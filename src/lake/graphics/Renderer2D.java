@@ -216,20 +216,25 @@ public class Renderer2D {
     }
     public void drawLine(float x1, float y1, float x2, float y2, Color color, int thickness, boolean round){
 
-        float dx = x2 - x1;
-        float dy = y2 - y1;
+        float ox = originX;
+        float oy = originY;
 
-        float angle = (float) Math.atan2(dy, dx);
+        {
+            float dx = x2 - x1;
+            float dy = y2 - y1;
 
-        setOrigin(x1, y1);
-        rotate(angle);
+            float angle = (float) Math.atan2(dy, dx);
 
-        float hypotenuse = (float) Math.sqrt((dx * dx) + (dy * dy));
+            setOrigin(ox + x1, oy + y1);
+            rotate(angle);
 
-        drawFilledRect(x1, y1 - (thickness / 2), hypotenuse, thickness, color);
+            float hypotenuse = (float) Math.sqrt((dx * dx) + (dy * dy));
 
-        resetTransform();
-        setOrigin(0, 0);
+            drawFilledRect(x1, y1 - (thickness / 2), hypotenuse, thickness, color);
+
+            rotate(-angle);
+            setOrigin(ox, oy);
+        }
 
         if(round){
             drawFilledEllipse(x1 - (thickness / 2f), y1 - (thickness / 2f), thickness, thickness, color);
