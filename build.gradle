@@ -8,6 +8,8 @@ plugins {
 
 project.ext.lwjglVersion = "3.3.3"
 project.ext.jomlVersion = "1.10.5"
+project.ext.imguiNatives = "natives-windows"
+
 
 
 switch (OperatingSystem.current()) {
@@ -21,6 +23,10 @@ switch (OperatingSystem.current()) {
         project.ext.lwjglNatives = "natives-windows"
         break
 }
+
+
+
+
 
 
 
@@ -42,12 +48,21 @@ dependencies {
 
     implementation files('dependencies/jbox2d-library.jar')
 
+
     implementation "org.lwjgl:lwjgl"
     implementation "org.lwjgl:lwjgl-glfw"
     implementation "org.lwjgl:lwjgl-opengl"
     implementation "org.lwjgl:lwjgl-stb"
     implementation "org.joml:joml:${jomlVersion}"
     implementation "org.lwjgl:lwjgl-openal"
+
+    implementation "io.github.spair:imgui-java-app:1.86.11"
+
+
+    implementation "org.lwjgl:lwjgl"
+    implementation "org.lwjgl:lwjgl-tinyfd"
+
+
 
 
     runtimeOnly "org.lwjgl:lwjgl::natives-windows"
@@ -71,6 +86,8 @@ dependencies {
     runtimeOnly "org.lwjgl:lwjgl-openal::natives-macos"
 
 
+    runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
+    runtimeOnly "org.lwjgl:lwjgl-tinyfd::$lwjglNatives"
 
 
 
@@ -83,11 +100,18 @@ dependencies {
 jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
-    exclude("demo")
+    exclude("lake/editor")
 
     from {
         configurations.runtimeClasspath.collect {
             it.isDirectory() ? it : zipTree(it)
         }
     }
+
+    manifest {
+        manifest.attributes["Main-Class"] = "lake.demo.Demo"
+
+    }
+
 }
+

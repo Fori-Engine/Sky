@@ -26,9 +26,9 @@ void main()
         float distance = length(uv);
 
         if(distance <= 1.0 && distance >= (1.0 - f_thickness))
-            FragColor = f_color;
+        FragColor = f_color;
         else
-            discard;
+        discard;
 
     }
     else {
