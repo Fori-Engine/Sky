@@ -21,17 +21,11 @@ public class Renderer2D {
     private Matrix4f proj;
     private Camera camera;
     private Matrix4f translation;
-    private IndexedVertexArray vertexArray;
-    private InstancingVertexArray instancingVertexArray;
-    private IndexedVertexBuffer vertexBuffer;
-    private InstancingVertexBuffer instancingBuffer;
-
-
-
+    private VertexArray vertexArray;
+    private VertexBuffer vertexBuffer;
     private float[] vertexData;
     private int maxTextureSlots;
     private ShaderProgram defaultShaderProgram, currentShaderProgram;
-    private ShaderProgram instancingShader;
     private ArrayList<String> renderCallNames = new ArrayList<>(50);
     private int RECT = -1;
     private int CIRCLE = -2;
@@ -80,19 +74,12 @@ public class Renderer2D {
         );
         defaultShaderProgram.prepare();
 
-        instancingShader = new ShaderProgram(
-                FileReader.readFile(Renderer2D.class.getClassLoader().getResourceAsStream("InstanceVertexShader.glsl")),
-                FileReader.readFile(Renderer2D.class.getClassLoader().getResourceAsStream("InstanceFragmentShader.glsl"))
-        );
-        instancingShader.prepare();
-
-
         currentShaderProgram = defaultShaderProgram;
         currentShaderProgram.bind();
         updateCamera2D();
 
         {
-            vertexArray = new IndexedVertexArray();
+            vertexArray = new VertexArray();
             vertexArray.bind();
             vertexArray.setVertexAttributes(
                     new VertexAttribute(0, 2, false, "v_pos"),
@@ -102,7 +89,7 @@ public class Renderer2D {
                     new VertexAttribute(4, 1, false, "v_thickness")
             );
 
-            vertexBuffer = new IndexedVertexBuffer(1000, vertexArray.getStride());
+            vertexBuffer = new VertexBuffer(1000, vertexArray.getStride());
             vertexArray.build();
 
             vertexData = new float[vertexBuffer.getNumOfVertices() * vertexBuffer.getVertexDataSize()];
@@ -150,7 +137,7 @@ public class Renderer2D {
         }
         return slots;
     }
-    public IndexedVertexBuffer getVertexBuffer() {
+    public VertexBuffer getVertexBuffer() {
         return vertexBuffer;
     }
     public int getWidth() {

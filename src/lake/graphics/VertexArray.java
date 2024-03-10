@@ -5,7 +5,7 @@ import static org.lwjgl.opengl.GL46.*;
 /***
  * Represents an OpenGL Vertex Array. This is a Disposable OpenGL object and will be disposed by the Window.
  */
-public class IndexedVertexArray implements Disposable {
+public class VertexArray implements Disposable {
     private int myVao;
 
     private VertexAttribute[] vertexAttributes;
@@ -14,7 +14,7 @@ public class IndexedVertexArray implements Disposable {
 
 
 
-    public IndexedVertexArray() {
+    public VertexArray() {
         Disposer.add(this);
         myVao = glGenVertexArrays();
     }
