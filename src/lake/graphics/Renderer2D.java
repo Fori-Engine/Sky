@@ -1,8 +1,9 @@
-package rebel.graphics;
+package lake.graphics;
 
 import org.joml.*;
 import org.lwjgl.BufferUtils;
-import rebel.FileReader;
+import lake.FileReader;
+import org.lwjgl.opengl.GLUtil;
 
 import java.lang.Math;
 import java.nio.IntBuffer;
@@ -20,17 +21,34 @@ public class Renderer2D {
     private Matrix4f proj;
     private Camera camera;
     private Matrix4f translation;
-    private VertexBuffer vertexBuffer;
+    private IndexedVertexArray vertexArray;
+    private InstancingVertexArray instancingVertexArray;
+    private IndexedVertexBuffer vertexBuffer;
+    private InstancingVertexBuffer instancingBuffer;
+
+
+
     private float[] vertexData;
     private int maxTextureSlots;
     private ShaderProgram defaultShaderProgram, currentShaderProgram;
+    private ShaderProgram instancingShader;
     private ArrayList<String> renderCallNames = new ArrayList<>(50);
     private int RECT = -1;
     private int CIRCLE = -2;
     private boolean debug = false;
     private FastTextureLookup textureLookup;
 
+    private Framebuffer2D framebuffer2D;
+
+
+    public Renderer2D(int width, int height, boolean msaa, Framebuffer2D framebuffer2D){
+        this(width, height, msaa);
+        this.framebuffer2D = framebuffer2D;
+    }
+
     public Renderer2D(int width, int height, boolean msaa) {
+        GLUtil.setupDebugMessageCallback();
+
         this.width = width;
         this.height = height;
 
@@ -62,29 +80,34 @@ public class Renderer2D {
         );
         defaultShaderProgram.prepare();
 
+        instancingShader = new ShaderProgram(
+                FileReader.readFile(Renderer2D.class.getClassLoader().getResourceAsStream("InstanceVertexShader.glsl")),
+                FileReader.readFile(Renderer2D.class.getClassLoader().getResourceAsStream("InstanceFragmentShader.glsl"))
+        );
+        instancingShader.prepare();
+
 
         currentShaderProgram = defaultShaderProgram;
-
-
         currentShaderProgram.bind();
         updateCamera2D();
 
-        VertexArray vertexArray = new VertexArray();
-        vertexArray.bind();
+        {
+            vertexArray = new IndexedVertexArray();
+            vertexArray.bind();
+            vertexArray.setVertexAttributes(
+                    new VertexAttribute(0, 2, false, "v_pos"),
+                    new VertexAttribute(1, 2, false, "v_uv"),
+                    new VertexAttribute(2, 1, false, "v_texindex"),
+                    new VertexAttribute(3, 4, false, "v_color"),
+                    new VertexAttribute(4, 1, false, "v_thickness")
+            );
 
+            vertexBuffer = new IndexedVertexBuffer(1000, vertexArray.getStride());
+            vertexArray.build();
 
-        vertexArray.setVertexAttributes(
-                new VertexAttribute(0, 2, false, "v_pos"),
-                new VertexAttribute(1, 2, false, "v_uv"),
-                new VertexAttribute(2, 1, false, "v_texindex"),
-                new VertexAttribute(3, 4, false, "v_color"),
-                new VertexAttribute(4, 1, false, "v_thickness")
-        );
+            vertexData = new float[vertexBuffer.getNumOfVertices() * vertexBuffer.getVertexDataSize()];
+        }
 
-        vertexBuffer = new VertexBuffer(1000, vertexArray.getStride());
-        vertexArray.build();
-
-        vertexData = new float[vertexBuffer.getNumOfVertices() * vertexBuffer.getVertexDataSize()];
     }
 
     /***
@@ -96,8 +119,13 @@ public class Renderer2D {
         if(currentShaderProgram != shaderProgram) {
             currentShaderProgram = shaderProgram;
             currentShaderProgram.bind();
+
+
+
             updateCamera2D();
         }
+
+
     }
 
     public void updateCamera2D(){
@@ -122,7 +150,7 @@ public class Renderer2D {
         }
         return slots;
     }
-    public VertexBuffer getVertexBuffer() {
+    public IndexedVertexBuffer getVertexBuffer() {
         return vertexBuffer;
     }
     public int getWidth() {
@@ -143,6 +171,15 @@ public class Renderer2D {
     public Matrix4f getTranslation() {
         return translation;
     }
+
+    public Framebuffer2D getFramebuffer2D() {
+        return framebuffer2D;
+    }
+
+    public boolean isUsingFramebuffer(){
+        return getFramebuffer2D() != null;
+    }
+
     private int quadIndex;
     private int nextTextureSlot;
     private Matrix4f transform = new Matrix4f().identity();
@@ -174,6 +211,9 @@ public class Renderer2D {
         this.originX = vector2f.x;
         this.originY = vector2f.y;
     }
+
+
+
 
     public void drawRect(float x, float y, float w, float h, Color color, int thickness){
 
@@ -354,9 +394,13 @@ public class Renderer2D {
 
         if(quadIndex == vertexBuffer.maxQuads()) render("Next Batch Render");
     }
-    public void render(){
-        render("Final Draw Call [rebel.engine.graphics.Renderer2D.render()]");
 
+
+
+
+
+    public void render() {
+        render("Final Draw Call [rebel.engine.graphics.Renderer2D.render()]");
         if(debug){
             System.out.println("Renderer2D (" + this + ") - Debug");
 
@@ -365,18 +409,19 @@ public class Renderer2D {
             }
             System.out.println("\n");
         }
-
-
         renderCallNames.clear();
+
+        if(framebuffer2D != null)
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
     public void render(String renderName) {
         renderCallNames.add(renderName);
 
+
+        vertexArray.bind();
+
         glBindBuffer(GL_ARRAY_BUFFER, getVertexBuffer().myVbo);
-
-
-
         glBufferSubData(GL_ARRAY_BUFFER, 0, vertexData);
 
 
@@ -408,6 +453,44 @@ public class Renderer2D {
         textureLookup.clear();
 
     }
+
+    public void renderInstanced(int count) {
+        renderCallNames.add("Instanced");
+        vertexArray.bind();
+
+        glBindBuffer(GL_ARRAY_BUFFER, getVertexBuffer().myVbo);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, vertexData);
+
+
+        int numOfIndices = quadIndex * 6;
+        int[] indices = new int[numOfIndices];
+        int offset = 0;
+
+        for (int j = 0; j < numOfIndices; j += 6) {
+
+            indices[j] =         offset;
+            indices[j + 1] = 1 + offset;
+            indices[j + 2] = 2 + offset;
+            indices[j + 3] = 2 + offset;
+            indices[j + 4] = 3 + offset;
+            indices[j + 5] =     offset;
+
+            offset += 4;
+        }
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, getVertexBuffer().myEbo);
+        glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, indices);
+        glDrawElementsInstanced(GL_TRIANGLES, indices.length, GL_UNSIGNED_INT, 0, count);
+
+
+        vertexData = new float[vertexBuffer.getNumOfVertices() * vertexBuffer.getVertexDataSize()];
+        quadIndex = 0;
+        nextTextureSlot = 0;
+        textureLookup.clear();
+
+    }
+
+
     public List<String> getRenderCalls(){
         return new ArrayList<>(renderCallNames);
     }
@@ -425,6 +508,13 @@ public class Renderer2D {
     }
 
     public void clear(Color color) {
+
+        if(framebuffer2D != null){
+            framebuffer2D.bind();
+            glClearTexImage(framebuffer2D.getTexture2D().getTexID(), 0, GL_RGBA, GL_FLOAT, new float[]{color.r, color.g, color.b, color.a});
+            return;
+        }
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(color.r, color.g, color.b, color.a);
     }
