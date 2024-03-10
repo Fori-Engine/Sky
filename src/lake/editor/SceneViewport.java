@@ -39,9 +39,12 @@ public class SceneViewport extends Panel {
     public void render() {
         Game.window.update();
 
-        ImGui.setNextWindowSize(width, height, ImGuiCond.FirstUseEver);
+
         ImGui.begin(title);
         {
+
+            width = (int) ImGui.getWindowSizeX();
+            height = (int) ImGui.getWindowSizeY();
 
             focused = ImGui.isWindowFocused();
 
@@ -50,6 +53,7 @@ public class SceneViewport extends Panel {
 
             if(isConnected) {
                 ImVec2 pos = ImGui.getWindowPos();
+
 
 
                 mouseX = ImGui.getMousePosX() - ImGui.getWindowPosX();
@@ -82,6 +86,13 @@ public class SceneViewport extends Panel {
 
     }
 
+    public int getWidth() {
+        return width;
+    }
+
+    public int getHeight() {
+        return height;
+    }
 
     private class SceneViewportWindow implements Window {
 
@@ -97,12 +108,12 @@ public class SceneViewport extends Panel {
 
         @Override
         public int getWidth() {
-            return width;
+            return (int) width;
         }
 
         @Override
         public int getHeight() {
-            return height;
+            return (int) height;
         }
 
         @Override
@@ -112,7 +123,7 @@ public class SceneViewport extends Panel {
 
         @Override
         public void update() {
-            glViewport(0, 0, width, height);
+            glViewport(0, 0, (int) width, (int) height);
         }
 
         @Override

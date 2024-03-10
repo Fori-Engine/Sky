@@ -6,7 +6,6 @@ import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.logging.Level;
@@ -34,13 +33,13 @@ public class ProjectRef {
     }
 
 
-    public boolean openProject(File path) {
+    public boolean openProject(File path, int width, int height) {
         if (isProjectOpened())
             closeProject();
 
         this.path = path;
         setProjectOpened(true);
-        setCrashed(false);
+        setLastProjectCrashed(false);
 
         try {
 
@@ -48,33 +47,30 @@ public class ProjectRef {
 
             Class editorLauncherClass = classLoader.loadClass("game.EditorLauncher");
             mInitRenderer = editorLauncherClass.getDeclaredMethod("initRenderer");
+
+
+
             mCreate = editorLauncherClass.getDeclaredMethod("create");
             mUpdate = editorLauncherClass.getDeclaredMethod("update");
             mDispose = editorLauncherClass.getDeclaredMethod("disposeRenderer");
 
 
+
             Constructor<?> constructor = editorLauncherClass.getDeclaredConstructor(String.class, int.class, int.class);
-            editorLauncherInstance = constructor.newInstance("", 1000, 600);
+            editorLauncherInstance = constructor.newInstance("", width, height);
 
             viewportTextureID = (Integer) mInitRenderer.invoke(editorLauncherInstance);
 
             logger.log(Level.INFO, "Editor Preview-Framebuffer Acquired! " + this.path.getPath());
             mCreate.invoke(editorLauncherInstance);
 
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        } catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        }
+        catch (Exception e) {
+            setLastProjectThrowableLog(e);
+            closeProject();
+            setLastProjectCrashed(true);
+
+
         }
 
 
@@ -85,17 +81,17 @@ public class ProjectRef {
     public void closeProject(){
         if(isProjectOpened()){
             setProjectOpened(false);
-            setPauseUpdate(false);
+            setCurrentProjectPaused(false);
             dispose();
             EditorUI.getRegistry().clear();
         }
     }
 
-    public boolean isPauseUpdate() {
+    public boolean isCurrentProjectPaused() {
         return pauseUpdate;
     }
 
-    public void setPauseUpdate(boolean pauseUpdate) {
+    public void setCurrentProjectPaused(boolean pauseUpdate) {
         this.pauseUpdate = pauseUpdate;
     }
 
@@ -118,35 +114,35 @@ public class ProjectRef {
         this.projectOpened = projectOpened;
     }
 
-    public boolean isCrashed() {
+    public boolean getLastProjectCrashed() {
         return crashed;
     }
 
-    private void setCrashed(boolean crashed) {
+    private void setLastProjectCrashed(boolean crashed) {
         this.crashed = crashed;
     }
 
-    public Throwable getThrowableLog() {
+    public Throwable getLastProjectThrowableLog() {
         return throwable;
     }
 
-    private void setThrowableLog(Throwable throwable) {
+    private void setLastProjectThrowableLog(Throwable throwable) {
         this.throwable = throwable;
     }
 
-    public void clearThrowableLog() {
+    public void clearLastProjectThrowableLog() {
         this.throwable = null;
     }
 
-    public void invokeUpdate(){
-        if(isPauseUpdate() || isCrashed()) return;
+    public void update(){
+        if(isCurrentProjectPaused() || getLastProjectCrashed()) return;
 
         try {
             mUpdate.invoke(editorLauncherInstance);
         } catch (InvocationTargetException | IllegalAccessException e) {
             closeProject();
-            setCrashed(true);
-            setThrowableLog(e);
+            setLastProjectCrashed(true);
+            setLastProjectThrowableLog(e);
         }
     }
 

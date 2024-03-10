@@ -41,7 +41,7 @@ public class Renderer2D {
     }
 
     public Renderer2D(int width, int height, boolean msaa) {
-        GLUtil.setupDebugMessageCallback();
+        //GLUtil.setupDebugMessageCallback();
 
         this.width = width;
         this.height = height;

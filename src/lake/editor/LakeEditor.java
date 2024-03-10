@@ -3,7 +3,6 @@ package lake.editor;
 import imgui.type.ImBoolean;
 import lake.FileReader;
 import lake.Time;
-import lake.Utils;
 import lake.graphics.*;
 import lake.script.EditorUI;
 import imgui.*;
@@ -28,7 +27,7 @@ public class LakeEditor {
     private final ImGuiImplGl3 imGuiGl3 = new ImGuiImplGl3();
     private ArrayList<Panel> panels = new ArrayList<>();
     private SceneViewport sceneViewport;
-    private CodeInspector codeInspector;
+    private ProjectInspector projectInspector;
     private GPUDriverOutput gpuDriverOutput;
     private boolean restartRequested = false;
     private StandaloneWindow window;
@@ -50,7 +49,7 @@ public class LakeEditor {
         
         
         sceneViewport = new SceneViewport(1000, 600, window);
-        codeInspector = new CodeInspector(sceneViewport);
+        projectInspector = new ProjectInspector(sceneViewport);
         gpuDriverOutput = new GPUDriverOutput(window);
 
 
@@ -58,7 +57,7 @@ public class LakeEditor {
 
 
         panels.add(sceneViewport);
-        panels.add(codeInspector);
+        panels.add(projectInspector);
         panels.add(gpuDriverOutput);
 
 
@@ -238,11 +237,11 @@ public class LakeEditor {
         ProjectRef projectRef = ProjectManager.getProjectRef();
 
         if(projectRef.isProjectOpened()) {
-            projectRef.invokeUpdate();
+            projectRef.update();
+        }
 
-            if(projectRef.isCrashed()){
-                sceneViewport.disconnect();
-            }
+        if(projectRef.getLastProjectCrashed()){
+            sceneViewport.disconnect();
         }
 
 
@@ -275,19 +274,7 @@ public class LakeEditor {
 
 
 
-            if(projectRef.getThrowableLog() != null){
-                ImGui.openPopup("The project crashed!");
-                if (ImGui.beginPopupModal("The project crashed!", new ImBoolean(true)))
-                {
-                    ImGui.text(Utils.exceptionToString(projectRef.getThrowableLog()));
-                    if (ImGui.button("Close")) {
-                        ImGui.closeCurrentPopup();
 
-                        projectRef.clearThrowableLog();
-                    }
-                    ImGui.endPopup();
-                }
-            }
 
 
 
@@ -311,7 +298,7 @@ public class LakeEditor {
 
                                 String outputPath = projectFilePath.strip().replace("project.lake", "") + FileReader.readFile(projectFilePath).strip();
 
-                                if(projectRef.openProject(new File(outputPath))){
+                                if(projectRef.openProject(new File(outputPath), 1000, 600)){
                                     sceneViewport.useFramebuffer2D(projectRef.getViewportTextureID());
                                 }
 
