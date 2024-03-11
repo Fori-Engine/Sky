@@ -13,6 +13,10 @@ public class Disposer {
         disposables.add(disposable);
     }
 
+    public static void remove(Disposable disposable){
+        disposables.remove(disposable);
+    }
+
     public static void disposeAll(){
 
         for(Disposable d : disposables) {
