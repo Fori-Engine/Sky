@@ -284,7 +284,7 @@ public class LakeEditor {
                     if(ImGui.beginMenu("File")){
 
 
-                        if(ImGui.menuItem("Open Project", "CTRL+O")){
+                        if(ImGui.menuItem("Open Project")){
                             String projectFilePath =
                                     TinyFileDialogs.tinyfd_openFileDialog(
                                             "Open Project",
@@ -298,7 +298,7 @@ public class LakeEditor {
 
                                 String outputPath = projectFilePath.strip().replace("project.lake", "") + FileReader.readFile(projectFilePath).strip();
 
-                                if(projectRef.openProject(new File(outputPath), 1000, 600)){
+                                if(projectRef.openProject(new File(outputPath), sceneViewport.getWidth(), sceneViewport.getHeight())){
                                     sceneViewport.useFramebuffer2D(projectRef.getViewportTextureID());
                                 }
 
@@ -306,7 +306,7 @@ public class LakeEditor {
                             }
 
                         }
-                        if(ImGui.menuItem("Restart Editor", "CTRL+R")){
+                        if(ImGui.menuItem("Restart Editor")){
                             setRestartRequested(true);
                         }
 
