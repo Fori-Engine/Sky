@@ -4,6 +4,7 @@ import imgui.type.ImBoolean;
 import lake.Utils;
 import lake.graphics.Color;
 import lake.graphics.Disposer;
+import lake.graphics.ShaderProgram;
 import lake.graphics.Texture2D;
 import lake.script.EditorUI;
 import imgui.ImGui;
@@ -65,11 +66,13 @@ public class ProjectInspector extends Panel {
 
                 ImGui.sameLine();
 
+                ImGui.pushID("ProjectReload");
                 if (ImGui.button("Reload")) {
                     projectRef.openProject(projectRef.getProjectPath(), sceneViewport.getWidth(), sceneViewport.getHeight());
                     projectRef.setCurrentProjectPaused(false);
                     sceneViewport.useFramebuffer2D(projectRef.getViewportTextureID());
                 }
+                ImGui.popID();
 
 
 
@@ -80,108 +83,133 @@ public class ProjectInspector extends Panel {
             ImGui.separator();
 
             for(Object object : EditorUI.getRegistry()){
+                if(ImGui.collapsingHeader(object.getClass().getSimpleName() + " [/" + object + "]")) {
 
-                ImGui.text(object.getClass().getSimpleName() + " [/" + object + "]");
+                    for (Field field : object.getClass().getFields()) {
 
-                for(Field field : object.getClass().getFields()){
+                        try {
 
-                    try {
-
-                        if (int.class.equals(field.getType())) {
-                            int i = field.getInt(object);
-                            int[] z = new int[]{i};
-                            if (ImGui.sliderInt(field.getName(), z, 0, 200)) {
-                                field.setInt(object, z[0]);
-                            }
-                        }
-
-                        if (float.class.equals(field.getType())) {
-                            float i = field.getFloat(object);
-                            float[] z = new float[]{i};
-                            if (ImGui.sliderFloat(field.getName(), z, 0, 200)) {
-                                field.setFloat(object, z[0]);
-                            }
-                        }
-
-                        if (double.class.equals(field.getType())) {
-                            double i = field.getDouble(object);
-                            float[] z = new float[]{(float) i};
-                            if (ImGui.sliderFloat(field.getName(), z, 0, 200)) {
-                                field.setDouble(object, z[0]);
-                            }
-                        }
-
-                        if (Color.class.equals(field.getType())) {
-                            Color i = (Color) field.get(object);
-                            float[] color = new float[]{i.r, i.g, i.b, i.a};
-                            if (ImGui.colorEdit4(field.getName(), color)) {
-                                field.set(object, new Color(color[0], color[1], color[2], color[3]));
-                            }
-                        }
-
-                        if (boolean.class.equals(field.getType())) {
-                            boolean i = field.getBoolean(object);
-
-                            if(ImGui.checkbox(field.getName(), i)){
-                                field.setBoolean(object, !i);
-                            }
-                        }
-
-                        if(Vector3f.class.equals(field.getType())){
-                            Vector3f i = (Vector3f) field.get(object);
-
-
-                            float[] vec = new float[]{i.x, i.y, i.z};
-
-                            if(ImGui.sliderFloat3(field.getName(), vec, 0, 200)){
-                                field.set(object, new Vector3f(vec[0], vec[1], vec[2]));
-                            }
-                        }
-                        if(Texture2D.class.equals(field.getType())){
-
-                            ImGui.separator();
-
-                            Texture2D i = (Texture2D) field.get(object);
-
-                            ImGui.text(field.getName());
-                            if(ImGui.button("Select")){
-                                String texturePath =
-                                        TinyFileDialogs.tinyfd_openFileDialog(
-                                                "Select Image",
-                                                FileSystemView.getFileSystemView().getHomeDirectory().getPath(),
-                                                null,
-                                                null,
-                                                false
-                                        );
-
-
-                                if(texturePath != null) {
-                                    i.dispose();
-                                    Disposer.remove(i);
-
-                                    field.set(object, new Texture2D(texturePath));
+                            if (int.class.equals(field.getType())) {
+                                int i = field.getInt(object);
+                                int[] z = new int[]{i};
+                                if (ImGui.sliderInt(field.getName(), z, 0, 200)) {
+                                    field.setInt(object, z[0]);
                                 }
                             }
-                            ImGui.sameLine();
-                            ImGui.text(i.getPath());
 
-                            ImGui.image(i.getTexID(), 256, 256);
+                            if (float.class.equals(field.getType())) {
+                                float i = field.getFloat(object);
+                                float[] z = new float[]{i};
+                                if (ImGui.sliderFloat(field.getName(), z, 0, 200)) {
+                                    field.setFloat(object, z[0]);
+                                }
+                            }
+
+                            if (double.class.equals(field.getType())) {
+                                double i = field.getDouble(object);
+                                float[] z = new float[]{(float) i};
+                                if (ImGui.sliderFloat(field.getName(), z, 0, 200)) {
+                                    field.setDouble(object, z[0]);
+                                }
+                            }
+
+                            if (Color.class.equals(field.getType())) {
+                                Color i = (Color) field.get(object);
+                                float[] color = new float[]{i.r, i.g, i.b, i.a};
+                                if (ImGui.colorEdit4(field.getName(), color)) {
+                                    field.set(object, new Color(color[0], color[1], color[2], color[3]));
+                                }
+                            }
+
+                            if (boolean.class.equals(field.getType())) {
+                                boolean i = field.getBoolean(object);
+
+                                if (ImGui.checkbox(field.getName(), i)) {
+                                    field.setBoolean(object, !i);
+                                }
+                            }
+
+                            if (Vector3f.class.equals(field.getType())) {
+                                Vector3f i = (Vector3f) field.get(object);
 
 
+                                float[] vec = new float[]{i.x, i.y, i.z};
+
+                                if (ImGui.sliderFloat3(field.getName(), vec, 0, 200)) {
+                                    field.set(object, new Vector3f(vec[0], vec[1], vec[2]));
+                                }
+                            }
+                            if (Texture2D.class.equals(field.getType())) {
+
+                                ImGui.separator();
+
+                                Texture2D i = (Texture2D) field.get(object);
+
+                                ImGui.text(field.getName());
+                                if (ImGui.button("Select")) {
+                                    String texturePath =
+                                            TinyFileDialogs.tinyfd_openFileDialog(
+                                                    "Select Image",
+                                                    FileSystemView.getFileSystemView().getHomeDirectory().getPath(),
+                                                    null,
+                                                    null,
+                                                    false
+                                            );
 
 
+                                    if (texturePath != null) {
+                                        i.dispose();
+                                        Disposer.remove(i);
+
+                                        field.set(object, new Texture2D(texturePath));
+                                    }
+                                }
+                                ImGui.sameLine();
+                                ImGui.text(i.getPath());
+
+                                ImGui.image(i.getTexID(), 256, 256);
+
+
+                            }
+
+                            if (ShaderProgram.class.equals(field.getType())) {
+                                ImGui.text(field.getName());
+                                ImGui.sameLine();
+
+                                ShaderProgram shaderProgram = (ShaderProgram) field.get(object);
+
+                                if (ImGui.button("Reload " + field.getName())) {
+
+                                    String vsText = shaderProgram.getVertexShaderSource();
+                                    String fsText = shaderProgram.getFragmentShaderSource();
+
+                                    shaderProgram.dispose();
+                                    Disposer.remove(shaderProgram);
+
+                                    ShaderProgram newShaderProgram = new ShaderProgram(vsText, fsText);
+                                    newShaderProgram.prepare();
+
+
+                                    field.set(object, newShaderProgram);
+
+                                }
+
+
+                            }
+
+
+                        } catch (IllegalAccessException e) {
+                            throw new RuntimeException(e);
                         }
 
-
-                    }
-                    catch (IllegalAccessException e) {
-                        throw new RuntimeException(e);
                     }
 
                 }
 
 
-                ImGui.separator();
+
+
+
 
             }
 
