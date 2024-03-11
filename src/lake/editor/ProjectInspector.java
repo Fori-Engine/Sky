@@ -5,6 +5,7 @@ import lake.Utils;
 import lake.graphics.Color;
 import lake.script.EditorUI;
 import imgui.ImGui;
+import org.joml.Vector3f;
 
 import java.lang.reflect.Field;
 
@@ -114,6 +115,24 @@ public class ProjectInspector extends Panel {
                             }
                         }
 
+                        if (boolean.class.equals(field.getType())) {
+                            boolean i = field.getBoolean(object);
+
+                            if(ImGui.checkbox(field.getName(), i)){
+                                field.setBoolean(object, !i);
+                            }
+                        }
+
+                        if(Vector3f.class.equals(field.getType())){
+                            Vector3f i = (Vector3f) field.get(object);
+
+
+                            float[] vec = new float[]{i.x, i.y, i.z};
+
+                            if(ImGui.sliderFloat3(field.getName(), vec, 0, 200)){
+                                field.set(object, new Vector3f(vec[0], vec[1], vec[2]));
+                            }
+                        }
 
 
                     }
