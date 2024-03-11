@@ -3,10 +3,14 @@ package lake.editor;
 import imgui.type.ImBoolean;
 import lake.Utils;
 import lake.graphics.Color;
+import lake.graphics.Disposer;
+import lake.graphics.Texture2D;
 import lake.script.EditorUI;
 import imgui.ImGui;
 import org.joml.Vector3f;
+import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
+import javax.swing.filechooser.FileSystemView;
 import java.lang.reflect.Field;
 
 public class ProjectInspector extends Panel {
@@ -132,6 +136,40 @@ public class ProjectInspector extends Panel {
                             if(ImGui.sliderFloat3(field.getName(), vec, 0, 200)){
                                 field.set(object, new Vector3f(vec[0], vec[1], vec[2]));
                             }
+                        }
+                        if(Texture2D.class.equals(field.getType())){
+
+                            ImGui.separator();
+
+                            Texture2D i = (Texture2D) field.get(object);
+
+                            ImGui.text(field.getName());
+                            if(ImGui.button("Select")){
+                                String texturePath =
+                                        TinyFileDialogs.tinyfd_openFileDialog(
+                                                "Select Image",
+                                                FileSystemView.getFileSystemView().getHomeDirectory().getPath(),
+                                                null,
+                                                null,
+                                                false
+                                        );
+
+
+                                if(texturePath != null) {
+                                    i.dispose();
+                                    Disposer.remove(i);
+
+                                    field.set(object, new Texture2D(texturePath));
+                                }
+                            }
+                            ImGui.sameLine();
+                            ImGui.text(i.getPath());
+
+                            ImGui.image(i.getTexID(), 256, 256);
+
+
+
+
                         }
 
 
