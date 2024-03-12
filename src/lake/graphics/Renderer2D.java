@@ -1,5 +1,6 @@
 package lake.graphics;
 
+import lake.script.EditorUI;
 import org.joml.*;
 import org.lwjgl.BufferUtils;
 import lake.FileReader;
@@ -25,7 +26,7 @@ public class Renderer2D {
     private VertexBuffer vertexBuffer;
     private float[] vertexData;
     private int maxTextureSlots;
-    private ShaderProgram defaultShaderProgram, currentShaderProgram;
+    public ShaderProgram defaultShaderProgram, currentShaderProgram;
     private ArrayList<String> renderCallNames = new ArrayList<>(50);
     private int RECT = -1;
     private int CIRCLE = -2;
@@ -41,6 +42,8 @@ public class Renderer2D {
     }
 
     public Renderer2D(int width, int height, boolean msaa) {
+
+
         //GLUtil.setupDebugMessageCallback();
 
         this.width = width;
@@ -411,6 +414,7 @@ public class Renderer2D {
         renderCallNames.add(renderName);
 
 
+        currentShaderProgram.bind();
         vertexArray.bind();
 
         glBindBuffer(GL_ARRAY_BUFFER, getVertexBuffer().myVbo);

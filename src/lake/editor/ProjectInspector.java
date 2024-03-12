@@ -4,15 +4,16 @@ import imgui.type.ImBoolean;
 import lake.Utils;
 import lake.graphics.Color;
 import lake.graphics.Disposer;
-import lake.graphics.ShaderProgram;
 import lake.graphics.Texture2D;
 import lake.script.EditorUI;
-import imgui.ImGui;
+import static imgui.ImGui.*;
 import org.joml.Vector3f;
 import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
 import javax.swing.filechooser.FileSystemView;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class ProjectInspector extends Panel {
     private SceneViewport sceneViewport;
@@ -25,184 +26,169 @@ public class ProjectInspector extends Panel {
     private boolean showLog = false;
     @Override
     public void render() {
-        ImGui.begin(title);
+        begin(title);
         {
-
 
             ProjectRef projectRef = ProjectManager.getProjectRef();
 
+
             if(projectRef.getLastProjectThrowableLog() != null){
 
-                ImGui.textColored(1f, 0f, 0f, 1f, "Error");
-                ImGui.sameLine();
-                if(ImGui.button("View Project Log")) {
+
+                text("Project Error (Details in Project Log)");
+
+
+                if(button("Open Project Log")) {
                     showLog = true;
                 }
 
                 if(showLog){
-                    ImGui.openPopup("The project crashed!");
-                    if (ImGui.beginPopupModal("The project crashed!", new ImBoolean(true))) {
-                        ImGui.text(Utils.exceptionToString(projectRef.getLastProjectThrowableLog()));
+                    openPopup("The project crashed!");
+                    if (beginPopupModal("The project crashed!", new ImBoolean(true))) {
+                        text(Utils.exceptionToString(projectRef.getLastProjectThrowableLog()));
 
-                        if (ImGui.button("Close")) {
-                            ImGui.closeCurrentPopup();
+                        if (button("Close")) {
+                            closeCurrentPopup();
                             showLog = false;
                             projectRef.clearLastProjectThrowableLog();
                         }
-                        ImGui.endPopup();
+                        endPopup();
                     }
                 }
             }
 
             if(projectRef.isProjectOpened()) {
 
-                ImGui.text(projectRef.getProjectPath().getPath());
-                ImGui.separator();
+                text(projectRef.getProjectPath().getPath());
+                separator();
 
 
-                if (ImGui.button(projectRef.isCurrentProjectPaused() ? "Resume" : "Pause")) {
+                pushID(ImID.currentID++);
+                if (button(projectRef.isCurrentProjectPaused() ? "Resume" : "Pause")) {
                     ProjectManager.getProjectRef().setCurrentProjectPaused(!projectRef.isCurrentProjectPaused());
                 }
+                popID();
 
-                ImGui.sameLine();
+                sameLine();
 
-                ImGui.pushID("ProjectReload");
-                if (ImGui.button("Reload")) {
+                pushID(ImID.currentID++);
+                if (button("Reload")) {
                     projectRef.openProject(projectRef.getProjectPath(), sceneViewport.getWidth(), sceneViewport.getHeight());
                     projectRef.setCurrentProjectPaused(false);
                     sceneViewport.useFramebuffer2D(projectRef.getViewportTextureID());
                 }
-                ImGui.popID();
+                popID();
 
 
 
-            }
 
 
+                separator();
+                for(String id : EditorUI.getRegistry().keySet()){
 
-            ImGui.separator();
+                    Object object = EditorUI.getRegistry().get(id);
 
-            for(Object object : EditorUI.getRegistry()){
-                if(ImGui.collapsingHeader(object.getClass().getSimpleName() + " [/" + object + "]")) {
-
-                    for (Field field : object.getClass().getFields()) {
-
-                        try {
-
-                            if (int.class.equals(field.getType())) {
-                                int i = field.getInt(object);
-                                int[] z = new int[]{i};
-                                if (ImGui.sliderInt(field.getName(), z, 0, 200)) {
-                                    field.setInt(object, z[0]);
-                                }
-                            }
-
-                            if (float.class.equals(field.getType())) {
-                                float i = field.getFloat(object);
-                                float[] z = new float[]{i};
-                                if (ImGui.sliderFloat(field.getName(), z, 0, 200)) {
-                                    field.setFloat(object, z[0]);
-                                }
-                            }
-
-                            if (double.class.equals(field.getType())) {
-                                double i = field.getDouble(object);
-                                float[] z = new float[]{(float) i};
-                                if (ImGui.sliderFloat(field.getName(), z, 0, 200)) {
-                                    field.setDouble(object, z[0]);
-                                }
-                            }
-
-                            if (Color.class.equals(field.getType())) {
-                                Color i = (Color) field.get(object);
-                                float[] color = new float[]{i.r, i.g, i.b, i.a};
-                                if (ImGui.colorEdit4(field.getName(), color)) {
-                                    field.set(object, new Color(color[0], color[1], color[2], color[3]));
-                                }
-                            }
-
-                            if (boolean.class.equals(field.getType())) {
-                                boolean i = field.getBoolean(object);
-
-                                if (ImGui.checkbox(field.getName(), i)) {
-                                    field.setBoolean(object, !i);
-                                }
-                            }
-
-                            if (Vector3f.class.equals(field.getType())) {
-                                Vector3f i = (Vector3f) field.get(object);
+                    String headerText = id + " [" + object + "]";
 
 
-                                float[] vec = new float[]{i.x, i.y, i.z};
-
-                                if (ImGui.sliderFloat3(field.getName(), vec, 0, 200)) {
-                                    field.set(object, new Vector3f(vec[0], vec[1], vec[2]));
-                                }
-                            }
-                            if (Texture2D.class.equals(field.getType())) {
-
-                                ImGui.separator();
-
-                                Texture2D i = (Texture2D) field.get(object);
-
-                                ImGui.text(field.getName());
-                                if (ImGui.button("Select")) {
-                                    String texturePath =
-                                            TinyFileDialogs.tinyfd_openFileDialog(
-                                                    "Select Image",
-                                                    FileSystemView.getFileSystemView().getHomeDirectory().getPath(),
-                                                    null,
-                                                    null,
-                                                    false
-                                            );
+                    if(collapsingHeader(headerText)) {
 
 
-                                    if (texturePath != null) {
-                                        i.dispose();
-                                        Disposer.remove(i);
+                        Field[] fields = object.getClass().getFields();
+                        for (int j = 0; j < fields.length; j++) {
+                            Field field = fields[j];
+                            try {
 
-                                        field.set(object, new Texture2D(texturePath));
+                                if (int.class.equals(field.getType())) {
+                                    int i = field.getInt(object);
+                                    int[] z = new int[]{i};
+                                    if (sliderInt(field.getName(), z, 0, 200)) {
+                                        field.setInt(object, z[0]);
                                     }
                                 }
-                                ImGui.sameLine();
-                                ImGui.text(i.getPath());
-
-                                ImGui.image(i.getTexID(), 256, 256);
-
-
-                            }
-
-                            if (ShaderProgram.class.equals(field.getType())) {
-                                ImGui.text(field.getName());
-                                ImGui.sameLine();
-
-                                ShaderProgram shaderProgram = (ShaderProgram) field.get(object);
-
-                                if (ImGui.button("Reload " + field.getName())) {
-
-                                    String vsText = shaderProgram.getVertexShaderSource();
-                                    String fsText = shaderProgram.getFragmentShaderSource();
-
-                                    shaderProgram.dispose();
-                                    Disposer.remove(shaderProgram);
-
-                                    ShaderProgram newShaderProgram = new ShaderProgram(vsText, fsText);
-                                    newShaderProgram.prepare();
-
-
-                                    field.set(object, newShaderProgram);
-
+                                else if (float.class.equals(field.getType())) {
+                                    float i = field.getFloat(object);
+                                    float[] z = new float[]{i};
+                                    if (sliderFloat(field.getName(), z, 0, 200)) {
+                                        field.setFloat(object, z[0]);
+                                    }
                                 }
+                                else if (double.class.equals(field.getType())) {
+                                    double i = field.getDouble(object);
+                                    float[] z = new float[]{(float) i};
+                                    if (sliderFloat(field.getName(), z, 0, 200)) {
+                                        field.setDouble(object, z[0]);
+                                    }
+                                }
+                                else if (Color.class.equals(field.getType())) {
+                                    Color i = (Color) field.get(object);
+                                    float[] color = new float[]{i.r, i.g, i.b, i.a};
+                                    if (colorEdit4(field.getName(), color)) {
+                                        field.set(object, new Color(color[0], color[1], color[2], color[3]));
+                                    }
+                                }
+                                else if (boolean.class.equals(field.getType())) {
+                                    boolean i = field.getBoolean(object);
+
+                                    if (checkbox(field.getName(), i)) {
+                                        field.setBoolean(object, !i);
+                                    }
+                                }
+                                else if (Vector3f.class.equals(field.getType())) {
+                                    Vector3f i = (Vector3f) field.get(object);
 
 
+                                    float[] vec = new float[]{i.x, i.y, i.z};
+
+                                    if (sliderFloat3(field.getName(), vec, 0, 200)) {
+                                        field.set(object, new Vector3f(vec[0], vec[1], vec[2]));
+                                    }
+                                }
+                                else if (Texture2D.class.equals(field.getType())) {
+
+                                    separator();
+
+                                    Texture2D i = (Texture2D) field.get(object);
+
+                                    text(field.getName());
+                                    if (button("Select")) {
+                                        String texturePath =
+                                                TinyFileDialogs.tinyfd_openFileDialog(
+                                                        "Select Image",
+                                                        FileSystemView.getFileSystemView().getHomeDirectory().getPath(),
+                                                        null,
+                                                        null,
+                                                        false
+                                                );
+
+
+                                        if (texturePath != null) {
+                                            i.dispose();
+                                            Disposer.remove(i);
+
+                                            field.set(object, new Texture2D(texturePath));
+                                        }
+                                    }
+                                    sameLine();
+                                    text(i.getPath());
+
+                                    image(i.getTexID(), 256, 256);
+                                }
+                                else {
+                                    textColored(1.0f, 0.0f, 0.0f, 1.0f, (field.getName() + "[" + field.getType() + "]\nNot editable! (Is it marked public?)"));
+                                    separator();
+                                }
+                            } catch (IllegalAccessException e) {
+                                throw new RuntimeException(e);
                             }
 
-
-                        } catch (IllegalAccessException e) {
-                            throw new RuntimeException(e);
                         }
-
                     }
+
+
+
+
+
 
                 }
 
@@ -215,7 +201,7 @@ public class ProjectInspector extends Panel {
 
 
         }
-        ImGui.end();
+        end();
 
     }
 

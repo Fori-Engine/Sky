@@ -54,6 +54,14 @@ public class ShaderProgram implements Disposable {
         glLinkProgram(shaderProgram);
     }
 
+    public String getVertexShaderSource() {
+        return vertexShaderSource;
+    }
+
+    public String getFragmentShaderSource() {
+        return fragmentShaderSource;
+    }
+
     public void bind(){
         glUseProgram(shaderProgram);
     }

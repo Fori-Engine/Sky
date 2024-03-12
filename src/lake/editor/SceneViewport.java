@@ -37,12 +37,14 @@ public class SceneViewport extends Panel {
 
     @Override
     public void render() {
+        //Nicht sehr gut aber was anders kann ich tun?
         Game.window.update();
 
 
         ImGui.begin(title);
         {
 
+            //Resizing the window does not change the Renderer2D's dimensions the game setup
             width = (int) ImGui.getWindowSizeX();
             height = (int) ImGui.getWindowSizeY();
 
