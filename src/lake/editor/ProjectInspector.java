@@ -63,21 +63,21 @@ public class ProjectInspector extends Panel {
                 separator();
 
 
-                pushID(ImID.currentID++);
+
                 if (button(projectRef.isCurrentProjectPaused() ? "Resume" : "Pause")) {
                     ProjectManager.getProjectRef().setCurrentProjectPaused(!projectRef.isCurrentProjectPaused());
                 }
-                popID();
+
 
                 sameLine();
 
-                pushID(ImID.currentID++);
+
                 if (button("Reload")) {
                     projectRef.openProject(projectRef.getProjectPath(), sceneViewport.getWidth(), sceneViewport.getHeight());
                     projectRef.setCurrentProjectPaused(false);
                     sceneViewport.useFramebuffer2D(projectRef.getViewportTextureID());
                 }
-                popID();
+
 
 
 
@@ -151,7 +151,7 @@ public class ProjectInspector extends Panel {
                                     Texture2D i = (Texture2D) field.get(object);
 
                                     text(field.getName());
-                                    if (button("Select")) {
+                                    if (button("Select##" + i.toString())) {
                                         String texturePath =
                                                 TinyFileDialogs.tinyfd_openFileDialog(
                                                         "Select Image",
