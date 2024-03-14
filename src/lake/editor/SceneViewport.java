@@ -18,10 +18,8 @@ public class SceneViewport extends Panel {
     private int width, height;
     private boolean focused;
 
-    protected SceneViewport(int width, int height, StandaloneWindow window) {
+    protected SceneViewport(StandaloneWindow window) {
         super("Scene Viewport");
-        this.width = width;
-        this.height = height;
 
         Game.window = new SceneViewportWindow(window);
     }
@@ -61,6 +59,9 @@ public class SceneViewport extends Panel {
                 mouseX = ImGui.getMousePosX() - ImGui.getWindowPosX();
                 mouseY = ImGui.getMousePosY() - ImGui.getWindowPosY();
 
+                //Todo, kind of ugly. The project's Renderer2D has to be regenerated
+                glViewport(0, 0, (int) width, (int) height);
+
 
                 ImGui.getWindowDrawList().addImage(
                         framebufferID,
@@ -71,6 +72,8 @@ public class SceneViewport extends Panel {
                         0, 1,
                         1, 0
                 );
+
+                //if(ImGui.)
             }
             else {
                 ImGui.text("Open a project");
@@ -125,7 +128,7 @@ public class SceneViewport extends Panel {
 
         @Override
         public void update() {
-            glViewport(0, 0, (int) width, (int) height);
+
         }
 
         @Override

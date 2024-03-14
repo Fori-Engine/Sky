@@ -1,7 +1,6 @@
 package lake.editor;
 
 import imgui.type.ImBoolean;
-import lake.FileReader;
 import lake.Time;
 import lake.graphics.*;
 import lake.script.EditorUI;
@@ -10,11 +9,8 @@ import imgui.callback.ImStrConsumer;
 import imgui.callback.ImStrSupplier;
 import imgui.flag.*;
 import imgui.gl3.ImGuiImplGl3;
-import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
-import javax.swing.filechooser.FileSystemView;
-import java.io.File;
-import java.util.ArrayList;
+import java.util.HashMap;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -25,40 +21,42 @@ public class LakeEditor {
     private final int[] fbHeight = new int[1];
     private final long[] mouseCursors = new long[ImGuiMouseCursor.COUNT];
     private final ImGuiImplGl3 imGuiGl3 = new ImGuiImplGl3();
-    private ArrayList<Panel> panels = new ArrayList<>();
-    private SceneViewport sceneViewport;
-    private ProjectInspector projectInspector;
-    private GPUDriverOutput gpuDriverOutput;
+    private HashMap<String, Panel> panels = new HashMap<>();
     private boolean restartRequested = false;
     private StandaloneWindow window;
     private String platform, arch;
     private String[] launchArgs;
-    
-    
+
+    private ScriptCore scriptCore;
+    private ProjectRef projectRef;
+
 
     public LakeEditor(StandaloneWindow window) {
         this.window = window;
-        
-        
+
+
         //Collect OS data
         {
             platform = System.getProperty("os.name");
             arch = System.getProperty("os.arch");
         }
-        
-        
-        
-        sceneViewport = new SceneViewport(1000, 600, window);
-        projectInspector = new ProjectInspector(sceneViewport);
-        gpuDriverOutput = new GPUDriverOutput(window);
 
 
 
+        MenuBar menuBar = new MenuBar(this);
+        SceneViewport sceneViewport = new SceneViewport(window);
+        GLOutputPanel glOutputPanel = new GLOutputPanel(window);
+        ScriptInspector scriptInspector = new ScriptInspector(this);
 
 
-        panels.add(sceneViewport);
-        panels.add(projectInspector);
-        panels.add(gpuDriverOutput);
+        panels.put("menuBar", menuBar);
+        panels.put("sceneViewport", sceneViewport);
+        panels.put("glOutputPanel", glOutputPanel);
+        panels.put("scriptInspector", scriptInspector);
+
+
+        scriptCore = new ScriptCore(this);
+        projectRef = new ProjectRef();
 
 
         //ImGui
@@ -231,23 +229,16 @@ public class LakeEditor {
         }
     }
 
+    public HashMap<String, Panel> getPanels() {
+        return panels;
+    }
+
+    public ProjectRef getProjectRef() {
+        return projectRef;
+    }
+
     public void update(){
-
-
-        ProjectRef projectRef = ProjectManager.getProjectRef();
-
-        if(projectRef.isProjectOpened()) {
-            projectRef.update();
-        }
-
-        if(projectRef.getLastProjectCrashed()){
-            sceneViewport.disconnect();
-        }
-
-
-
-
-
+        scriptCore.update(projectRef);
 
 
         //ImGui
@@ -278,45 +269,6 @@ public class LakeEditor {
 
 
 
-            //MenuBar
-            {
-                if(ImGui.beginMainMenuBar()){
-                    if(ImGui.beginMenu("File")){
-
-
-                        if(ImGui.menuItem("Open Project")){
-                            String projectFilePath =
-                                    TinyFileDialogs.tinyfd_openFileDialog(
-                                            "Open Project",
-                                            FileSystemView.getFileSystemView().getHomeDirectory().getPath(),
-                                            null,
-                                            null,
-                                            false
-                                    );
-
-                            if(projectFilePath != null) {
-
-                                String outputPath = projectFilePath.strip().replace("project.lake", "") + FileReader.readFile(projectFilePath).strip();
-
-                                if(projectRef.openProject(new File(outputPath), sceneViewport.getWidth(), sceneViewport.getHeight())){
-                                    sceneViewport.useFramebuffer2D(projectRef.getViewportTextureID());
-                                }
-
-
-                            }
-
-                        }
-                        if(ImGui.menuItem("Restart Editor")){
-                            setRestartRequested(true);
-                        }
-
-                        ImGui.endMenu();
-                    }
-                    ImGui.endMainMenuBar();
-                }
-            }
-
-
 
 
 
@@ -345,7 +297,7 @@ public class LakeEditor {
                 // Dockspace
                 ImGui.dockSpace(ImGui.getID("Dockspace"));
 
-                for(Panel panel : panels){
+                for(Panel panel : panels.values()){
                     panel.render();
                 }
 
@@ -377,14 +329,13 @@ public class LakeEditor {
 
     public void destroy(){
 
-        for(Panel panel : panels){
+        for(Panel panel : panels.values()){
             panel.dispose();
         }
 
-
-
-        if(ProjectManager.getProjectRef().isProjectOpened())
-            ProjectManager.getProjectRef().dispose();
+        if(projectRef.isProjectOpened()){
+            projectRef.closeProject();
+        }
 
         EditorUI.getRegistry().clear();
         imGuiGl3.dispose();

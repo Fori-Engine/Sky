@@ -29,14 +29,21 @@ public class EditorMainLoop {
                     window.update();
                 }
                 else {
+                    //This leaves the process running somehow lol
                     lakeEditor.destroy();
                     quit = true;
                     window.close();
-                    break;
+
+
+
                 }
 
 
             }
         }
+
+
+        System.out.println("I'm outta here");
+
     }
 }

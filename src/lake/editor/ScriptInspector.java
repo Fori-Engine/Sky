@@ -12,14 +12,12 @@ import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
 import javax.swing.filechooser.FileSystemView;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.HashMap;
 
-public class ProjectInspector extends Panel {
-    private SceneViewport sceneViewport;
-    protected ProjectInspector(SceneViewport sceneViewport) {
-        super("Project Inspector");
-        this.sceneViewport = sceneViewport;
+public class ScriptInspector extends Panel {
+    private LakeEditor lakeEditor;
+    protected ScriptInspector(LakeEditor lakeEditor) {
+        super("Inspector");
+        this.lakeEditor = lakeEditor;
     }
 
 
@@ -29,7 +27,8 @@ public class ProjectInspector extends Panel {
         begin(title);
         {
 
-            ProjectRef projectRef = ProjectManager.getProjectRef();
+            ProjectRef projectRef = lakeEditor.getProjectRef();
+
 
 
             if(projectRef.getLastProjectThrowableLog() != null){
@@ -65,18 +64,12 @@ public class ProjectInspector extends Panel {
 
 
                 if (button(projectRef.isCurrentProjectPaused() ? "Resume" : "Pause")) {
-                    ProjectManager.getProjectRef().setCurrentProjectPaused(!projectRef.isCurrentProjectPaused());
+                    projectRef.setCurrentProjectPaused(!projectRef.isCurrentProjectPaused());
                 }
 
 
                 sameLine();
 
-
-                if (button("Reload")) {
-                    projectRef.openProject(projectRef.getProjectPath(), sceneViewport.getWidth(), sceneViewport.getHeight());
-                    projectRef.setCurrentProjectPaused(false);
-                    sceneViewport.useFramebuffer2D(projectRef.getViewportTextureID());
-                }
 
 
 
