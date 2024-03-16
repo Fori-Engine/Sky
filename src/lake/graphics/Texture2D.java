@@ -73,10 +73,11 @@ public class Texture2D implements Disposable {
      * Creates a Texture with no uploaded data
      */
     public Texture2D(int width, int height) {
+        this.width = width;
+        this.height = height;
         Disposer.add(this);
         texID = glGenTextures();
         glBindTexture(GL_TEXTURE_2D, texID);
-
         //On an NVIDIA GeForce MX450 and Intel Iris Xe Graphics, Compute Shaders break without the 4 following lines
     }
 
