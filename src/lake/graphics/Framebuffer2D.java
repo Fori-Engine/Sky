@@ -9,9 +9,16 @@ public class Framebuffer2D implements Disposable {
     private int framebufferID;
     private int renderbufferID;
     private Texture2D texture2D;
+    private int width, height;
 
-    public Framebuffer2D(int width, int height) {
+    public Framebuffer2D(int width, int height){
+        this(width, height, GL_RGBA);
+    }
+
+    public Framebuffer2D(int width, int height, int format) {
         Disposer.add(this);
+        this.width = width;
+        this.height = height;
         framebufferID = glGenFramebuffers();
         glBindFramebuffer(GL_FRAMEBUFFER, framebufferID);
 
@@ -20,7 +27,8 @@ public class Framebuffer2D implements Disposable {
         texture2D.bind();
 
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, MemoryUtil.NULL);
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, MemoryUtil.NULL);
+
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -31,17 +39,17 @@ public class Framebuffer2D implements Disposable {
 
         renderbufferID = glGenRenderbuffers();
         glBindRenderbuffer(GL_RENDERBUFFER, renderbufferID);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height); // use a single renderbuffer object for both a depth AND stencil buffer.
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderbufferID); // now actually attach it
-        // now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderbufferID);
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
             throw new RuntimeException("Incomplete Framebuffer");
+
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+    }
 
-
-
-
+    public int getFramebufferID() {
+        return framebufferID;
     }
 
     public void bind(){
@@ -50,6 +58,14 @@ public class Framebuffer2D implements Disposable {
 
     public Texture2D getTexture2D() {
         return texture2D;
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public int getHeight() {
+        return height;
     }
 
     @Override
