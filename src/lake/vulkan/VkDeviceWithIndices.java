@@ -2,11 +2,11 @@ package lake.vulkan;
 
 import org.lwjgl.vulkan.VkDevice;
 
-public class VkDeviceConfig {
+public class VkDeviceWithIndices {
     public VkDevice device;
     public QueueFamilyIndices queueFamilyIndices;
 
-    public VkDeviceConfig(VkDevice device, QueueFamilyIndices queueFamilyIndices) {
+    public VkDeviceWithIndices(VkDevice device, QueueFamilyIndices queueFamilyIndices) {
         this.device = device;
         this.queueFamilyIndices = queueFamilyIndices;
     }
