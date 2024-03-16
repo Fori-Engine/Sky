@@ -75,6 +75,11 @@ public class ShaderProgram implements Disposable {
         glUniform1f(location, value);
     }
 
+    public void setInt(String name, int value){
+        int location = glGetUniformLocation(shaderProgram, name);
+        glUniform1i(location, value);
+    }
+
     public void setMatrix4f(String name, Matrix4f proj) {
         int location = glGetUniformLocation(shaderProgram, name);
 
