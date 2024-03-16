@@ -32,7 +32,7 @@ public class StandaloneWindow implements Window {
      * @param title
      */
     public StandaloneWindow(int w, int h, String title){
-        this(w, h, title, true);
+        this(w, h, title, true, true);
     }
 
     /***
@@ -42,7 +42,7 @@ public class StandaloneWindow implements Window {
      * @param title
      * @param resizable
      */
-    public StandaloneWindow(int w, int h, String title, boolean resizable){
+    public StandaloneWindow(int w, int h, String title, boolean resizable, boolean opengl){
         System.setProperty("java.awt.headless", "true");
 
         this.width = w;
@@ -68,7 +68,8 @@ public class StandaloneWindow implements Window {
         glfwSwapInterval(1);
         glfwShowWindow(window);
 
-        GL.createCapabilities();
+        if(opengl)
+            GL.createCapabilities();
 
 
 
