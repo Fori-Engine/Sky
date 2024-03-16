@@ -1,5 +1,7 @@
 package lake.vulkan;
 
+import lake.graphics.StandaloneWindow;
+import lake.graphics.Window;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
@@ -12,6 +14,7 @@ import java.util.Set;
 import java.util.stream.IntStream;
 
 import static java.util.stream.Collectors.toSet;
+import static org.lwjgl.glfw.GLFWVulkan.glfwCreateWindowSurface;
 import static org.lwjgl.glfw.GLFWVulkan.glfwGetRequiredInstanceExtensions;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
@@ -133,13 +136,7 @@ public class FastVK {
         return physicalDevice;
     }
 
-    private static class QueueFamilyIndices {
-        private Integer graphicsFamily;
-        private boolean isComplete() {
-            return graphicsFamily != null;
-        }
 
-    }
 
     private static boolean isDeviceSuitable(VkPhysicalDevice device) {
 
@@ -169,6 +166,83 @@ public class FastVK {
 
             return indices;
         }
+    }
+
+    public static VkDeviceConfig createLogicalDevice(VkPhysicalDevice physicalDevice, boolean validation) {
+
+        VkDevice device;
+        QueueFamilyIndices indices;
+
+        try(MemoryStack stack = stackPush()) {
+
+            indices = findQueueFamilies(physicalDevice);
+
+            VkDeviceQueueCreateInfo.Buffer queueCreateInfos = VkDeviceQueueCreateInfo.calloc(1, stack);
+
+            queueCreateInfos.sType(VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO);
+            queueCreateInfos.queueFamilyIndex(indices.graphicsFamily);
+            queueCreateInfos.pQueuePriorities(stack.floats(1.0f));
+
+            VkPhysicalDeviceFeatures deviceFeatures = VkPhysicalDeviceFeatures.calloc(stack);
+
+            VkDeviceCreateInfo createInfo = VkDeviceCreateInfo.calloc(stack);
+
+            createInfo.sType(VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO);
+            createInfo.pQueueCreateInfos(queueCreateInfos);
+            // queueCreateInfoCount is automatically set
+
+            createInfo.pEnabledFeatures(deviceFeatures);
+
+            if(validation) {
+                createInfo.ppEnabledLayerNames(validationLayersAsPointerBuffer(stack));
+            }
+
+            PointerBuffer pDevice = stack.pointers(VK_NULL_HANDLE);
+
+            if(vkCreateDevice(physicalDevice, createInfo, null, pDevice) != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create logical device");
+            }
+
+            device = new VkDevice(pDevice.get(0), physicalDevice, createInfo);
+
+
+        }
+
+        return new VkDeviceConfig(device, indices);
+    }
+
+
+    public static VkQueue getGraphicsQueue(VkDeviceConfig deviceConfig) {
+
+        VkQueue graphicsQueue;
+
+        try(MemoryStack stack = stackPush()) {
+            PointerBuffer pGraphicsQueue = stack.pointers(VK_NULL_HANDLE);
+
+            vkGetDeviceQueue(deviceConfig.device, deviceConfig.queueFamilyIndices.graphicsFamily, 0, pGraphicsQueue);
+
+            graphicsQueue = new VkQueue(pGraphicsQueue.get(0), deviceConfig.device);
+        }
+
+        return graphicsQueue;
+    }
+
+    public static long createSurface(VkInstance instance, StandaloneWindow window) {
+
+        long surface;
+
+        try(MemoryStack stack = stackPush()) {
+
+            LongBuffer pSurface = stack.longs(VK_NULL_HANDLE);
+
+            if(glfwCreateWindowSurface(instance, window.getGLFWHandle(), null, pSurface) != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create window surface");
+            }
+
+            surface = pSurface.get(0);
+        }
+
+        return surface;
     }
 
 
@@ -226,9 +300,10 @@ public class FastVK {
         }
     }
 
-    public static void cleanup(VkInstance instance){
+    public static void cleanupDebugMessenger(VkInstance instance){
         destroyDebugUtilsMessengerEXT(instance, debugMessenger, null);
-        vkDestroyInstance(instance, null);
+
+
     }
 
     private static int createDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerCreateInfoEXT createInfo,

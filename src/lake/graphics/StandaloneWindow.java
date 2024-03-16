@@ -42,11 +42,15 @@ public class StandaloneWindow implements Window {
      * @param title
      * @param resizable
      */
-    public StandaloneWindow(int w, int h, String title, boolean resizable, boolean opengl){
+
+    private boolean manageContext;
+
+    public StandaloneWindow(int w, int h, String title, boolean resizable, boolean manageContext){
         System.setProperty("java.awt.headless", "true");
 
         this.width = w;
         this.height = h;
+        this.manageContext = manageContext;
 
 
         GLFWErrorCallback.createPrint(System.err).set();
@@ -59,16 +63,22 @@ public class StandaloneWindow implements Window {
 
         glfwWindowHint(GLFW_SAMPLES, 4);
 
+        if(!manageContext)
+            glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
         window = glfwCreateWindow(w, h, title, NULL, NULL);
         if (window == NULL)
             throw new RuntimeException("Failed to create the GLFW window");
 
-        glfwMakeContextCurrent(window);
 
-        glfwSwapInterval(1);
+        if(manageContext){
+            glfwMakeContextCurrent(window);
+            glfwSwapInterval(1);
+        }
+
         glfwShowWindow(window);
 
-        if(opengl)
+        if(manageContext)
             GL.createCapabilities();
 
 
@@ -120,7 +130,8 @@ public class StandaloneWindow implements Window {
 
 
 
-        glfwSwapBuffers(window);
+        if(manageContext)
+            glfwSwapBuffers(window);
         glfwPollEvents();
 
         double timeNow = glfwGetTime();
