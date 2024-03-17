@@ -273,6 +273,41 @@ public class FastVK {
             VkPipelineVertexInputStateCreateInfo vertexInputInfo = VkPipelineVertexInputStateCreateInfo.calloc(stack);
             vertexInputInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO);
 
+
+            VkVertexInputBindingDescription.Buffer bindingDescription =
+                    VkVertexInputBindingDescription.calloc(1, stack);
+
+            bindingDescription.binding(0);
+            bindingDescription.stride(5 * Float.BYTES);
+            bindingDescription.inputRate(VK_VERTEX_INPUT_RATE_VERTEX);
+            vertexInputInfo.pVertexBindingDescriptions(bindingDescription);
+
+
+
+
+
+
+
+
+
+            VkVertexInputAttributeDescription.Buffer attributeDescriptions =
+                    VkVertexInputAttributeDescription.calloc(2);
+
+            // Position
+            VkVertexInputAttributeDescription posDescription = attributeDescriptions.get(0);
+            posDescription.binding(0);
+            posDescription.location(0);
+            posDescription.format(VK_FORMAT_R32G32_SFLOAT);
+            posDescription.offset(0);
+
+            // Color
+            VkVertexInputAttributeDescription colorDescription = attributeDescriptions.get(1);
+            colorDescription.binding(0);
+            colorDescription.location(1);
+            colorDescription.format(VK_FORMAT_R32G32B32_SFLOAT);
+            colorDescription.offset(2 * Float.BYTES);
+            vertexInputInfo.pVertexAttributeDescriptions(attributeDescriptions.rewind());
+
             // ===> ASSEMBLY STAGE <===
 
             VkPipelineInputAssemblyStateCreateInfo inputAssembly = VkPipelineInputAssemblyStateCreateInfo.calloc(stack);
@@ -498,7 +533,7 @@ public class FastVK {
         return commandPool;
     }
 
-    public static List<VkCommandBuffer> createCommandBuffers(VkDevice device, long commandPool, long renderPass, Swapchain swapchain, List<Long> swapChainFramebuffers, VulkanPipeline pipeline) {
+    public static List<VkCommandBuffer> createCommandBuffers(VkDevice device, long commandPool, long renderPass, Swapchain swapchain, List<Long> swapChainFramebuffers, VulkanVertexBuffer vertexBuffer, VulkanPipeline pipeline) {
 
         final int commandBuffersCount = swapChainFramebuffers.size();
 
@@ -549,9 +584,20 @@ public class FastVK {
 
                 vkCmdBeginRenderPass(commandBuffer, renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
                 {
+
                     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
+
+                    LongBuffer vertexBuffers = stack.longs(vertexBuffer.getVertexBuffer());
+                    LongBuffer offsets = stack.longs(0);
+                    vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
+
+                    //VBSIZE
                     vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+
+
+
+
                 }
                 vkCmdEndRenderPass(commandBuffer);
 
@@ -638,6 +684,8 @@ public class FastVK {
 
         return buffer.rewind();
     }
+
+
 
     public static VkQueue getGraphicsQueue(VkDeviceWithIndices deviceConfig) {
 

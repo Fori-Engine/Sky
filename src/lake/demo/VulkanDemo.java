@@ -11,6 +11,7 @@ import static org.lwjgl.vulkan.KHRSurface.*;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
+import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.List;
 
@@ -65,7 +66,13 @@ public class VulkanDemo {
         List<Long> swapchainFramebuffers = FastVK.createFramebuffers(deviceWithIndices.device, swapchain, swapchainImageViews, renderPass);
 
         long commandPool = FastVK.createCommandPool(deviceWithIndices);
-        List<VkCommandBuffer> commandBuffers = FastVK.createCommandBuffers(deviceWithIndices.device, commandPool, renderPass, swapchain, swapchainFramebuffers, pipeline);
+
+        VulkanVertexBuffer vertexBuffer = new VulkanVertexBuffer(1000, 4 * Float.BYTES);
+        vertexBuffer.setDevice(deviceWithIndices.device);
+        vertexBuffer.setPhysicalDevice(physicalDevice);
+        vertexBuffer.build();
+
+        List<VkCommandBuffer> commandBuffers = FastVK.createCommandBuffers(deviceWithIndices.device, commandPool, renderPass, swapchain, swapchainFramebuffers, vertexBuffer, pipeline);
         VulkanRenderSyncInfo renderSyncInfo = FastVK.createSyncObjects(deviceWithIndices.device, swapchain, MAX_FRAMES_IN_FLIGHT);
 
 
@@ -74,10 +81,27 @@ public class VulkanDemo {
         long UINT64_MAX = 0xFFFFFFFFFFFFFFFFL;
 
 
+
+        vkMapMemory(deviceWithIndices.device, vertexBuffer.getVertexBufferMemory(), 0, vertexBuffer.getBufferInfo().size(), 0, vertexBuffer.getData());
+        {
+            memcpy(vertexBuffer.getData().getByteBuffer(0, (int) vertexBuffer.getBufferInfo().size()), new float[]{
+                    0.0f, -0.5f,
+                    1.0f, 0.0f, 0.0f,
+                    0.5f, 0.5f,
+                    0.0f, 1.0f, 0.0f,
+                    -0.5f, 0.5f,
+                    0.0f, 0.0f, 1.0f
+            });
+
+        }
+        vkUnmapMemory(deviceWithIndices.device, vertexBuffer.getVertexBufferMemory());
+
+
+
         while(!window.shouldClose()){
 
 
-
+            System.out.println(window.getFPS());
 
 
 
@@ -99,15 +123,14 @@ public class VulkanDemo {
                 renderSyncInfo.imagesInFlight.put(imageIndex, thisFrame);
 
                 VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
-                submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
-
-                submitInfo.waitSemaphoreCount(1);
-                submitInfo.pWaitSemaphores(thisFrame.pImageAvailableSemaphore());
-                submitInfo.pWaitDstStageMask(stack.ints(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT));
-
-                submitInfo.pSignalSemaphores(thisFrame.pRenderFinishedSemaphore());
-
-                submitInfo.pCommandBuffers(stack.pointers(commandBuffers.get(imageIndex)));
+                {
+                    submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
+                    submitInfo.waitSemaphoreCount(1);
+                    submitInfo.pWaitSemaphores(thisFrame.pImageAvailableSemaphore());
+                    submitInfo.pWaitDstStageMask(stack.ints(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT));
+                    submitInfo.pSignalSemaphores(thisFrame.pRenderFinishedSemaphore());
+                    submitInfo.pCommandBuffers(stack.pointers(commandBuffers.get(imageIndex)));
+                }
 
                 vkResetFences(deviceWithIndices.device, thisFrame.pFence());
 
@@ -116,18 +139,19 @@ public class VulkanDemo {
                 }
 
                 VkPresentInfoKHR presentInfo = VkPresentInfoKHR.calloc(stack);
-                presentInfo.sType(VK_STRUCTURE_TYPE_PRESENT_INFO_KHR);
-
-                presentInfo.pWaitSemaphores(thisFrame.pRenderFinishedSemaphore());
-
-                presentInfo.swapchainCount(1);
-                presentInfo.pSwapchains(stack.longs(swapchain.swapChain));
-
-                presentInfo.pImageIndices(pImageIndex);
+                {
+                    presentInfo.sType(VK_STRUCTURE_TYPE_PRESENT_INFO_KHR);
+                    presentInfo.pWaitSemaphores(thisFrame.pRenderFinishedSemaphore());
+                    presentInfo.swapchainCount(1);
+                    presentInfo.pSwapchains(stack.longs(swapchain.swapChain));
+                    presentInfo.pImageIndices(pImageIndex);
+                }
 
                 vkQueuePresentKHR(presentQueue, presentInfo);
 
                 currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+
+                vkDeviceWaitIdle(deviceWithIndices.device);
             }
 
 
@@ -152,6 +176,31 @@ public class VulkanDemo {
 
             window.update();
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        vkDestroyBuffer(deviceWithIndices.device, vertexBuffer.getVertexBuffer(), null);
+        vkFreeMemory(deviceWithIndices.device, vertexBuffer.getVertexBufferMemory(), null);
+
 
 
         renderSyncInfo.inFlightFrames.forEach(frame -> {
@@ -181,4 +230,11 @@ public class VulkanDemo {
         window.close();
 
     }
+
+    private static void memcpy(ByteBuffer buffer, float[] vertices) {
+        for(float f : vertices){
+            buffer.putFloat(f);
+        }
+    }
+
 }
