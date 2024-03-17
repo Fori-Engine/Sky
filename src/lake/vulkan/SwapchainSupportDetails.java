@@ -5,7 +5,7 @@ import org.lwjgl.vulkan.VkSurfaceFormatKHR;
 
 import java.nio.IntBuffer;
 
-class SwapChainSupportDetails {
+class SwapchainSupportDetails {
 
     public VkSurfaceCapabilitiesKHR capabilities;
     public VkSurfaceFormatKHR.Buffer formats;

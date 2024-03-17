@@ -152,7 +152,7 @@ public class FastVK {
 
         if(extensionsSupported) {
             try(MemoryStack stack = stackPush()) {
-                SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device, stack,  surface);
+                SwapchainSupportDetails swapChainSupport = querySwapChainSupport(device, stack,  surface);
                 swapChainAdequate = swapChainSupport.formats.hasRemaining() && swapChainSupport.presentModes.hasRemaining();
             }
         }
@@ -441,9 +441,9 @@ public class FastVK {
         return swapChainImageViews;
     }
 
-    private static SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, MemoryStack stack, long surface) {
+    private static SwapchainSupportDetails querySwapChainSupport(VkPhysicalDevice device, MemoryStack stack, long surface) {
 
-        SwapChainSupportDetails details = new SwapChainSupportDetails();
+        SwapchainSupportDetails details = new SwapchainSupportDetails();
 
         details.capabilities = VkSurfaceCapabilitiesKHR.malloc(stack);
         vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, details.capabilities);
@@ -473,7 +473,7 @@ public class FastVK {
 
         try(MemoryStack stack = stackPush()) {
 
-            SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice, stack, surface);
+            SwapchainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice, stack, surface);
 
             VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
             int presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
