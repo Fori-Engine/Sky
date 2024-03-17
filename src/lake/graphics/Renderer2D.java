@@ -24,7 +24,7 @@ public class Renderer2D {
     private VertexBuffer vertexBuffer;
     private float[] vertexData;
     private int maxTextureSlots;
-    public ShaderProgram defaultShaderProgram, currentShaderProgram;
+    public GLShaderProgram defaultGLShaderProgram, currentGLShaderProgram;
     private ArrayList<String> renderCallNames = new ArrayList<>(50);
     private int RECT = -1;
     private int CIRCLE = -2;
@@ -69,14 +69,14 @@ public class Renderer2D {
 
 
 
-        defaultShaderProgram = new ShaderProgram(
+        defaultGLShaderProgram = new GLShaderProgram(
                 FileReader.readFile(Renderer2D.class.getClassLoader().getResourceAsStream("BatchVertexShader.glsl")),
                 FileReader.readFile(Renderer2D.class.getClassLoader().getResourceAsStream("BatchFragmentShader.glsl"))
         );
-        defaultShaderProgram.prepare();
+        defaultGLShaderProgram.prepare();
 
-        currentShaderProgram = defaultShaderProgram;
-        currentShaderProgram.bind();
+        currentGLShaderProgram = defaultGLShaderProgram;
+        currentGLShaderProgram.bind();
         updateCamera2D();
 
         {
@@ -102,13 +102,13 @@ public class Renderer2D {
 
     /***
      * Sets the current shader. This shader must be compiled before calling this method!
-     * @param shaderProgram
+     * @param GLShaderProgram
      */
-    public void setShader(ShaderProgram shaderProgram){
+    public void setShader(GLShaderProgram GLShaderProgram){
 
-        if(currentShaderProgram != shaderProgram) {
-            currentShaderProgram = shaderProgram;
-            currentShaderProgram.bind();
+        if(currentGLShaderProgram != GLShaderProgram) {
+            currentGLShaderProgram = GLShaderProgram;
+            currentGLShaderProgram.bind();
 
 
 
@@ -119,18 +119,18 @@ public class Renderer2D {
     }
 
     public void updateCamera2D(){
-        currentShaderProgram.setMatrix4f("v_model", getTranslation());
-        currentShaderProgram.setMatrix4f("v_view", getView());
-        currentShaderProgram.setMatrix4f("v_projection", getProj());
-        currentShaderProgram.setIntArray("u_textures", createTextureSlots());
+        currentGLShaderProgram.setMatrix4f("v_model", getTranslation());
+        currentGLShaderProgram.setMatrix4f("v_view", getView());
+        currentGLShaderProgram.setMatrix4f("v_projection", getProj());
+        currentGLShaderProgram.setIntArray("u_textures", createTextureSlots());
     }
 
-    public ShaderProgram getDefaultShader() {
-        return defaultShaderProgram;
+    public GLShaderProgram getDefaultShader() {
+        return defaultGLShaderProgram;
     }
 
-    public ShaderProgram getCurrentShaderProgram() {
-        return currentShaderProgram;
+    public GLShaderProgram getCurrentShaderProgram() {
+        return currentGLShaderProgram;
     }
 
     private int[] createTextureSlots() {
@@ -436,7 +436,7 @@ public class Renderer2D {
         renderCallNames.add(renderName);
 
 
-        currentShaderProgram.bind();
+        currentGLShaderProgram.bind();
         vertexArray.bind();
 
         glBindBuffer(GL_ARRAY_BUFFER, getVertexBuffer().myVbo);

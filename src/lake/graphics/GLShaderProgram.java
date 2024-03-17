@@ -9,9 +9,7 @@ import static org.lwjgl.opengl.GL46.*;
 /***
  * Represents an OpenGL Shader Program. This is a Disposable OpenGL object and will be disposed by the Window.
  */
-public class ShaderProgram implements Disposable {
-    private String vertexShaderSource;
-    private String fragmentShaderSource;
+public class GLShaderProgram extends AbstractShaderProgram implements Disposable {
 
     private int shaderProgram;
 
@@ -20,11 +18,11 @@ public class ShaderProgram implements Disposable {
      * @param vertexShaderSource
      * @param fragmentShaderSource
      */
-    public ShaderProgram(String vertexShaderSource, String fragmentShaderSource) {
+    public GLShaderProgram(String vertexShaderSource, String fragmentShaderSource) {
+        super(vertexShaderSource, fragmentShaderSource);
         Disposer.add(this);
-        this.vertexShaderSource = vertexShaderSource;
-        this.fragmentShaderSource = fragmentShaderSource;
     }
+
 
     /***
      * Compiles and Links the shader
@@ -54,13 +52,6 @@ public class ShaderProgram implements Disposable {
         glLinkProgram(shaderProgram);
     }
 
-    public String getVertexShaderSource() {
-        return vertexShaderSource;
-    }
-
-    public String getFragmentShaderSource() {
-        return fragmentShaderSource;
-    }
 
     public void bind(){
         glUseProgram(shaderProgram);
