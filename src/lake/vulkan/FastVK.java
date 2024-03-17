@@ -5,13 +5,10 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
+import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.IntStream;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toSet;
@@ -264,6 +261,176 @@ public class FastVK {
 
 
 
+    public static VulkanPipeline createPipeline(VkDevice device, Swapchain swapchain, VkPipelineShaderStageCreateInfo.Buffer shaderStages, long renderPass){
+
+
+        long pipelineLayout;
+        long graphicsPipeline = 0;
+
+        try(MemoryStack stack = stackPush()) {
+            // ===> VERTEX STAGE <===
+
+            VkPipelineVertexInputStateCreateInfo vertexInputInfo = VkPipelineVertexInputStateCreateInfo.calloc(stack);
+            vertexInputInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO);
+
+            // ===> ASSEMBLY STAGE <===
+
+            VkPipelineInputAssemblyStateCreateInfo inputAssembly = VkPipelineInputAssemblyStateCreateInfo.calloc(stack);
+            inputAssembly.sType(VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO);
+            inputAssembly.topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+            inputAssembly.primitiveRestartEnable(false);
+
+            // ===> VIEWPORT & SCISSOR
+
+            VkViewport.Buffer viewport = VkViewport.calloc(1, stack);
+            viewport.x(0.0f);
+            viewport.y(0.0f);
+            viewport.width(swapchain.swapChainExtent.width());
+            viewport.height(swapchain.swapChainExtent.height());
+            viewport.minDepth(0.0f);
+            viewport.maxDepth(1.0f);
+
+            VkRect2D.Buffer scissor = VkRect2D.calloc(1, stack);
+            scissor.offset(VkOffset2D.calloc(stack).set(0, 0));
+            scissor.extent(swapchain.swapChainExtent);
+
+            VkPipelineViewportStateCreateInfo viewportState = VkPipelineViewportStateCreateInfo.calloc(stack);
+            viewportState.sType(VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO);
+            viewportState.pViewports(viewport);
+            viewportState.pScissors(scissor);
+
+            // ===> RASTERIZATION STAGE <===
+
+            VkPipelineRasterizationStateCreateInfo rasterizer = VkPipelineRasterizationStateCreateInfo.calloc(stack);
+            rasterizer.sType(VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO);
+            rasterizer.depthClampEnable(false);
+            rasterizer.rasterizerDiscardEnable(false);
+            rasterizer.polygonMode(VK_POLYGON_MODE_FILL);
+            rasterizer.lineWidth(1.0f);
+            rasterizer.cullMode(VK_CULL_MODE_BACK_BIT);
+            rasterizer.frontFace(VK_FRONT_FACE_CLOCKWISE);
+            rasterizer.depthBiasEnable(false);
+
+            // ===> MULTISAMPLING <===
+
+            VkPipelineMultisampleStateCreateInfo multisampling = VkPipelineMultisampleStateCreateInfo.calloc(stack);
+            multisampling.sType(VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO);
+            multisampling.sampleShadingEnable(false);
+            multisampling.rasterizationSamples(VK_SAMPLE_COUNT_1_BIT);
+
+            // ===> COLOR BLENDING <===
+
+            VkPipelineColorBlendAttachmentState.Buffer colorBlendAttachment = VkPipelineColorBlendAttachmentState.calloc(1, stack);
+            colorBlendAttachment.colorWriteMask(VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT);
+            colorBlendAttachment.blendEnable(false);
+
+            VkPipelineColorBlendStateCreateInfo colorBlending = VkPipelineColorBlendStateCreateInfo.calloc(stack);
+            colorBlending.sType(VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO);
+            colorBlending.logicOpEnable(false);
+            colorBlending.logicOp(VK_LOGIC_OP_COPY);
+            colorBlending.pAttachments(colorBlendAttachment);
+            colorBlending.blendConstants(stack.floats(0.0f, 0.0f, 0.0f, 0.0f));
+
+            // ===> PIPELINE LAYOUT CREATION <===
+
+            VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.calloc(stack);
+            pipelineLayoutInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
+
+            LongBuffer pPipelineLayout = stack.longs(VK_NULL_HANDLE);
+
+            if(vkCreatePipelineLayout(device, pipelineLayoutInfo, null, pPipelineLayout) != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create pipeline layout");
+            }
+
+            pipelineLayout = pPipelineLayout.get(0);
+
+            VkGraphicsPipelineCreateInfo.Buffer pipelineInfo = VkGraphicsPipelineCreateInfo.calloc(1, stack);
+            pipelineInfo.sType(VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO);
+            pipelineInfo.pStages(shaderStages);
+            pipelineInfo.pVertexInputState(vertexInputInfo);
+            pipelineInfo.pInputAssemblyState(inputAssembly);
+            pipelineInfo.pViewportState(viewportState);
+            pipelineInfo.pRasterizationState(rasterizer);
+            pipelineInfo.pMultisampleState(multisampling);
+            pipelineInfo.pColorBlendState(colorBlending);
+            pipelineInfo.layout(pipelineLayout);
+            pipelineInfo.renderPass(renderPass);
+            pipelineInfo.subpass(0);
+            pipelineInfo.basePipelineHandle(VK_NULL_HANDLE);
+            pipelineInfo.basePipelineIndex(-1);
+
+
+            LongBuffer pGraphicsPipeline = stack.mallocLong(1);
+
+
+            if(vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, pipelineInfo, null, pGraphicsPipeline) != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create graphics pipeline");
+            }
+
+
+            graphicsPipeline = pGraphicsPipeline.get(0);
+
+
+        }
+
+        return new VulkanPipeline(pipelineLayout, graphicsPipeline);
+    }
+
+    public static VulkanRenderSyncInfo createSyncObjects(VkDevice device, Swapchain swapchain, int framesInFlight) {
+
+        VulkanRenderSyncInfo vulkanRenderSyncInfo = new VulkanRenderSyncInfo();
+        vulkanRenderSyncInfo.inFlightFrames = new ArrayList<>(framesInFlight);
+        vulkanRenderSyncInfo.imagesInFlight = new HashMap<>(swapchain.swapChainImages.size());
+
+        try(MemoryStack stack = stackPush()) {
+
+            VkSemaphoreCreateInfo semaphoreInfo = VkSemaphoreCreateInfo.calloc(stack);
+            semaphoreInfo.sType(VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO);
+
+            VkFenceCreateInfo fenceInfo = VkFenceCreateInfo.calloc(stack);
+            fenceInfo.sType(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
+            fenceInfo.flags(VK_FENCE_CREATE_SIGNALED_BIT);
+
+            LongBuffer pImageAvailableSemaphore = stack.mallocLong(1);
+            LongBuffer pRenderFinishedSemaphore = stack.mallocLong(1);
+            LongBuffer pFence = stack.mallocLong(1);
+
+            for(int i = 0;i < framesInFlight;i++) {
+
+                if(vkCreateSemaphore(device, semaphoreInfo, null, pImageAvailableSemaphore) != VK_SUCCESS
+                        || vkCreateSemaphore(device, semaphoreInfo, null, pRenderFinishedSemaphore) != VK_SUCCESS
+                        || vkCreateFence(device, fenceInfo, null, pFence) != VK_SUCCESS) {
+
+                    throw new RuntimeException("Failed to create synchronization objects for the frame " + i);
+                }
+
+                vulkanRenderSyncInfo.inFlightFrames.add(new Frame(pImageAvailableSemaphore.get(0), pRenderFinishedSemaphore.get(0), pFence.get(0)));
+            }
+
+        }
+
+        return vulkanRenderSyncInfo;
+    }
+
+
+    public static long createShaderModule(VkDevice device, ByteBuffer spirvCode) {
+
+        try(MemoryStack stack = stackPush()) {
+
+            VkShaderModuleCreateInfo createInfo = VkShaderModuleCreateInfo.calloc(stack);
+
+            createInfo.sType(VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO);
+            createInfo.pCode(spirvCode);
+
+            LongBuffer pShaderModule = stack.mallocLong(1);
+
+            if(vkCreateShaderModule(device, createInfo, null, pShaderModule) != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create shader module");
+            }
+
+            return pShaderModule.get(0);
+        }
+    }
 
 
 
@@ -272,11 +439,133 @@ public class FastVK {
 
 
 
+    public static ArrayList<Long> createFramebuffers(VkDevice device, Swapchain swapchain, List<Long> swapChainImageViews, long renderPass) {
+
+        ArrayList<Long> swapChainFramebuffers = new ArrayList<>(swapChainImageViews.size());
+
+        try(MemoryStack stack = stackPush()) {
+
+            LongBuffer attachments = stack.mallocLong(1);
+            LongBuffer pFramebuffer = stack.mallocLong(1);
+
+            // Lets allocate the create info struct once and just update the pAttachments field each iteration
+            VkFramebufferCreateInfo framebufferInfo = VkFramebufferCreateInfo.calloc(stack);
+            framebufferInfo.sType(VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO);
+            framebufferInfo.renderPass(renderPass);
+            framebufferInfo.width(swapchain.swapChainExtent.width());
+            framebufferInfo.height(swapchain.swapChainExtent.height());
+            framebufferInfo.layers(1);
+
+            for(long imageView : swapChainImageViews) {
+
+                attachments.put(0, imageView);
+
+                framebufferInfo.pAttachments(attachments);
+
+                if(vkCreateFramebuffer(device, framebufferInfo, null, pFramebuffer) != VK_SUCCESS) {
+                    throw new RuntimeException("Failed to create framebuffer");
+                }
+
+                swapChainFramebuffers.add(pFramebuffer.get(0));
+            }
+        }
+
+        return swapChainFramebuffers;
+    }
+
+
+    public static long createCommandPool(VkDeviceWithIndices deviceWithIndices) {
+
+        long commandPool;
+
+        try(MemoryStack stack = stackPush()) {
 
 
 
+            VkCommandPoolCreateInfo poolInfo = VkCommandPoolCreateInfo.calloc(stack);
+            poolInfo.sType(VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO);
+            poolInfo.queueFamilyIndex(deviceWithIndices.queueFamilyIndices.graphicsFamily);
+
+            LongBuffer pCommandPool = stack.mallocLong(1);
+
+            if (vkCreateCommandPool(deviceWithIndices.device, poolInfo, null, pCommandPool) != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create command pool");
+            }
+
+            commandPool = pCommandPool.get(0);
+        }
+
+        return commandPool;
+    }
+
+    public static List<VkCommandBuffer> createCommandBuffers(VkDevice device, long commandPool, long renderPass, Swapchain swapchain, List<Long> swapChainFramebuffers, VulkanPipeline pipeline) {
+
+        final int commandBuffersCount = swapChainFramebuffers.size();
+
+        List<VkCommandBuffer> commandBuffers = new ArrayList<>(commandBuffersCount);
+
+        try(MemoryStack stack = stackPush()) {
+
+            VkCommandBufferAllocateInfo allocInfo = VkCommandBufferAllocateInfo.calloc(stack);
+            allocInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
+            allocInfo.commandPool(commandPool);
+            allocInfo.level(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+            allocInfo.commandBufferCount(commandBuffersCount);
+
+            PointerBuffer pCommandBuffers = stack.mallocPointer(commandBuffersCount);
+
+            if(vkAllocateCommandBuffers(device, allocInfo, pCommandBuffers) != VK_SUCCESS) {
+                throw new RuntimeException("Fialed to allocate command buffers");
+            }
+
+            for(int i = 0;i < commandBuffersCount;i++) {
+                commandBuffers.add(new VkCommandBuffer(pCommandBuffers.get(i), device));
+            }
+
+            VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
+            beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
+
+            VkRenderPassBeginInfo renderPassInfo = VkRenderPassBeginInfo.calloc(stack);
+            renderPassInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO);
+            renderPassInfo.renderPass(renderPass);
+            VkRect2D renderArea = VkRect2D.calloc(stack);
+            renderArea.offset(VkOffset2D.calloc(stack).set(0, 0));
+            renderArea.extent(swapchain.swapChainExtent);
+            renderPassInfo.renderArea(renderArea);
+            VkClearValue.Buffer clearValues = VkClearValue.calloc(1, stack);
+            clearValues.color().float32(stack.floats(0.0f, 0.0f, 0.0f, 1.0f));
+            renderPassInfo.pClearValues(clearValues);
+
+            for(int i = 0;i < commandBuffersCount;i++) {
+
+                VkCommandBuffer commandBuffer = commandBuffers.get(i);
+
+                if(vkBeginCommandBuffer(commandBuffer, beginInfo) != VK_SUCCESS) {
+                    throw new RuntimeException("Failed to begin recording command buffer");
+                }
+
+                renderPassInfo.framebuffer(swapChainFramebuffers.get(i));
 
 
+                vkCmdBeginRenderPass(commandBuffer, renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+                {
+                    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
+
+                    vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+                }
+                vkCmdEndRenderPass(commandBuffer);
+
+
+                if(vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+                    throw new RuntimeException("Failed to record command buffer");
+                }
+
+            }
+
+        }
+
+        return commandBuffers;
+    }
 
 
 
@@ -441,6 +730,48 @@ public class FastVK {
         return swapChainImageViews;
     }
 
+
+    public static long createRenderPass(VkDevice device, Swapchain swapchain) {
+
+        long renderPass;
+
+        try(MemoryStack stack = stackPush()) {
+
+            VkAttachmentDescription.Buffer colorAttachment = VkAttachmentDescription.calloc(1, stack);
+            colorAttachment.format(swapchain.swapChainImageFormat);
+            colorAttachment.samples(VK_SAMPLE_COUNT_1_BIT);
+            colorAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR);
+            colorAttachment.storeOp(VK_ATTACHMENT_STORE_OP_STORE);
+            colorAttachment.stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
+            colorAttachment.stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
+            colorAttachment.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
+            colorAttachment.finalLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
+            VkAttachmentReference.Buffer colorAttachmentRef = VkAttachmentReference.calloc(1, stack);
+            colorAttachmentRef.attachment(0);
+            colorAttachmentRef.layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+            VkSubpassDescription.Buffer subpass = VkSubpassDescription.calloc(1, stack);
+            subpass.pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS);
+            subpass.colorAttachmentCount(1);
+            subpass.pColorAttachments(colorAttachmentRef);
+
+            VkRenderPassCreateInfo renderPassInfo = VkRenderPassCreateInfo.calloc(stack);
+            renderPassInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO);
+            renderPassInfo.pAttachments(colorAttachment);
+            renderPassInfo.pSubpasses(subpass);
+
+            LongBuffer pRenderPass = stack.mallocLong(1);
+
+            if(vkCreateRenderPass(device, renderPassInfo, null, pRenderPass) != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create render pass");
+            }
+
+            renderPass = pRenderPass.get(0);
+        }
+
+        return renderPass;
+    }
     private static SwapchainSupportDetails querySwapChainSupport(VkPhysicalDevice device, MemoryStack stack, long surface) {
 
         SwapchainSupportDetails details = new SwapchainSupportDetails();
@@ -678,4 +1009,5 @@ public class FastVK {
         }
 
     }
+
 }
