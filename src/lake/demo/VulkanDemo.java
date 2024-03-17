@@ -8,6 +8,9 @@ import static org.lwjgl.vulkan.KHRSurface.*;
 import org.lwjgl.vulkan.VkInstance;
 import org.lwjgl.vulkan.VkPhysicalDevice;
 import org.lwjgl.vulkan.VkQueue;
+
+import java.util.List;
+
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.KHRSwapchain.*;
 
@@ -31,6 +34,8 @@ public class VulkanDemo {
         VkQueue presentQueue = FastVK.getPresentQueue(deviceWithIndices);
 
         Swapchain swapchain = FastVK.createSwapChain(physicalDevice, deviceWithIndices.device, surface, window.getWidth(), window.getHeight());
+        List<Long> swapchainImageViews = FastVK.createImageViews(deviceWithIndices.device, swapchain);
+
 
 
 
@@ -41,6 +46,7 @@ public class VulkanDemo {
             window.update();
         }
 
+        swapchainImageViews.forEach(imageView -> vkDestroyImageView(deviceWithIndices.device, imageView, null));
         vkDestroySwapchainKHR(deviceWithIndices.device, swapchain.swapChain, null);
         vkDestroyDevice(deviceWithIndices.device, null);
         FastVK.cleanupDebugMessenger(instance, true);
