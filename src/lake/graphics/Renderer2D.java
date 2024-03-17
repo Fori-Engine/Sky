@@ -89,8 +89,9 @@ public class Renderer2D {
                     new VertexAttribute(3, 4, false, "v_color"),
                     new VertexAttribute(4, 1, false, "v_thickness"),
                     new VertexAttribute(5, 1, false, "v_bloom")
-
             );
+
+            System.out.println("Stride: " + vertexArray.getStride());
 
             vertexBuffer = new VertexBuffer(1000, vertexArray.getStride());
             vertexArray.build();
