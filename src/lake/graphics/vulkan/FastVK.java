@@ -3,6 +3,7 @@ package lake.graphics.vulkan;
 import lake.graphics.StandaloneWindow;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
 
 import java.nio.ByteBuffer;
@@ -737,6 +738,54 @@ public class FastVK {
 
         return surface;
     }
+
+    private static int findMemoryType(int typeFilter, int properties, VkPhysicalDevice physicalDevice) {
+
+        VkPhysicalDeviceMemoryProperties memProperties = VkPhysicalDeviceMemoryProperties.create();
+        vkGetPhysicalDeviceMemoryProperties(physicalDevice, memProperties);
+
+        for(int i = 0;i < memProperties.memoryTypeCount();i++) {
+            if((typeFilter & (1 << i)) != 0 && (memProperties.memoryTypes(i).propertyFlags() & properties) == properties) {
+                return i;
+            }
+        }
+
+        throw new RuntimeException("Failed to find suitable memory type");
+    }
+    public static VulkanGenericBuffer createBuffer(VkDevice device, VkPhysicalDevice physicalDevice, long size, int usage, int properties, LongBuffer pBufferMemory) {
+
+        LongBuffer pBuffer = MemoryUtil.memAllocLong(1);
+
+        VkBufferCreateInfo bufferInfo = VkBufferCreateInfo.create();
+        bufferInfo.sType(VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO);
+        bufferInfo.size(size);
+        bufferInfo.usage(usage);
+        bufferInfo.sharingMode(VK_SHARING_MODE_EXCLUSIVE);
+
+        if(vkCreateBuffer(device, bufferInfo, null, pBuffer) != VK_SUCCESS) {
+            throw new RuntimeException("Failed to create vertex buffer");
+        }
+
+        VkMemoryRequirements memRequirements = VkMemoryRequirements.create();
+        vkGetBufferMemoryRequirements(device, pBuffer.get(0), memRequirements);
+
+        VkMemoryAllocateInfo allocInfo = VkMemoryAllocateInfo.create();
+        allocInfo.sType(VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO);
+        allocInfo.allocationSize(memRequirements.size());
+        allocInfo.memoryTypeIndex(findMemoryType(memRequirements.memoryTypeBits(), properties, physicalDevice));
+
+        if(vkAllocateMemory(device, allocInfo, null, pBufferMemory) != VK_SUCCESS) {
+            throw new RuntimeException("Failed to allocate vertex buffer memory");
+        }
+
+        vkBindBufferMemory(device, pBuffer.get(0), pBufferMemory.get(0), 0);
+
+        VulkanGenericBuffer genericBuffer =  new VulkanGenericBuffer(pBuffer.get(0), bufferInfo);
+
+        MemoryUtil.memFree(pBuffer);
+        return genericBuffer;
+    }
+
 
     public static List<Long> createImageViews(VkDevice device, Swapchain swapchain) {
 
