@@ -80,7 +80,8 @@ public class VkRenderer2D extends Renderer2D {
         commandPool = FastVK.createCommandPool(deviceWithIndices);
 
         vertexBuffer = new VulkanVertexBuffer(1000, 4 * Float.BYTES);
-        vertexBuffer.setDevice(deviceWithIndices.device);
+        vertexBuffer.setDeviceWithIndices(deviceWithIndices);
+        vertexBuffer.setGraphicsQueue(graphicsQueue);
         vertexBuffer.setPhysicalDevice(physicalDevice);
         vertexBuffer.build();
 
@@ -253,7 +254,10 @@ public class VkRenderer2D extends Renderer2D {
 
 
         vkDestroyBuffer(deviceWithIndices.device, vertexBuffer.getVertexBuffer(), null);
+        vkDestroyBuffer(deviceWithIndices.device, vertexBuffer.getStagingBuffer(), null);
+
         vkFreeMemory(deviceWithIndices.device, vertexBuffer.getVertexBufferMemory(), null);
+        vkFreeMemory(deviceWithIndices.device, vertexBuffer.getStagingBufferMemory(), null);
 
 
 
@@ -267,6 +271,8 @@ public class VkRenderer2D extends Renderer2D {
 
 
         vkDestroyRenderPass(deviceWithIndices.device, renderPass, null);
+        vkDestroyCommandPool(deviceWithIndices.device, vertexBuffer.getCommandPool(), null);
+
         vkDestroyCommandPool(deviceWithIndices.device, commandPool, null);
         swapchainFramebuffers.forEach(framebuffer -> vkDestroyFramebuffer(deviceWithIndices.device, framebuffer, null));
         vkDestroyPipeline(deviceWithIndices.device, pipeline.pipeline, null);
