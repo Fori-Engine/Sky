@@ -1,5 +1,8 @@
-package lake.graphics;
+package lake.graphics.opengl;
 
+import lake.graphics.ShaderProgram;
+import lake.graphics.Disposable;
+import lake.graphics.Disposer;
 import org.joml.Matrix4f;
 import org.lwjgl.BufferUtils;
 
@@ -9,7 +12,7 @@ import static org.lwjgl.opengl.GL46.*;
 /***
  * Represents an OpenGL Shader Program. This is a Disposable OpenGL object and will be disposed by the Window.
  */
-public class GLShaderProgram extends AbstractShaderProgram implements Disposable {
+public class GLShaderProgram extends ShaderProgram implements Disposable {
 
     private int shaderProgram;
 

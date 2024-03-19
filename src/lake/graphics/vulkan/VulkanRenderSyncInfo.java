@@ -1,4 +1,4 @@
-package lake.vulkan;
+package lake.graphics.vulkan;
 
 import java.util.List;
 import java.util.Map;

@@ -1,7 +1,7 @@
 package lake;
 
 import lake.graphics.Rect2D;
-import lake.graphics.Texture2D;
+import lake.graphics.opengl.Texture2D;
 
 import java.util.ArrayList;
 

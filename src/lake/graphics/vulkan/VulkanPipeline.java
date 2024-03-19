@@ -1,4 +1,4 @@
-package lake.vulkan;
+package lake.graphics.vulkan;
 
 public class VulkanPipeline {
     public long pipelineLayout;

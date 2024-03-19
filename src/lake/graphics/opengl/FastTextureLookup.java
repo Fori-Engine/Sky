@@ -1,4 +1,4 @@
-package lake.graphics;
+package lake.graphics.opengl;
 
 /***
  * A fast array-based implementation for looking up Textures in existing slots

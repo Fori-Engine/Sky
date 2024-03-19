@@ -1,4 +1,7 @@
-package lake.graphics;
+package lake.graphics.opengl;
+
+import lake.graphics.Disposable;
+import lake.graphics.Disposer;
 
 import static org.lwjgl.opengl.GL46.*;
 

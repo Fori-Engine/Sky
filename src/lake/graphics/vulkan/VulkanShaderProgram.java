@@ -1,25 +1,24 @@
-package lake.vulkan;
+package lake.graphics.vulkan;
 
-import lake.graphics.AbstractShaderProgram;
+import lake.graphics.ShaderProgram;
 import lake.graphics.Disposable;
 import lake.graphics.Disposer;
-import org.lwjgl.BufferUtils;
+import org.joml.Matrix4f;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.VkDevice;
 import org.lwjgl.vulkan.VkPipelineShaderStageCreateInfo;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 
-import static lake.vulkan.ShaderSPIRVUtils.ShaderKind.FRAGMENT_SHADER;
-import static lake.vulkan.ShaderSPIRVUtils.ShaderKind.VERTEX_SHADER;
-import static lake.vulkan.ShaderSPIRVUtils.compileShader;
+import static lake.graphics.vulkan.ShaderSPIRVUtils.ShaderKind.FRAGMENT_SHADER;
+import static lake.graphics.vulkan.ShaderSPIRVUtils.ShaderKind.VERTEX_SHADER;
+import static lake.graphics.vulkan.ShaderSPIRVUtils.compileShader;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK10.vkDestroyShaderModule;
 
-public class VulkanShaderProgram extends AbstractShaderProgram implements Disposable {
+public class VulkanShaderProgram extends ShaderProgram implements Disposable {
 
     private VkPipelineShaderStageCreateInfo.Buffer shaderStages;
     private VkDevice device;
@@ -88,6 +87,36 @@ public class VulkanShaderProgram extends AbstractShaderProgram implements Dispos
 
             //stack.
         }
+    }
+
+    @Override
+    public void bind() {
+
+    }
+
+    @Override
+    public void setFloat(String name, float value) {
+
+    }
+
+    @Override
+    public void setInt(String name, int value) {
+
+    }
+
+    @Override
+    public void setMatrix4f(String name, Matrix4f proj) {
+
+    }
+
+    @Override
+    public void setIntArray(String name, int[] array) {
+
+    }
+
+    @Override
+    public void setVector2fArray(String name, float[] array) {
+
     }
 
     public void disposeShaderModules(){

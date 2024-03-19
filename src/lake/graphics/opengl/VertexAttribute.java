@@ -1,4 +1,4 @@
-package lake.graphics;
+package lake.graphics.opengl;
 
 /***
  * Represents a GLSL Vertex Attribute

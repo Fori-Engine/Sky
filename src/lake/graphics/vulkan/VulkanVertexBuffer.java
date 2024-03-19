@@ -1,19 +1,16 @@
-package lake.vulkan;
+package lake.graphics.vulkan;
 
-import lake.graphics.AbstractVertexBuffer;
-import lake.graphics.Disposable;
+import lake.graphics.VertexBuffer;
 import lake.graphics.Disposer;
 import org.lwjgl.PointerBuffer;
-import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
 
 import java.nio.LongBuffer;
 
-import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
-public class VulkanVertexBuffer extends AbstractVertexBuffer {
+public class VulkanVertexBuffer extends VertexBuffer {
 
     private VkDevice device;
     private VkPhysicalDevice physicalDevice;

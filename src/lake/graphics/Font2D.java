@@ -1,5 +1,7 @@
 package lake.graphics;
 
+import lake.graphics.opengl.Texture2D;
+
 import java.awt.*;
 import java.awt.image.*;
 import java.io.File;

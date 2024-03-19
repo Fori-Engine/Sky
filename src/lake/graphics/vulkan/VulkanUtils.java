@@ -1,4 +1,4 @@
-package lake.vulkan;
+package lake.graphics.vulkan;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;

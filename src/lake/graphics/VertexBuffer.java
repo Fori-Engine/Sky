@@ -1,46 +1,23 @@
 package lake.graphics;
 
-import static org.lwjgl.opengl.GL46.*;
-
-/***
- * Represents an OpenGL Vertex Buffer. This is a Disposable OpenGL object and will be disposed by the Window.
- * This class also manages the Index Buffer automatically
- */
-public class VertexBuffer extends AbstractVertexBuffer {
-    public int myVbo;
-    public int myEbo;
-    private int numOfVertices;
+public abstract class VertexBuffer implements Disposable {
+    public int maxQuads;
+    public int vertexDataSize;
 
     public VertexBuffer(int maxQuads, int vertexDataSize) {
-        super(maxQuads, vertexDataSize);
-        Disposer.add(this);
-
-        build();
+        this.maxQuads = maxQuads;
+        this.vertexDataSize = vertexDataSize;
     }
 
-    public int getNumOfVertices() {
-        return numOfVertices;
+    public abstract int getNumOfVertices();
+    public abstract void build();
+    public int maxQuads() {
+        return maxQuads;
     }
-
-
-    /***
-     */
-    public void build() {
-        myVbo = glGenBuffers();
-        glBindBuffer(GL_ARRAY_BUFFER, myVbo);
-        glBufferData(GL_ARRAY_BUFFER, maxQuads * 4 * vertexDataSize * Float.BYTES, GL_DYNAMIC_DRAW);
-        numOfVertices = maxQuads * 4;
-
-        myEbo = glGenBuffers();
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, myEbo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, maxQuads * 6L * Integer.BYTES, GL_DYNAMIC_DRAW);
-
+    public int getVertexDataSize() {
+        return vertexDataSize;
     }
 
     @Override
-    public void dispose() {
-        glDeleteBuffers(myVbo);
-        glDeleteBuffers(myEbo);
-    }
-
+    public abstract void dispose();
 }

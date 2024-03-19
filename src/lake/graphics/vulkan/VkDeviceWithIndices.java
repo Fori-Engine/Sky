@@ -1,4 +1,4 @@
-package lake.vulkan;
+package lake.graphics.vulkan;
 
 import org.lwjgl.vulkan.VkDevice;
 

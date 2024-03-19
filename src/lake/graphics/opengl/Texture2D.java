@@ -1,5 +1,7 @@
-package lake.graphics;
+package lake.graphics.opengl;
 
+import lake.graphics.Disposable;
+import lake.graphics.Disposer;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL46;
 import org.lwjgl.stb.STBImage;

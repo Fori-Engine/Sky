@@ -2,6 +2,9 @@ package lake.demo;
 
 import lake.FileReader;
 import lake.graphics.*;
+import lake.graphics.opengl.Framebuffer2D;
+import lake.graphics.opengl.GLRenderer2D;
+import lake.graphics.opengl.Texture2D;
 import org.lwjgl.opengl.GL20;
 
 import static org.lwjgl.opengl.GL46.*;
@@ -21,13 +24,13 @@ public class Demo {
 
 
         Framebuffer2D inputFB = new Framebuffer2D(1920, 1080, GL_RGBA32F);
-        Renderer2D renderer2D = new Renderer2D(1920, 1080, true, inputFB);
+        GLRenderer2D GLRenderer2D = new GLRenderer2D(1920, 1080, true, inputFB);
         Texture2D texture2D = new Texture2D("project/logo.png");
-        Renderer2D realRenderer2D = new Renderer2D(1920, 1080, true);
+        GLRenderer2D realGLRenderer2D = new GLRenderer2D(1920, 1080, true);
 
 
         int computeShader = glCreateShader(GL_COMPUTE_SHADER);
-        GL20.glShaderSource(computeShader, FileReader.readFile(Renderer2D.class.getClassLoader().getResourceAsStream("BloomComputeShader.glsl")));
+        GL20.glShaderSource(computeShader, FileReader.readFile(GLRenderer2D.class.getClassLoader().getResourceAsStream("BloomComputeShader.glsl")));
         glCompileShader(computeShader);
         System.err.println(glGetShaderInfoLog(computeShader));
 
@@ -51,9 +54,9 @@ public class Demo {
         while(!window.shouldClose()){
 
             {
-                renderer2D.clear(Color.BLACK);
-                renderer2D.drawTexture(0, 0, 300, 300, texture2D);
-                renderer2D.render();
+                GLRenderer2D.clear(Color.BLACK);
+                GLRenderer2D.drawTexture(0, 0, 300, 300, texture2D);
+                GLRenderer2D.render();
             }
 
 
@@ -61,9 +64,9 @@ public class Demo {
             glDispatchCompute(1920, 1080, 1);
             glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
-            realRenderer2D.clear(Color.WHITE);
-            realRenderer2D.drawTexture(0, 0,outputFB.getWidth(), outputFB.getHeight(), outputFB.getTexture2D());
-            realRenderer2D.render();
+            realGLRenderer2D.clear(Color.WHITE);
+            realGLRenderer2D.drawTexture(0, 0,outputFB.getWidth(), outputFB.getHeight(), outputFB.getTexture2D());
+            realGLRenderer2D.render();
 
             System.out.println(glGetError());
             System.out.println(window.getFPS());

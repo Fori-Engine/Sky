@@ -1,4 +1,4 @@
-package lake.vulkan;
+package lake.graphics.vulkan;
 
 import lake.graphics.StandaloneWindow;
 import org.lwjgl.PointerBuffer;
