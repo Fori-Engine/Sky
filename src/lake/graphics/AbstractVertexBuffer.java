@@ -1,6 +1,6 @@
 package lake.graphics;
 
-public abstract class AbstractVertexBuffer {
+public abstract class AbstractVertexBuffer implements Disposable {
     public int maxQuads;
     public int vertexDataSize;
 
@@ -17,5 +17,7 @@ public abstract class AbstractVertexBuffer {
     public int getVertexDataSize() {
         return vertexDataSize;
     }
+
+    @Override
     public abstract void dispose();
 }

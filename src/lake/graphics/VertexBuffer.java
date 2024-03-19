@@ -6,7 +6,7 @@ import static org.lwjgl.opengl.GL46.*;
  * Represents an OpenGL Vertex Buffer. This is a Disposable OpenGL object and will be disposed by the Window.
  * This class also manages the Index Buffer automatically
  */
-public class VertexBuffer extends AbstractVertexBuffer implements Disposable {
+public class VertexBuffer extends AbstractVertexBuffer {
     public int myVbo;
     public int myEbo;
     private int numOfVertices;

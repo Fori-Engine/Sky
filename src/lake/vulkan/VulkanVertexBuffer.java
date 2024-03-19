@@ -1,6 +1,8 @@
 package lake.vulkan;
 
 import lake.graphics.AbstractVertexBuffer;
+import lake.graphics.Disposable;
+import lake.graphics.Disposer;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
@@ -22,6 +24,7 @@ public class VulkanVertexBuffer extends AbstractVertexBuffer {
 
     public VulkanVertexBuffer(int maxQuads, int vertexDataSize) {
         super(maxQuads, vertexDataSize);
+        Disposer.add(this);
 
 
 
@@ -129,7 +132,7 @@ public class VulkanVertexBuffer extends AbstractVertexBuffer {
 
     @Override
     public void dispose() {
-
+        MemoryUtil.memFree(data);
     }
 
 }
