@@ -2,7 +2,6 @@ package lake.graphics.vulkan;
 
 import lake.FileReader;
 import lake.graphics.*;
-import lake.graphics.opengl.GLRenderer2D;
 import lake.graphics.opengl.Texture2D;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
@@ -32,6 +31,7 @@ public class VkRenderer2D extends Renderer2D {
     private List<Long> swapchainFramebuffers;
     private long commandPool;
     private VulkanVertexBuffer vertexBuffer;
+    private VulkanIndexBuffer indexBuffer;
     private List<VkCommandBuffer> commandBuffers;
     private VulkanRenderSyncInfo renderSyncInfo;
     private int currentFrame;
@@ -79,22 +79,12 @@ public class VkRenderer2D extends Renderer2D {
 
         commandPool = FastVK.createCommandPool(deviceWithIndices);
 
-        vertexBuffer = new VulkanVertexBuffer(1000, 4 * Float.BYTES);
+        vertexBuffer = new VulkanVertexBuffer(1, 5 * Float.BYTES);
         vertexBuffer.setDeviceWithIndices(deviceWithIndices);
+        vertexBuffer.setCommandPool(commandPool);
         vertexBuffer.setGraphicsQueue(graphicsQueue);
         vertexBuffer.setPhysicalDevice(physicalDevice);
         vertexBuffer.build();
-
-        commandBuffers = FastVK.createCommandBuffers(deviceWithIndices.device, commandPool, renderPass, swapchain, swapchainFramebuffers, vertexBuffer, pipeline);
-        renderSyncInfo = FastVK.createSyncObjects(deviceWithIndices.device, swapchain, MAX_FRAMES_IN_FLIGHT);
-
-
-
-
-
-
-
-
 
 
 
@@ -105,16 +95,38 @@ public class VkRenderer2D extends Renderer2D {
         vkMapMemory(deviceWithIndices.device, vertexBuffer.getVertexBufferMemory(), 0, vertexBuffer.getBufferInfo().size(), 0, vertexBuffer.getData());
         {
             memcpy(vertexBuffer.getData().getByteBuffer(0, (int) vertexBuffer.getBufferInfo().size()), new float[]{
-                    0.0f, -0.5f,
-                    1.0f, 0.0f, 0.0f,
-                    0.5f, 0.5f,
-                    0.0f, 1.0f, 0.0f,
-                    -0.5f, 0.5f,
-                    0.0f, 0.0f, 1.0f
+                    -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
+                    0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+                    0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+                    -0.5f, 0.5f, 1.0f, 1.0f, 1.0f
             });
-
         }
         vkUnmapMemory(deviceWithIndices.device, vertexBuffer.getVertexBufferMemory());
+
+
+        indexBuffer = new VulkanIndexBuffer(Integer.BYTES);
+        indexBuffer.setDeviceWithIndices(deviceWithIndices);
+        indexBuffer.setCommandPool(commandPool);
+        indexBuffer.setGraphicsQueue(graphicsQueue);
+        indexBuffer.setPhysicalDevice(physicalDevice);
+        indexBuffer.build();
+
+
+
+        vkMapMemory(deviceWithIndices.device, indexBuffer.getIndexBufferMemory(), 0, indexBuffer.getBufferInfo().size(), 0, indexBuffer.getData());
+        {
+            memcpy(indexBuffer.getData().getByteBuffer(0, (int) indexBuffer.getBufferInfo().size()), new int[]{
+                    0, 1, 2, 2, 3, 0
+            });
+        }
+        vkUnmapMemory(deviceWithIndices.device, indexBuffer.getIndexBufferMemory());
+
+
+
+        commandBuffers = FastVK.createCommandBuffers(deviceWithIndices.device, commandPool, renderPass, swapchain, swapchainFramebuffers, vertexBuffer, indexBuffer, pipeline);
+        renderSyncInfo = FastVK.createSyncObjects(deviceWithIndices.device, swapchain, MAX_FRAMES_IN_FLIGHT);
+
+
 
 
 
@@ -137,6 +149,15 @@ public class VkRenderer2D extends Renderer2D {
             buffer.putFloat(f);
         }
     }
+
+    private static void memcpy(ByteBuffer buffer, int[] vertices) {
+        for(int f : vertices){
+            buffer.putInt(f);
+        }
+    }
+
+
+
     @Override
     public void updateCamera2D() {
 
@@ -249,15 +270,16 @@ public class VkRenderer2D extends Renderer2D {
 
     }
 
+    private void cleanupSwapchain(){
+        swapchainFramebuffers.forEach(framebuffer -> vkDestroyFramebuffer(deviceWithIndices.device, framebuffer, null));
+        vkDestroyPipeline(deviceWithIndices.device, pipeline.pipeline, null);
+        vkDestroyPipelineLayout(deviceWithIndices.device, pipeline.pipelineLayout, null);
+        swapchainImageViews.forEach(imageView -> vkDestroyImageView(deviceWithIndices.device, imageView, null));
+        vkDestroySwapchainKHR(deviceWithIndices.device, swapchain.swapChain, null);
+    }
+
     public void destroyVulkanObjects() {
 
-
-
-        vkDestroyBuffer(deviceWithIndices.device, vertexBuffer.getVertexBuffer(), null);
-        vkDestroyBuffer(deviceWithIndices.device, vertexBuffer.getStagingBuffer(), null);
-
-        vkFreeMemory(deviceWithIndices.device, vertexBuffer.getVertexBufferMemory(), null);
-        vkFreeMemory(deviceWithIndices.device, vertexBuffer.getStagingBufferMemory(), null);
 
 
 
@@ -271,14 +293,12 @@ public class VkRenderer2D extends Renderer2D {
 
 
         vkDestroyRenderPass(deviceWithIndices.device, renderPass, null);
-        vkDestroyCommandPool(deviceWithIndices.device, vertexBuffer.getCommandPool(), null);
-
         vkDestroyCommandPool(deviceWithIndices.device, commandPool, null);
-        swapchainFramebuffers.forEach(framebuffer -> vkDestroyFramebuffer(deviceWithIndices.device, framebuffer, null));
-        vkDestroyPipeline(deviceWithIndices.device, pipeline.pipeline, null);
-        vkDestroyPipelineLayout(deviceWithIndices.device, pipeline.pipelineLayout, null);
-        swapchainImageViews.forEach(imageView -> vkDestroyImageView(deviceWithIndices.device, imageView, null));
-        vkDestroySwapchainKHR(deviceWithIndices.device, swapchain.swapChain, null);
+
+        Disposer.disposeAllInCategory("buffers");
+
+        cleanupSwapchain();
+
         vkDestroyDevice(deviceWithIndices.device, null);
         FastVK.cleanupDebugMessenger(instance, true);
 

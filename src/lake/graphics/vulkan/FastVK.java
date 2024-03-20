@@ -534,7 +534,7 @@ public class FastVK {
         return commandPool;
     }
 
-    public static List<VkCommandBuffer> createCommandBuffers(VkDevice device, long commandPool, long renderPass, Swapchain swapchain, List<Long> swapChainFramebuffers, VulkanVertexBuffer vertexBuffer, VulkanPipeline pipeline) {
+    public static List<VkCommandBuffer> createCommandBuffers(VkDevice device, long commandPool, long renderPass, Swapchain swapchain, List<Long> swapChainFramebuffers, VulkanVertexBuffer vertexBuffer, VulkanIndexBuffer indexBuffer, VulkanPipeline pipeline) {
 
         final int commandBuffersCount = swapChainFramebuffers.size();
 
@@ -589,13 +589,14 @@ public class FastVK {
                     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
 
-                    LongBuffer vertexBuffers = stack.longs(vertexBuffer.getVertexBuffer());
+                    LongBuffer vertexBuffers = stack.longs(vertexBuffer.getBuffer());
+
+
                     LongBuffer offsets = stack.longs(0);
                     vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
+                    vkCmdBindIndexBuffer(commandBuffer, indexBuffer.getBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
-                    //VBSIZE
-                    vkCmdDraw(commandBuffer, 3, 1, 0, 0);
-
+                    vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
 
 
 
@@ -1036,6 +1037,42 @@ public class FastVK {
         System.err.println("Validation layer: " + callbackData.pMessageString());
 
         return VK_FALSE;
+    }
+
+    public static VkSubmitInfo transfer(int sizeInBytes, long commandPool, VkDevice device, long srcBuffer, long dstBuffer){
+
+        VkCommandBufferAllocateInfo allocInfo = VkCommandBufferAllocateInfo.create();
+        allocInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
+        allocInfo.commandPool(commandPool);
+        allocInfo.level(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+        allocInfo.commandBufferCount(1);
+
+        PointerBuffer pCommandBuffer = MemoryUtil.memAllocPointer(1);
+        vkAllocateCommandBuffers(device, allocInfo, pCommandBuffer);
+        VkCommandBuffer commandBuffer = new VkCommandBuffer(pCommandBuffer.get(), device);
+
+
+        VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.create();
+        beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
+        beginInfo.flags(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+        vkBeginCommandBuffer(commandBuffer, beginInfo);
+
+
+        VkBufferCopy.Buffer copyRegion = VkBufferCopy.create(1);;
+        copyRegion.srcOffset(0);
+        copyRegion.dstOffset(0);
+        copyRegion.size(sizeInBytes);
+        vkCmdCopyBuffer(commandBuffer, dstBuffer, srcBuffer, copyRegion);
+        vkEndCommandBuffer(commandBuffer);
+
+        VkSubmitInfo submitInfo = VkSubmitInfo.create();
+        {
+            submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
+            submitInfo.pCommandBuffers(pCommandBuffer);
+        }
+
+        return submitInfo;
     }
 
     public static long debugMessenger;

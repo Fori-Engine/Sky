@@ -4,7 +4,6 @@ import java.util.stream.IntStream;
 
 public class QueueFamilyIndices {
 
-    // We use Integer to use null as the empty value
     public Integer graphicsFamily;
     public Integer presentFamily;
 

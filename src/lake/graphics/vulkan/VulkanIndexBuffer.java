@@ -1,7 +1,7 @@
 package lake.graphics.vulkan;
 
+import lake.graphics.Disposable;
 import lake.graphics.Disposer;
-import lake.graphics.VertexBuffer;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
@@ -10,21 +10,21 @@ import java.nio.LongBuffer;
 
 import static org.lwjgl.vulkan.VK10.*;
 
-public class VulkanVertexBuffer extends VertexBuffer {
+public class VulkanIndexBuffer implements Disposable {
 
     private VkDeviceWithIndices deviceWithIndices;
     private VkPhysicalDevice physicalDevice;
-    private long vertexBufferMemory, stagingBufferMemory;
+    private long indexBufferMemory, stagingBufferMemory;
     private PointerBuffer data;
     private VulkanGenericBuffer buffer;
     private VulkanGenericBuffer stagingBuffer;
     private VkQueue graphicsQueue;
     private long commandPool;
 
+    private int indexSizeBytes;
 
-
-    public VulkanVertexBuffer(int maxQuads, int vertexSizeBytes) {
-        super(maxQuads, vertexSizeBytes);
+    public VulkanIndexBuffer(int indexSizeBytes) {
+        this.indexSizeBytes = indexSizeBytes;
         Disposer.add("buffers", this);
     }
 
@@ -43,7 +43,6 @@ public class VulkanVertexBuffer extends VertexBuffer {
     public long getCommandPool() {
         return commandPool;
     }
-
     public VkQueue getGraphicsQueue() {
         return graphicsQueue;
     }
@@ -69,17 +68,12 @@ public class VulkanVertexBuffer extends VertexBuffer {
     }
 
 
-    @Override
-    public int getNumOfVertices() {
-        return 0;
-    }
 
 
-    @Override
     public void build() {
 
-
-        int verticesSizeBytes = vertexSizeBytes * maxQuads * 4;
+        //TODO Remove hardcoded 6 indices per quad!
+        int indicesSizeBytes = indexSizeBytes * 6;
         data = MemoryUtil.memAllocPointer(1);
 
 
@@ -88,7 +82,7 @@ public class VulkanVertexBuffer extends VertexBuffer {
         stagingBuffer = FastVK.createBuffer(
                 deviceWithIndices.device,
                 physicalDevice,
-                verticesSizeBytes,
+                indicesSizeBytes,
                 VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                 pStagingBufferMemory
@@ -96,17 +90,18 @@ public class VulkanVertexBuffer extends VertexBuffer {
         stagingBufferMemory = pStagingBufferMemory.get(0);
 
 
-        LongBuffer pVertexBufferMemory = MemoryUtil.memAllocLong(1);
+        LongBuffer pIndexBufferMemory = MemoryUtil.memAllocLong(1);
         buffer = FastVK.createBuffer(
                 deviceWithIndices.device,
                 physicalDevice,
-                verticesSizeBytes,
-                VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                indicesSizeBytes,
+                VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                pVertexBufferMemory
+                pIndexBufferMemory
         );
-        vertexBufferMemory = pVertexBufferMemory.get(0);
-        VkSubmitInfo submitInfo = FastVK.transfer(verticesSizeBytes, commandPool, deviceWithIndices.device, buffer.buffer, stagingBuffer.buffer);
+        indexBufferMemory = pIndexBufferMemory.get(0);
+        VkSubmitInfo submitInfo = FastVK.transfer(indicesSizeBytes, commandPool, deviceWithIndices.device, buffer.buffer, stagingBuffer.buffer);
+
 
         if(vkQueueSubmit(graphicsQueue, submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
             throw new RuntimeException("Failed to submit copy command buffer");
@@ -124,13 +119,14 @@ public class VulkanVertexBuffer extends VertexBuffer {
     }
 
 
-    public long getVertexBufferMemory() {
-        return vertexBufferMemory;
+    public long getIndexBufferMemory() {
+        return indexBufferMemory;
     }
 
     public long getStagingBufferMemory() {
         return stagingBufferMemory;
     }
+
 
     @Override
     public void dispose() {
@@ -139,9 +135,9 @@ public class VulkanVertexBuffer extends VertexBuffer {
         vkDestroyBuffer(deviceWithIndices.device, getBuffer(), null);
         vkDestroyBuffer(deviceWithIndices.device, getStagingBuffer(), null);
 
-        vkFreeMemory(deviceWithIndices.device, getVertexBufferMemory(), null);
+        vkFreeMemory(deviceWithIndices.device, getIndexBufferMemory(), null);
         vkFreeMemory(deviceWithIndices.device, getStagingBufferMemory(), null);
 
-    }
 
+    }
 }
