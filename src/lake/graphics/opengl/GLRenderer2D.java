@@ -38,6 +38,7 @@ public class GLRenderer2D extends Renderer2D {
     public GLRenderer2D(int width, int height, boolean msaa, Framebuffer2D framebuffer2D){
         this(width, height, msaa);
         this.framebuffer2D = framebuffer2D;
+
     }
 
     public GLRenderer2D(int width, int height, boolean msaa) {
@@ -95,7 +96,7 @@ public class GLRenderer2D extends Renderer2D {
             vertexBuffer = new VertexBuffer(1000, vertexArray.getStride());
             vertexArray.build();
 
-            vertexData = new float[vertexBuffer.getNumOfVertices() * vertexBuffer.getVertexDataSize()];
+            vertexData = new float[vertexBuffer.getNumOfVertices() * vertexBuffer.getVertexSizeBytes()];
         }
 
     }
@@ -354,56 +355,56 @@ public class GLRenderer2D extends Renderer2D {
 
 
         {
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 0] = topLeft.x;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 1] = topLeft.y;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 2] = copy.x;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 3] = copy.y;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 4] = slot;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 5] = color.r;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 6] = color.g;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 7] = color.b;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 8] = color.a;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 9] = thickness;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 10] = bloom;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 0] = topLeft.x;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 1] = topLeft.y;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 2] = copy.x;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 3] = copy.y;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 4] = slot;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 5] = color.r;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 6] = color.g;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 7] = color.b;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 8] = color.a;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 9] = thickness;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 10] = bloom;
 
 
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 11] = bottomLeft.x;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 12] = bottomLeft.y;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 13] = copy.x;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 14] = copy.h;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 15] = slot;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 16] = color.r;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 17] = color.g;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 18] = color.b;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 19] = color.a;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 20] = thickness;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 21] = bloom;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 11] = bottomLeft.x;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 12] = bottomLeft.y;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 13] = copy.x;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 14] = copy.h;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 15] = slot;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 16] = color.r;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 17] = color.g;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 18] = color.b;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 19] = color.a;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 20] = thickness;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 21] = bloom;
 
 
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 22] = bottomRight.x;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 23] = bottomRight.y;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 24] = copy.w;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 25] = copy.h;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 26] = slot;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 27] = color.r;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 28] = color.g;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 29] = color.b;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 30] = color.a;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 31] = thickness;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 32] = bloom;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 22] = bottomRight.x;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 23] = bottomRight.y;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 24] = copy.w;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 25] = copy.h;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 26] = slot;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 27] = color.r;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 28] = color.g;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 29] = color.b;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 30] = color.a;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 31] = thickness;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 32] = bloom;
 
 
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 33] = topRight.x;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 34] = topRight.y;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 35] = copy.w;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 36] = copy.y;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 37] = slot;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 38] = color.r;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 39] = color.g;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 40] = color.b;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 41] = color.a;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 42] = thickness;
-            vertexData[(quadIndex * vertexBuffer.getVertexDataSize()) + 43] = bloom;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 33] = topRight.x;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 34] = topRight.y;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 35] = copy.w;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 36] = copy.y;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 37] = slot;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 38] = color.r;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 39] = color.g;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 40] = color.b;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 41] = color.a;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 42] = thickness;
+            vertexData[(quadIndex * vertexBuffer.getVertexSizeBytes()) + 43] = bloom;
 
         }
         quadIndex++;
@@ -465,7 +466,7 @@ public class GLRenderer2D extends Renderer2D {
         glDrawElements(GL_TRIANGLES, indices.length, GL_UNSIGNED_INT, 0);
 
 
-        vertexData = new float[vertexBuffer.getNumOfVertices() * vertexBuffer.getVertexDataSize()];
+        vertexData = new float[vertexBuffer.getNumOfVertices() * vertexBuffer.getVertexSizeBytes()];
         quadIndex = 0;
         nextTextureSlot = 0;
         textureLookup.clear();
@@ -501,7 +502,7 @@ public class GLRenderer2D extends Renderer2D {
         glDrawElementsInstanced(GL_TRIANGLES, indices.length, GL_UNSIGNED_INT, 0, count);
 
 
-        vertexData = new float[vertexBuffer.getNumOfVertices() * vertexBuffer.getVertexDataSize()];
+        vertexData = new float[vertexBuffer.getNumOfVertices() * vertexBuffer.getVertexSizeBytes()];
         quadIndex = 0;
         nextTextureSlot = 0;
         textureLookup.clear();

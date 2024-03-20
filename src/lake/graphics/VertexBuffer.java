@@ -1,12 +1,12 @@
 package lake.graphics;
 
 public abstract class VertexBuffer implements Disposable {
-    public int maxQuads;
-    public int vertexDataSize;
+    protected int maxQuads;
+    protected int vertexSizeBytes;
 
     public VertexBuffer(int maxQuads, int vertexDataSize) {
         this.maxQuads = maxQuads;
-        this.vertexDataSize = vertexDataSize;
+        this.vertexSizeBytes = vertexDataSize;
     }
 
     public abstract int getNumOfVertices();
@@ -14,8 +14,8 @@ public abstract class VertexBuffer implements Disposable {
     public int maxQuads() {
         return maxQuads;
     }
-    public int getVertexDataSize() {
-        return vertexDataSize;
+    public int getVertexSizeBytes() {
+        return vertexSizeBytes;
     }
 
     @Override
