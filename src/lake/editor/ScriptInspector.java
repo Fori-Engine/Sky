@@ -4,14 +4,15 @@ import imgui.type.ImBoolean;
 import lake.Utils;
 import lake.graphics.Color;
 import lake.graphics.Disposer;
-import lake.graphics.Texture2D;
+import lake.graphics.opengl.Texture2D;
 import lake.script.EditorUI;
-import static imgui.ImGui.*;
 import org.joml.Vector3f;
 import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
 import javax.swing.filechooser.FileSystemView;
 import java.lang.reflect.Field;
+
+import static imgui.ImGui.*;
 
 public class ScriptInspector extends Panel {
     private LakeEditor lakeEditor;
@@ -84,7 +85,10 @@ public class ScriptInspector extends Panel {
                     String headerText = id + " [" + object + "]";
 
 
+
                     if(collapsingHeader(headerText)) {
+
+
 
 
                         Field[] fields = object.getClass().getFields();
@@ -177,10 +181,6 @@ public class ScriptInspector extends Panel {
 
                         }
                     }
-
-
-
-
 
 
                 }
