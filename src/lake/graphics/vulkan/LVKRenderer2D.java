@@ -15,7 +15,7 @@ import static org.lwjgl.vulkan.KHRSurface.vkDestroySurfaceKHR;
 import static org.lwjgl.vulkan.KHRSwapchain.*;
 import static org.lwjgl.vulkan.VK10.*;
 
-public class VkRenderer2D extends Renderer2D implements Disposable {
+public class LVKRenderer2D extends Renderer2D implements Disposable {
     private int MAX_FRAMES_IN_FLIGHT = 2;
 
     long UINT64_MAX = 0xFFFFFFFFFFFFFFFFL;
@@ -24,20 +24,20 @@ public class VkRenderer2D extends Renderer2D implements Disposable {
     private VkPhysicalDevice physicalDevice;
     private VkInstance instance;
     private long surface;
-    private Swapchain swapchain;
+    private LVKSwapchain swapchain;
     private List<Long> swapchainImageViews;
-    private VulkanPipeline pipeline;
+    private LVKPipeline pipeline;
     private long renderPass;
     private List<Long> swapchainFramebuffers;
     private long commandPool;
-    private VulkanVertexBuffer vertexBuffer;
-    private VulkanIndexBuffer indexBuffer;
+    private LVKVertexBuffer vertexBuffer;
+    private LVKIndexBuffer indexBuffer;
     private List<VkCommandBuffer> commandBuffers;
-    private VulkanRenderSyncInfo renderSyncInfo;
+    private LVKRenderSync renderSyncInfo;
     private int currentFrame;
 
 
-    public VkRenderer2D(StandaloneWindow window, int width, int height, boolean msaa) {
+    public LVKRenderer2D(StandaloneWindow window, int width, int height, boolean msaa) {
         super(width, height, msaa);
 
         Disposer.add("renderer", this);
@@ -57,9 +57,9 @@ public class VkRenderer2D extends Renderer2D implements Disposable {
         swapchain = FastVK.createSwapChain(physicalDevice, deviceWithIndices.device, surface, width, height);
         swapchainImageViews = FastVK.createImageViews(deviceWithIndices.device, swapchain);
 
-        VulkanShaderProgram shaderProgram = new VulkanShaderProgram(
-                FileReader.readFile(VkRenderer2D.class.getClassLoader().getResourceAsStream("vulkan/VertexShader.glsl")),
-                FileReader.readFile(VkRenderer2D.class.getClassLoader().getResourceAsStream("vulkan/FragmentShader.glsl"))
+        LVKShaderProgram shaderProgram = new LVKShaderProgram(
+                FileReader.readFile(LVKRenderer2D.class.getClassLoader().getResourceAsStream("vulkan/VertexShader.glsl")),
+                FileReader.readFile(LVKRenderer2D.class.getClassLoader().getResourceAsStream("vulkan/FragmentShader.glsl"))
         );
 
 
@@ -81,7 +81,7 @@ public class VkRenderer2D extends Renderer2D implements Disposable {
 
         commandPool = FastVK.createCommandPool(deviceWithIndices);
 
-        vertexBuffer = new VulkanVertexBuffer(1, 5 * Float.BYTES);
+        vertexBuffer = new LVKVertexBuffer(1, 5 * Float.BYTES);
         vertexBuffer.setDeviceWithIndices(deviceWithIndices);
         vertexBuffer.setCommandPool(commandPool);
         vertexBuffer.setGraphicsQueue(graphicsQueue);
@@ -106,7 +106,7 @@ public class VkRenderer2D extends Renderer2D implements Disposable {
         vkUnmapMemory(deviceWithIndices.device, vertexBuffer.getVertexBufferMemory());
 
 
-        indexBuffer = new VulkanIndexBuffer(Integer.BYTES);
+        indexBuffer = new LVKIndexBuffer(Integer.BYTES);
         indexBuffer.setDeviceWithIndices(deviceWithIndices);
         indexBuffer.setCommandPool(commandPool);
         indexBuffer.setGraphicsQueue(graphicsQueue);
@@ -214,7 +214,7 @@ public class VkRenderer2D extends Renderer2D implements Disposable {
     public void render(String renderName) {
         try(MemoryStack stack = stackPush()) {
 
-            Frame thisFrame = renderSyncInfo.inFlightFrames.get(currentFrame);
+            LVKRenderFrame thisFrame = renderSyncInfo.inFlightFrames.get(currentFrame);
 
             vkWaitForFences(deviceWithIndices.device, thisFrame.pFence(), true, UINT64_MAX);
 

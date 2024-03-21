@@ -10,20 +10,20 @@ import java.nio.LongBuffer;
 
 import static org.lwjgl.vulkan.VK10.*;
 
-public class VulkanIndexBuffer implements Disposable {
+public class LVKIndexBuffer implements Disposable {
 
     private VkDeviceWithIndices deviceWithIndices;
     private VkPhysicalDevice physicalDevice;
     private long indexBufferMemory, stagingBufferMemory;
     private PointerBuffer data;
-    private VulkanGenericBuffer buffer;
-    private VulkanGenericBuffer stagingBuffer;
+    private LVKGenericBuffer buffer;
+    private LVKGenericBuffer stagingBuffer;
     private VkQueue graphicsQueue;
     private long commandPool;
 
     private int indexSizeBytes;
 
-    public VulkanIndexBuffer(int indexSizeBytes) {
+    public LVKIndexBuffer(int indexSizeBytes) {
         this.indexSizeBytes = indexSizeBytes;
         Disposer.add("managedResources", this);
     }

@@ -1,7 +1,6 @@
 package lake.graphics.vulkan;
 
 import lake.graphics.ShaderProgram;
-import lake.graphics.Disposable;
 import lake.graphics.Disposer;
 import org.joml.Matrix4f;
 import org.lwjgl.system.MemoryStack;
@@ -18,7 +17,7 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK10.vkDestroyShaderModule;
 
-public class VulkanShaderProgram extends ShaderProgram {
+public class LVKShaderProgram extends ShaderProgram {
 
     private VkPipelineShaderStageCreateInfo.Buffer shaderStages;
     private VkDevice device;
@@ -29,7 +28,7 @@ public class VulkanShaderProgram extends ShaderProgram {
 
     private long vertShaderModule;
     private long fragShaderModule;
-    public VulkanShaderProgram(String vertexShaderSource, String fragmentShaderSource) {
+    public LVKShaderProgram(String vertexShaderSource, String fragmentShaderSource) {
         super(vertexShaderSource, fragmentShaderSource);
         Disposer.add("managedResources", this);
     }

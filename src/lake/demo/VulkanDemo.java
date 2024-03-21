@@ -3,7 +3,6 @@ package lake.demo;
 import lake.graphics.Renderer2D;
 import lake.graphics.RendererType;
 import lake.graphics.StandaloneWindow;
-import lake.graphics.vulkan.VkRenderer2D;
 
 public class VulkanDemo {
 

@@ -1,7 +1,7 @@
 package lake.graphics;
 
 import lake.graphics.opengl.*;
-import lake.graphics.vulkan.VkRenderer2D;
+import lake.graphics.vulkan.LVKRenderer2D;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 
@@ -120,7 +120,7 @@ public abstract class Renderer2D {
             return new GLRenderer2D(width, height, msaa);
         }
         else if(type == RendererType.VULKAN){
-            return new VkRenderer2D(window, width, height, msaa);
+            return new LVKRenderer2D(window, width, height, msaa);
         }
 
         return null;

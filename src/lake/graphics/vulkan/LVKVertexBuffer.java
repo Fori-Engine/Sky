@@ -11,20 +11,20 @@ import java.nio.LongBuffer;
 
 import static org.lwjgl.vulkan.VK10.*;
 
-public class VulkanVertexBuffer extends VertexBuffer implements Disposable {
+public class LVKVertexBuffer extends VertexBuffer implements Disposable {
 
     private VkDeviceWithIndices deviceWithIndices;
     private VkPhysicalDevice physicalDevice;
     private long vertexBufferMemory, stagingBufferMemory;
     private PointerBuffer data;
-    private VulkanGenericBuffer buffer;
-    private VulkanGenericBuffer stagingBuffer;
+    private LVKGenericBuffer buffer;
+    private LVKGenericBuffer stagingBuffer;
     private VkQueue graphicsQueue;
     private long commandPool;
 
 
 
-    public VulkanVertexBuffer(int maxQuads, int vertexSizeBytes) {
+    public LVKVertexBuffer(int maxQuads, int vertexSizeBytes) {
         super(maxQuads, vertexSizeBytes);
         Disposer.add("managedResources", this);
     }

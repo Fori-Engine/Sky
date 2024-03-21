@@ -262,7 +262,7 @@ public class FastVK {
 
 
 
-    public static VulkanPipeline createPipeline(VkDevice device, Swapchain swapchain, VkPipelineShaderStageCreateInfo.Buffer shaderStages, long renderPass){
+    public static LVKPipeline createPipeline(VkDevice device, LVKSwapchain swapchain, VkPipelineShaderStageCreateInfo.Buffer shaderStages, long renderPass){
 
 
         long pipelineLayout;
@@ -409,12 +409,12 @@ public class FastVK {
 
         }
 
-        return new VulkanPipeline(pipelineLayout, graphicsPipeline);
+        return new LVKPipeline(pipelineLayout, graphicsPipeline);
     }
 
-    public static VulkanRenderSyncInfo createSyncObjects(VkDevice device, Swapchain swapchain, int framesInFlight) {
+    public static LVKRenderSync createSyncObjects(VkDevice device, LVKSwapchain swapchain, int framesInFlight) {
 
-        VulkanRenderSyncInfo vulkanRenderSyncInfo = new VulkanRenderSyncInfo();
+        LVKRenderSync vulkanRenderSyncInfo = new LVKRenderSync();
         vulkanRenderSyncInfo.inFlightFrames = new ArrayList<>(framesInFlight);
         vulkanRenderSyncInfo.imagesInFlight = new HashMap<>(swapchain.swapChainImages.size());
 
@@ -440,7 +440,7 @@ public class FastVK {
                     throw new RuntimeException("Failed to create synchronization objects for the frame " + i);
                 }
 
-                vulkanRenderSyncInfo.inFlightFrames.add(new Frame(pImageAvailableSemaphore.get(0), pRenderFinishedSemaphore.get(0), pFence.get(0)));
+                vulkanRenderSyncInfo.inFlightFrames.add(new LVKRenderFrame(pImageAvailableSemaphore.get(0), pRenderFinishedSemaphore.get(0), pFence.get(0)));
             }
 
         }
@@ -475,7 +475,7 @@ public class FastVK {
 
 
 
-    public static ArrayList<Long> createFramebuffers(VkDevice device, Swapchain swapchain, List<Long> swapChainImageViews, long renderPass) {
+    public static ArrayList<Long> createFramebuffers(VkDevice device, LVKSwapchain swapchain, List<Long> swapChainImageViews, long renderPass) {
 
         ArrayList<Long> swapChainFramebuffers = new ArrayList<>(swapChainImageViews.size());
 
@@ -534,7 +534,7 @@ public class FastVK {
         return commandPool;
     }
 
-    public static List<VkCommandBuffer> createCommandBuffers(VkDevice device, long commandPool, long renderPass, Swapchain swapchain, List<Long> swapChainFramebuffers, VulkanVertexBuffer vertexBuffer, VulkanIndexBuffer indexBuffer, VulkanPipeline pipeline) {
+    public static List<VkCommandBuffer> createCommandBuffers(VkDevice device, long commandPool, long renderPass, LVKSwapchain swapchain, List<Long> swapChainFramebuffers, LVKVertexBuffer vertexBuffer, LVKIndexBuffer indexBuffer, LVKPipeline pipeline) {
 
         final int commandBuffersCount = swapChainFramebuffers.size();
 
@@ -753,7 +753,7 @@ public class FastVK {
 
         throw new RuntimeException("Failed to find suitable memory type");
     }
-    public static VulkanGenericBuffer createBuffer(VkDevice device, VkPhysicalDevice physicalDevice, long size, int usage, int properties, LongBuffer pBufferMemory) {
+    public static LVKGenericBuffer createBuffer(VkDevice device, VkPhysicalDevice physicalDevice, long size, int usage, int properties, LongBuffer pBufferMemory) {
 
         LongBuffer pBuffer = MemoryUtil.memAllocLong(1);
 
@@ -781,14 +781,14 @@ public class FastVK {
 
         vkBindBufferMemory(device, pBuffer.get(0), pBufferMemory.get(0), 0);
 
-        VulkanGenericBuffer genericBuffer =  new VulkanGenericBuffer(pBuffer.get(0), bufferInfo);
+        LVKGenericBuffer genericBuffer =  new LVKGenericBuffer(pBuffer.get(0), bufferInfo);
 
         MemoryUtil.memFree(pBuffer);
         return genericBuffer;
     }
 
 
-    public static List<Long> createImageViews(VkDevice device, Swapchain swapchain) {
+    public static List<Long> createImageViews(VkDevice device, LVKSwapchain swapchain) {
 
         List<Long> swapChainImageViews = new ArrayList<>(swapchain.swapChainImages.size());
 
@@ -829,7 +829,7 @@ public class FastVK {
     }
 
 
-    public static long createRenderPass(VkDevice device, Swapchain swapchain) {
+    public static long createRenderPass(VkDevice device, LVKSwapchain swapchain) {
 
         long renderPass;
 
@@ -896,9 +896,9 @@ public class FastVK {
         return details;
     }
 
-    public static Swapchain createSwapChain(VkPhysicalDevice physicalDevice, VkDevice device, long surface, int width, int height) {
+    public static LVKSwapchain createSwapChain(VkPhysicalDevice physicalDevice, VkDevice device, long surface, int width, int height) {
 
-        Swapchain swapchain = new Swapchain();
+        LVKSwapchain swapchain = new LVKSwapchain();
 
         try(MemoryStack stack = stackPush()) {
 
