@@ -15,7 +15,7 @@ import static org.lwjgl.opengl.GL46.*;
  * A Renderer2D is a Batch Renderer responsible for drawing 2D Graphics to the screen. This manages lots of OpenGL state internally including the current shader
  * VertexArray, VertexBuffer, and the Model, View and Projection Matrices. It also includes some debugging utilities to track draw calls using setDebug()
  */
-public class GLRenderer2D extends Renderer2D {
+public class GLRenderer2D extends Renderer2D implements Disposable {
     private int width;
     private int height;
     private Matrix4f proj;
@@ -38,12 +38,11 @@ public class GLRenderer2D extends Renderer2D {
     public GLRenderer2D(int width, int height, boolean msaa, Framebuffer2D framebuffer2D){
         this(width, height, msaa);
         this.framebuffer2D = framebuffer2D;
-
     }
 
     public GLRenderer2D(int width, int height, boolean msaa) {
         super(width, height, msaa);
-
+        Disposer.add("renderer", this);
 
         //GLUtil.setupDebugMessageCallback();
 
@@ -574,6 +573,11 @@ public class GLRenderer2D extends Renderer2D {
             drawTexture(xc, y, texture.getWidth(), texture.getHeight(), texture, color);
             xc += texture.getWidth();
         }
+
+    }
+
+    @Override
+    public void dispose() {
 
     }
 }

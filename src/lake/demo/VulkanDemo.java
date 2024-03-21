@@ -27,12 +27,6 @@ public class VulkanDemo {
 
 
 
-
-        //TODO Remove this!
-        ((VkRenderer2D) renderer2D).destroyVulkanObjects();
-
-
-
         window.close();
 
     }

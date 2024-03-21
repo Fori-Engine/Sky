@@ -18,7 +18,7 @@ public class Framebuffer2D implements Disposable {
     }
 
     public Framebuffer2D(int width, int height, int format) {
-        Disposer.add(this);
+        Disposer.add("managedResources", this);
         this.width = width;
         this.height = height;
         framebufferID = glGenFramebuffers();

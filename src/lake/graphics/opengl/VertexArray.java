@@ -18,7 +18,7 @@ public class VertexArray implements Disposable {
 
 
     public VertexArray() {
-        Disposer.add(this);
+        Disposer.add("managedResources", this);
         myVao = glGenVertexArrays();
     }
 

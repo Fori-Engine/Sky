@@ -15,24 +15,6 @@ import static org.lwjgl.util.shaderc.Shaderc.*;
 
 public class ShaderSPIRVUtils {
 
-    /*
-    public static SPIRV compileShaderFile(String shaderFile, ShaderKind shaderKind) {
-        return compileShaderAbsoluteFile(getSystemClassLoader().getResource(shaderFile).toExternalForm(), shaderKind);
-    }
-
-
-
-    public static SPIRV compileShaderAbsoluteFile(String shaderFile, ShaderKind shaderKind) {
-        try {
-            String source = new String(Files.readAllBytes(Paths.get(new URI(shaderFile))));
-            return compileShader(shaderFile, source, shaderKind);
-        } catch (IOException | URISyntaxException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-     */
 
     public static SPIRV compileShader(String filename, String source, ShaderKind shaderKind) {
 

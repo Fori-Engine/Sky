@@ -46,7 +46,7 @@ public class Texture2D implements Disposable {
      */
     public Texture2D(String path, int filter) {
         if(!new File(path).exists()) throw new RuntimeException("The file " + path + " does not exist!");
-        Disposer.add(this);
+        Disposer.add("managedResources", this);
 
 
         this.path = path;
@@ -77,7 +77,7 @@ public class Texture2D implements Disposable {
     public Texture2D(int width, int height) {
         this.width = width;
         this.height = height;
-        Disposer.add(this);
+        Disposer.add("managedResources", this);
         texID = glGenTextures();
         glBindTexture(GL_TEXTURE_2D, texID);
         //On an NVIDIA GeForce MX450 and Intel Iris Xe Graphics, Compute Shaders break without the 4 following lines

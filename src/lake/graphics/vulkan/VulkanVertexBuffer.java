@@ -1,5 +1,6 @@
 package lake.graphics.vulkan;
 
+import lake.graphics.Disposable;
 import lake.graphics.Disposer;
 import lake.graphics.VertexBuffer;
 import org.lwjgl.PointerBuffer;
@@ -10,7 +11,7 @@ import java.nio.LongBuffer;
 
 import static org.lwjgl.vulkan.VK10.*;
 
-public class VulkanVertexBuffer extends VertexBuffer {
+public class VulkanVertexBuffer extends VertexBuffer implements Disposable {
 
     private VkDeviceWithIndices deviceWithIndices;
     private VkPhysicalDevice physicalDevice;
@@ -25,7 +26,7 @@ public class VulkanVertexBuffer extends VertexBuffer {
 
     public VulkanVertexBuffer(int maxQuads, int vertexSizeBytes) {
         super(maxQuads, vertexSizeBytes);
-        Disposer.add("buffers", this);
+        Disposer.add("managedResources", this);
     }
 
     public VkDeviceWithIndices getDeviceWithIndices() {

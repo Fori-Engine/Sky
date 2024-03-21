@@ -15,7 +15,7 @@ import static org.lwjgl.vulkan.KHRSurface.vkDestroySurfaceKHR;
 import static org.lwjgl.vulkan.KHRSwapchain.*;
 import static org.lwjgl.vulkan.VK10.*;
 
-public class VkRenderer2D extends Renderer2D {
+public class VkRenderer2D extends Renderer2D implements Disposable {
     private int MAX_FRAMES_IN_FLIGHT = 2;
 
     long UINT64_MAX = 0xFFFFFFFFFFFFFFFFL;
@@ -39,6 +39,8 @@ public class VkRenderer2D extends Renderer2D {
 
     public VkRenderer2D(StandaloneWindow window, int width, int height, boolean msaa) {
         super(width, height, msaa);
+
+        Disposer.add("renderer", this);
 
         instance = FastVK.createInstance(getClass().getName(), "LakeEngine", true);
         FastVK.setupDebugMessenger(instance, true);
@@ -278,11 +280,8 @@ public class VkRenderer2D extends Renderer2D {
         vkDestroySwapchainKHR(deviceWithIndices.device, swapchain.swapChain, null);
     }
 
-    public void destroyVulkanObjects() {
-
-
-
-
+    @Override
+    public void dispose() {
         renderSyncInfo.inFlightFrames.forEach(frame -> {
 
             vkDestroySemaphore(deviceWithIndices.device, frame.renderFinishedSemaphore(), null);
@@ -294,8 +293,6 @@ public class VkRenderer2D extends Renderer2D {
 
         vkDestroyRenderPass(deviceWithIndices.device, renderPass, null);
         vkDestroyCommandPool(deviceWithIndices.device, commandPool, null);
-
-        Disposer.disposeAllInCategory("buffers");
 
         cleanupSwapchain();
 

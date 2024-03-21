@@ -12,7 +12,7 @@ import static org.lwjgl.opengl.GL46.*;
 /***
  * Represents an OpenGL Shader Program. This is a Disposable OpenGL object and will be disposed by the Window.
  */
-public class GLShaderProgram extends ShaderProgram implements Disposable {
+public class GLShaderProgram extends ShaderProgram {
 
     private int shaderProgram;
 
@@ -23,7 +23,7 @@ public class GLShaderProgram extends ShaderProgram implements Disposable {
      */
     public GLShaderProgram(String vertexShaderSource, String fragmentShaderSource) {
         super(vertexShaderSource, fragmentShaderSource);
-        Disposer.add(this);
+        Disposer.add("managedResources", this);
     }
 
 

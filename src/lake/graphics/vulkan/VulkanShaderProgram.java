@@ -18,7 +18,7 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK10.vkDestroyShaderModule;
 
-public class VulkanShaderProgram extends ShaderProgram implements Disposable {
+public class VulkanShaderProgram extends ShaderProgram {
 
     private VkPipelineShaderStageCreateInfo.Buffer shaderStages;
     private VkDevice device;
@@ -31,7 +31,7 @@ public class VulkanShaderProgram extends ShaderProgram implements Disposable {
     private long fragShaderModule;
     public VulkanShaderProgram(String vertexShaderSource, String fragmentShaderSource) {
         super(vertexShaderSource, fragmentShaderSource);
-        Disposer.add(this);
+        Disposer.add("managedResources", this);
     }
 
     public VkDevice getDevice() {

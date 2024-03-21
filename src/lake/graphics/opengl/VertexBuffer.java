@@ -1,5 +1,6 @@
 package lake.graphics.opengl;
 
+import lake.graphics.Disposable;
 import lake.graphics.Disposer;
 
 import static org.lwjgl.opengl.GL46.*;
@@ -8,13 +9,14 @@ import static org.lwjgl.opengl.GL46.*;
  * Represents an OpenGL Vertex Buffer. This is a Disposable OpenGL object and will be disposed by the Window.
  * This class also manages the Index Buffer automatically
  */
-public class VertexBuffer extends lake.graphics.VertexBuffer {
+public class VertexBuffer extends lake.graphics.VertexBuffer implements Disposable {
     public int myVbo;
     public int myEbo;
     private int numOfVertices;
 
     public VertexBuffer(int maxQuads, int vertexDataSize) {
         super(maxQuads, vertexDataSize);
+        Disposer.add("managedResources", this);
 
 
         build();

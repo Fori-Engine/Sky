@@ -179,7 +179,12 @@ public class StandaloneWindow implements Window {
      */
 
     public void close() {
-        Disposer.disposeAll();
+
+        Disposer.disposeAllInCategory("managedResources");
+        Disposer.disposeAllInCategory("renderer");
+
+
+
         glfwFreeCallbacks(window);
         glfwDestroyWindow(window);
         glfwTerminate();

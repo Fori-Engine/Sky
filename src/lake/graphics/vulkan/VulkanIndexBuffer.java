@@ -25,7 +25,7 @@ public class VulkanIndexBuffer implements Disposable {
 
     public VulkanIndexBuffer(int indexSizeBytes) {
         this.indexSizeBytes = indexSizeBytes;
-        Disposer.add("buffers", this);
+        Disposer.add("managedResources", this);
     }
 
     public VkDeviceWithIndices getDeviceWithIndices() {
