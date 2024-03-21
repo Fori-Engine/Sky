@@ -3,17 +3,12 @@ package lake.graphics.vulkan;
 import lake.graphics.ShaderProgram;
 import lake.graphics.Disposer;
 import org.joml.Matrix4f;
-import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.VkDevice;
 import org.lwjgl.vulkan.VkPipelineShaderStageCreateInfo;
-
+import static org.lwjgl.util.shaderc.Shaderc.*;
 import java.nio.ByteBuffer;
 
-import static lake.graphics.vulkan.ShaderSPIRVUtils.ShaderKind.FRAGMENT_SHADER;
-import static lake.graphics.vulkan.ShaderSPIRVUtils.ShaderKind.VERTEX_SHADER;
-import static lake.graphics.vulkan.ShaderSPIRVUtils.compileShader;
-import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK10.vkDestroyShaderModule;
 
@@ -21,8 +16,8 @@ public class LVKShaderProgram extends ShaderProgram {
 
     private VkPipelineShaderStageCreateInfo.Buffer shaderStages;
     private VkDevice device;
-    private ShaderSPIRVUtils.SPIRV vertShaderSPIRV;
-    private ShaderSPIRVUtils.SPIRV fragShaderSPIRV;
+    private LVKSPRIV vertShaderSPIRV;
+    private LVKSPRIV fragShaderSPIRV;
 
     private ByteBuffer entryPoint;
 
@@ -49,44 +44,82 @@ public class LVKShaderProgram extends ShaderProgram {
     public void prepare() {
         entryPoint = MemoryUtil.memUTF8("main");
 
-        //MemoryUtil.fr
 
+        vertShaderSPIRV = compileShaderToSPIRV(getVertexShaderSource(), shaderc_glsl_vertex_shader);
+        fragShaderSPIRV = compileShaderToSPIRV(getFragmentShaderSource(), shaderc_glsl_fragment_shader);
 
-        try(MemoryStack stack = stackPush()) {
-
-            // Let's compile the GLSL shaders into SPIR-V at runtime using the shaderc library
-            // Check ShaderSPIRVUtils class to see how it can be done
-            vertShaderSPIRV = compileShader("", getVertexShaderSource(), VERTEX_SHADER);
-            fragShaderSPIRV = compileShader("", getFragmentShaderSource(), FRAGMENT_SHADER);
-
-            vertShaderModule = FastVK.createShaderModule(device, vertShaderSPIRV.bytecode());
-            fragShaderModule = FastVK.createShaderModule(device, fragShaderSPIRV.bytecode());
+        vertShaderModule = FastVK.createShaderModule(device, vertShaderSPIRV.bytecode);
+        fragShaderModule = FastVK.createShaderModule(device, fragShaderSPIRV.bytecode);
 
 
 
+        shaderStages = VkPipelineShaderStageCreateInfo.create(2);
 
-            //MemoryUtil.memFr
-            //This goes out of scope when the MemoryStack frame is blown
-            shaderStages = VkPipelineShaderStageCreateInfo.create(2);
+        VkPipelineShaderStageCreateInfo vertShaderStageInfo = shaderStages.get(0);
 
-            VkPipelineShaderStageCreateInfo vertShaderStageInfo = shaderStages.get(0);
+        vertShaderStageInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
+        vertShaderStageInfo.stage(VK_SHADER_STAGE_VERTEX_BIT);
+        vertShaderStageInfo.module(vertShaderModule);
+        vertShaderStageInfo.pName(entryPoint);
 
-            vertShaderStageInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
-            vertShaderStageInfo.stage(VK_SHADER_STAGE_VERTEX_BIT);
-            vertShaderStageInfo.module(vertShaderModule);
-            vertShaderStageInfo.pName(entryPoint);
+        VkPipelineShaderStageCreateInfo fragShaderStageInfo = shaderStages.get(1);
 
-            VkPipelineShaderStageCreateInfo fragShaderStageInfo = shaderStages.get(1);
-
-            fragShaderStageInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
-            fragShaderStageInfo.stage(VK_SHADER_STAGE_FRAGMENT_BIT);
-            fragShaderStageInfo.module(fragShaderModule);
-            fragShaderStageInfo.pName(entryPoint);
+        fragShaderStageInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
+        fragShaderStageInfo.stage(VK_SHADER_STAGE_FRAGMENT_BIT);
+        fragShaderStageInfo.module(fragShaderModule);
+        fragShaderStageInfo.pName(entryPoint);
+    }
 
 
-            //stack.
+    public static LVKSPRIV compileShaderToSPIRV(String source, int kind){
+        long compiler = shaderc_compiler_initialize();
+        if(compiler == MemoryUtil.NULL){
+            throw new RuntimeException("Failed to init shaderc compiler");
+        }
+
+        long result = shaderc_compile_into_spv(compiler, source, kind, "", "main", MemoryUtil.NULL);
+        if(result == MemoryUtil.NULL){
+            throw new RuntimeException("Shader compilation failed");
+        }
+        if(shaderc_result_get_compilation_status(result) != shaderc_compilation_status_success){
+            throw new RuntimeException("Failed to compile shader because: \n" + shaderc_result_get_error_message(result));
+        }
+
+        shaderc_compiler_release(compiler);
+
+
+        return new LVKSPRIV(result, shaderc_result_get_bytes(result));
+    }
+
+    public static class LVKSPRIV {
+        public long handle;
+        public ByteBuffer bytecode;
+
+        public LVKSPRIV(long handle, ByteBuffer bytecode) {
+            this.handle = handle;
+            this.bytecode = bytecode;
+        }
+
+        public void cleanup() {
+            shaderc_result_release(handle);
         }
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     @Override
     public void bind() {
@@ -123,8 +156,8 @@ public class LVKShaderProgram extends ShaderProgram {
         vkDestroyShaderModule(device, vertShaderModule, null);
         vkDestroyShaderModule(device, fragShaderModule, null);
 
-        vertShaderSPIRV.free();
-        fragShaderSPIRV.free();
+        vertShaderSPIRV.cleanup();
+        fragShaderSPIRV.cleanup();
     }
 
     @Override
