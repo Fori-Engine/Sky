@@ -15,9 +15,9 @@ public abstract class Renderer2D {
 
     private int width;
     private int height;
-    private Matrix4f proj;
-    private Camera camera;
-    private Matrix4f translation;
+    protected Matrix4f proj;
+    protected Camera camera;
+    protected Matrix4f translation;
     private ArrayList<String> renderCallNames = new ArrayList<>(50);
     private boolean debug = false;
     private boolean msaa;
