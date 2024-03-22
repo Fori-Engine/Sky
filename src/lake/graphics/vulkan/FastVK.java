@@ -348,7 +348,7 @@ public class FastVK {
             PointerBuffer pCommandBuffers = stack.mallocPointer(commandBuffersCount);
 
             if(vkAllocateCommandBuffers(device, allocInfo, pCommandBuffers) != VK_SUCCESS) {
-                throw new RuntimeException("Fialed to allocate command buffers");
+                throw new RuntimeException("Failed to allocate command buffers");
             }
 
             for(int i = 0;i < commandBuffersCount;i++) {
