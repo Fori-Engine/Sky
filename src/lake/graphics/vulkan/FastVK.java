@@ -209,41 +209,7 @@ public class FastVK {
         }
     }
 
-    public static LVKRenderSync createSyncObjects(VkDevice device, LVKSwapchain swapchain, int framesInFlight) {
 
-        LVKRenderSync vulkanRenderSyncInfo = new LVKRenderSync();
-        vulkanRenderSyncInfo.inFlightFrames = new ArrayList<>(framesInFlight);
-        vulkanRenderSyncInfo.imagesInFlight = new HashMap<>(swapchain.swapChainImages.size());
-
-        try(MemoryStack stack = stackPush()) {
-
-            VkSemaphoreCreateInfo semaphoreInfo = VkSemaphoreCreateInfo.calloc(stack);
-            semaphoreInfo.sType(VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO);
-
-            VkFenceCreateInfo fenceInfo = VkFenceCreateInfo.calloc(stack);
-            fenceInfo.sType(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
-            fenceInfo.flags(VK_FENCE_CREATE_SIGNALED_BIT);
-
-            LongBuffer pImageAvailableSemaphore = stack.mallocLong(1);
-            LongBuffer pRenderFinishedSemaphore = stack.mallocLong(1);
-            LongBuffer pFence = stack.mallocLong(1);
-
-            for(int i = 0;i < framesInFlight;i++) {
-
-                if(vkCreateSemaphore(device, semaphoreInfo, null, pImageAvailableSemaphore) != VK_SUCCESS
-                        || vkCreateSemaphore(device, semaphoreInfo, null, pRenderFinishedSemaphore) != VK_SUCCESS
-                        || vkCreateFence(device, fenceInfo, null, pFence) != VK_SUCCESS) {
-
-                    throw new RuntimeException("Failed to create synchronization objects for the frame " + i);
-                }
-
-                vulkanRenderSyncInfo.inFlightFrames.add(new LVKRenderFrame(pImageAvailableSemaphore.get(0), pRenderFinishedSemaphore.get(0), pFence.get(0)));
-            }
-
-        }
-
-        return vulkanRenderSyncInfo;
-    }
 
 
     public static long createShaderModule(VkDevice device, ByteBuffer spirvCode) {
@@ -329,87 +295,6 @@ public class FastVK {
         }
 
         return commandPool;
-    }
-
-    public static List<VkCommandBuffer> createCommandBuffers(VkDevice device, long commandPool, long renderPass, LVKSwapchain swapchain, List<Long> swapChainFramebuffers, LVKVertexBuffer vertexBuffer, LVKIndexBuffer indexBuffer, LVKPipeline pipeline) {
-
-        final int commandBuffersCount = swapChainFramebuffers.size();
-
-        List<VkCommandBuffer> commandBuffers = new ArrayList<>(commandBuffersCount);
-
-        try(MemoryStack stack = stackPush()) {
-
-            VkCommandBufferAllocateInfo allocInfo = VkCommandBufferAllocateInfo.calloc(stack);
-            allocInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
-            allocInfo.commandPool(commandPool);
-            allocInfo.level(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
-            allocInfo.commandBufferCount(commandBuffersCount);
-
-            PointerBuffer pCommandBuffers = stack.mallocPointer(commandBuffersCount);
-
-            if(vkAllocateCommandBuffers(device, allocInfo, pCommandBuffers) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to allocate command buffers");
-            }
-
-            for(int i = 0;i < commandBuffersCount;i++) {
-                commandBuffers.add(new VkCommandBuffer(pCommandBuffers.get(i), device));
-            }
-
-            VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
-            beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
-
-            VkRenderPassBeginInfo renderPassInfo = VkRenderPassBeginInfo.calloc(stack);
-            renderPassInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO);
-            renderPassInfo.renderPass(renderPass);
-            VkRect2D renderArea = VkRect2D.calloc(stack);
-            renderArea.offset(VkOffset2D.calloc(stack).set(0, 0));
-            renderArea.extent(swapchain.swapChainExtent);
-            renderPassInfo.renderArea(renderArea);
-            VkClearValue.Buffer clearValues = VkClearValue.calloc(1, stack);
-            clearValues.color().float32(stack.floats(0.0f, 0.0f, 0.0f, 1.0f));
-            renderPassInfo.pClearValues(clearValues);
-
-            for(int i = 0;i < commandBuffersCount;i++) {
-
-                VkCommandBuffer commandBuffer = commandBuffers.get(i);
-
-                if(vkBeginCommandBuffer(commandBuffer, beginInfo) != VK_SUCCESS) {
-                    throw new RuntimeException("Failed to begin recording command buffer");
-                }
-
-                renderPassInfo.framebuffer(swapChainFramebuffers.get(i));
-
-
-                vkCmdBeginRenderPass(commandBuffer, renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-                {
-
-                    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
-
-
-                    LongBuffer vertexBuffers = stack.longs(vertexBuffer.getBuffer());
-
-
-                    LongBuffer offsets = stack.longs(0);
-                    vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
-                    vkCmdBindIndexBuffer(commandBuffer, indexBuffer.getBuffer(), 0, VK_INDEX_TYPE_UINT32);
-
-                    vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
-
-
-
-                }
-                vkCmdEndRenderPass(commandBuffer);
-
-
-                if(vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-                    throw new RuntimeException("Failed to record command buffer");
-                }
-
-            }
-
-        }
-
-        return commandBuffers;
     }
 
 
@@ -705,7 +590,8 @@ public class FastVK {
             int presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
             VkExtent2D extent = chooseSwapExtent(stack, swapChainSupport.capabilities, width, height);
 
-            IntBuffer imageCount = stack.ints(swapChainSupport.capabilities.minImageCount() + 1);
+            IntBuffer imageCount = stack.ints(swapChainSupport.capabilities.minImageCount());
+
 
             if(swapChainSupport.capabilities.maxImageCount() > 0 && imageCount.get(0) > swapChainSupport.capabilities.maxImageCount()) {
                 imageCount.put(0, swapChainSupport.capabilities.maxImageCount());

@@ -1,8 +1,10 @@
 package lake.graphics.vulkan;
 
 import lake.FileReader;
+import lake.Time;
 import lake.graphics.*;
 import lake.graphics.opengl.Texture2D;
+import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
@@ -10,6 +12,8 @@ import org.lwjgl.vulkan.*;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
@@ -38,6 +42,9 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
     private LVKRenderSync renderSyncInfo;
     private int currentFrame;
     private LongBuffer descriptorSetLayout;
+    private long descriptorPool;
+
+    private List<Long> descriptorSets;
 
     public LVKRenderer2D(StandaloneWindow window, int width, int height, boolean msaa) {
         super(width, height, msaa);
@@ -111,10 +118,67 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
 
+        renderSyncInfo = new LVKRenderSync();
+        renderSyncInfo.inFlightFrames = new ArrayList<>(MAX_FRAMES_IN_FLIGHT);
+        renderSyncInfo.imagesInFlight = new HashMap<>(swapchain.swapChainImages.size());
 
 
 
-        //Descriptor Set stuff
+        try(MemoryStack stack = stackPush()) {
+
+            VkSemaphoreCreateInfo semaphoreInfo = VkSemaphoreCreateInfo.calloc(stack);
+            semaphoreInfo.sType(VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO);
+
+            VkFenceCreateInfo fenceInfo = VkFenceCreateInfo.calloc(stack);
+            fenceInfo.sType(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
+            fenceInfo.flags(VK_FENCE_CREATE_SIGNALED_BIT);
+
+            LongBuffer pImageAvailableSemaphore = stack.mallocLong(1);
+            LongBuffer pRenderFinishedSemaphore = stack.mallocLong(1);
+            LongBuffer pFence = stack.mallocLong(1);
+
+            for(int i = 0;i < MAX_FRAMES_IN_FLIGHT;i++) {
+
+                if(vkCreateSemaphore(deviceWithIndices.device, semaphoreInfo, null, pImageAvailableSemaphore) != VK_SUCCESS
+                        || vkCreateSemaphore(deviceWithIndices.device, semaphoreInfo, null, pRenderFinishedSemaphore) != VK_SUCCESS
+                        || vkCreateFence(deviceWithIndices.device, fenceInfo, null, pFence) != VK_SUCCESS) {
+
+                    throw new RuntimeException("Failed to create synchronization objects for the frame " + i);
+                }
+
+                renderSyncInfo.inFlightFrames.add(new LVKRenderFrame(pImageAvailableSemaphore.get(0), pRenderFinishedSemaphore.get(0), pFence.get(0)));
+            }
+
+
+
+
+
+
+
+
+            int size = 1 * Float.BYTES;
+
+            for(LVKRenderFrame frame : renderSyncInfo.inFlightFrames){
+                LongBuffer pMemoryBuffer = stack.mallocLong(1);
+                LVKGenericBuffer uniformBuffer = FastVK.createBuffer(deviceWithIndices.device, physicalDevice, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, pMemoryBuffer);
+                LVKRenderFrame.LVKFrameUniforms uniforms = new LVKRenderFrame.LVKFrameUniforms(uniformBuffer, pMemoryBuffer.get());
+                frame.uniformBuffers().add(uniforms);
+            }
+
+
+
+
+
+
+
+
+
+        }
+
+
+
+
+        //Descriptor Set Layout stuff
         {
             try(MemoryStack stack = stackPush()) {
 
@@ -139,6 +203,124 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
         }
 
+        //Descriptor Pool stuff
+        {
+            try(MemoryStack stack = stackPush()) {
+
+                VkDescriptorPoolSize.Buffer poolSize = VkDescriptorPoolSize.calloc(1, stack);
+                poolSize.type(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+                poolSize.descriptorCount(swapchain.swapChainImages.size());
+
+                VkDescriptorPoolCreateInfo poolInfo = VkDescriptorPoolCreateInfo.calloc(stack);
+                poolInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO);
+                poolInfo.pPoolSizes(poolSize);
+                poolInfo.maxSets(swapchain.swapChainImages.size());
+
+                LongBuffer pDescriptorPool = stack.mallocLong(1);
+
+                if(vkCreateDescriptorPool(deviceWithIndices.device, poolInfo, null, pDescriptorPool) != VK_SUCCESS) {
+                    throw new RuntimeException("Failed to create descriptor pool");
+                }
+
+                descriptorPool = pDescriptorPool.get(0);
+            }
+        }
+
+        //Descriptor Set stuff
+        {
+
+
+            try(MemoryStack stack = stackPush()) {
+
+                LongBuffer layouts = stack.mallocLong(MAX_FRAMES_IN_FLIGHT);
+                for(int i = 0;i < layouts.capacity();i++) {
+                    layouts.put(i, descriptorSetLayout.get(0));
+                }
+
+                VkDescriptorSetAllocateInfo allocInfo = VkDescriptorSetAllocateInfo.calloc(stack);
+                allocInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO);
+                allocInfo.descriptorPool(descriptorPool);
+                allocInfo.pSetLayouts(layouts);
+
+                LongBuffer pDescriptorSets = stack.mallocLong(MAX_FRAMES_IN_FLIGHT);
+
+                if(vkAllocateDescriptorSets(deviceWithIndices.device, allocInfo, pDescriptorSets) != VK_SUCCESS) {
+                    throw new RuntimeException("Failed to allocate descriptor sets");
+                }
+
+
+
+
+
+
+                descriptorSets = new ArrayList<>(pDescriptorSets.capacity());
+
+                VkDescriptorBufferInfo.Buffer bufferInfo = VkDescriptorBufferInfo.calloc(1, stack);
+                bufferInfo.offset(0);
+
+                //FIXME
+                bufferInfo.range(1 * Float.BYTES);
+
+                VkWriteDescriptorSet.Buffer descriptorWrite = VkWriteDescriptorSet.calloc(1, stack);
+                descriptorWrite.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
+                descriptorWrite.dstBinding(0);
+                descriptorWrite.dstArrayElement(0);
+                descriptorWrite.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+                descriptorWrite.descriptorCount(1);
+                descriptorWrite.pBufferInfo(bufferInfo);
+
+                List<LVKRenderFrame> inFlightFrames = renderSyncInfo.inFlightFrames;
+
+
+                for (int i = 0; i < inFlightFrames.size(); i++) {
+                    LVKRenderFrame frame = inFlightFrames.get(i);
+                    for (LVKRenderFrame.LVKFrameUniforms uniform : frame.uniformBuffers()) {
+                        long descriptorSet = pDescriptorSets.get(i);
+                        bufferInfo.buffer(uniform.getBuffer().buffer);
+                        descriptorWrite.dstSet(descriptorSet);
+                        vkUpdateDescriptorSets(deviceWithIndices.device, descriptorWrite, null);
+                        descriptorSets.add(descriptorSet);
+                    }
+                }
+
+
+
+
+
+
+            }
+
+
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
         LVKShaderProgram shaderProgram = new LVKShaderProgram(
@@ -160,8 +342,26 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
 
-        commandBuffers = FastVK.createCommandBuffers(deviceWithIndices.device, commandPool, renderPass, swapchain, swapchainFramebuffers, vertexBuffer, indexBuffer, pipeline);
-        renderSyncInfo = FastVK.createSyncObjects(deviceWithIndices.device, swapchain, MAX_FRAMES_IN_FLIGHT);
+
+        commandBuffers = createCommandBuffers(
+                deviceWithIndices.device,
+                commandPool,
+                renderPass,
+                swapchain,
+                swapchainFramebuffers,
+                vertexBuffer,
+                indexBuffer,
+                pipeline,
+                descriptorSets);
+
+
+
+
+
+
+
+
+
 
 
 
@@ -177,6 +377,92 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
     }
+
+
+    private List<VkCommandBuffer> createCommandBuffers(VkDevice device, long commandPool, long renderPass, LVKSwapchain swapchain, List<Long> swapChainFramebuffers, LVKVertexBuffer vertexBuffer, LVKIndexBuffer indexBuffer, LVKPipeline pipeline, List<Long> descriptorSets) {
+
+        final int commandBuffersCount = swapChainFramebuffers.size();
+
+        List<VkCommandBuffer> commandBuffers = new ArrayList<>(commandBuffersCount);
+
+        try(MemoryStack stack = stackPush()) {
+
+            VkCommandBufferAllocateInfo allocInfo = VkCommandBufferAllocateInfo.calloc(stack);
+            allocInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
+            allocInfo.commandPool(commandPool);
+            allocInfo.level(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+            allocInfo.commandBufferCount(commandBuffersCount);
+
+            PointerBuffer pCommandBuffers = stack.mallocPointer(commandBuffersCount);
+
+            if(vkAllocateCommandBuffers(device, allocInfo, pCommandBuffers) != VK_SUCCESS) {
+                throw new RuntimeException("Failed to allocate command buffers");
+            }
+
+            for(int i = 0;i < commandBuffersCount;i++) {
+                commandBuffers.add(new VkCommandBuffer(pCommandBuffers.get(i), device));
+            }
+
+            VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
+            beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
+
+            VkRenderPassBeginInfo renderPassInfo = VkRenderPassBeginInfo.calloc(stack);
+            renderPassInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO);
+            renderPassInfo.renderPass(renderPass);
+            VkRect2D renderArea = VkRect2D.calloc(stack);
+            renderArea.offset(VkOffset2D.calloc(stack).set(0, 0));
+            renderArea.extent(swapchain.swapChainExtent);
+            renderPassInfo.renderArea(renderArea);
+            VkClearValue.Buffer clearValues = VkClearValue.calloc(1, stack);
+            clearValues.color().float32(stack.floats(0.0f, 0.0f, 0.0f, 1.0f));
+            renderPassInfo.pClearValues(clearValues);
+
+
+            for(int i = 0; i < commandBuffersCount;i++) {
+
+                VkCommandBuffer commandBuffer = commandBuffers.get(i);
+
+                if(vkBeginCommandBuffer(commandBuffer, beginInfo) != VK_SUCCESS) {
+                    throw new RuntimeException("Failed to begin recording command buffer");
+                }
+
+                renderPassInfo.framebuffer(swapChainFramebuffers.get(i));
+
+
+                vkCmdBeginRenderPass(commandBuffer, renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+                {
+
+                    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
+
+
+                    LongBuffer vertexBuffers = stack.longs(vertexBuffer.getBuffer());
+
+
+                    LongBuffer offsets = stack.longs(0);
+                    vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
+                    vkCmdBindIndexBuffer(commandBuffer, indexBuffer.getBuffer(), 0, VK_INDEX_TYPE_UINT32);
+
+                    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                            pipeline.pipelineLayout, 0, stack.longs(descriptorSets.get(i)), null);
+                    vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
+
+
+
+                }
+                vkCmdEndRenderPass(commandBuffer);
+
+
+                if(vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+                    throw new RuntimeException("Failed to record command buffer");
+                }
+
+            }
+
+        }
+
+        return commandBuffers;
+    }
+
 
     private static void memcpy(ByteBuffer buffer, float[] vertices) {
         for(float f : vertices){
@@ -417,11 +703,53 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
         render("Final Render");
     }
 
+
+    float t = 0;
+
     @Override
     public void render(String renderName) {
         try(MemoryStack stack = stackPush()) {
 
             LVKRenderFrame thisFrame = renderSyncInfo.inFlightFrames.get(currentFrame);
+
+
+            //Uniforms
+            {
+                for(LVKRenderFrame.LVKFrameUniforms uniform : thisFrame.uniformBuffers()){
+
+                    PointerBuffer data = stack.mallocPointer(1);
+
+                    vkMapMemory(deviceWithIndices.device, uniform.getpMemory(), 0, uniform.getBuffer().bufferInfo.size(), 0, data);
+                    {
+                        memcpy(data.getByteBuffer(0, (int) uniform.getBuffer().bufferInfo.size()), new float[]{
+                                (float) (Math.pow(Math.sin(t), 2) + 1) / 2
+                        });
+                    }
+                    vkUnmapMemory(deviceWithIndices.device, uniform.getpMemory());
+                }
+
+                t += Time.deltaTime * 3;
+            }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
             vkWaitForFences(deviceWithIndices.device, thisFrame.pFence(), true, UINT64_MAX);
 
@@ -489,11 +817,24 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
     @Override
     public void dispose() {
+
+        vkDestroyDescriptorPool(deviceWithIndices.device, descriptorPool, null);
+
+
         renderSyncInfo.inFlightFrames.forEach(frame -> {
 
             vkDestroySemaphore(deviceWithIndices.device, frame.renderFinishedSemaphore(), null);
             vkDestroySemaphore(deviceWithIndices.device, frame.imageAvailableSemaphore(), null);
             vkDestroyFence(deviceWithIndices.device, frame.fence(), null);
+
+            for(LVKRenderFrame.LVKFrameUniforms uniforms : frame.uniformBuffers()){
+                vkDestroyBuffer(deviceWithIndices.device, uniforms.getBuffer().buffer, null);
+                vkFreeMemory(deviceWithIndices.device, uniforms.getpMemory(), null);
+            }
+
+
+
+
         });
         renderSyncInfo.imagesInFlight.clear();
 
