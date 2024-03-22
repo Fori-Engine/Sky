@@ -4,6 +4,7 @@ import lake.FileReader;
 import lake.graphics.*;
 import lake.graphics.opengl.Texture2D;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
 
 import java.nio.ByteBuffer;
@@ -36,7 +37,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
     private List<VkCommandBuffer> commandBuffers;
     private LVKRenderSync renderSyncInfo;
     private int currentFrame;
-
+    private LongBuffer descriptorSetLayout;
 
     public LVKRenderer2D(StandaloneWindow window, int width, int height, boolean msaa) {
         super(width, height, msaa);
@@ -58,26 +59,9 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
         swapchain = FastVK.createSwapChain(physicalDevice, deviceWithIndices.device, surface, width, height);
         swapchainImageViews = FastVK.createImageViews(deviceWithIndices.device, swapchain);
 
-        LVKShaderProgram shaderProgram = new LVKShaderProgram(
-                FileReader.readFile(LVKRenderer2D.class.getClassLoader().getResourceAsStream("vulkan/VertexShader.glsl")),
-                FileReader.readFile(LVKRenderer2D.class.getClassLoader().getResourceAsStream("vulkan/FragmentShader.glsl"))
-        );
 
 
         renderPass = FastVK.createRenderPass(deviceWithIndices.device, swapchain);
-
-        shaderProgram.setDevice(deviceWithIndices.device);
-        shaderProgram.prepare();
-
-        pipeline = createPipeline(deviceWithIndices.device, swapchain, shaderProgram.getShaderStages(), renderPass);
-        shaderProgram.disposeShaderModules();
-
-        currentShaderProgram = shaderProgram;
-        defaultShaderProgram = shaderProgram;
-
-
-
-
         swapchainFramebuffers = FastVK.createFramebuffers(deviceWithIndices.device, swapchain, swapchainImageViews, renderPass);
 
         commandPool = FastVK.createCommandPool(deviceWithIndices);
@@ -126,11 +110,58 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
 
+
+
+
+
+        //Descriptor Set stuff
+        {
+            try(MemoryStack stack = stackPush()) {
+
+                VkDescriptorSetLayoutBinding.Buffer uboLayoutBinding = VkDescriptorSetLayoutBinding.calloc(1, stack);
+                uboLayoutBinding.binding(0);
+                uboLayoutBinding.descriptorCount(1);
+                uboLayoutBinding.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+                uboLayoutBinding.pImmutableSamplers(null);
+                uboLayoutBinding.stageFlags(VK_SHADER_STAGE_VERTEX_BIT);
+
+                VkDescriptorSetLayoutCreateInfo layoutInfo = VkDescriptorSetLayoutCreateInfo.calloc(stack);
+                layoutInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO);
+                layoutInfo.pBindings(uboLayoutBinding);
+
+                LongBuffer pDescriptorSetLayout = MemoryUtil.memAllocLong(1);
+
+                if(vkCreateDescriptorSetLayout(deviceWithIndices.device, layoutInfo, null, pDescriptorSetLayout) != VK_SUCCESS) {
+                    throw new RuntimeException("Failed to create descriptor set layout");
+                }
+                descriptorSetLayout = pDescriptorSetLayout;
+            }
+
+        }
+
+
+
+        LVKShaderProgram shaderProgram = new LVKShaderProgram(
+                FileReader.readFile(LVKRenderer2D.class.getClassLoader().getResourceAsStream("vulkan/VertexShader.glsl")),
+                FileReader.readFile(LVKRenderer2D.class.getClassLoader().getResourceAsStream("vulkan/FragmentShader.glsl"))
+        );
+
+
+
+
+        shaderProgram.setDevice(deviceWithIndices.device);
+        shaderProgram.prepare();
+
+        pipeline = createPipeline(deviceWithIndices.device, swapchain, shaderProgram.getShaderStages(), renderPass, descriptorSetLayout);
+        shaderProgram.disposeShaderModules();
+
+        currentShaderProgram = shaderProgram;
+        defaultShaderProgram = shaderProgram;
+
+
+
         commandBuffers = FastVK.createCommandBuffers(deviceWithIndices.device, commandPool, renderPass, swapchain, swapchainFramebuffers, vertexBuffer, indexBuffer, pipeline);
         renderSyncInfo = FastVK.createSyncObjects(deviceWithIndices.device, swapchain, MAX_FRAMES_IN_FLIGHT);
-
-
-
 
 
 
@@ -164,7 +195,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
 
-    private LVKPipeline createPipeline(VkDevice device, LVKSwapchain swapchain, VkPipelineShaderStageCreateInfo.Buffer shaderStages, long renderPass){
+    private LVKPipeline createPipeline(VkDevice device, LVKSwapchain swapchain, VkPipelineShaderStageCreateInfo.Buffer shaderStages, long renderPass, LongBuffer descriptorSetLayout){
 
 
         long pipelineLayout;
@@ -290,6 +321,8 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
             VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.calloc(stack);
             {
                 pipelineLayoutInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
+                pipelineLayoutInfo.setLayoutCount(1);
+                pipelineLayoutInfo.pSetLayouts(descriptorSetLayout);
             }
             LongBuffer pPipelineLayout = stack.longs(VK_NULL_HANDLE);
 
@@ -469,6 +502,8 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
         vkDestroyCommandPool(deviceWithIndices.device, commandPool, null);
 
         cleanupSwapchain();
+
+        vkDestroyDescriptorSetLayout(deviceWithIndices.device, descriptorSetLayout.get(), null);
 
         vkDestroyDevice(deviceWithIndices.device, null);
         FastVK.cleanupDebugMessenger(instance, true);
