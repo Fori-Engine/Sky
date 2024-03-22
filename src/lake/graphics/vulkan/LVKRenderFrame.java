@@ -30,6 +30,8 @@ public class LVKRenderFrame {
         private LVKGenericBuffer buffer;
         private long pMemory;
 
+        public static int SIZE = 1 * Float.BYTES;
+
 
 
 

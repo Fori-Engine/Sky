@@ -61,19 +61,16 @@ public class LVKVertexBuffer extends VertexBuffer implements Disposable {
         this.physicalDevice = physicalDevice;
     }
 
-    public PointerBuffer getData() {
+    public PointerBuffer getMappingBuffer() {
         return data;
     }
 
-    public VkBufferCreateInfo getBufferInfo() {
-        return buffer.bufferInfo;
-    }
 
 
 
     @Override
     public int getNumOfVertices() {
-        return 0;
+        return maxQuads * 4;
     }
 
 
@@ -108,7 +105,7 @@ public class LVKVertexBuffer extends VertexBuffer implements Disposable {
                 pVertexBufferMemory
         );
         vertexBufferMemory = pVertexBufferMemory.get(0);
-        VkSubmitInfo submitInfo = FastVK.transfer(verticesSizeBytes, commandPool, deviceWithIndices.device, buffer.buffer, stagingBuffer.buffer);
+        VkSubmitInfo submitInfo = FastVK.transfer(verticesSizeBytes, commandPool, deviceWithIndices.device, buffer.handle, stagingBuffer.handle);
 
         if(vkQueueSubmit(graphicsQueue, submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
             throw new RuntimeException("Failed to submit copy command buffer");
@@ -119,14 +116,6 @@ public class LVKVertexBuffer extends VertexBuffer implements Disposable {
 
     public LVKGenericBuffer getGenericBuffer(){
         return buffer;
-    }
-
-    public long getBuffer() {
-        return buffer.buffer;
-    }
-
-    public long getStagingBuffer(){
-        return stagingBuffer.buffer;
     }
 
 
@@ -142,8 +131,8 @@ public class LVKVertexBuffer extends VertexBuffer implements Disposable {
     public void dispose() {
         MemoryUtil.memFree(data);
 
-        vkDestroyBuffer(deviceWithIndices.device, getBuffer(), null);
-        vkDestroyBuffer(deviceWithIndices.device, getStagingBuffer(), null);
+        vkDestroyBuffer(deviceWithIndices.device, buffer.handle, null);
+        vkDestroyBuffer(deviceWithIndices.device, stagingBuffer.handle, null);
 
         vkFreeMemory(deviceWithIndices.device, getVertexBufferMemory(), null);
         vkFreeMemory(deviceWithIndices.device, getStagingBufferMemory(), null);

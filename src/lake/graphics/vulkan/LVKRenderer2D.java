@@ -9,7 +9,6 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
 
-import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.ArrayList;
@@ -53,38 +52,42 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
         instance = FastVK.createInstance(getClass().getName(), "LakeEngine", true);
         FastVK.setupDebugMessenger(instance, true);
-
         surface = FastVK.createSurface(instance, window);
-
         physicalDevice = FastVK.pickPhysicalDevice(instance, surface);
         deviceWithIndices = FastVK.createLogicalDevice(physicalDevice, true, surface);
-
-
         graphicsQueue = FastVK.getGraphicsQueue(deviceWithIndices);
         presentQueue = FastVK.getPresentQueue(deviceWithIndices);
-
         swapchain = FastVK.createSwapChain(physicalDevice, deviceWithIndices.device, surface, width, height);
         swapchainImageViews = FastVK.createImageViews(deviceWithIndices.device, swapchain);
-
-
-
         renderPass = FastVK.createRenderPass(deviceWithIndices.device, swapchain);
         swapchainFramebuffers = FastVK.createFramebuffers(deviceWithIndices.device, swapchain, swapchainImageViews, renderPass);
-
         commandPool = FastVK.createCommandPool(deviceWithIndices);
 
+
+
+
+
+
+
+
+
+
+
+
+
         vertexBuffer = new LVKVertexBuffer(1, 5 * Float.BYTES);
-        vertexBuffer.setDeviceWithIndices(deviceWithIndices);
-        vertexBuffer.setCommandPool(commandPool);
-        vertexBuffer.setGraphicsQueue(graphicsQueue);
-        vertexBuffer.setPhysicalDevice(physicalDevice);
-        vertexBuffer.build();
+        {
+            vertexBuffer.setDeviceWithIndices(deviceWithIndices);
+            vertexBuffer.setCommandPool(commandPool);
+            vertexBuffer.setGraphicsQueue(graphicsQueue);
+            vertexBuffer.setPhysicalDevice(physicalDevice);
+            vertexBuffer.build();
+        }
 
 
 
 
-
-        vertexBuffer.getGenericBuffer().mapAndUpload(deviceWithIndices.device, vertexBuffer.getData(), new float[]{
+        vertexBuffer.getGenericBuffer().mapAndUpload(deviceWithIndices.device, vertexBuffer.getMappingBuffer(), new float[]{
                 -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
                 0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
                 0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
@@ -92,14 +95,16 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
         });
 
 
-        indexBuffer = new LVKIndexBuffer(Integer.BYTES);
-        indexBuffer.setDeviceWithIndices(deviceWithIndices);
-        indexBuffer.setCommandPool(commandPool);
-        indexBuffer.setGraphicsQueue(graphicsQueue);
-        indexBuffer.setPhysicalDevice(physicalDevice);
-        indexBuffer.build();
+        indexBuffer = new LVKIndexBuffer(1, 6, Integer.BYTES);
+        {
+            indexBuffer.setDeviceWithIndices(deviceWithIndices);
+            indexBuffer.setCommandPool(commandPool);
+            indexBuffer.setGraphicsQueue(graphicsQueue);
+            indexBuffer.setPhysicalDevice(physicalDevice);
+            indexBuffer.build();
+        }
 
-        indexBuffer.getGenericBuffer().mapAndUpload(deviceWithIndices.device, indexBuffer.getData(), new int[]{
+        indexBuffer.getMainBuffer().mapAndUpload(deviceWithIndices.device, indexBuffer.getMappingBuffer(), new int[]{
                 0, 1, 2, 2, 3, 0
         });
 
@@ -137,29 +142,12 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
                 renderSyncInfo.inFlightFrames.add(new LVKRenderFrame(pImageAvailableSemaphore.get(0), pRenderFinishedSemaphore.get(0), pFence.get(0)));
             }
 
-
-
-
-
-
-
-
-            int size = 1 * Float.BYTES;
-
             for(LVKRenderFrame frame : renderSyncInfo.inFlightFrames){
                 LongBuffer pMemoryBuffer = stack.mallocLong(1);
-                LVKGenericBuffer uniformBuffer = FastVK.createBuffer(deviceWithIndices.device, physicalDevice, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, pMemoryBuffer);
-                LVKRenderFrame.LVKFrameUniforms uniforms = new LVKRenderFrame.LVKFrameUniforms(uniformBuffer, pMemoryBuffer.get());
+                LVKGenericBuffer uniformsBuffer = FastVK.createBuffer(deviceWithIndices.device, physicalDevice, LVKRenderFrame.LVKFrameUniforms.SIZE, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, pMemoryBuffer);
+                LVKRenderFrame.LVKFrameUniforms uniforms = new LVKRenderFrame.LVKFrameUniforms(uniformsBuffer, pMemoryBuffer.get());
                 frame.uniformBuffers().add(uniforms);
             }
-
-
-
-
-
-
-
-
 
         }
 
@@ -246,8 +234,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
                 VkDescriptorBufferInfo.Buffer bufferInfo = VkDescriptorBufferInfo.calloc(1, stack);
                 bufferInfo.offset(0);
 
-                //FIXME
-                bufferInfo.range(1 * Float.BYTES);
+                bufferInfo.range(LVKRenderFrame.LVKFrameUniforms.SIZE);
 
                 VkWriteDescriptorSet.Buffer descriptorWrite = VkWriteDescriptorSet.calloc(1, stack);
                 descriptorWrite.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
@@ -262,9 +249,9 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
                 for (int i = 0; i < inFlightFrames.size(); i++) {
                     LVKRenderFrame frame = inFlightFrames.get(i);
-                    for (LVKRenderFrame.LVKFrameUniforms uniform : frame.uniformBuffers()) {
+                    for (LVKRenderFrame.LVKFrameUniforms uniforms : frame.uniformBuffers()) {
                         long descriptorSet = pDescriptorSets.get(i);
-                        bufferInfo.buffer(uniform.getBuffer().buffer);
+                        bufferInfo.buffer(uniforms.getBuffer().handle);
                         descriptorWrite.dstSet(descriptorSet);
                         vkUpdateDescriptorSets(deviceWithIndices.device, descriptorWrite, null);
                         descriptorSets.add(descriptorSet);
@@ -423,12 +410,12 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
                     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
 
-                    LongBuffer vertexBuffers = stack.longs(vertexBuffer.getBuffer());
+                    LongBuffer vertexBuffers = stack.longs(vertexBuffer.getGenericBuffer().handle);
 
 
                     LongBuffer offsets = stack.longs(0);
                     vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
-                    vkCmdBindIndexBuffer(commandBuffer, indexBuffer.getBuffer(), 0, VK_INDEX_TYPE_UINT32);
+                    vkCmdBindIndexBuffer(commandBuffer, indexBuffer.getMainBuffer().handle, 0, VK_INDEX_TYPE_UINT32);
 
                     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                             pipeline.pipelineLayout, 0, stack.longs(descriptorSets.get(i)), null);
@@ -449,19 +436,6 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
         }
 
         return commandBuffers;
-    }
-
-
-    private static void memcpy(ByteBuffer buffer, float[] vertices) {
-        for(float f : vertices){
-            buffer.putFloat(f);
-        }
-    }
-
-    private static void memcpy(ByteBuffer buffer, int[] vertices) {
-        for(int f : vertices){
-            buffer.putInt(f);
-        }
     }
 
 
@@ -703,11 +677,11 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
             //Uniforms
             {
-                for(LVKRenderFrame.LVKFrameUniforms uniform : thisFrame.uniformBuffers()){
+                for(LVKRenderFrame.LVKFrameUniforms uniforms : thisFrame.uniformBuffers()){
 
                     PointerBuffer data = stack.mallocPointer(1);
 
-                    uniform.getBuffer().mapAndUpload(deviceWithIndices.device, data, new float[]{
+                    uniforms.getBuffer().mapAndUpload(deviceWithIndices.device, data, new float[]{
                             (float) (Math.pow(Math.sin(t), 2) + 1) / 2
                     });
 
@@ -833,7 +807,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
             vkDestroyFence(deviceWithIndices.device, frame.fence(), null);
 
             for(LVKRenderFrame.LVKFrameUniforms uniforms : frame.uniformBuffers()){
-                vkDestroyBuffer(deviceWithIndices.device, uniforms.getBuffer().buffer, null);
+                vkDestroyBuffer(deviceWithIndices.device, uniforms.getBuffer().handle, null);
                 vkFreeMemory(deviceWithIndices.device, uniforms.getpMemory(), null);
             }
 

@@ -22,8 +22,12 @@ public class LVKIndexBuffer implements Disposable {
     private long commandPool;
 
     private int indexSizeBytes;
+    private int indicesPerQuad;
+    private int targetQuads;
 
-    public LVKIndexBuffer(int indexSizeBytes) {
+    public LVKIndexBuffer(int targetQuads, int indicesPerQuad, int indexSizeBytes) {
+        this.targetQuads = targetQuads;
+        this.indicesPerQuad = indicesPerQuad;
         this.indexSizeBytes = indexSizeBytes;
         Disposer.add("managedResources", this);
     }
@@ -59,21 +63,18 @@ public class LVKIndexBuffer implements Disposable {
         this.physicalDevice = physicalDevice;
     }
 
-    public PointerBuffer getData() {
+    public PointerBuffer getMappingBuffer() {
         return data;
     }
 
-    public VkBufferCreateInfo getBufferInfo() {
-        return buffer.bufferInfo;
-    }
 
 
 
 
     public void build() {
 
-        //TODO Remove hardcoded 6 indices per quad!
-        int indicesSizeBytes = indexSizeBytes * 6;
+        int indicesSizeBytes = indexSizeBytes * indicesPerQuad * targetQuads;
+
         data = MemoryUtil.memAllocPointer(1);
 
 
@@ -100,7 +101,7 @@ public class LVKIndexBuffer implements Disposable {
                 pIndexBufferMemory
         );
         indexBufferMemory = pIndexBufferMemory.get(0);
-        VkSubmitInfo submitInfo = FastVK.transfer(indicesSizeBytes, commandPool, deviceWithIndices.device, buffer.buffer, stagingBuffer.buffer);
+        VkSubmitInfo submitInfo = FastVK.transfer(indicesSizeBytes, commandPool, deviceWithIndices.device, buffer.handle, stagingBuffer.handle);
 
 
         if(vkQueueSubmit(graphicsQueue, submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
@@ -111,17 +112,11 @@ public class LVKIndexBuffer implements Disposable {
     }
 
 
-    public LVKGenericBuffer getGenericBuffer(){
+    public LVKGenericBuffer getMainBuffer(){
         return buffer;
     }
 
-    public long getBuffer() {
-        return buffer.buffer;
-    }
 
-    public long getStagingBuffer(){
-        return stagingBuffer.buffer;
-    }
 
 
     public long getIndexBufferMemory() {
@@ -137,8 +132,8 @@ public class LVKIndexBuffer implements Disposable {
     public void dispose() {
         MemoryUtil.memFree(data);
 
-        vkDestroyBuffer(deviceWithIndices.device, getBuffer(), null);
-        vkDestroyBuffer(deviceWithIndices.device, getStagingBuffer(), null);
+        vkDestroyBuffer(deviceWithIndices.device, buffer.handle, null);
+        vkDestroyBuffer(deviceWithIndices.device, stagingBuffer.handle, null);
 
         vkFreeMemory(deviceWithIndices.device, getIndexBufferMemory(), null);
         vkFreeMemory(deviceWithIndices.device, getStagingBufferMemory(), null);

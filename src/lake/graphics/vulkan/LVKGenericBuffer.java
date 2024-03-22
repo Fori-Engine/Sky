@@ -1,7 +1,6 @@
 package lake.graphics.vulkan;
 
 import org.lwjgl.PointerBuffer;
-import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkBufferCreateInfo;
 import org.lwjgl.vulkan.VkDevice;
 
@@ -11,13 +10,13 @@ import static org.lwjgl.vulkan.VK10.vkMapMemory;
 import static org.lwjgl.vulkan.VK10.vkUnmapMemory;
 
 public class LVKGenericBuffer {
-    public long buffer;
+    public long handle;
     public VkBufferCreateInfo bufferInfo;
 
     public long pMemory;
 
-    public LVKGenericBuffer(long buffer, VkBufferCreateInfo bufferInfo, long pMemory) {
-        this.buffer = buffer;
+    public LVKGenericBuffer(long handle, VkBufferCreateInfo bufferInfo, long pMemory) {
+        this.handle = handle;
         this.bufferInfo = bufferInfo;
         this.pMemory = pMemory;
     }
