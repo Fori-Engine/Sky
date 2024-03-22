@@ -110,6 +110,11 @@ public class LVKIndexBuffer implements Disposable {
         vkQueueWaitIdle(graphicsQueue);
     }
 
+
+    public LVKGenericBuffer getGenericBuffer(){
+        return buffer;
+    }
+
     public long getBuffer() {
         return buffer.buffer;
     }

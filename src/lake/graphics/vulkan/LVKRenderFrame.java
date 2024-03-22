@@ -1,10 +1,17 @@
 package lake.graphics.vulkan;
 
+import org.lwjgl.PointerBuffer;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.VkDevice;
+
+import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.lwjgl.system.MemoryStack.stackGet;
+import static org.lwjgl.vulkan.VK10.vkMapMemory;
+import static org.lwjgl.vulkan.VK10.vkUnmapMemory;
 
 /**
  * Wraps the needed sync objects for an in flight frame
@@ -23,8 +30,6 @@ public class LVKRenderFrame {
         private LVKGenericBuffer buffer;
         private long pMemory;
 
-        public float r = 1;
-
 
 
 
@@ -33,6 +38,16 @@ public class LVKRenderFrame {
             this.buffer = buffer;
             this.pMemory = pMemory;
         }
+
+
+
+
+
+
+
+
+
+
 
         public LVKGenericBuffer getBuffer() {
             return buffer;

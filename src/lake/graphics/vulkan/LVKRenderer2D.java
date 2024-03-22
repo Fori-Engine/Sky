@@ -84,18 +84,12 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
 
-
-
-        vkMapMemory(deviceWithIndices.device, vertexBuffer.getVertexBufferMemory(), 0, vertexBuffer.getBufferInfo().size(), 0, vertexBuffer.getData());
-        {
-            memcpy(vertexBuffer.getData().getByteBuffer(0, (int) vertexBuffer.getBufferInfo().size()), new float[]{
-                    -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
-                    0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
-                    0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
-                    -0.5f, 0.5f, 1.0f, 1.0f, 1.0f
-            });
-        }
-        vkUnmapMemory(deviceWithIndices.device, vertexBuffer.getVertexBufferMemory());
+        vertexBuffer.getGenericBuffer().mapAndUpload(deviceWithIndices.device, vertexBuffer.getData(), new float[]{
+                -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
+                0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+                0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+                -0.5f, 0.5f, 1.0f, 1.0f, 1.0f
+        });
 
 
         indexBuffer = new LVKIndexBuffer(Integer.BYTES);
@@ -105,15 +99,9 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
         indexBuffer.setPhysicalDevice(physicalDevice);
         indexBuffer.build();
 
-
-
-        vkMapMemory(deviceWithIndices.device, indexBuffer.getIndexBufferMemory(), 0, indexBuffer.getBufferInfo().size(), 0, indexBuffer.getData());
-        {
-            memcpy(indexBuffer.getData().getByteBuffer(0, (int) indexBuffer.getBufferInfo().size()), new int[]{
-                    0, 1, 2, 2, 3, 0
-            });
-        }
-        vkUnmapMemory(deviceWithIndices.device, indexBuffer.getIndexBufferMemory());
+        indexBuffer.getGenericBuffer().mapAndUpload(deviceWithIndices.device, indexBuffer.getData(), new int[]{
+                0, 1, 2, 2, 3, 0
+        });
 
 
 
@@ -719,13 +707,30 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
                     PointerBuffer data = stack.mallocPointer(1);
 
-                    vkMapMemory(deviceWithIndices.device, uniform.getpMemory(), 0, uniform.getBuffer().bufferInfo.size(), 0, data);
-                    {
-                        memcpy(data.getByteBuffer(0, (int) uniform.getBuffer().bufferInfo.size()), new float[]{
-                                (float) (Math.pow(Math.sin(t), 2) + 1) / 2
-                        });
-                    }
-                    vkUnmapMemory(deviceWithIndices.device, uniform.getpMemory());
+                    uniform.getBuffer().mapAndUpload(deviceWithIndices.device, data, new float[]{
+                            (float) (Math.pow(Math.sin(t), 2) + 1) / 2
+                    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                 }
 
                 t += Time.deltaTime * 3;

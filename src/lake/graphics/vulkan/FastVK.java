@@ -463,7 +463,7 @@ public class FastVK {
 
         vkBindBufferMemory(device, pBuffer.get(0), pBufferMemory.get(0), 0);
 
-        LVKGenericBuffer genericBuffer =  new LVKGenericBuffer(pBuffer.get(0), bufferInfo);
+        LVKGenericBuffer genericBuffer =  new LVKGenericBuffer(pBuffer.get(0), bufferInfo, pBufferMemory.get(0));
 
         MemoryUtil.memFree(pBuffer);
         return genericBuffer;

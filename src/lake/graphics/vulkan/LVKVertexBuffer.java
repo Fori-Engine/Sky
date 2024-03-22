@@ -70,6 +70,7 @@ public class LVKVertexBuffer extends VertexBuffer implements Disposable {
     }
 
 
+
     @Override
     public int getNumOfVertices() {
         return 0;
@@ -114,6 +115,10 @@ public class LVKVertexBuffer extends VertexBuffer implements Disposable {
         }
 
         vkQueueWaitIdle(graphicsQueue);
+    }
+
+    public LVKGenericBuffer getGenericBuffer(){
+        return buffer;
     }
 
     public long getBuffer() {
