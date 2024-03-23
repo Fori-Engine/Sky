@@ -16,8 +16,6 @@ import static org.lwjgl.opengl.GL46.*;
  * VertexArray, VertexBuffer, and the Model, View and Projection Matrices. It also includes some debugging utilities to track draw calls using setDebug()
  */
 public class GLRenderer2D extends Renderer2D implements Disposable {
-    private int width;
-    private int height;
     private Matrix4f proj;
     private Camera camera;
     private Matrix4f translation;
@@ -143,12 +141,6 @@ public class GLRenderer2D extends Renderer2D implements Disposable {
     public VertexBuffer getVertexBuffer() {
         return vertexBuffer;
     }
-    public int getWidth() {
-        return width;
-    }
-    public int getHeight() {
-        return height;
-    }
     public Matrix4f getProj() {
         return proj;
     }
@@ -172,8 +164,6 @@ public class GLRenderer2D extends Renderer2D implements Disposable {
 
     private int quadIndex;
     private int nextTextureSlot;
-    private Matrix4f transform = new Matrix4f().identity();
-    private float originX, originY;
     public Matrix4f getTransform() {
         return transform;
     }
