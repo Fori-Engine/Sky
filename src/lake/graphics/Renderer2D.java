@@ -23,6 +23,10 @@ public abstract class Renderer2D {
     private boolean msaa;
     protected ShaderProgram currentShaderProgram, defaultShaderProgram;
 
+
+    protected Matrix4f transform = new Matrix4f().identity();
+    protected float originX, originY;
+
     public Renderer2D(int width, int height, boolean msaa){
         this.width = width;
         this.height = height;
@@ -62,8 +66,6 @@ public abstract class Renderer2D {
     public Matrix4f getTranslation() {
         return translation;
     }
-    private Matrix4f transform = new Matrix4f().identity();
-    private float originX, originY;
     public Matrix4f getTransform() {
         return transform;
     }

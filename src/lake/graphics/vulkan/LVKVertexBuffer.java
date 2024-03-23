@@ -114,7 +114,7 @@ public class LVKVertexBuffer extends VertexBuffer implements Disposable {
         vkQueueWaitIdle(graphicsQueue);
     }
 
-    public LVKGenericBuffer getGenericBuffer(){
+    public LVKGenericBuffer getMainBuffer(){
         return buffer;
     }
 

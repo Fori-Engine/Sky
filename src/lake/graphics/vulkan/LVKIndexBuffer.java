@@ -67,9 +67,13 @@ public class LVKIndexBuffer implements Disposable {
         return data;
     }
 
+    public int getIndicesPerQuad() {
+        return indicesPerQuad;
+    }
 
-
-
+    public int getTargetQuads() {
+        return targetQuads;
+    }
 
     public void build() {
 

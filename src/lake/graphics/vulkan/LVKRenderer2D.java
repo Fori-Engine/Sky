@@ -1,10 +1,10 @@
 package lake.graphics.vulkan;
 
 import lake.FileReader;
-import lake.Time;
 import lake.graphics.*;
 import lake.graphics.opengl.Texture2D;
 import org.joml.Matrix4f;
+import org.joml.Vector4f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
@@ -46,6 +46,11 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
     private long descriptorPool;
 
     private List<Long> descriptorSets;
+    private float[] vertexData;
+    private int quadIndex;
+
+
+
 
     public LVKRenderer2D(StandaloneWindow window, int width, int height, boolean msaa) {
         super(width, height, msaa);
@@ -89,21 +94,10 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
 
-        vertexBuffer.getGenericBuffer().mapAndUpload(deviceWithIndices.device, vertexBuffer.getMappingBuffer(), new float[]{
-                0, 0,
-                1.0f, 0.0f, 0.0f,
-                0, 200,
-                0.0f, 1.0f, 0.0f,
-                200, 200,
-                0.0f, 0.0f, 1.0f,
-                200, 0,
-                1.0f, 1.0f, 1.0f
 
 
-        });
 
-
-        indexBuffer = new LVKIndexBuffer(1, 6, Integer.BYTES);
+        indexBuffer = new LVKIndexBuffer(1000, 6, Integer.BYTES);
         {
             indexBuffer.setDeviceWithIndices(deviceWithIndices);
             indexBuffer.setCommandPool(commandPool);
@@ -112,16 +106,12 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
             indexBuffer.build();
         }
 
-        indexBuffer.getMainBuffer().mapAndUpload(deviceWithIndices.device, indexBuffer.getMappingBuffer(), new int[]{
-                0, 1, 2, 2, 3, 0
-        });
-
 
 
 
         renderSyncInfo = new LVKRenderSync();
         renderSyncInfo.inFlightFrames = new ArrayList<>(MAX_FRAMES_IN_FLIGHT);
-        renderSyncInfo.imagesInFlight = new HashMap<>(swapchain.swapChainImages.size());
+        renderSyncInfo.imagesInFlight = new HashMap<>(MAX_FRAMES_IN_FLIGHT);
 
 
 
@@ -193,12 +183,12 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
                 VkDescriptorPoolSize.Buffer poolSize = VkDescriptorPoolSize.calloc(1, stack);
                 poolSize.type(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-                poolSize.descriptorCount(swapchain.swapChainImages.size());
+                poolSize.descriptorCount(MAX_FRAMES_IN_FLIGHT);
 
                 VkDescriptorPoolCreateInfo poolInfo = VkDescriptorPoolCreateInfo.calloc(stack);
                 poolInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO);
                 poolInfo.pPoolSizes(poolSize);
-                poolInfo.maxSets(swapchain.swapChainImages.size());
+                poolInfo.maxSets(MAX_FRAMES_IN_FLIGHT);
 
                 LongBuffer pDescriptorPool = stack.mallocLong(1);
 
@@ -326,20 +316,6 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
 
-        commandBuffers = createCommandBuffers(
-                deviceWithIndices.device,
-                commandPool,
-                renderPass,
-                swapchain,
-                swapchainFramebuffers,
-                vertexBuffer,
-                indexBuffer,
-                pipeline,
-                descriptorSets);
-
-
-
-
 
         proj = new Matrix4f().ortho(0, getWidth(), 0, getHeight(), 0, 1, true);
 
@@ -348,21 +324,13 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
 
-
-
-
-
-
-
-
-
-
-
+        vertexData = new float[vertexBuffer.getNumOfVertices() * (vertexBuffer.getVertexSizeBytes() / Float.BYTES)];
 
 
     }
 
 
+    //This should probably be moved to render()
     private List<VkCommandBuffer> createCommandBuffers(VkDevice device, long commandPool, long renderPass, LVKSwapchain swapchain, List<Long> swapChainFramebuffers, LVKVertexBuffer vertexBuffer, LVKIndexBuffer indexBuffer, LVKPipeline pipeline, List<Long> descriptorSets) {
 
         final int commandBuffersCount = swapChainFramebuffers.size();
@@ -419,7 +387,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
                     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
 
-                    LongBuffer vertexBuffers = stack.longs(vertexBuffer.getGenericBuffer().handle);
+                    LongBuffer vertexBuffers = stack.longs(vertexBuffer.getMainBuffer().handle);
 
 
                     LongBuffer offsets = stack.longs(0);
@@ -655,8 +623,8 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
     }
 
     @Override
-    public void drawFilledRect(float x, float y, float w, float h, Color color) {
-
+    public void drawFilledRect(float x, float y, float w, float h, Color color){
+        drawQuadVK(x, y, w, h, -1, color, originX, originY, new Rect2D(0, 0, 1, 1), -1, false, false, 0);
     }
 
     @Override
@@ -669,19 +637,143 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
     }
 
+
+
+    private void drawQuadVK(float x,
+                         float y,
+                         float w,
+                         float h,
+                         int slot,
+                         Color color,
+                         float originX,
+                         float originY,
+                         Rect2D region,
+                         float thickness,
+                         boolean xFlip,
+                         boolean yFlip,
+                         float bloom){
+
+        Rect2D copy = new Rect2D(region.x, region.y, region.w, region.h);
+
+        if(xFlip){
+            float temp = copy.x;
+            copy.x = copy.w;
+            copy.w = temp;
+        }
+
+        if(yFlip){
+            float temp = copy.y;
+            copy.y = copy.h;
+            copy.h = temp;
+        }
+
+        Vector4f topLeft = new Vector4f(x - originX, y - originY, 0, 1);
+        Vector4f topRight = new Vector4f(x + w - originX, y - originY, 0, 1);
+        Vector4f bottomLeft = new Vector4f(x - originX, y + h - originY, 0, 1);
+        Vector4f bottomRight = new Vector4f(x + w - originX, y + h - originY, 0, 1);
+
+        topLeft.mul(transform);
+        topRight.mul(transform);
+        bottomLeft.mul(transform);
+        bottomRight.mul(transform);
+
+
+
+        //Translate forward by origin back to the current position
+        topLeft.x += originX;
+        topRight.x += originX;
+        bottomLeft.x += originX;
+        bottomRight.x += originX;
+
+        topLeft.y += originY;
+        topRight.y += originY;
+        bottomLeft.y += originY;
+        bottomRight.y += originY;
+
+
+        {
+            vertexData[quadIndex + 0] = topLeft.x;
+            vertexData[quadIndex + 1] = topLeft.y;
+            vertexData[quadIndex + 2] = color.r;
+            vertexData[quadIndex + 3] = color.g;
+            vertexData[quadIndex + 4] = color.b;
+
+            vertexData[quadIndex + 5] = bottomLeft.x;
+            vertexData[quadIndex + 6] = bottomLeft.y;
+            vertexData[quadIndex + 7] = color.r;
+            vertexData[quadIndex + 8] = color.g;
+            vertexData[quadIndex + 9] = color.b;
+
+            vertexData[quadIndex + 10] = bottomRight.x;
+            vertexData[quadIndex + 11] = bottomRight.y;
+            vertexData[quadIndex + 12] = color.r;
+            vertexData[quadIndex + 13] = color.g;
+            vertexData[quadIndex + 14] = color.b;
+
+            vertexData[quadIndex + 15] = topRight.x;
+            vertexData[quadIndex + 16] = topRight.y;
+            vertexData[quadIndex + 17] = color.r;
+            vertexData[quadIndex + 18] = color.g;
+            vertexData[quadIndex + 19] = color.b;
+        }
+        quadIndex++;
+
+
+        if(quadIndex == vertexBuffer.maxQuads()) render("Next Batch Render");
+    }
+
+
+
+
+
     @Override
     public void render() {
         render("Final Render");
     }
 
 
-    float t = 0;
 
     @Override
     public void render(String renderName) {
+
+
+
+
+
+
+
+        vkDeviceWaitIdle(deviceWithIndices.device);
+        vertexBuffer.getMainBuffer().mapAndUpload(deviceWithIndices.device, vertexBuffer.getMappingBuffer(), vertexData);
+
+        int numOfIndices = quadIndex * 6;
+        int[] indices = new int[indexBuffer.getIndicesPerQuad() * indexBuffer.getTargetQuads()];
+        int offset = 0;
+
+        for (int j = 0; j < numOfIndices; j += 6) {
+
+            indices[j] =         offset;
+            indices[j + 1] = 1 + offset;
+            indices[j + 2] = 2 + offset;
+            indices[j + 3] = 2 + offset;
+            indices[j + 4] = 3 + offset;
+            indices[j + 5] =     offset;
+
+            offset += 4;
+        }
+
+        indexBuffer.getMainBuffer().mapAndUpload(deviceWithIndices.device, indexBuffer.getMappingBuffer(), indices);
+
+
+
+
+        //vertexBuffer.getGenericBuffer().m
+
+
+
         try(MemoryStack stack = stackPush()) {
 
             LVKRenderFrame thisFrame = renderSyncInfo.inFlightFrames.get(currentFrame);
+
 
 
             //Uniforms
@@ -692,21 +784,9 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
                     ByteBuffer buffer = uniforms.getBuffer().mapAndGet(deviceWithIndices.device, data);
                     proj.get(buffer);
-                    //new Matrix4f().identity().get(buffer);
-
-
-
-
                     uniforms.getBuffer().unmap(deviceWithIndices.device);
-
-
-
-
-
-
                 }
 
-                t += Time.deltaTime * 3;
             }
 
 
@@ -773,6 +853,11 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
             vkDeviceWaitIdle(deviceWithIndices.device);
         }
+
+
+
+        vertexData = new float[vertexData.length];
+        quadIndex = 0;
     }
 
     @Override
