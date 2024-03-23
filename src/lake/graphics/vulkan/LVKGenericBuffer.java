@@ -50,4 +50,13 @@ public class LVKGenericBuffer {
         vkUnmapMemory(device, getpMemory());
     }
 
+    public ByteBuffer mapAndGet(VkDevice device, PointerBuffer data){
+        vkMapMemory(device, getpMemory(), 0, bufferInfo.size(), 0, data);
+        return data.getByteBuffer(0, (int) bufferInfo.size());
+    }
+
+    public void unmap(VkDevice device){
+        vkUnmapMemory(device, getpMemory());
+    }
+
 }

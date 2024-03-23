@@ -4,11 +4,13 @@ import lake.FileReader;
 import lake.Time;
 import lake.graphics.*;
 import lake.graphics.opengl.Texture2D;
+import org.joml.Matrix4f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
 
+import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.ArrayList;
@@ -88,10 +90,16 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
         vertexBuffer.getGenericBuffer().mapAndUpload(deviceWithIndices.device, vertexBuffer.getMappingBuffer(), new float[]{
-                -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
-                0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
-                0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
-                -0.5f, 0.5f, 1.0f, 1.0f, 1.0f
+                0, 0,
+                1.0f, 0.0f, 0.0f,
+                0, 200,
+                0.0f, 1.0f, 0.0f,
+                200, 200,
+                0.0f, 0.0f, 1.0f,
+                200, 0,
+                1.0f, 1.0f, 1.0f
+
+
         });
 
 
@@ -333,6 +341,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
 
+        proj = new Matrix4f().ortho(0, getWidth(), 0, getHeight(), 0, 1, true);
 
 
 
@@ -535,7 +544,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
                 rasterizer.polygonMode(VK_POLYGON_MODE_FILL);
                 rasterizer.lineWidth(1.0f);
                 rasterizer.cullMode(VK_CULL_MODE_BACK_BIT);
-                rasterizer.frontFace(VK_FRONT_FACE_CLOCKWISE);
+                rasterizer.frontFace(VK_FRONT_FACE_COUNTER_CLOCKWISE);
                 rasterizer.depthBiasEnable(false);
             }
             // ===> MULTISAMPLING <===
@@ -681,24 +690,14 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
                     PointerBuffer data = stack.mallocPointer(1);
 
-                    uniforms.getBuffer().mapAndUpload(deviceWithIndices.device, data, new float[]{
-                            (float) (Math.pow(Math.sin(t), 2) + 1) / 2
-                    });
+                    ByteBuffer buffer = uniforms.getBuffer().mapAndGet(deviceWithIndices.device, data);
+                    proj.get(buffer);
+                    //new Matrix4f().identity().get(buffer);
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
+                    uniforms.getBuffer().unmap(deviceWithIndices.device);
 
 
 

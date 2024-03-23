@@ -30,25 +30,12 @@ public class LVKRenderFrame {
         private LVKGenericBuffer buffer;
         private long pMemory;
 
-        public static int SIZE = 1 * Float.BYTES;
-
-
-
-
+        public static int SIZE = 1 * 16 * Float.BYTES;
 
         public LVKFrameUniforms(LVKGenericBuffer buffer, long pMemory) {
             this.buffer = buffer;
             this.pMemory = pMemory;
         }
-
-
-
-
-
-
-
-
-
 
 
         public LVKGenericBuffer getBuffer() {
