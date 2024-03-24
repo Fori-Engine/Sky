@@ -32,7 +32,7 @@ public class VertexBuffer extends lake.graphics.VertexBuffer implements Disposab
     public void build() {
         myVbo = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, myVbo);
-        glBufferData(GL_ARRAY_BUFFER, maxQuads * 4 * vertexSizeBytes * Float.BYTES, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, maxQuads * 4 * vertexDataSize * Float.BYTES, GL_DYNAMIC_DRAW);
         numOfVertices = maxQuads * 4;
 
         myEbo = glGenBuffers();

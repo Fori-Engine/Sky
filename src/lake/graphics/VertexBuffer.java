@@ -2,11 +2,11 @@ package lake.graphics;
 
 public abstract class VertexBuffer {
     protected int maxQuads;
-    protected int vertexSizeBytes;
+    protected int vertexDataSize;
 
     public VertexBuffer(int maxQuads, int vertexDataSize) {
         this.maxQuads = maxQuads;
-        this.vertexSizeBytes = vertexDataSize;
+        this.vertexDataSize = vertexDataSize;
     }
 
     public abstract int getNumOfVertices();
@@ -14,8 +14,8 @@ public abstract class VertexBuffer {
     public int maxQuads() {
         return maxQuads;
     }
-    public int getVertexSizeBytes() {
-        return vertexSizeBytes;
+    public int getVertexDataSize() {
+        return vertexDataSize;
     }
     public abstract void dispose();
 }
