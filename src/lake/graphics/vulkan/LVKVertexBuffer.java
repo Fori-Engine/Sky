@@ -24,8 +24,8 @@ public class LVKVertexBuffer extends VertexBuffer implements Disposable {
 
 
 
-    public LVKVertexBuffer(int maxQuads, int vertexSizeBytes) {
-        super(maxQuads, vertexSizeBytes);
+    public LVKVertexBuffer(int maxQuads, int vertexDataSize) {
+        super(maxQuads, vertexDataSize);
         Disposer.add("managedResources", this);
     }
 
@@ -77,8 +77,7 @@ public class LVKVertexBuffer extends VertexBuffer implements Disposable {
     @Override
     public void build() {
 
-
-        int verticesSizeBytes = vertexSizeBytes * maxQuads * 4;
+        int verticesSizeBytes = (vertexDataSize * Float.BYTES) * maxQuads * 4;
         data = MemoryUtil.memAllocPointer(1);
 
 

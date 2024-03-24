@@ -14,6 +14,7 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -49,6 +50,9 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
     private float[] vertexData;
     private int quadIndex;
 
+    private Color clearColor = Color.BLACK;
+
+    private ByteBuffer vertexBufferData, indexBufferData;
 
 
 
@@ -82,7 +86,8 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
 
-        vertexBuffer = new LVKVertexBuffer(1, 5 * Float.BYTES);
+        //Found it, wth is this 1?
+        vertexBuffer = new LVKVertexBuffer(3, 5);
         {
             vertexBuffer.setDeviceWithIndices(deviceWithIndices);
             vertexBuffer.setCommandPool(commandPool);
@@ -90,14 +95,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
             vertexBuffer.setPhysicalDevice(physicalDevice);
             vertexBuffer.build();
         }
-
-
-
-
-
-
-
-        indexBuffer = new LVKIndexBuffer(1000, 6, Integer.BYTES);
+        indexBuffer = new LVKIndexBuffer(3, 6, Integer.BYTES);
         {
             indexBuffer.setDeviceWithIndices(deviceWithIndices);
             indexBuffer.setCommandPool(commandPool);
@@ -106,7 +104,8 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
             indexBuffer.build();
         }
 
-
+        vertexBufferData = vertexBuffer.getMainBuffer().mapAndGet(deviceWithIndices.device, vertexBuffer.getMappingBuffer());
+        indexBufferData = indexBuffer.getMainBuffer().mapAndGet(deviceWithIndices.device, indexBuffer.getMappingBuffer());
 
 
         renderSyncInfo = new LVKRenderSync();
@@ -265,44 +264,10 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         LVKShaderProgram shaderProgram = new LVKShaderProgram(
                 FileReader.readFile(LVKRenderer2D.class.getClassLoader().getResourceAsStream("vulkan/VertexShader.glsl")),
                 FileReader.readFile(LVKRenderer2D.class.getClassLoader().getResourceAsStream("vulkan/FragmentShader.glsl"))
         );
-
-
-
 
         shaderProgram.setDevice(deviceWithIndices.device);
         shaderProgram.prepare();
@@ -313,19 +278,24 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
         currentShaderProgram = shaderProgram;
         defaultShaderProgram = shaderProgram;
 
-
-
-
-
         proj = new Matrix4f().ortho(0, getWidth(), 0, getHeight(), 0, 1, true);
 
+        vertexData = new float[vertexBuffer.getNumOfVertices() * vertexBuffer.getVertexDataSize()];
 
 
 
 
 
-        vertexData = new float[vertexBuffer.getNumOfVertices() * (vertexBuffer.getVertexSizeBytes() / Float.BYTES)];
-
+        commandBuffers = createCommandBuffers(
+                deviceWithIndices.device,
+                commandPool,
+                renderPass,
+                swapchain,
+                swapchainFramebuffers,
+                vertexBuffer,
+                indexBuffer,
+                pipeline,
+                descriptorSets);
 
     }
 
@@ -366,7 +336,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
             renderArea.extent(swapchain.swapChainExtent);
             renderPassInfo.renderArea(renderArea);
             VkClearValue.Buffer clearValues = VkClearValue.calloc(1, stack);
-            clearValues.color().float32(stack.floats(0.0f, 0.0f, 0.0f, 1.0f));
+            clearValues.color().float32(stack.floats(clearColor.r, clearColor.g, clearColor.b, clearColor.a));
             renderPassInfo.pClearValues(clearValues);
 
 
@@ -396,7 +366,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
                     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                             pipeline.pipelineLayout, 0, stack.longs(descriptorSets.get(i)), null);
-                    vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
+                    vkCmdDrawIndexed(commandBuffer, indexBuffer.getIndicesPerQuad() * indexBuffer.getTargetQuads(), 1, 0, 0, 0);
 
 
 
@@ -692,34 +662,40 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
         {
-            vertexData[quadIndex + 0] = topLeft.x;
-            vertexData[quadIndex + 1] = topLeft.y;
-            vertexData[quadIndex + 2] = color.r;
-            vertexData[quadIndex + 3] = color.g;
-            vertexData[quadIndex + 4] = color.b;
 
-            vertexData[quadIndex + 5] = bottomLeft.x;
-            vertexData[quadIndex + 6] = bottomLeft.y;
-            vertexData[quadIndex + 7] = color.r;
-            vertexData[quadIndex + 8] = color.g;
-            vertexData[quadIndex + 9] = color.b;
+            int dataPerQuad = vertexBuffer.getVertexDataSize() * 4;
 
-            vertexData[quadIndex + 10] = bottomRight.x;
-            vertexData[quadIndex + 11] = bottomRight.y;
-            vertexData[quadIndex + 12] = color.r;
-            vertexData[quadIndex + 13] = color.g;
-            vertexData[quadIndex + 14] = color.b;
 
-            vertexData[quadIndex + 15] = topRight.x;
-            vertexData[quadIndex + 16] = topRight.y;
-            vertexData[quadIndex + 17] = color.r;
-            vertexData[quadIndex + 18] = color.g;
-            vertexData[quadIndex + 19] = color.b;
+            vertexData[(quadIndex * dataPerQuad) + 0] = topLeft.x;
+            vertexData[(quadIndex * dataPerQuad) + 1] = topLeft.y;
+            vertexData[(quadIndex * dataPerQuad) + 2] = color.r;
+            vertexData[(quadIndex * dataPerQuad) + 3] = color.g;
+            vertexData[(quadIndex * dataPerQuad) + 4] = color.b;
+
+            vertexData[(quadIndex * dataPerQuad) + 5] = bottomLeft.x;
+            vertexData[(quadIndex * dataPerQuad) + 6] = bottomLeft.y;
+            vertexData[(quadIndex * dataPerQuad) + 7] = color.r;
+            vertexData[(quadIndex * dataPerQuad) + 8] = color.g;
+            vertexData[(quadIndex * dataPerQuad) + 9] = color.b;
+
+            vertexData[(quadIndex * dataPerQuad) + 10] = bottomRight.x;
+            vertexData[(quadIndex * dataPerQuad) + 11] = bottomRight.y;
+            vertexData[(quadIndex * dataPerQuad) + 12] = color.r;
+            vertexData[(quadIndex * dataPerQuad) + 13] = color.g;
+            vertexData[(quadIndex * dataPerQuad) + 14] = color.b;
+
+            vertexData[(quadIndex * dataPerQuad) + 15] = topRight.x;
+            vertexData[(quadIndex * dataPerQuad) + 16] = topRight.y;
+            vertexData[(quadIndex * dataPerQuad) + 17] = color.r;
+            vertexData[(quadIndex * dataPerQuad) + 18] = color.g;
+            vertexData[(quadIndex * dataPerQuad) + 19] = color.b;
+
+
         }
         quadIndex++;
 
 
-        if(quadIndex == vertexBuffer.maxQuads()) render("Next Batch Render");
+        //if(quadIndex == vertexBuffer.maxQuads()) render("Next Batch Render");
     }
 
 
@@ -733,17 +709,20 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
 
+
     @Override
     public void render(String renderName) {
 
 
 
+        vertexBufferData.clear();
+        indexBufferData.clear();
+
+        for (float f : vertexData) {
+            vertexBufferData.putFloat(f);
+        }
 
 
-
-
-        vkDeviceWaitIdle(deviceWithIndices.device);
-        vertexBuffer.getMainBuffer().mapAndUpload(deviceWithIndices.device, vertexBuffer.getMappingBuffer(), vertexData);
 
         int numOfIndices = quadIndex * 6;
         int[] indices = new int[indexBuffer.getIndicesPerQuad() * indexBuffer.getTargetQuads()];
@@ -751,23 +730,19 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
         for (int j = 0; j < numOfIndices; j += 6) {
 
-            indices[j] =         offset;
+            indices[j] = offset;
             indices[j + 1] = 1 + offset;
             indices[j + 2] = 2 + offset;
             indices[j + 3] = 2 + offset;
             indices[j + 4] = 3 + offset;
-            indices[j + 5] =     offset;
+            indices[j + 5] = offset;
 
             offset += 4;
         }
 
-        indexBuffer.getMainBuffer().mapAndUpload(deviceWithIndices.device, indexBuffer.getMappingBuffer(), indices);
-
-
-
-
-        //vertexBuffer.getGenericBuffer().m
-
+        for (int i : indices) {
+            indexBufferData.putInt(i);
+        }
 
 
         try(MemoryStack stack = stackPush()) {
@@ -862,7 +837,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
     @Override
     public void clear(Color color) {
-
+        this.clearColor = color;
     }
 
     @Override
