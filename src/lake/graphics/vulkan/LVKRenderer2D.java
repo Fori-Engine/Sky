@@ -53,7 +53,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
     private Color clearColor = Color.BLACK;
 
     private ByteBuffer vertexBufferData, indexBufferData;
-
+    private LVKShaderProgram currentShaderProgram, defaultShaderProgram;
 
 
     public LVKRenderer2D(StandaloneWindow window, int width, int height, boolean msaa) {
@@ -561,10 +561,24 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
     }
 
 
+    @Override
+    public void setShader(ShaderProgram shaderProgram) {
+
+    }
 
     @Override
     public void updateCamera2D() {
 
+    }
+
+    @Override
+    public ShaderProgram getDefaultShader() {
+        return defaultShaderProgram;
+    }
+
+    @Override
+    public ShaderProgram getCurrentShaderProgram() {
+        return currentShaderProgram;
     }
 
     @Override

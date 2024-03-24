@@ -16,20 +16,15 @@ import static org.lwjgl.opengl.GL46.*;
  * VertexArray, VertexBuffer, and the Model, View and Projection Matrices. It also includes some debugging utilities to track draw calls using setDebug()
  */
 public class GLRenderer2D extends Renderer2D implements Disposable {
-    private Matrix4f proj;
-    private Camera camera;
-    private Matrix4f translation;
-    private VertexArray vertexArray;
-    private VertexBuffer vertexBuffer;
+    private GLVertexArray vertexArray;
+    private GLVertexBuffer vertexBuffer;
     private float[] vertexData;
     private int maxTextureSlots;
     public GLShaderProgram defaultGLShaderProgram, currentGLShaderProgram;
     private ArrayList<String> renderCallNames = new ArrayList<>(50);
     private int RECT = -1;
     private int CIRCLE = -2;
-    private boolean debug = false;
     private FastTextureLookup textureLookup;
-
     private Framebuffer2D framebuffer2D;
 
 
@@ -77,20 +72,20 @@ public class GLRenderer2D extends Renderer2D implements Disposable {
         updateCamera2D();
 
         {
-            vertexArray = new VertexArray();
+            vertexArray = new GLVertexArray();
             vertexArray.bind();
             vertexArray.setVertexAttributes(
-                    new VertexAttribute(0, 2, false, "v_pos"),
-                    new VertexAttribute(1, 2, false, "v_uv"),
-                    new VertexAttribute(2, 1, false, "v_texindex"),
-                    new VertexAttribute(3, 4, false, "v_color"),
-                    new VertexAttribute(4, 1, false, "v_thickness"),
-                    new VertexAttribute(5, 1, false, "v_bloom")
+                    new GLVertexAttribute(0, 2, false, "v_pos"),
+                    new GLVertexAttribute(1, 2, false, "v_uv"),
+                    new GLVertexAttribute(2, 1, false, "v_texindex"),
+                    new GLVertexAttribute(3, 4, false, "v_color"),
+                    new GLVertexAttribute(4, 1, false, "v_thickness"),
+                    new GLVertexAttribute(5, 1, false, "v_bloom")
             );
 
             System.out.println("Stride: " + vertexArray.getStride());
 
-            vertexBuffer = new VertexBuffer(1000, vertexArray.getStride() / Float.BYTES);
+            vertexBuffer = new GLVertexBuffer(1000, vertexArray.getStride() / Float.BYTES);
             vertexArray.build();
 
             vertexData = new float[vertexBuffer.getNumOfVertices() * vertexBuffer.getVertexDataSize()];
@@ -98,22 +93,13 @@ public class GLRenderer2D extends Renderer2D implements Disposable {
 
     }
 
-    /***
-     * Sets the current shader. This shader must be compiled before calling this method!
-     * @param GLShaderProgram
-     */
-    public void setShader(GLShaderProgram GLShaderProgram){
-
-        if(currentGLShaderProgram != GLShaderProgram) {
-            currentGLShaderProgram = GLShaderProgram;
+    @Override
+    public void setShader(ShaderProgram shaderProgram) {
+        if(currentGLShaderProgram != shaderProgram) {
+            currentGLShaderProgram = (GLShaderProgram) shaderProgram;
             currentGLShaderProgram.bind();
-
-
-
             updateCamera2D();
         }
-
-
     }
 
     public void updateCamera2D(){
@@ -123,11 +109,13 @@ public class GLRenderer2D extends Renderer2D implements Disposable {
         currentGLShaderProgram.setIntArray("u_textures", createTextureSlots());
     }
 
-    public GLShaderProgram getDefaultShader() {
+    @Override
+    public ShaderProgram getDefaultShader() {
         return defaultGLShaderProgram;
     }
 
-    public GLShaderProgram getCurrentShaderProgram() {
+    @Override
+    public ShaderProgram getCurrentShaderProgram() {
         return currentGLShaderProgram;
     }
 
@@ -138,20 +126,8 @@ public class GLRenderer2D extends Renderer2D implements Disposable {
         }
         return slots;
     }
-    public VertexBuffer getVertexBuffer() {
+    public GLVertexBuffer getVertexBuffer() {
         return vertexBuffer;
-    }
-    public Matrix4f getProj() {
-        return proj;
-    }
-    public Camera getCamera2D() {
-        return camera;
-    }
-    public Matrix4f getView() {
-        return camera.getViewMatrix();
-    }
-    public Matrix4f getTranslation() {
-        return translation;
     }
 
     public Framebuffer2D getFramebuffer2D() {
@@ -161,40 +137,11 @@ public class GLRenderer2D extends Renderer2D implements Disposable {
     public boolean isUsingFramebuffer(){
         return getFramebuffer2D() != null;
     }
-
     private int quadIndex;
     private int nextTextureSlot;
-    public Matrix4f getTransform() {
-        return transform;
-    }
-    public void setTransform(Matrix4f transform) {
-        this.transform = transform;
-    }
-    public void rotate(float radians){
-        setTransform(getTransform().mul(new Matrix4f().rotate(radians, 0, 0, 1)));
-    }
-    public void scale(float x, float y, float z){
-        setTransform(getTransform().mul(new Matrix4f().scale(x, y, z)));
-    }
-    public void resetTransform(){
-        setTransform(new Matrix4f().identity());
-    }
     public void drawTexture(float x, float y, float w, float h, Texture2D texture){
         drawTexture(x, y, w, h, texture, Color.WHITE);
     }
-    public void setOrigin(float x, float y){
-        this.originX = x;
-        this.originY = y;
-    }
-
-    public void setOrigin(Vector2f vector2f){
-        this.originX = vector2f.x;
-        this.originY = vector2f.y;
-    }
-
-
-
-
     public void drawRect(float x, float y, float w, float h, Color color, int thickness){
 
         //Left
@@ -238,8 +185,6 @@ public class GLRenderer2D extends Renderer2D implements Disposable {
 
 
     }
-
-
     public void drawTexture(float x, float y, float w, float h, Texture2D texture, Color color){
         drawTexture(x, y, w, h, texture, color, new Rect2D(0, 0, 1, 1), false, false);
     }
@@ -406,12 +351,9 @@ public class GLRenderer2D extends Renderer2D implements Disposable {
     }
 
 
-
-
-
     public void render() {
         render("Final Draw Call [rebel.engine.graphics.Renderer2D.render()]");
-        if(debug){
+        if(isDebug()){
             System.out.println("Renderer2D (" + this + ") - Debug");
 
             for(String call : getRenderCalls()){
@@ -424,7 +366,6 @@ public class GLRenderer2D extends Renderer2D implements Disposable {
         if(framebuffer2D != null)
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
-
     public void render(String renderName) {
         renderCallNames.add(renderName);
 
@@ -464,60 +405,6 @@ public class GLRenderer2D extends Renderer2D implements Disposable {
         textureLookup.clear();
 
     }
-
-    public void renderInstanced(int count) {
-        renderCallNames.add("Instanced");
-        vertexArray.bind();
-
-        glBindBuffer(GL_ARRAY_BUFFER, getVertexBuffer().myVbo);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, vertexData);
-
-
-        int numOfIndices = quadIndex * 6;
-        int[] indices = new int[numOfIndices];
-        int offset = 0;
-
-        for (int j = 0; j < numOfIndices; j += 6) {
-
-            indices[j] =         offset;
-            indices[j + 1] = 1 + offset;
-            indices[j + 2] = 2 + offset;
-            indices[j + 3] = 2 + offset;
-            indices[j + 4] = 3 + offset;
-            indices[j + 5] =     offset;
-
-            offset += 4;
-        }
-
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, getVertexBuffer().myEbo);
-        glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, indices);
-        glDrawElementsInstanced(GL_TRIANGLES, indices.length, GL_UNSIGNED_INT, 0, count);
-
-
-        vertexData = new float[vertexBuffer.getNumOfVertices() * vertexBuffer.getVertexDataSize()];
-        quadIndex = 0;
-        nextTextureSlot = 0;
-        textureLookup.clear();
-
-    }
-
-
-    public List<String> getRenderCalls(){
-        return new ArrayList<>(renderCallNames);
-    }
-
-    public boolean isDebug() {
-        return debug;
-    }
-
-    /***
-     * Enables OpenGL draw call tracking
-     * @param debug
-     */
-    public void setDebug(boolean debug) {
-        this.debug = debug;
-    }
-
     public void clear(Color color) {
 
         if(framebuffer2D != null){
@@ -529,23 +416,6 @@ public class GLRenderer2D extends Renderer2D implements Disposable {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(color.r, color.g, color.b, color.a);
     }
-
-    public float getOriginX() {
-        return originX;
-    }
-
-    public float getOriginY() {
-        return originY;
-    }
-
-    /***
-     * Returns information about the current OpenGL Renderer
-     * @return
-     */
-    public String getOpenGLRendererName() {
-        return glGetString(GL_RENDERER);
-    }
-
     public void drawText(float x, float y, String text, Color color, Font2D font) {
 
         float xc = x;
@@ -568,7 +438,6 @@ public class GLRenderer2D extends Renderer2D implements Disposable {
         }
 
     }
-
     @Override
     public void dispose() {
 

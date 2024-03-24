@@ -21,7 +21,6 @@ public abstract class Renderer2D {
     private ArrayList<String> renderCallNames = new ArrayList<>(50);
     private boolean debug = false;
     private boolean msaa;
-    protected ShaderProgram currentShaderProgram, defaultShaderProgram;
 
 
     protected Matrix4f transform = new Matrix4f().identity();
@@ -33,21 +32,10 @@ public abstract class Renderer2D {
         this.msaa = msaa;
     }
 
-    public void setShader(ShaderProgram shaderProgram){
-        if(currentShaderProgram != shaderProgram) {
-            currentShaderProgram = shaderProgram;
-            currentShaderProgram.bind();
-            updateCamera2D();
-        }
-    }
-
+    public abstract void setShader(ShaderProgram shaderProgram);
     public abstract void updateCamera2D();
-    public ShaderProgram getDefaultShader() {
-        return defaultShaderProgram;
-    }
-    public ShaderProgram getCurrentShaderProgram() {
-        return currentShaderProgram;
-    }
+    public abstract ShaderProgram getDefaultShader();
+    public abstract ShaderProgram getCurrentShaderProgram();
     public int getWidth() {
         return width;
     }

@@ -8,16 +8,16 @@ import static org.lwjgl.opengl.GL46.*;
 /***
  * Represents an OpenGL Vertex Array. This is a Disposable OpenGL object and will be disposed by the Window.
  */
-public class VertexArray implements Disposable {
+public class GLVertexArray implements Disposable {
     private int myVao;
 
-    private VertexAttribute[] vertexAttributes;
+    private GLVertexAttribute[] vertexAttributes;
     private int stride = 0;
 
 
 
 
-    public VertexArray() {
+    public GLVertexArray() {
         Disposer.add("managedResources", this);
         myVao = glGenVertexArrays();
     }
@@ -31,7 +31,7 @@ public class VertexArray implements Disposable {
 
         int pointer = 0;
 
-        for(VertexAttribute vertexAttribute : vertexAttributes){
+        for(GLVertexAttribute vertexAttribute : vertexAttributes){
 
             glVertexAttribPointer(
                     vertexAttribute.index,
@@ -49,9 +49,9 @@ public class VertexArray implements Disposable {
 
     }
 
-    public void setVertexAttributes(VertexAttribute... vertexAttributes) {
+    public void setVertexAttributes(GLVertexAttribute... vertexAttributes) {
         this.vertexAttributes = vertexAttributes;
-        for(VertexAttribute vertexAttribute : vertexAttributes){
+        for(GLVertexAttribute vertexAttribute : vertexAttributes){
             stride += vertexAttribute.size * Float.BYTES;
         }
     }
@@ -65,7 +65,7 @@ public class VertexArray implements Disposable {
         glDeleteVertexArrays(myVao);
     }
 
-    public VertexAttribute[] getVertexAttributes() {
+    public GLVertexAttribute[] getVertexAttributes() {
         return vertexAttributes;
     }
 }
