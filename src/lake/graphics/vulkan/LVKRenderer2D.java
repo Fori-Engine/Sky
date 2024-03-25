@@ -26,8 +26,8 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
     long UINT64_MAX = 0xFFFFFFFFFFFFFFFFL;
     private VkQueue graphicsQueue, presentQueue;
-    private VkDeviceWithIndices deviceWithIndices;
-    private VkPhysicalDevice physicalDevice;
+    private static VkDeviceWithIndices deviceWithIndices;
+    private static VkPhysicalDevice physicalDevice;
     private VkInstance instance;
     private long surface;
     private LVKSwapchain swapchain;
@@ -855,6 +855,14 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
     @Override
     public void drawText(float x, float y, String text, Color color, Font2D font) {
 
+    }
+
+    public static VkDeviceWithIndices getDeviceWithIndices() {
+        return deviceWithIndices;
+    }
+
+    public static VkPhysicalDevice getPhysicalDevice() {
+        return physicalDevice;
     }
 
     private void cleanupSwapchain(){

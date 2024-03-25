@@ -1,6 +1,6 @@
 package lake.graphics;
 
-import lake.graphics.opengl.Texture2D;
+import lake.graphics.opengl.GLTexture2D;
 
 import java.awt.*;
 import java.awt.image.*;
@@ -66,7 +66,7 @@ public class Font2D {
             char c = (char) i;
 
             BufferedImage ch = toBufferedImage(c);
-            Texture2D glyph = new Texture2D(ch.getWidth(), ch.getHeight());
+            Texture2D glyph = Texture2D.newTexture(ch.getWidth(), ch.getHeight());
             glyph.setData(ch);
             glyphs.put(i, glyph);
         }

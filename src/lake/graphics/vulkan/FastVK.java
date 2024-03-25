@@ -422,7 +422,7 @@ public class FastVK {
         return surface;
     }
 
-    private static int findMemoryType(int typeFilter, int properties, VkPhysicalDevice physicalDevice) {
+    public static int findMemoryType(int typeFilter, int properties, VkPhysicalDevice physicalDevice) {
 
         VkPhysicalDeviceMemoryProperties memProperties = VkPhysicalDeviceMemoryProperties.create();
         vkGetPhysicalDeviceMemoryProperties(physicalDevice, memProperties);

@@ -22,6 +22,7 @@ public abstract class Renderer2D {
     private boolean debug = false;
     private boolean msaa;
 
+    private static RendererType api;
 
     protected Matrix4f transform = new Matrix4f().identity();
     protected float originX, originY;
@@ -106,6 +107,7 @@ public abstract class Renderer2D {
     public abstract void drawText(float x, float y, String text, Color color, Font2D font);
 
     public static Renderer2D createRenderer(RendererType type, StandaloneWindow window, int width, int height, boolean msaa){
+        api = type;
         if(type == RendererType.OPENGL){
             return new GLRenderer2D(width, height, msaa);
         }
@@ -114,5 +116,9 @@ public abstract class Renderer2D {
         }
 
         return null;
+    }
+
+    public static RendererType getAPI() {
+        return api;
     }
 }

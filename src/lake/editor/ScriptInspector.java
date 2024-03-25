@@ -4,7 +4,7 @@ import imgui.type.ImBoolean;
 import lake.Utils;
 import lake.graphics.Color;
 import lake.graphics.Disposer;
-import lake.graphics.opengl.Texture2D;
+import lake.graphics.opengl.GLTexture2D;
 import lake.script.EditorUI;
 import org.joml.Vector3f;
 import org.lwjgl.util.tinyfd.TinyFileDialogs;
@@ -141,11 +141,11 @@ public class ScriptInspector extends Panel {
                                         field.set(object, new Vector3f(vec[0], vec[1], vec[2]));
                                     }
                                 }
-                                else if (Texture2D.class.equals(field.getType())) {
+                                else if (GLTexture2D.class.equals(field.getType())) {
 
                                     separator();
 
-                                    Texture2D i = (Texture2D) field.get(object);
+                                    GLTexture2D i = (GLTexture2D) field.get(object);
 
                                     text(field.getName());
                                     if (button("Select##" + i.toString())) {
@@ -163,7 +163,7 @@ public class ScriptInspector extends Panel {
                                             i.dispose();
                                             Disposer.remove(i);
 
-                                            field.set(object, new Texture2D(texturePath));
+                                            field.set(object, new GLTexture2D(texturePath));
                                         }
                                     }
                                     sameLine();

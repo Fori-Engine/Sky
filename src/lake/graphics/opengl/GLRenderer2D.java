@@ -428,7 +428,7 @@ public class GLRenderer2D extends Renderer2D implements Disposable {
                 continue;
             }
 
-            GLTexture2D texture = font.getGlyphs().get((int) c);
+            Texture2D texture = font.getGlyphs().get((int) c);
 
 
 
