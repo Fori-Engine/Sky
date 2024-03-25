@@ -2,7 +2,6 @@ package lake.graphics.vulkan;
 
 import lake.FileReader;
 import lake.graphics.*;
-import lake.graphics.opengl.Texture2D;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
 import org.lwjgl.PointerBuffer;
@@ -14,7 +13,6 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
