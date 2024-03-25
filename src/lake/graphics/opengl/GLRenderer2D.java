@@ -8,7 +8,6 @@ import lake.FileReader;
 import java.lang.Math;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
-import java.util.List;
 
 import static org.lwjgl.opengl.GL46.*;
 /***
@@ -189,6 +188,7 @@ public class GLRenderer2D extends Renderer2D implements Disposable {
         drawTexture(x, y, w, h, texture, color, new Rect2D(0, 0, 1, 1), false, false);
     }
     public void drawTexture(float x, float y, float w, float h, Texture2D texture, Color color, Rect2D rect2D, boolean xFlip, boolean yFlip) {
+        GLTexture2D glTexture2D = (GLTexture2D) texture;
 
         int slot = nextTextureSlot;
         boolean isUniqueTexture = false;
@@ -196,16 +196,16 @@ public class GLRenderer2D extends Renderer2D implements Disposable {
 
 
         //Existing texture
-        if (textureLookup.hasTexture(texture)) {
-            slot = textureLookup.getTexture(texture);
+        if (textureLookup.hasTexture(glTexture2D)) {
+            slot = textureLookup.getTexture(glTexture2D);
         }
 
         //Unique Texture
         else {
             glActiveTexture(GL_TEXTURE0 + slot);
-            texture.bind();
-            texture.setSlot(slot);
-            textureLookup.registerTexture(texture, slot);
+            glTexture2D.bind();
+            glTexture2D.setSlot(slot);
+            textureLookup.registerTexture(glTexture2D, slot);
             isUniqueTexture = true;
         }
 
@@ -428,7 +428,7 @@ public class GLRenderer2D extends Renderer2D implements Disposable {
                 continue;
             }
 
-            Texture2D texture = font.getGlyphs().get((int) c);
+            GLTexture2D texture = font.getGlyphs().get((int) c);
 
 
 

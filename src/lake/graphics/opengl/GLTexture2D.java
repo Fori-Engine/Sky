@@ -2,6 +2,7 @@ package lake.graphics.opengl;
 
 import lake.graphics.Disposable;
 import lake.graphics.Disposer;
+import lake.graphics.Texture2D;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL46;
 import org.lwjgl.stb.STBImage;
@@ -21,22 +22,17 @@ import static org.lwjgl.opengl.GL46.*;
 /***
  * Represents an OpenGL 2D Texture. This is a Disposable OpenGL object and will be disposed by the Window.
  */
-public class Texture2D implements Disposable {
-    private String path;
+public class GLTexture2D extends Texture2D {
     private int texID;
-    private int width, height;
-
     private int slot;
 
-    public static int FILTER_NEAREST = GL46.GL_NEAREST;
-    public static int FILTER_LINEAR = GL46.GL_LINEAR;
 
     /***
      * Create a Texture from a path. This defaults to a default Linear filter
      * @param path
      */
-    public Texture2D(String path){
-        this(path, FILTER_LINEAR);
+    public GLTexture2D(String path){
+        this(path, Filter.LINEAR);
     }
 
     /***
@@ -44,20 +40,19 @@ public class Texture2D implements Disposable {
      * @param path
      * @param filter
      */
-    public Texture2D(String path, int filter) {
-        if(!new File(path).exists()) throw new RuntimeException("The file " + path + " does not exist!");
+    public GLTexture2D(String path, Texture2D.Filter filter) {
         Disposer.add("managedResources", this);
 
-
-        this.path = path;
 
         IntBuffer w = BufferUtils.createIntBuffer(1);
         IntBuffer h = BufferUtils.createIntBuffer(1);
         IntBuffer channelsInFile = BufferUtils.createIntBuffer(1);
         ByteBuffer texture = STBImage.stbi_load(path, w, h, channelsInFile, 4);
         System.out.println(STBImage.stbi_failure_reason());
-        width = w.get();
-        height = h.get();
+        int width = w.get();
+        int height = h.get();
+
+        setProperties(path, width, height);
 
         texID = glGenTextures();
 
@@ -65,8 +60,8 @@ public class Texture2D implements Disposable {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture);
         glGenerateMipmap(GL_TEXTURE_2D);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter == Filter.NEAREST ? GL_NEAREST : GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter == Filter.NEAREST ? GL_NEAREST : GL_LINEAR);
 
         STBImage.stbi_image_free(texture);
     }
@@ -74,13 +69,13 @@ public class Texture2D implements Disposable {
     /***
      * Creates a Texture with no uploaded data
      */
-    public Texture2D(int width, int height) {
-        this.width = width;
-        this.height = height;
+    public GLTexture2D(int width, int height) {
+        setProperties(null, width, height);
+
+
         Disposer.add("managedResources", this);
         texID = glGenTextures();
         glBindTexture(GL_TEXTURE_2D, texID);
-        //On an NVIDIA GeForce MX450 and Intel Iris Xe Graphics, Compute Shaders break without the 4 following lines
     }
 
     /***
@@ -90,8 +85,8 @@ public class Texture2D implements Disposable {
      * @param height
      */
     public void setData(ByteBuffer data, int width, int height) {
-        this.width = width;
-        this.height = height;
+        setWidth(width);
+        setHeight(height);
 
         glBindTexture(GL_TEXTURE_2D, texID);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
@@ -150,23 +145,10 @@ public class Texture2D implements Disposable {
         glBindTexture(GL_TEXTURE_2D, texID);
     }
 
-    public String getPath() {
-        return path;
-    }
-
     public int getTexID() {
         return texID;
     }
 
-
-
-    public int getWidth() {
-        return width;
-    }
-
-    public int getHeight() {
-        return height;
-    }
 
     public int getSlot() {
         return slot;

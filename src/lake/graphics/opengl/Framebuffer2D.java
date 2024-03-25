@@ -10,7 +10,7 @@ public class Framebuffer2D implements Disposable {
 
     private int framebufferID;
     private int renderbufferID;
-    private Texture2D texture2D;
+    private GLTexture2D texture2D;
     private int width, height;
 
     public Framebuffer2D(int width, int height){
@@ -25,7 +25,7 @@ public class Framebuffer2D implements Disposable {
         glBindFramebuffer(GL_FRAMEBUFFER, framebufferID);
 
 
-        texture2D = new Texture2D(width, height);
+        texture2D = new GLTexture2D(width, height);
         texture2D.bind();
 
 
@@ -58,7 +58,7 @@ public class Framebuffer2D implements Disposable {
         glBindFramebuffer(GL_FRAMEBUFFER, framebufferID);
     }
 
-    public Texture2D getTexture2D() {
+    public GLTexture2D getTexture2D() {
         return texture2D;
     }
 
