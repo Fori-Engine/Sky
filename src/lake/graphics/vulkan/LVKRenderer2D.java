@@ -72,6 +72,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
         swapchainFramebuffers = FastVK.createFramebuffers(deviceWithIndices.device, swapchain, swapchainImageViews, renderPass);
         commandPool = FastVK.createCommandPool(deviceWithIndices);
 
+        LVKCommandRunner.setup(deviceWithIndices, graphicsQueue);
 
 
 
@@ -212,6 +213,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
                 allocInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO);
                 allocInfo.descriptorPool(descriptorPool);
                 allocInfo.pSetLayouts(layouts);
+
 
                 LongBuffer pDescriptorSets = stack.mallocLong(MAX_FRAMES_IN_FLIGHT);
 
@@ -875,6 +877,8 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
     @Override
     public void dispose() {
+
+        LVKCommandRunner.cleanup(deviceWithIndices.device);
 
         vkDestroyDescriptorPool(deviceWithIndices.device, descriptorPool, null);
 

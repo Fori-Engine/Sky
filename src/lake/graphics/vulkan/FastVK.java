@@ -323,6 +323,7 @@ public class FastVK {
             }
 
             VkPhysicalDeviceFeatures deviceFeatures = VkPhysicalDeviceFeatures.calloc(stack);
+            deviceFeatures.samplerAnisotropy(true);
 
             VkDeviceCreateInfo createInfo = VkDeviceCreateInfo.calloc(stack);
 
@@ -346,13 +347,6 @@ public class FastVK {
 
             device = new VkDevice(pDevice.get(0), physicalDevice, createInfo);
 
-            PointerBuffer pQueue = stack.pointers(VK_NULL_HANDLE);
-
-            //vkGetDeviceQueue(device, indices.graphicsFamily, 0, pQueue);
-            //graphicsQueue = new VkQueue(pQueue.get(0), device);
-
-            //vkGetDeviceQueue(device, indices.presentFamily, 0, pQueue);
-            //presentQueue = new VkQueue(pQueue.get(0), device);
         }
 
         return new VkDeviceWithIndices(device, indices);
@@ -723,6 +717,10 @@ public class FastVK {
     }
 
     public static VkSubmitInfo transfer(int sizeInBytes, long commandPool, VkDevice device, long srcBuffer, long dstBuffer){
+
+        //TODO: Move to LVKCommandRunner
+
+
 
         VkCommandBufferAllocateInfo allocInfo = VkCommandBufferAllocateInfo.create();
         allocInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
