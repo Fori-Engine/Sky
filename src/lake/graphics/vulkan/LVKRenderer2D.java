@@ -54,6 +54,9 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
     private LVKShaderProgram currentShaderProgram, defaultShaderProgram;
 
 
+
+
+
     public LVKRenderer2D(StandaloneWindow window, int width, int height, boolean msaa) {
         super(width, height, msaa);
 
@@ -241,6 +244,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
                 descriptorWrite.descriptorCount(1);
                 descriptorWrite.pBufferInfo(bufferInfo);
 
+
                 List<LVKRenderFrame> inFlightFrames = renderSyncInfo.inFlightFrames;
 
 
@@ -282,48 +286,45 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
         vertexData = new float[vertexBuffer.getNumOfVertices() * vertexBuffer.getVertexDataSize()];
 
+        final int commandBuffersCount = swapchainFramebuffers.size();
+
+        commandBuffers = new ArrayList<>(commandBuffersCount);
+
+        VkCommandBufferAllocateInfo allocInfo = VkCommandBufferAllocateInfo.create();
+        allocInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
+        allocInfo.commandPool(commandPool);
+        allocInfo.level(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+        allocInfo.commandBufferCount(commandBuffersCount);
+
+        PointerBuffer pCommandBuffers = MemoryUtil.memAllocPointer(commandBuffersCount);
+
+        if(vkAllocateCommandBuffers(deviceWithIndices.device, allocInfo, pCommandBuffers) != VK_SUCCESS) {
+            throw new RuntimeException("Failed to allocate command buffers");
+        }
+
+        for(int i = 0;i < commandBuffersCount;i++) {
+            commandBuffers.add(new VkCommandBuffer(pCommandBuffers.get(i), deviceWithIndices.device));
+        }
 
 
 
 
-        commandBuffers = createCommandBuffers(
-                deviceWithIndices.device,
-                commandPool,
-                renderPass,
-                swapchain,
-                swapchainFramebuffers,
-                vertexBuffer,
-                indexBuffer,
-                pipeline,
-                descriptorSets);
+
+
 
     }
 
 
     //This should probably be moved to render()
-    private List<VkCommandBuffer> createCommandBuffers(VkDevice device, long commandPool, long renderPass, LVKSwapchain swapchain, List<Long> swapChainFramebuffers, LVKVertexBuffer vertexBuffer, LVKIndexBuffer indexBuffer, LVKPipeline pipeline, List<Long> descriptorSets) {
+    private void recordCmdBuffers() {
 
-        final int commandBuffersCount = swapChainFramebuffers.size();
+        final int commandBuffersCount = swapchainFramebuffers.size();
 
-        List<VkCommandBuffer> commandBuffers = new ArrayList<>(commandBuffersCount);
+
 
         try(MemoryStack stack = stackPush()) {
 
-            VkCommandBufferAllocateInfo allocInfo = VkCommandBufferAllocateInfo.calloc(stack);
-            allocInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
-            allocInfo.commandPool(commandPool);
-            allocInfo.level(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
-            allocInfo.commandBufferCount(commandBuffersCount);
 
-            PointerBuffer pCommandBuffers = stack.mallocPointer(commandBuffersCount);
-
-            if(vkAllocateCommandBuffers(device, allocInfo, pCommandBuffers) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to allocate command buffers");
-            }
-
-            for(int i = 0;i < commandBuffersCount;i++) {
-                commandBuffers.add(new VkCommandBuffer(pCommandBuffers.get(i), device));
-            }
 
             VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
             beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
@@ -348,7 +349,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
                     throw new RuntimeException("Failed to begin recording command buffer");
                 }
 
-                renderPassInfo.framebuffer(swapChainFramebuffers.get(i));
+                renderPassInfo.framebuffer(swapchainFramebuffers.get(i));
 
 
                 vkCmdBeginRenderPass(commandBuffer, renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -382,7 +383,6 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
         }
 
-        return commandBuffers;
     }
 
 
@@ -727,6 +727,8 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
     @Override
     public void render(String renderName) {
 
+
+        recordCmdBuffers();
 
 
         vertexBufferData.clear();
