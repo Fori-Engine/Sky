@@ -56,6 +56,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
     private LVKTexture2D texture2D;
     private LVKSampler sampler;
 
+    private int maxTextures = 32;
 
 
 
@@ -174,7 +175,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
                 VkDescriptorSetLayoutBinding samplerLayoutBinding = bindings.get(1);
 
                 samplerLayoutBinding.binding(1);
-                samplerLayoutBinding.descriptorCount(1);
+                samplerLayoutBinding.descriptorCount(maxTextures);
                 samplerLayoutBinding.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
                 samplerLayoutBinding.pImmutableSamplers(null);
                 samplerLayoutBinding.stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT);
@@ -206,7 +207,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
                 VkDescriptorPoolSize poolSize1 = poolSizes.get(1);
                 poolSize1.type(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-                poolSize1.descriptorCount(MAX_FRAMES_IN_FLIGHT);
+                poolSize1.descriptorCount(MAX_FRAMES_IN_FLIGHT * maxTextures);
 
                 VkDescriptorPoolCreateInfo poolInfo = VkDescriptorPoolCreateInfo.calloc(stack);
                 poolInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO);
@@ -230,7 +231,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
             try(MemoryStack stack = stackPush()) {
 
                 LongBuffer layouts = stack.mallocLong(MAX_FRAMES_IN_FLIGHT);
-                for(int i = 0;i < layouts.capacity();i++) {
+                for(int i = 0; i < layouts.capacity();i++) {
                     layouts.put(i, descriptorSetLayout.get(0));
                 }
 
@@ -260,16 +261,22 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
 
-                VkDescriptorImageInfo.Buffer imageInfo = VkDescriptorImageInfo.calloc(1, stack);
+                VkDescriptorImageInfo.Buffer imageInfos = VkDescriptorImageInfo.calloc(maxTextures, stack);
 
                 //Texture test
                 {
                     texture2D = (LVKTexture2D) Texture2D.newTexture("project/logo.png");
                     sampler = new LVKSampler(deviceWithIndices.device);
 
-                    imageInfo.imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-                    imageInfo.imageView(texture2D.getTextureImageView());
-                    imageInfo.sampler(sampler.getTextureSampler());
+                    for (int i = 0; i < maxTextures; i++) {
+
+                        VkDescriptorImageInfo imageInfo = imageInfos.get(i);
+
+                        imageInfo.imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                        imageInfo.imageView(texture2D.getTextureImageView());
+                        imageInfo.sampler(sampler.getTextureSampler());
+
+                    }
 
                 }
 
@@ -307,8 +314,8 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
                 descriptorWrite1.dstBinding(1);
                 descriptorWrite1.dstArrayElement(0);
                 descriptorWrite1.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-                descriptorWrite1.descriptorCount(1);
-                descriptorWrite1.pImageInfo(imageInfo);
+                descriptorWrite1.descriptorCount(maxTextures);
+                descriptorWrite1.pImageInfo(imageInfos);
 
 
 
