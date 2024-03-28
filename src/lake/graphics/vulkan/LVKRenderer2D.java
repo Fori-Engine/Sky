@@ -89,7 +89,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
         //Found it, wth is this 1?
-        vertexBuffer = new LVKVertexBuffer(3, 5);
+        vertexBuffer = new LVKVertexBuffer(3, 8);
         {
             vertexBuffer.setDeviceWithIndices(deviceWithIndices);
             vertexBuffer.setCommandPool(commandPool);
@@ -315,7 +315,6 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
     }
 
 
-    //This should probably be moved to render()
     private void recordCmdBuffers() {
 
         final int commandBuffersCount = swapchainFramebuffers.size();
@@ -407,7 +406,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
                     VkVertexInputBindingDescription.calloc(1, stack);
 
             bindingDescription.binding(0);
-            bindingDescription.stride(5 * Float.BYTES);
+            bindingDescription.stride(vertexBuffer.getVertexDataSize() * Float.BYTES);
             bindingDescription.inputRate(VK_VERTEX_INPUT_RATE_VERTEX);
             vertexInputInfo.pVertexBindingDescriptions(bindingDescription);
 
@@ -420,7 +419,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
             VkVertexInputAttributeDescription.Buffer attributeDescriptions =
-                    VkVertexInputAttributeDescription.calloc(2);
+                    VkVertexInputAttributeDescription.calloc(3);
 
             // Position
             VkVertexInputAttributeDescription posDescription = attributeDescriptions.get(0);
@@ -431,14 +430,28 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
                 posDescription.offset(0);
             }
 
+            //Texture Coordinates
+            VkVertexInputAttributeDescription texCoordDescription = attributeDescriptions.get(1);
+            {
+                texCoordDescription.binding(0);
+                texCoordDescription.location(1);
+                texCoordDescription.format(VK_FORMAT_R32G32B32_SFLOAT);
+                texCoordDescription.offset(2 * Float.BYTES);
+            }
+
             // Color
-            VkVertexInputAttributeDescription colorDescription = attributeDescriptions.get(1);
+            VkVertexInputAttributeDescription colorDescription = attributeDescriptions.get(2);
             {
                 colorDescription.binding(0);
-                colorDescription.location(1);
+                colorDescription.location(2);
                 colorDescription.format(VK_FORMAT_R32G32B32_SFLOAT);
-                colorDescription.offset(2 * Float.BYTES);
+                colorDescription.offset(4 * Float.BYTES);
             }
+
+
+
+
+
             vertexInputInfo.pVertexAttributeDescriptions(attributeDescriptions.rewind());
 
             // ===> ASSEMBLY STAGE <===
@@ -682,28 +695,42 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
             vertexData[(quadIndex * dataPerQuad) + 0] = topLeft.x;
             vertexData[(quadIndex * dataPerQuad) + 1] = topLeft.y;
-            vertexData[(quadIndex * dataPerQuad) + 2] = color.r;
-            vertexData[(quadIndex * dataPerQuad) + 3] = color.g;
-            vertexData[(quadIndex * dataPerQuad) + 4] = color.b;
+            vertexData[(quadIndex * dataPerQuad) + 2] = copy.x;
+            vertexData[(quadIndex * dataPerQuad) + 3] = copy.y;
+            vertexData[(quadIndex * dataPerQuad) + 4] = color.r;
+            vertexData[(quadIndex * dataPerQuad) + 5] = color.g;
+            vertexData[(quadIndex * dataPerQuad) + 6] = color.b;
+            vertexData[(quadIndex * dataPerQuad) + 7] = color.a;
 
-            vertexData[(quadIndex * dataPerQuad) + 5] = bottomLeft.x;
-            vertexData[(quadIndex * dataPerQuad) + 6] = bottomLeft.y;
-            vertexData[(quadIndex * dataPerQuad) + 7] = color.r;
-            vertexData[(quadIndex * dataPerQuad) + 8] = color.g;
-            vertexData[(quadIndex * dataPerQuad) + 9] = color.b;
 
-            vertexData[(quadIndex * dataPerQuad) + 10] = bottomRight.x;
-            vertexData[(quadIndex * dataPerQuad) + 11] = bottomRight.y;
+            vertexData[(quadIndex * dataPerQuad) + 8] = bottomLeft.x;
+            vertexData[(quadIndex * dataPerQuad) + 9] = bottomLeft.y;
+            vertexData[(quadIndex * dataPerQuad) + 10] = copy.x;
+            vertexData[(quadIndex * dataPerQuad) + 11] = copy.h;
             vertexData[(quadIndex * dataPerQuad) + 12] = color.r;
             vertexData[(quadIndex * dataPerQuad) + 13] = color.g;
             vertexData[(quadIndex * dataPerQuad) + 14] = color.b;
+            vertexData[(quadIndex * dataPerQuad) + 15] = color.a;
 
-            vertexData[(quadIndex * dataPerQuad) + 15] = topRight.x;
-            vertexData[(quadIndex * dataPerQuad) + 16] = topRight.y;
-            vertexData[(quadIndex * dataPerQuad) + 17] = color.r;
-            vertexData[(quadIndex * dataPerQuad) + 18] = color.g;
-            vertexData[(quadIndex * dataPerQuad) + 19] = color.b;
 
+            vertexData[(quadIndex * dataPerQuad) + 16] = bottomRight.x;
+            vertexData[(quadIndex * dataPerQuad) + 17] = bottomRight.y;
+            vertexData[(quadIndex * dataPerQuad) + 18] = copy.w;
+            vertexData[(quadIndex * dataPerQuad) + 19] = copy.h;
+            vertexData[(quadIndex * dataPerQuad) + 20] = color.r;
+            vertexData[(quadIndex * dataPerQuad) + 21] = color.g;
+            vertexData[(quadIndex * dataPerQuad) + 22] = color.b;
+            vertexData[(quadIndex * dataPerQuad) + 23] = color.a;
+
+
+            vertexData[(quadIndex * dataPerQuad) + 24] = topRight.x;
+            vertexData[(quadIndex * dataPerQuad) + 25] = topRight.y;
+            vertexData[(quadIndex * dataPerQuad) + 26] = copy.w;
+            vertexData[(quadIndex * dataPerQuad) + 27] = copy.y;
+            vertexData[(quadIndex * dataPerQuad) + 28] = color.r;
+            vertexData[(quadIndex * dataPerQuad) + 29] = color.g;
+            vertexData[(quadIndex * dataPerQuad) + 30] = color.b;
+            vertexData[(quadIndex * dataPerQuad) + 31] = color.a;
 
         }
         quadIndex++;
