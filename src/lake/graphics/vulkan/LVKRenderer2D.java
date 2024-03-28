@@ -53,6 +53,9 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
     private ByteBuffer vertexBufferData, indexBufferData;
     private LVKShaderProgram currentShaderProgram, defaultShaderProgram;
 
+    private LVKTexture2D texture2D;
+    private LVKSampler sampler;
+
 
 
 
@@ -157,16 +160,28 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
         {
             try(MemoryStack stack = stackPush()) {
 
-                VkDescriptorSetLayoutBinding.Buffer uboLayoutBinding = VkDescriptorSetLayoutBinding.calloc(1, stack);
+                VkDescriptorSetLayoutBinding.Buffer bindings = VkDescriptorSetLayoutBinding.calloc(2, stack);
+
+                VkDescriptorSetLayoutBinding uboLayoutBinding = bindings.get(0);
+
                 uboLayoutBinding.binding(0);
                 uboLayoutBinding.descriptorCount(1);
                 uboLayoutBinding.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
                 uboLayoutBinding.pImmutableSamplers(null);
                 uboLayoutBinding.stageFlags(VK_SHADER_STAGE_VERTEX_BIT);
 
+
+                VkDescriptorSetLayoutBinding samplerLayoutBinding = bindings.get(1);
+
+                samplerLayoutBinding.binding(1);
+                samplerLayoutBinding.descriptorCount(1);
+                samplerLayoutBinding.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+                samplerLayoutBinding.pImmutableSamplers(null);
+                samplerLayoutBinding.stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT);
+
                 VkDescriptorSetLayoutCreateInfo layoutInfo = VkDescriptorSetLayoutCreateInfo.calloc(stack);
                 layoutInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO);
-                layoutInfo.pBindings(uboLayoutBinding);
+                layoutInfo.pBindings(bindings);
 
                 LongBuffer pDescriptorSetLayout = MemoryUtil.memAllocLong(1);
 
@@ -182,13 +197,20 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
         {
             try(MemoryStack stack = stackPush()) {
 
-                VkDescriptorPoolSize.Buffer poolSize = VkDescriptorPoolSize.calloc(1, stack);
-                poolSize.type(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-                poolSize.descriptorCount(MAX_FRAMES_IN_FLIGHT);
+                VkDescriptorPoolSize.Buffer poolSizes = VkDescriptorPoolSize.calloc(2, stack);
+
+
+                VkDescriptorPoolSize poolSize0 = poolSizes.get(0);
+                poolSize0.type(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+                poolSize0.descriptorCount(MAX_FRAMES_IN_FLIGHT);
+
+                VkDescriptorPoolSize poolSize1 = poolSizes.get(1);
+                poolSize1.type(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+                poolSize1.descriptorCount(MAX_FRAMES_IN_FLIGHT);
 
                 VkDescriptorPoolCreateInfo poolInfo = VkDescriptorPoolCreateInfo.calloc(stack);
                 poolInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO);
-                poolInfo.pPoolSizes(poolSize);
+                poolInfo.pPoolSizes(poolSizes);
                 poolInfo.maxSets(MAX_FRAMES_IN_FLIGHT);
 
                 LongBuffer pDescriptorPool = stack.mallocLong(1);
@@ -231,18 +253,63 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
                 descriptorSets = new ArrayList<>(pDescriptorSets.capacity());
 
+
+
+
+
+
+
+
+                VkDescriptorImageInfo.Buffer imageInfo = VkDescriptorImageInfo.calloc(1, stack);
+
+                //Texture test
+                {
+                    texture2D = (LVKTexture2D) Texture2D.newTexture("project/logo.png");
+                    sampler = new LVKSampler(deviceWithIndices.device);
+
+                    imageInfo.imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                    imageInfo.imageView(texture2D.getTextureImageView());
+                    imageInfo.sampler(sampler.getTextureSampler());
+
+                }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                 VkDescriptorBufferInfo.Buffer bufferInfo = VkDescriptorBufferInfo.calloc(1, stack);
                 bufferInfo.offset(0);
 
                 bufferInfo.range(LVKRenderFrame.LVKFrameUniforms.SIZE);
 
-                VkWriteDescriptorSet.Buffer descriptorWrite = VkWriteDescriptorSet.calloc(1, stack);
-                descriptorWrite.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
-                descriptorWrite.dstBinding(0);
-                descriptorWrite.dstArrayElement(0);
-                descriptorWrite.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-                descriptorWrite.descriptorCount(1);
-                descriptorWrite.pBufferInfo(bufferInfo);
+                VkWriteDescriptorSet.Buffer descriptorWrites = VkWriteDescriptorSet.calloc(2, stack);
+
+                VkWriteDescriptorSet descriptorWrite0 = descriptorWrites.get(0);
+                descriptorWrite0.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
+                descriptorWrite0.dstBinding(0);
+                descriptorWrite0.dstArrayElement(0);
+                descriptorWrite0.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+                descriptorWrite0.descriptorCount(1);
+                descriptorWrite0.pBufferInfo(bufferInfo);
+
+                VkWriteDescriptorSet descriptorWrite1 = descriptorWrites.get(1);
+                descriptorWrite1.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
+                descriptorWrite1.dstBinding(1);
+                descriptorWrite1.dstArrayElement(0);
+                descriptorWrite1.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+                descriptorWrite1.descriptorCount(1);
+                descriptorWrite1.pImageInfo(imageInfo);
+
 
 
                 List<LVKRenderFrame> inFlightFrames = renderSyncInfo.inFlightFrames;
@@ -252,9 +319,14 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
                     LVKRenderFrame frame = inFlightFrames.get(i);
                     for (LVKRenderFrame.LVKFrameUniforms uniforms : frame.uniformBuffers()) {
                         long descriptorSet = pDescriptorSets.get(i);
+
+                        for(VkWriteDescriptorSet descriptorWrite : descriptorWrites){
+                            descriptorWrite.dstSet(descriptorSet);
+                        }
+
+
                         bufferInfo.buffer(uniforms.getBuffer().handle);
-                        descriptorWrite.dstSet(descriptorSet);
-                        vkUpdateDescriptorSets(deviceWithIndices.device, descriptorWrite, null);
+                        vkUpdateDescriptorSets(deviceWithIndices.device, descriptorWrites, null);
                         descriptorSets.add(descriptorSet);
                     }
                 }
@@ -314,6 +386,9 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
     }
 
+    public LVKTexture2D getTexture2D() {
+        return texture2D;
+    }
 
     private void recordCmdBuffers() {
 
@@ -637,18 +712,18 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
     private void drawQuadVK(float x,
-                         float y,
-                         float w,
-                         float h,
-                         int slot,
-                         Color color,
-                         float originX,
-                         float originY,
-                         Rect2D region,
-                         float thickness,
-                         boolean xFlip,
-                         boolean yFlip,
-                         float bloom){
+                            float y,
+                            float w,
+                            float h,
+                            int slot,
+                            Color color,
+                            float originX,
+                            float originY,
+                            Rect2D region,
+                            float thickness,
+                            boolean xFlip,
+                            boolean yFlip,
+                            float bloom){
 
         Rect2D copy = new Rect2D(region.x, region.y, region.w, region.h);
 

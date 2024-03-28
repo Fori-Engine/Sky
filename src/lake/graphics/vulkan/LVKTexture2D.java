@@ -25,7 +25,7 @@ public class LVKTexture2D extends Texture2D {
     private LongBuffer pTextureImageMemory;
     private VkDevice device;
     private long textureImage, textureImageMemory;
-    private long textureSampler, textureImageView;
+    private long textureImageView;
 
     public LVKTexture2D(String path){
         this(path, Filter.LINEAR);
@@ -181,51 +181,21 @@ public class LVKTexture2D extends Texture2D {
 
                 }
 
-                //Sampler
-                {
-                    VkSamplerCreateInfo samplerInfo = VkSamplerCreateInfo.calloc(stack);
-                    samplerInfo.sType(VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO);
-                    samplerInfo.magFilter(VK_FILTER_LINEAR);
-                    samplerInfo.minFilter(VK_FILTER_LINEAR);
-                    samplerInfo.addressModeU(VK_SAMPLER_ADDRESS_MODE_REPEAT);
-                    samplerInfo.addressModeV(VK_SAMPLER_ADDRESS_MODE_REPEAT);
-                    samplerInfo.addressModeW(VK_SAMPLER_ADDRESS_MODE_REPEAT);
-                    samplerInfo.anisotropyEnable(true);
-
-                    //TODO: Fix this
-                    samplerInfo.maxAnisotropy(16.0f);
-                    samplerInfo.borderColor(VK_BORDER_COLOR_INT_OPAQUE_BLACK);
-                    samplerInfo.unnormalizedCoordinates(false);
-                    samplerInfo.compareEnable(false);
-                    samplerInfo.compareOp(VK_COMPARE_OP_ALWAYS);
-                    samplerInfo.mipmapMode(VK_SAMPLER_MIPMAP_MODE_LINEAR);
-
-                    LongBuffer pTextureSampler = stack.mallocLong(1);
-
-                    if(vkCreateSampler(device, samplerInfo, null, pTextureSampler) != VK_SUCCESS) {
-                        throw new RuntimeException("Failed to create texture sampler");
-                    }
-
-                    textureSampler = pTextureSampler.get(0);
-                }
-
-
-
-
-
-
-
 
             });
-
-
-
-
 
         }
 
 
         STBImage.stbi_image_free(texture);
+    }
+
+    public long getTextureImage() {
+        return textureImage;
+    }
+
+    public long getTextureImageView() {
+        return textureImageView;
     }
 
     private void transition(long textureImage, int oldLayout, int newLayout, VkCommandBuffer commandBuffer, MemoryStack stack){
@@ -285,7 +255,6 @@ public class LVKTexture2D extends Texture2D {
     @Override
     public void dispose() {
         vkDestroyImageView(device, textureImageView, null);
-        vkDestroySampler(device, textureSampler, null);
         vkDestroyImage(device, textureImage, null);
         vkDestroyBuffer(device, stagingBuffer.handle, null);
         vkFreeMemory(device, stagingBufferMemory, null);
