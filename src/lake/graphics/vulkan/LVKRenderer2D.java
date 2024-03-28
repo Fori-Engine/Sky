@@ -19,7 +19,7 @@ import java.util.List;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.KHRSurface.vkDestroySurfaceKHR;
 import static org.lwjgl.vulkan.KHRSwapchain.*;
-import static org.lwjgl.vulkan.VK10.*;
+import static org.lwjgl.vulkan.VK13.*;
 
 public class LVKRenderer2D extends Renderer2D implements Disposable {
     private int MAX_FRAMES_IN_FLIGHT = 2;
@@ -58,6 +58,8 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
     private int maxTextures = 32;
 
+    private int RECT = -1;
+    private int CIRCLE = -2;
 
 
 
@@ -93,7 +95,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
         //Found it, wth is this 1?
-        vertexBuffer = new LVKVertexBuffer(3, 8);
+        vertexBuffer = new LVKVertexBuffer(3, 10);
         {
             vertexBuffer.setDeviceWithIndices(deviceWithIndices);
             vertexBuffer.setCommandPool(commandPool);
@@ -501,7 +503,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
             VkVertexInputAttributeDescription.Buffer attributeDescriptions =
-                    VkVertexInputAttributeDescription.calloc(3);
+                    VkVertexInputAttributeDescription.calloc(5);
 
             // Position
             VkVertexInputAttributeDescription posDescription = attributeDescriptions.get(0);
@@ -517,17 +519,37 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
             {
                 texCoordDescription.binding(0);
                 texCoordDescription.location(1);
-                texCoordDescription.format(VK_FORMAT_R32G32B32_SFLOAT);
+                texCoordDescription.format(VK_FORMAT_R32G32_SFLOAT);
                 texCoordDescription.offset(2 * Float.BYTES);
             }
 
+            //Texture Index
+            VkVertexInputAttributeDescription texIndexDescription = attributeDescriptions.get(2);
+            {
+                texIndexDescription.binding(0);
+                texIndexDescription.location(2);
+                texIndexDescription.format(VK_FORMAT_R32_SFLOAT);
+                texIndexDescription.offset(4 * Float.BYTES);
+
+
+            }
+
             // Color
-            VkVertexInputAttributeDescription colorDescription = attributeDescriptions.get(2);
+            VkVertexInputAttributeDescription colorDescription = attributeDescriptions.get(3);
             {
                 colorDescription.binding(0);
-                colorDescription.location(2);
-                colorDescription.format(VK_FORMAT_R32G32B32_SFLOAT);
-                colorDescription.offset(4 * Float.BYTES);
+                colorDescription.location(3);
+                colorDescription.format(VK_FORMAT_R32G32B32A32_SFLOAT);
+                colorDescription.offset(5 * Float.BYTES);
+            }
+
+            // Thickness
+            VkVertexInputAttributeDescription thicknessDescription = attributeDescriptions.get(4);
+            {
+                thicknessDescription.binding(0);
+                thicknessDescription.location(4);
+                thicknessDescription.format(VK_FORMAT_R32_SFLOAT);
+                thicknessDescription.offset(9 * Float.BYTES);
             }
 
 
@@ -675,62 +697,116 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
     public ShaderProgram getCurrentShaderProgram() {
         return currentShaderProgram;
     }
+    public void drawTexture(float x, float y, float w, float h, Texture2D texture){
+        drawTexture(x, y, w, h, texture, Color.WHITE);
+    }
+    public void drawRect(float x, float y, float w, float h, Color color, int thickness){
 
-    @Override
-    public void drawTexture(float x, float y, float w, float h, Texture2D texture) {
+        //Left
+        drawFilledRect(x - ((float) thickness / 2), y, thickness, h, color);
+        //Top
+        drawFilledRect(x, y - ((float) thickness / 2), w, thickness, color);
+        //Bottom
+        drawFilledRect(x, y - ((float) thickness / 2) + h, w, thickness, color);
+        //Right
+        drawFilledRect(x - ((float) thickness / 2) + w, y, thickness, h, color);
 
     }
+    public void drawLine(float x1, float y1, float x2, float y2, Color color, int thickness, boolean round){
 
-    @Override
-    public void drawRect(float x, float y, float w, float h, Color color, int thickness) {
+        float ox = originX;
+        float oy = originY;
+
+        {
+            float dx = x2 - x1;
+            float dy = y2 - y1;
+
+            float angle = (float) Math.atan2(dy, dx);
+
+            setOrigin(ox + x1, oy + y1);
+            rotate(angle);
+
+            float hypotenuse = (float) Math.sqrt((dx * dx) + (dy * dy));
+
+            drawFilledRect(x1, y1 - (thickness / 2), hypotenuse, thickness, color);
+
+            rotate(-angle);
+            setOrigin(ox, oy);
+        }
+
+        if(round){
+            drawFilledEllipse(x1 - (thickness / 2f), y1 - (thickness / 2f), thickness, thickness, color);
+            drawFilledEllipse(x2 - (thickness / 2f), y2 - (thickness / 2f), thickness, thickness, color);
+        }
+
+
+
 
     }
-
-    @Override
-    public void drawLine(float x1, float y1, float x2, float y2, Color color, int thickness, boolean round) {
-
+    public void drawTexture(float x, float y, float w, float h, Texture2D texture, Color color){
+        drawTexture(x, y, w, h, texture, color, new Rect2D(0, 0, 1, 1), false, false);
     }
-
-    @Override
-    public void drawTexture(float x, float y, float w, float h, Texture2D texture, Color color) {
-
-    }
-
-    @Override
     public void drawTexture(float x, float y, float w, float h, Texture2D texture, Color color, Rect2D rect2D, boolean xFlip, boolean yFlip) {
+        /*
+        GLTexture2D glTexture2D = (GLTexture2D) texture;
 
+        int slot = nextTextureSlot;
+        boolean isUniqueTexture = false;
+
+
+
+        //Existing texture
+        if (textureLookup.hasTexture(glTexture2D)) {
+            slot = textureLookup.getTexture(glTexture2D);
+        }
+
+        //Unique Texture
+        else {
+            glActiveTexture(GL_TEXTURE0 + slot);
+            glTexture2D.bind();
+            glTexture2D.setSlot(slot);
+            textureLookup.registerTexture(glTexture2D, slot);
+            isUniqueTexture = true;
+        }
+
+
+        drawQuad(x, y, w, h, slot, color, originX, originY, rect2D, -1, xFlip, yFlip, 0);
+
+        if(isUniqueTexture) nextTextureSlot++;
+
+        if(nextTextureSlot == maxTextureSlots)
+            render("Next Batch Render [No more rebel.engine.graphics.Texture slots out of " + maxTextureSlots + "]");
+
+
+         */
     }
-
-    @Override
     public void drawFilledRect(float x, float y, float w, float h, Color color){
-        drawQuadVK(x, y, w, h, -1, color, originX, originY, new Rect2D(0, 0, 1, 1), -1, false, false, 0);
+        drawQuad(x, y, w, h, RECT, color, originX, originY, new Rect2D(0, 0, 1, 1), -1, false, false, 0);
     }
-
-    @Override
     public void drawFilledEllipse(float x, float y, float w, float h, Color color) {
-
+        drawQuad(x, y, w, h, CIRCLE, color, originX, originY, new Rect2D(0, 0, 1, 1), 1, false, false, 0);
     }
-
-    @Override
     public void drawEllipse(float x, float y, float w, float h, Color color, float thickness) {
-
+        drawQuad(x, y, w, h, CIRCLE, color, originX, originY, new Rect2D(0, 0, 1, 1), thickness, false, false, 0);
     }
 
 
 
-    private void drawQuadVK(float x,
-                            float y,
-                            float w,
-                            float h,
-                            int slot,
-                            Color color,
-                            float originX,
-                            float originY,
-                            Rect2D region,
-                            float thickness,
-                            boolean xFlip,
-                            boolean yFlip,
-                            float bloom){
+    private void drawQuad(float x,
+                          float y,
+                          float w,
+                          float h,
+                          int slot,
+                          Color color,
+                          float originX,
+                          float originY,
+                          Rect2D region,
+                          float thickness,
+                          boolean xFlip,
+                          boolean yFlip,
+                          float bloom){
+
+
 
         Rect2D copy = new Rect2D(region.x, region.y, region.w, region.h);
 
@@ -775,44 +851,53 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
             int dataPerQuad = vertexBuffer.getVertexDataSize() * 4;
 
 
+
             vertexData[(quadIndex * dataPerQuad) + 0] = topLeft.x;
             vertexData[(quadIndex * dataPerQuad) + 1] = topLeft.y;
             vertexData[(quadIndex * dataPerQuad) + 2] = copy.x;
             vertexData[(quadIndex * dataPerQuad) + 3] = copy.y;
-            vertexData[(quadIndex * dataPerQuad) + 4] = color.r;
-            vertexData[(quadIndex * dataPerQuad) + 5] = color.g;
-            vertexData[(quadIndex * dataPerQuad) + 6] = color.b;
-            vertexData[(quadIndex * dataPerQuad) + 7] = color.a;
+            vertexData[(quadIndex * dataPerQuad) + 4] = slot;
+            vertexData[(quadIndex * dataPerQuad) + 5] = color.r;
+            vertexData[(quadIndex * dataPerQuad) + 6] = color.g;
+            vertexData[(quadIndex * dataPerQuad) + 7] = color.b;
+            vertexData[(quadIndex * dataPerQuad) + 8] = color.a;
+            vertexData[(quadIndex * dataPerQuad) + 9] = thickness;
 
 
-            vertexData[(quadIndex * dataPerQuad) + 8] = bottomLeft.x;
-            vertexData[(quadIndex * dataPerQuad) + 9] = bottomLeft.y;
-            vertexData[(quadIndex * dataPerQuad) + 10] = copy.x;
-            vertexData[(quadIndex * dataPerQuad) + 11] = copy.h;
-            vertexData[(quadIndex * dataPerQuad) + 12] = color.r;
-            vertexData[(quadIndex * dataPerQuad) + 13] = color.g;
-            vertexData[(quadIndex * dataPerQuad) + 14] = color.b;
-            vertexData[(quadIndex * dataPerQuad) + 15] = color.a;
+            vertexData[(quadIndex * dataPerQuad) + 10] = bottomLeft.x;
+            vertexData[(quadIndex * dataPerQuad) + 11] = bottomLeft.y;
+            vertexData[(quadIndex * dataPerQuad) + 12] = copy.x;
+            vertexData[(quadIndex * dataPerQuad) + 13] = copy.h;
+            vertexData[(quadIndex * dataPerQuad) + 14] = slot;
+            vertexData[(quadIndex * dataPerQuad) + 15] = color.r;
+            vertexData[(quadIndex * dataPerQuad) + 16] = color.g;
+            vertexData[(quadIndex * dataPerQuad) + 17] = color.b;
+            vertexData[(quadIndex * dataPerQuad) + 18] = color.a;
+            vertexData[(quadIndex * dataPerQuad) + 19] = thickness;
 
 
-            vertexData[(quadIndex * dataPerQuad) + 16] = bottomRight.x;
-            vertexData[(quadIndex * dataPerQuad) + 17] = bottomRight.y;
-            vertexData[(quadIndex * dataPerQuad) + 18] = copy.w;
-            vertexData[(quadIndex * dataPerQuad) + 19] = copy.h;
-            vertexData[(quadIndex * dataPerQuad) + 20] = color.r;
-            vertexData[(quadIndex * dataPerQuad) + 21] = color.g;
-            vertexData[(quadIndex * dataPerQuad) + 22] = color.b;
-            vertexData[(quadIndex * dataPerQuad) + 23] = color.a;
+            vertexData[(quadIndex * dataPerQuad) + 20] = bottomRight.x;
+            vertexData[(quadIndex * dataPerQuad) + 21] = bottomRight.y;
+            vertexData[(quadIndex * dataPerQuad) + 22] = copy.w;
+            vertexData[(quadIndex * dataPerQuad) + 23] = copy.h;
+            vertexData[(quadIndex * dataPerQuad) + 24] = slot;
+            vertexData[(quadIndex * dataPerQuad) + 25] = color.r;
+            vertexData[(quadIndex * dataPerQuad) + 26] = color.g;
+            vertexData[(quadIndex * dataPerQuad) + 27] = color.b;
+            vertexData[(quadIndex * dataPerQuad) + 28] = color.a;
+            vertexData[(quadIndex * dataPerQuad) + 29] = thickness;
 
 
-            vertexData[(quadIndex * dataPerQuad) + 24] = topRight.x;
-            vertexData[(quadIndex * dataPerQuad) + 25] = topRight.y;
-            vertexData[(quadIndex * dataPerQuad) + 26] = copy.w;
-            vertexData[(quadIndex * dataPerQuad) + 27] = copy.y;
-            vertexData[(quadIndex * dataPerQuad) + 28] = color.r;
-            vertexData[(quadIndex * dataPerQuad) + 29] = color.g;
-            vertexData[(quadIndex * dataPerQuad) + 30] = color.b;
-            vertexData[(quadIndex * dataPerQuad) + 31] = color.a;
+            vertexData[(quadIndex * dataPerQuad) + 30] = topRight.x;
+            vertexData[(quadIndex * dataPerQuad) + 31] = topRight.y;
+            vertexData[(quadIndex * dataPerQuad) + 32] = copy.w;
+            vertexData[(quadIndex * dataPerQuad) + 33] = copy.y;
+            vertexData[(quadIndex * dataPerQuad) + 34] = slot;
+            vertexData[(quadIndex * dataPerQuad) + 35] = color.r;
+            vertexData[(quadIndex * dataPerQuad) + 36] = color.g;
+            vertexData[(quadIndex * dataPerQuad) + 37] = color.b;
+            vertexData[(quadIndex * dataPerQuad) + 38] = color.a;
+            vertexData[(quadIndex * dataPerQuad) + 39] = thickness;
 
         }
         quadIndex++;

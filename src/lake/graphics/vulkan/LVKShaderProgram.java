@@ -79,16 +79,29 @@ public class LVKShaderProgram extends ShaderProgram {
 
         long result = shaderc_compile_into_spv(compiler, source, kind, "", "main", MemoryUtil.NULL);
         if(result == MemoryUtil.NULL){
-            throw new RuntimeException("Shader compilation failed");
+            throw new RuntimeException("Shader compilation failed for " + kind);
         }
         if(shaderc_result_get_compilation_status(result) != shaderc_compilation_status_success){
-            throw new RuntimeException("Failed to compile shader because: \n" + shaderc_result_get_error_message(result));
+
+            String shaderType = getShaderType(kind);
+
+
+
+            throw new RuntimeException("Failed to compile shader because: \n" + shaderc_result_get_error_message(result) + " for " + shaderType);
         }
 
         shaderc_compiler_release(compiler);
 
 
         return new LVKSPRIV(result, shaderc_result_get_bytes(result));
+    }
+
+    private static String getShaderType(int kind) {
+        if(kind == shaderc_glsl_vertex_shader) return "Vertex Shader";
+        if(kind == shaderc_glsl_fragment_shader) return "Fragment Shader";
+
+
+        return null;
     }
 
     public static class LVKSPRIV {
