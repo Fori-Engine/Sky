@@ -1,3 +1,7 @@
+//This code heavily reuses code from https://github.com/Naitsirc98/Vulkan-Tutorial-Java
+//Thank you to Nathan and Alexander
+
+
 package lake.graphics.vulkan;
 
 import lake.graphics.StandaloneWindow;
@@ -284,6 +288,7 @@ public class FastVK {
             VkCommandPoolCreateInfo poolInfo = VkCommandPoolCreateInfo.calloc(stack);
             poolInfo.sType(VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO);
             poolInfo.queueFamilyIndex(deviceWithIndices.queueFamilyIndices.graphicsFamily);
+            poolInfo.flags(VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
             LongBuffer pCommandPool = stack.mallocLong(1);
 
