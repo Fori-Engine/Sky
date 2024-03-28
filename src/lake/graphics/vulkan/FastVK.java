@@ -445,7 +445,7 @@ public class FastVK {
         bufferInfo.sharingMode(VK_SHARING_MODE_EXCLUSIVE);
 
         if(vkCreateBuffer(device, bufferInfo, null, pBuffer) != VK_SUCCESS) {
-            throw new RuntimeException("Failed to create vertex buffer");
+            throw new RuntimeException("Failed to create buffer");
         }
 
         VkMemoryRequirements memRequirements = VkMemoryRequirements.create();
@@ -457,7 +457,7 @@ public class FastVK {
         allocInfo.memoryTypeIndex(findMemoryType(memRequirements.memoryTypeBits(), properties, physicalDevice));
 
         if(vkAllocateMemory(device, allocInfo, null, pBufferMemory) != VK_SUCCESS) {
-            throw new RuntimeException("Failed to allocate vertex buffer memory");
+            throw new RuntimeException("Failed to allocate buffer memory");
         }
 
         vkBindBufferMemory(device, pBuffer.get(0), pBufferMemory.get(0), 0);
