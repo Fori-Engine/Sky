@@ -27,6 +27,8 @@ public class LVKTexture2D extends Texture2D {
     private long textureImage, textureImageMemory;
     private long textureImageView;
 
+    private LVKSampler sampler;
+
     public LVKTexture2D(String path){
         this(path, Filter.LINEAR);
     }
@@ -40,6 +42,8 @@ public class LVKTexture2D extends Texture2D {
     public LVKTexture2D(String path, Texture2D.Filter filter) {
         Disposer.add("managedResources", this);
         device = LVKRenderer2D.getDeviceWithIndices().device;
+
+        sampler = new LVKSampler(device);
 
         VkPhysicalDevice physicalDevice = LVKRenderer2D.getPhysicalDevice();
 
@@ -251,6 +255,9 @@ public class LVKTexture2D extends Texture2D {
 
     }
 
+    public LVKSampler getSampler() {
+        return sampler;
+    }
 
     @Override
     public void dispose() {

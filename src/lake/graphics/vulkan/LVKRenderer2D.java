@@ -54,13 +54,16 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
     private LVKShaderProgram currentShaderProgram, defaultShaderProgram;
 
     private LVKTexture2D texture2D;
-    private LVKSampler sampler;
 
     private int maxTextures = 32;
 
     private int RECT = -1;
     private int CIRCLE = -2;
 
+    private FastTextureLookup textureLookup;
+    private int nextTextureSlot;
+
+    private VkDescriptorImageInfo.Buffer imageInfos;
 
 
     public LVKRenderer2D(StandaloneWindow window, int width, int height, boolean msaa) {
@@ -80,6 +83,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
         renderPass = FastVK.createRenderPass(deviceWithIndices.device, swapchain);
         swapchainFramebuffers = FastVK.createFramebuffers(deviceWithIndices.device, swapchain, swapchainImageViews, renderPass);
         commandPool = FastVK.createCommandPool(deviceWithIndices);
+        textureLookup = new FastTextureLookup(maxTextures);
 
         LVKCommandRunner.setup(deviceWithIndices, graphicsQueue);
 
@@ -95,7 +99,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
         //Found it, wth is this 1?
-        vertexBuffer = new LVKVertexBuffer(3, 10);
+        vertexBuffer = new LVKVertexBuffer(10, 10);
         {
             vertexBuffer.setDeviceWithIndices(deviceWithIndices);
             vertexBuffer.setCommandPool(commandPool);
@@ -103,7 +107,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
             vertexBuffer.setPhysicalDevice(physicalDevice);
             vertexBuffer.build();
         }
-        indexBuffer = new LVKIndexBuffer(3, 6, Integer.BYTES);
+        indexBuffer = new LVKIndexBuffer(10, 6, Integer.BYTES);
         {
             indexBuffer.setDeviceWithIndices(deviceWithIndices);
             indexBuffer.setCommandPool(commandPool);
@@ -263,12 +267,11 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
 
-                VkDescriptorImageInfo.Buffer imageInfos = VkDescriptorImageInfo.calloc(maxTextures, stack);
+                imageInfos = VkDescriptorImageInfo.create(maxTextures);
 
                 //Texture test
                 {
-                    texture2D = (LVKTexture2D) Texture2D.newTexture("project/logo.png");
-                    sampler = new LVKSampler(deviceWithIndices.device);
+                    texture2D = (LVKTexture2D) Texture2D.newTexture("project/demo.png");
 
                     for (int i = 0; i < maxTextures; i++) {
 
@@ -276,7 +279,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
                         imageInfo.imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
                         imageInfo.imageView(texture2D.getTextureImageView());
-                        imageInfo.sampler(sampler.getTextureSampler());
+                        imageInfo.sampler(texture2D.getSampler().getTextureSampler());
 
                     }
 
@@ -326,12 +329,16 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
                 for (int i = 0; i < inFlightFrames.size(); i++) {
                     LVKRenderFrame frame = inFlightFrames.get(i);
-                    for (LVKRenderFrame.LVKFrameUniforms uniforms : frame.uniformBuffers()) {
-                        long descriptorSet = pDescriptorSets.get(i);
+                    long descriptorSet = pDescriptorSets.get(i);
 
-                        for(VkWriteDescriptorSet descriptorWrite : descriptorWrites){
-                            descriptorWrite.dstSet(descriptorSet);
-                        }
+                    for(VkWriteDescriptorSet descriptorWrite : descriptorWrites){
+                        descriptorWrite.dstSet(descriptorSet);
+                    }
+
+
+                    for (LVKRenderFrame.LVKFrameUniforms uniforms : frame.uniformBuffers()) {
+
+
 
 
                         bufferInfo.buffer(uniforms.getBuffer().handle);
@@ -747,8 +754,8 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
         drawTexture(x, y, w, h, texture, color, new Rect2D(0, 0, 1, 1), false, false);
     }
     public void drawTexture(float x, float y, float w, float h, Texture2D texture, Color color, Rect2D rect2D, boolean xFlip, boolean yFlip) {
-        /*
-        GLTexture2D glTexture2D = (GLTexture2D) texture;
+
+        LVKTexture2D lvkTexture2D = (LVKTexture2D) texture;
 
         int slot = nextTextureSlot;
         boolean isUniqueTexture = false;
@@ -756,16 +763,47 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
         //Existing texture
-        if (textureLookup.hasTexture(glTexture2D)) {
-            slot = textureLookup.getTexture(glTexture2D);
+        if (textureLookup.hasTexture(lvkTexture2D)) {
+            slot = textureLookup.getTexture(lvkTexture2D);
         }
 
         //Unique Texture
         else {
-            glActiveTexture(GL_TEXTURE0 + slot);
-            glTexture2D.bind();
-            glTexture2D.setSlot(slot);
-            textureLookup.registerTexture(glTexture2D, slot);
+
+
+            try(MemoryStack stack = stackPush()){
+
+                VkDescriptorImageInfo.Buffer newImageInfos = VkDescriptorImageInfo.calloc(1);
+
+                VkDescriptorImageInfo imageInfo = newImageInfos.get(0);
+
+                imageInfo.imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                imageInfo.imageView(lvkTexture2D.getTextureImageView());
+                imageInfo.sampler(lvkTexture2D.getSampler().getTextureSampler());
+
+
+
+                VkWriteDescriptorSet.Buffer descriptorWrites = VkWriteDescriptorSet.calloc(1, stack);
+
+                VkWriteDescriptorSet descriptorWrite1 = descriptorWrites.get(0);
+                descriptorWrite1.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
+                descriptorWrite1.dstSet(descriptorSets.get(0));
+                descriptorWrite1.dstBinding(1);
+                descriptorWrite1.dstArrayElement(slot);
+                descriptorWrite1.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+                descriptorWrite1.descriptorCount(1);
+                descriptorWrite1.pImageInfo(newImageInfos);
+
+
+
+
+                vkUpdateDescriptorSets(deviceWithIndices.device, descriptorWrites, null);
+
+
+            }
+
+
+            textureLookup.registerTexture(lvkTexture2D, slot);
             isUniqueTexture = true;
         }
 
@@ -774,11 +812,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
         if(isUniqueTexture) nextTextureSlot++;
 
-        if(nextTextureSlot == maxTextureSlots)
-            render("Next Batch Render [No more rebel.engine.graphics.Texture slots out of " + maxTextureSlots + "]");
 
-
-         */
     }
     public void drawFilledRect(float x, float y, float w, float h, Color color){
         drawQuad(x, y, w, h, RECT, color, originX, originY, new Rect2D(0, 0, 1, 1), -1, false, false, 0);
@@ -1043,6 +1077,8 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
         vertexData = new float[vertexData.length];
         quadIndex = 0;
+        nextTextureSlot = 0;
+        textureLookup.clear();
     }
 
     @Override
