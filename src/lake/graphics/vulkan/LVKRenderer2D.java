@@ -65,6 +65,8 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
     private VkDescriptorImageInfo.Buffer imageInfos;
 
+    private boolean updateCmdBuffers;
+
 
     public LVKRenderer2D(StandaloneWindow window, int width, int height, boolean msaa) {
         super(width, height, msaa);
@@ -787,7 +789,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
                 VkWriteDescriptorSet descriptorWrite1 = descriptorWrites.get(0);
                 descriptorWrite1.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
-                descriptorWrite1.dstSet(descriptorSets.get(0));
+                descriptorWrite1.dstSet(descriptorSets.get(currentFrame));
                 descriptorWrite1.dstBinding(1);
                 descriptorWrite1.dstArrayElement(slot);
                 descriptorWrite1.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
@@ -956,7 +958,10 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
     public void render(String renderName) {
 
 
-        recordCmdBuffers();
+        if(updateCmdBuffers) {
+            recordCmdBuffers();
+            updateCmdBuffers = false;
+        }
 
 
         vertexBufferData.clear();
@@ -1084,6 +1089,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
     @Override
     public void clear(Color color) {
         this.clearColor = color;
+        updateCmdBuffers = true;
     }
 
     @Override
