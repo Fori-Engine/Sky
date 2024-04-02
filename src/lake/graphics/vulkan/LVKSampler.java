@@ -15,7 +15,7 @@ public class LVKSampler implements Disposable {
     private final VkDevice device;
     private long textureSampler;
 
-    public LVKSampler(VkDevice device){
+    public LVKSampler(VkDevice device, int minFilter, int magFilter){
         Disposer.add("managedResources", this);
         this.device = device;
 
@@ -23,8 +23,8 @@ public class LVKSampler implements Disposable {
         {
             VkSamplerCreateInfo samplerInfo = VkSamplerCreateInfo.create();
             samplerInfo.sType(VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO);
-            samplerInfo.magFilter(VK_FILTER_LINEAR);
-            samplerInfo.minFilter(VK_FILTER_LINEAR);
+            samplerInfo.magFilter(minFilter);
+            samplerInfo.minFilter(magFilter);
             samplerInfo.addressModeU(VK_SAMPLER_ADDRESS_MODE_REPEAT);
             samplerInfo.addressModeV(VK_SAMPLER_ADDRESS_MODE_REPEAT);
             samplerInfo.addressModeW(VK_SAMPLER_ADDRESS_MODE_REPEAT);
