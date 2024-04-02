@@ -101,7 +101,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
         //Found it, wth is this 1?
-        vertexBuffer = new LVKVertexBuffer(10, 10);
+        vertexBuffer = new LVKVertexBuffer(400, 10);
         {
             vertexBuffer.setDeviceWithIndices(deviceWithIndices);
             vertexBuffer.setCommandPool(commandPool);
@@ -109,7 +109,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
             vertexBuffer.setPhysicalDevice(physicalDevice);
             vertexBuffer.build();
         }
-        indexBuffer = new LVKIndexBuffer(10, 6, Integer.BYTES);
+        indexBuffer = new LVKIndexBuffer(400, 6, Integer.BYTES);
         {
             indexBuffer.setDeviceWithIndices(deviceWithIndices);
             indexBuffer.setCommandPool(commandPool);
@@ -1146,6 +1146,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
         vkDestroyDescriptorSetLayout(deviceWithIndices.device, descriptorSetLayout.get(), null);
 
+        System.out.println("Nuking device");
         vkDestroyDevice(deviceWithIndices.device, null);
         FastVK.cleanupDebugMessenger(instance, true);
 
