@@ -29,6 +29,8 @@ public class LVKTexture2D extends Texture2D {
 
     private LVKSampler sampler;
 
+    private boolean isInitialized;
+
     public LVKTexture2D(String path){
         this(path, Filter.LINEAR);
     }
@@ -37,12 +39,13 @@ public class LVKTexture2D extends Texture2D {
         Disposer.add("managedResources", this);
         device = LVKRenderer2D.getDeviceWithIndices().device;
         setProperties(null, width, height);
-
+        isInitialized = false;
         //TODO: Wth does this do?
     }
     public LVKTexture2D(String path, Texture2D.Filter filter) {
         Disposer.add("managedResources", this);
         device = LVKRenderer2D.getDeviceWithIndices().device;
+        isInitialized = true;
 
         int minFilter = filter == Filter.LINEAR ? VK_FILTER_LINEAR : VK_FILTER_NEAREST;
         int magFilter = filter == Filter.LINEAR ? VK_FILTER_LINEAR : VK_FILTER_NEAREST;
@@ -274,14 +277,14 @@ public class LVKTexture2D extends Texture2D {
     @Override
     public void dispose() {
 
+        if(isInitialized) {
 
-        System.out.println("Texture POV: " + device);
-
-        vkDestroyImageView(device, textureImageView, null);
-        vkDestroyImage(device, textureImage, null);
-        vkDestroyBuffer(device, stagingBuffer.handle, null);
-        vkFreeMemory(device, stagingBufferMemory, null);
-        vkFreeMemory(device, textureImageMemory, null);
+            vkDestroyImageView(device, textureImageView, null);
+            vkDestroyImage(device, textureImage, null);
+            vkDestroyBuffer(device, stagingBuffer.handle, null);
+            vkFreeMemory(device, stagingBufferMemory, null);
+            vkFreeMemory(device, textureImageMemory, null);
+        }
     }
 
 }
