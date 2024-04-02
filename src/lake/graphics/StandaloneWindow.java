@@ -78,13 +78,10 @@ public class StandaloneWindow implements Window {
 
         glfwShowWindow(window);
 
-        if(manageContext)
+        if(manageContext) {
             GL.createCapabilities();
-
-
-
-
-        glfwSetWindowSizeCallback(window, (window1, width, height) -> glViewport(0, 0, width, height));
+            glfwSetWindowSizeCallback(window, (window1, width, height) -> glViewport(0, 0, width, height));
+        }
 
         start = glfwGetTime();
     }
