@@ -99,7 +99,7 @@ public class LVKTexture2D extends Texture2D {
         texture.get(bytes);
         texture.limit(texture.capacity()).rewind();
 
-
+        stagingBuffer.mapAndUpload(device, data, bytes);
 
 
         try(MemoryStack stack = stackPush()) {
