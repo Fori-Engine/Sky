@@ -35,6 +35,7 @@ public class LVKTexture2D extends Texture2D {
 
     public LVKTexture2D(int width, int height) {
         Disposer.add("managedResources", this);
+        device = LVKRenderer2D.getDeviceWithIndices().device;
         setProperties(null, width, height);
 
         //TODO: Wth does this do?
@@ -43,14 +44,24 @@ public class LVKTexture2D extends Texture2D {
         Disposer.add("managedResources", this);
         device = LVKRenderer2D.getDeviceWithIndices().device;
 
-        sampler = new LVKSampler(device);
+        int minFilter = filter == Filter.LINEAR ? VK_FILTER_LINEAR : VK_FILTER_NEAREST;
+        int magFilter = filter == Filter.LINEAR ? VK_FILTER_LINEAR : VK_FILTER_NEAREST;
+
+        sampler = new LVKSampler(device, minFilter, magFilter);
 
         VkPhysicalDevice physicalDevice = LVKRenderer2D.getPhysicalDevice();
 
         IntBuffer w = BufferUtils.createIntBuffer(1);
         IntBuffer h = BufferUtils.createIntBuffer(1);
         IntBuffer channelsInFile = BufferUtils.createIntBuffer(1);
+
         ByteBuffer texture = STBImage.stbi_load(path, w, h, channelsInFile, 4);
+
+
+
+
+
+
         System.out.println("STBImage says: " + STBImage.stbi_failure_reason());
         int width = w.get();
         int height = h.get();
@@ -79,11 +90,12 @@ public class LVKTexture2D extends Texture2D {
 
 
         byte[] bytes = new byte[texture.remaining()];
+
+
         texture.limit(size);
         texture.get(bytes);
         texture.limit(texture.capacity()).rewind();
 
-        stagingBuffer.mapAndUpload(device, data, bytes);
 
 
 
@@ -261,6 +273,10 @@ public class LVKTexture2D extends Texture2D {
 
     @Override
     public void dispose() {
+
+
+        System.out.println("Texture POV: " + device);
+
         vkDestroyImageView(device, textureImageView, null);
         vkDestroyImage(device, textureImage, null);
         vkDestroyBuffer(device, stagingBuffer.handle, null);
