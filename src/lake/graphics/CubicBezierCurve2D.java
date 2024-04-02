@@ -38,7 +38,7 @@ public class CubicBezierCurve2D implements BezierCurve2D {
         float lastX = a.start.x, lastY = a.start.y;
 
         for (float i = 0.0f; i < 1.0f; i += step) {
-            System.out.println(i);
+
 
             ab.start = a.tValue(i);
             ab.end = c.tValue(i);
