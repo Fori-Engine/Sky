@@ -15,6 +15,7 @@ import java.nio.LongBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.KHRSurface.vkDestroySurfaceKHR;
@@ -101,7 +102,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
         //Found it, wth is this 1?
-        vertexBuffer = new LVKVertexBuffer(400, 10);
+        vertexBuffer = new LVKVertexBuffer(1000, 10);
         {
             vertexBuffer.setDeviceWithIndices(deviceWithIndices);
             vertexBuffer.setCommandPool(commandPool);
@@ -109,7 +110,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
             vertexBuffer.setPhysicalDevice(physicalDevice);
             vertexBuffer.build();
         }
-        indexBuffer = new LVKIndexBuffer(400, 6, Integer.BYTES);
+        indexBuffer = new LVKIndexBuffer(1000, 6, Integer.BYTES);
         {
             indexBuffer.setDeviceWithIndices(deviceWithIndices);
             indexBuffer.setCommandPool(commandPool);
@@ -1092,10 +1093,11 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
         updateCmdBuffers = true;
     }
 
-    @Override
-    public void drawText(float x, float y, String text, Color color, Font2D font) {
 
+    public void drawText(float x, float y, String text, Color color, Font2D font) {
+        BitmapFont2DRenderer.drawText(x, y, text, color, font, this);
     }
+
 
     public static VkDeviceWithIndices getDeviceWithIndices() {
         return deviceWithIndices;

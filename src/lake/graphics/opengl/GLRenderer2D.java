@@ -8,6 +8,9 @@ import lake.FileReader;
 import java.lang.Math;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.lwjgl.opengl.GL46.*;
 /***
@@ -416,28 +419,11 @@ public class GLRenderer2D extends Renderer2D implements Disposable {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(color.r, color.g, color.b, color.a);
     }
+
     public void drawText(float x, float y, String text, Color color, Font2D font) {
-
-        float xc = x;
-
-        for(char c : text.toCharArray()){
-
-            if(c == '\n'){
-                y += font.getLineHeight();
-                xc = x;
-                continue;
-            }
-
-            Texture2D texture = font.getGlyphs().get((int) c);
-
-
-
-
-            drawTexture(xc, y, texture.getWidth(), texture.getHeight(), texture, color);
-            xc += texture.getWidth();
-        }
-
+        BitmapFont2DRenderer.drawText(x, y, text, color, font, this);
     }
+
     @Override
     public void dispose() {
 

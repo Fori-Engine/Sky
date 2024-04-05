@@ -1,5 +1,6 @@
 package lake.graphics;
 
+import lake.FileReader;
 import lake.graphics.opengl.GLTexture2D;
 
 import java.awt.*;
@@ -7,135 +8,156 @@ import java.awt.image.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 
 /***
  * Represents a Font that can be rendered to the screen. This class can also interoperate with AWT Fonts, as well as load TrueType (.ttf) fonts from disk.
  */
 public class Font2D {
-    private final Font awtFont;
-    private final HashMap<Integer, Texture2D> glyphs = new HashMap<>();
-    private FontMetrics metrics;
-    public static int NORMAL = Font.PLAIN;
-    public static int ITALIC = Font.ITALIC;
-    public static int BOLD = Font.BOLD;
-
-    /***
-     * Loads a TrueType (.ttf) font from a file
-     * @param ttfPath
-     * @param style
-     * @param size
-     */
-    public Font2D(File ttfPath, int style, int size){
-        this(loadTTF(ttfPath).deriveFont(style, size));
-    }
-
-    /***
-     * Loads a system-installed font
-     * @param name
-     * @param style
-     * @param size
-     */
-
-    public Font2D(String name, int style, int size){
-        this(new Font(name, style, size));
-    }
+    private String texturePath, fntPath;
+    private Texture2D texture;
+    private HashMap<Integer, Glyph> glyphs = new HashMap<>();
 
 
-    /***
-     * Loads an AWT font
-     * @param awtFont
-     */
-    public Font2D(Font awtFont){
-        this.awtFont = awtFont;
+
+
+    public Font2D(String texturePath, String fntPath) {
+        this.texturePath = texturePath;
+        this.fntPath = fntPath;
+
+        texture = Texture2D.newTexture(texturePath);
         createGlyphs();
+
     }
 
-    private static Font loadTTF(File ttfPath){
-        try {
-            return Font.createFont(Font.TRUETYPE_FONT, ttfPath);
-        } catch (FontFormatException | IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
+
+
 
     public void createGlyphs(){
-        metrics = createFontMetrics();
+        String text = FileReader.readFile(this.fntPath);
 
-        for (int i = 32; i < 256; i++) {
-            if (i == 127) continue;
-            char c = (char) i;
+        for (String line : text.split("\n")){
 
-            BufferedImage ch = toBufferedImage(c);
-            Texture2D glyph = Texture2D.newTexture(ch.getWidth(), ch.getHeight());
-            glyph.setData(ch);
-            glyphs.put(i, glyph);
+
+            Map<String, String> parameters = getParameters(line);
+
+            if(line.startsWith("chars")){
+                System.out.println("Stub [chars]");
+            }
+
+            else if(line.startsWith("char")){
+                int id = Integer.parseInt(parameters.get("id"));
+
+                float x = Float.parseFloat(parameters.get("x"));
+                float y = Float.parseFloat(parameters.get("y"));
+                float w = Float.parseFloat(parameters.get("width"));
+                float h = Float.parseFloat(parameters.get("height"));
+
+                float xo = Float.parseFloat(parameters.get("xoffset"));
+                float yo = Float.parseFloat(parameters.get("yoffset"));
+
+                float xAdvance = Float.parseFloat(parameters.get("xadvance"));
+
+
+                glyphs.put(id, new Glyph(x, y, w, h, xo, yo, xAdvance));
+                System.out.println("New Glyph [" + id + "]" + " x [" + x + "]");
+            }
+
         }
+
+
+
     }
 
-    public HashMap<Integer, Texture2D> getGlyphs() {
+    public Texture2D getTexture() {
+        return texture;
+    }
+
+    public HashMap<Integer, Glyph> getGlyphs() {
         return glyphs;
     }
 
-    public Font getAWTFont() {
-        return awtFont;
+    private Map<String, String> getParameters(String text) {
+
+        HashMap<String, String> params = new HashMap<>();
+
+        String[] split = text.split(" ");
+        for (int i = 1; i < split.length; i++) {
+            String kv = split[i];
+            String[] tokens = kv.split("=");
+
+            if(tokens.length > 1)
+                params.put(tokens[0], tokens[1]);
+        }
+
+
+
+        return params;
     }
 
 
-
-
-    private FontMetrics createFontMetrics(){
-        BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = image.createGraphics();
-        g.setFont(awtFont);
-        FontMetrics metrics = g.getFontMetrics();
-        g.dispose();
-
-        return metrics;
-    }
-
-    private BufferedImage toBufferedImage(char c) {
-        BufferedImage image = new BufferedImage(metrics.charWidth(c), metrics.getHeight(), BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = image.createGraphics();
-
-        g.setPaint(java.awt.Color.WHITE);
-        g.setFont(awtFont);
-        g.drawString(String.valueOf(c), 0, metrics.getAscent());
-        g.dispose();
-
-        return image;
-    }
-
-    public float getLineHeight(){
-        return metrics.getHeight();
+    public float getLineHeight(String line){
+        return stringHeight(line);
     }
 
 
-    //Use this in Zara2
     public float getHeightOf(String string){
         String[] lines = string.split("\n");
         float height = 0f;
+
         for (String ignored : lines) {
-            height += metrics.getHeight();
+            height += stringHeight(ignored);
         }
 
         return height;
     }
 
+    private float stringWidth(String line){
+
+        float x = 0;
+
+        for (char c : line.toCharArray()){
+            x += glyphs.get((int) c).getXAdvance();
+        }
+
+        return x;
+    }
+
+    private float stringHeight(String line){
+
+        float h = 0;
+
+        for (char c : line.toCharArray()){
+
+            Glyph glyph = glyphs.get((int) c);
+
+            float n = glyph.getH() + glyph.getyOffset();
+
+            if(n > h){
+                h = n;
+            }
+        }
+
+        return h;
+    }
 
 
     public float getWidthOf(String string){
-
         String[] lines = string.split("\n");
         float width = 0f;
 
         for(String line : lines){
-            float lineWidth = metrics.stringWidth(line);
+            float lineWidth = stringWidth(line);
+
             if(lineWidth > width){
                 width = lineWidth;
             }
         }
 
         return width;
+
+
+
     }
 
 }
