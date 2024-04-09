@@ -8,6 +8,8 @@ import lake.Time;
 import org.lwjgl.system.Callback;
 
 import java.nio.DoubleBuffer;
+import java.util.HashMap;
+
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
@@ -24,6 +26,8 @@ public class StandaloneWindow implements Window {
     private double mouseX, mouseY;
     private double start;
     private int width, height;
+    
+    private HashMap<Integer, Boolean> keyStateMap = new HashMap<>();
 
     /***
      * Creates a Window and initializes GLFW. This also creates the OpenGL context
@@ -163,6 +167,28 @@ public class StandaloneWindow implements Window {
     public boolean isMousePressed(int button){
         return glfwGetMouseButton(window, button) == GLFW_PRESS;
     }
+
+    @Override
+    public boolean isMouseJustPressed(int button) {
+        
+        if(!keyStateMap.getOrDefault(button, false)){
+            if(isMousePressed(button)){
+                keyStateMap.put(button, true);
+                return true;
+            }
+        }
+        else {
+            if(!isMousePressed(button)){
+                keyStateMap.put(button, false);
+                return false;
+            }
+        }
+        
+        
+        
+        return false;
+    }
+
     public boolean isMouseReleased(int button){
         return glfwGetMouseButton(window, button) == GLFW_RELEASE;
     }

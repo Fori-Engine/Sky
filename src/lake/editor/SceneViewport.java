@@ -171,6 +171,11 @@ public class SceneViewport extends Panel {
         }
 
         @Override
+        public boolean isMouseJustPressed(int button) {
+            return false;
+        }
+
+        @Override
         public boolean isMouseReleased(int button) {
             if(!focused) return false;
             return window.isMouseReleased(button);

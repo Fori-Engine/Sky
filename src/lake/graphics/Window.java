@@ -19,6 +19,7 @@ public interface Window {
     float getMouseX();
     float getMouseY();
     boolean isMousePressed(int button);
+    boolean isMouseJustPressed(int button);
     boolean isMouseReleased(int button);
 
     int getFPS();
