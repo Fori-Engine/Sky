@@ -11,7 +11,7 @@ public class BitmapFont2DRenderer {
 
         Texture2D glyphTexture = font.getTexture();
         Map<Integer, Glyph> glyphs = font.getGlyphs();
-        float xc = 0;
+        float xc = x;
 
         String line = "";
 
@@ -39,7 +39,7 @@ public class BitmapFont2DRenderer {
             renderer2D.drawTexture(xc + glyph.getxOffset(), y + (glyph.getyOffset()), glyph.getW(), glyph.getH(), glyphTexture, color, new Rect2D(texX, texY, texW, texH), false, false);
 
 
-            xc += glyph.getXAdvance() + glyph.getxOffset();
+            xc += glyph.getXAdvance();
 
             line += c;
         }
