@@ -654,11 +654,17 @@ public class FastVK {
     }
 
     private static VkSurfaceFormatKHR chooseSwapSurfaceFormat(VkSurfaceFormatKHR.Buffer availableFormats) {
-        return availableFormats.stream()
-                .filter(availableFormat -> availableFormat.format() == VK_FORMAT_B8G8R8_UNORM)
-                .filter(availableFormat -> availableFormat.colorSpace() == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
-                .findAny()
-                .orElse(availableFormats.get(0));
+
+        for(VkSurfaceFormatKHR availableFormat : availableFormats){
+            if(availableFormat.format() == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace() == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR){
+                return availableFormat;
+            }
+        }
+
+
+        System.err.println("FastVK.chooseSwapSurfaceFormat() // " + "Unable to find sRGB VkSurfaceFormatKHR, using default. Colors may look incorrect.");
+
+        return availableFormats.get(0);
     }
 
     private static int chooseSwapPresentMode(IntBuffer availablePresentModes) {
