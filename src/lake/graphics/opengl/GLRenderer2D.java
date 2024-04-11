@@ -61,8 +61,8 @@ public class GLRenderer2D extends Renderer2D implements Disposable {
 
 
         defaultGLShaderProgram = new GLShaderProgram(
-                FileReader.readFile(GLRenderer2D.class.getClassLoader().getResourceAsStream("opengl/VertexShader.glsl")),
-                FileReader.readFile(GLRenderer2D.class.getClassLoader().getResourceAsStream("opengl/FragmentShader.glsl"))
+                FileReader.readFile("assets/shaders/opengl/VertexShader.glsl"),
+                FileReader.readFile("assets/shaders/opengl/FragmentShader.glsl")
         );
         defaultGLShaderProgram.prepare();
 

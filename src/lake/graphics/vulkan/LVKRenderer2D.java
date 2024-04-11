@@ -15,7 +15,6 @@ import java.nio.LongBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.KHRSurface.vkDestroySurfaceKHR;
@@ -274,7 +273,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
                 //Texture test
                 {
-                    texture2D = (LVKTexture2D) Texture2D.newTexture("project/demo.png");
+                    texture2D = (LVKTexture2D) Texture2D.newTexture("assets/empty.png");
 
                     for (int i = 0; i < maxTextures; i++) {
 
@@ -360,8 +359,8 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
         }
         LVKShaderProgram shaderProgram = new LVKShaderProgram(
-                FileReader.readFile(LVKRenderer2D.class.getClassLoader().getResourceAsStream("vulkan/VertexShader.glsl")),
-                FileReader.readFile(LVKRenderer2D.class.getClassLoader().getResourceAsStream("vulkan/FragmentShader.glsl"))
+                FileReader.readFile("assets/shaders/vulkan/VertexShader.glsl"),
+                FileReader.readFile("assets/shaders/vulkan/FragmentShader.glsl")
         );
 
         shaderProgram.setDevice(deviceWithIndices.device);

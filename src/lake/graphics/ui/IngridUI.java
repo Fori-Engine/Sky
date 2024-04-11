@@ -57,7 +57,7 @@ public class IngridUI {
 
         if(!hasFont) {
 
-            IngridUI.font = new Font2D("fonts/default.png", "fonts/default.fnt");
+            IngridUI.font = Font2D.getDefault();
             hasFont = true;
         }
         IngridUI.window = window;
@@ -128,7 +128,7 @@ public class IngridUI {
             public void draw(Renderer2D renderer, int x, int y, int width, int height) {
 
                 //renderer.drawFilledRect(x, y, width, height, uiScope.bgColor);
-                renderer.drawRect(x, y, width, height, Color.LIGHT_GRAY, 2);
+                renderer.drawRect(x, y, width, height, Color.LIGHT_GRAY, 1);
 
 
 
@@ -204,11 +204,8 @@ public class IngridUI {
 
 
 
-
                     if(window.isMouseJustPressed(Input.MOUSE_BUTTON_1)) {
-
                         color = Color.LIGHT_GRAY;
-
                         contextBasedEventMap.get(currentContext).put(myID, new Buttons.ButtonEvent(true));
                     }
                     else {

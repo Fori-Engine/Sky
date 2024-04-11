@@ -95,6 +95,21 @@ public class Font2D {
         return params;
     }
 
+    private static Font2D defaultFont2D;
+
+    public static Font2D getDefault(){
+        if(defaultFont2D == null){
+            defaultFont2D = new Font2D(
+                    "assets/fonts/arial/default.png",
+                    "assets/fonts/arial/default.fnt"
+            );
+        }
+
+        return defaultFont2D;
+    }
+
+
+
 
     public float getLineHeight(String line){
         return stringHeight(line);
