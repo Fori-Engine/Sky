@@ -451,6 +451,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
                     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
 
+
                     LongBuffer vertexBuffers = stack.longs(vertexBuffer.getMainBuffer().handle);
 
 
@@ -625,7 +626,13 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
             VkPipelineColorBlendAttachmentState.Buffer colorBlendAttachment = VkPipelineColorBlendAttachmentState.calloc(1, stack);
             {
                 colorBlendAttachment.colorWriteMask(VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT);
-                colorBlendAttachment.blendEnable(false);
+                colorBlendAttachment.blendEnable(true);
+                colorBlendAttachment.srcColorBlendFactor(VK_BLEND_FACTOR_SRC_ALPHA);
+                colorBlendAttachment.dstColorBlendFactor(VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA);
+                colorBlendAttachment.colorBlendOp(VK_BLEND_OP_ADD);
+                colorBlendAttachment.srcAlphaBlendFactor(VK_BLEND_FACTOR_ONE);
+                colorBlendAttachment.dstAlphaBlendFactor(VK_BLEND_FACTOR_ZERO);
+                colorBlendAttachment.alphaBlendOp(VK_BLEND_OP_ADD);
             }
 
 
@@ -814,6 +821,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
         drawQuad(x, y, w, h, slot, color, originX, originY, rect2D, -1, xFlip, yFlip, 0);
 
         if(isUniqueTexture) nextTextureSlot++;
+
 
 
     }
