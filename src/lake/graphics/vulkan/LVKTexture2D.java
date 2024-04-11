@@ -59,21 +59,17 @@ public class LVKTexture2D extends Texture2D {
         IntBuffer channelsInFile = BufferUtils.createIntBuffer(1);
 
         ByteBuffer texture = STBImage.stbi_load(path, w, h, channelsInFile, 4);
+        System.out.println(STBImage.stbi_failure_reason());
 
-
-
-
-
-
-        System.out.println("STBImage says: " + STBImage.stbi_failure_reason());
         int width = w.get();
         int height = h.get();
 
-        int channels = channelsInFile.get();
 
         setProperties(path, width, height);
 
-        int size = width * height * channels;
+
+
+        int size = texture.remaining();
 
         LongBuffer pStagingBufferMemory = MemoryUtil.memAllocLong(1);
         stagingBuffer = FastVK.createBuffer(
@@ -92,7 +88,8 @@ public class LVKTexture2D extends Texture2D {
 
 
 
-        byte[] bytes = new byte[texture.remaining()];
+
+        byte[] bytes = new byte[size];
 
 
         texture.limit(size);
