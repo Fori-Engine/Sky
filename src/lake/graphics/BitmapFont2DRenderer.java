@@ -7,6 +7,9 @@ public class BitmapFont2DRenderer {
 
     }
 
+    private static float spaceXAdvance = 0;
+    private static final int spacesPerTab = 4;
+
     public static void drawText(float x, float y, String text, Color color, Font2D font, Renderer2D renderer2D) {
 
         Texture2D glyphTexture = font.getTexture();
@@ -15,9 +18,24 @@ public class BitmapFont2DRenderer {
 
         String line = "";
 
-        for(char c : text.toCharArray()){
-            Glyph glyph = glyphs.get((int) c);
+        if(spaceXAdvance == 0){
+            spaceXAdvance = glyphs.get((int) ' ').getXAdvance();
+            System.out.println(spaceXAdvance);
+        }
 
+        for(char c : text.toCharArray()){
+
+            if(c == '\t'){
+                xc += spaceXAdvance * spacesPerTab;
+                continue;
+            }
+
+            if(c == '\r'){
+                xc = x;
+                continue;
+            }
+
+            Glyph glyph = glyphs.get((int) c);
 
             if(c == '\n'){
                 y += font.getLineHeight(line);
@@ -25,6 +43,10 @@ public class BitmapFont2DRenderer {
                 xc = x;
                 continue;
             }
+
+
+
+
 
 
             float xt = glyph.getX();// + glyph.getxOffset();
