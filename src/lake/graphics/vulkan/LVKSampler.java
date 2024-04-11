@@ -28,10 +28,10 @@ public class LVKSampler implements Disposable {
             samplerInfo.addressModeU(VK_SAMPLER_ADDRESS_MODE_REPEAT);
             samplerInfo.addressModeV(VK_SAMPLER_ADDRESS_MODE_REPEAT);
             samplerInfo.addressModeW(VK_SAMPLER_ADDRESS_MODE_REPEAT);
-            samplerInfo.anisotropyEnable(true);
+            samplerInfo.anisotropyEnable(false);
 
             //TODO: Fix this
-            samplerInfo.maxAnisotropy(16.0f);
+            //samplerInfo.maxAnisotropy(16.0f);
             samplerInfo.borderColor(VK_BORDER_COLOR_INT_OPAQUE_BLACK);
             samplerInfo.unnormalizedCoordinates(false);
             samplerInfo.compareEnable(false);
