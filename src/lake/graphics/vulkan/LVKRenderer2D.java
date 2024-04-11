@@ -52,9 +52,6 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
     private ByteBuffer vertexBufferData, indexBufferData;
     private LVKShaderProgram currentShaderProgram, defaultShaderProgram;
-
-    private LVKTexture2D texture2D;
-
     private int maxTextures = 32;
 
     private int RECT = -1;
@@ -271,17 +268,17 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
                 imageInfos = VkDescriptorImageInfo.create(maxTextures);
 
-                //Texture test
+
                 {
-                    texture2D = (LVKTexture2D) Texture2D.newTexture("assets/empty.png");
+                    LVKTexture2D emptyTexture = (LVKTexture2D) Texture2D.newTexture("assets/empty.png");
 
                     for (int i = 0; i < maxTextures; i++) {
 
                         VkDescriptorImageInfo imageInfo = imageInfos.get(i);
 
                         imageInfo.imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-                        imageInfo.imageView(texture2D.getTextureImageView());
-                        imageInfo.sampler(texture2D.getSampler().getTextureSampler());
+                        imageInfo.imageView(emptyTexture.getTextureImageView());
+                        imageInfo.sampler(emptyTexture.getSampler().getTextureSampler());
 
                     }
 
@@ -316,6 +313,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
                 descriptorWrite0.descriptorCount(1);
                 descriptorWrite0.pBufferInfo(bufferInfo);
 
+
                 VkWriteDescriptorSet descriptorWrite1 = descriptorWrites.get(1);
                 descriptorWrite1.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
                 descriptorWrite1.dstBinding(1);
@@ -323,6 +321,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
                 descriptorWrite1.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
                 descriptorWrite1.descriptorCount(maxTextures);
                 descriptorWrite1.pImageInfo(imageInfos);
+
 
 
 
@@ -402,10 +401,6 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
 
-    }
-
-    public LVKTexture2D getTexture2D() {
-        return texture2D;
     }
 
     private void recordCmdBuffers() {
@@ -952,6 +947,12 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
 
+    public void reset(){
+        vertexData = new float[vertexData.length];
+        quadIndex = 0;
+        nextTextureSlot = 0;
+        textureLookup.clear();
+    }
 
 
     @Override
