@@ -1,21 +1,12 @@
 package lake.graphics.opengl;
 
-import lake.graphics.Disposable;
 import lake.graphics.Disposer;
 import lake.graphics.Texture2D;
 import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.GL46;
 import org.lwjgl.stb.STBImage;
 
-import java.awt.*;
-import java.awt.Color;
-import java.awt.color.ColorSpace;
-import java.awt.image.*;
-import java.io.File;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.IntBuffer;
-import java.util.Hashtable;
 
 import static org.lwjgl.opengl.GL46.*;
 
