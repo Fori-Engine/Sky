@@ -8,9 +8,6 @@ import lake.FileReader;
 import java.lang.Math;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import static org.lwjgl.opengl.GL46.*;
 /***
@@ -64,8 +61,8 @@ public class GLRenderer2D extends Renderer2D implements Disposable {
 
 
         defaultGLShaderProgram = new GLShaderProgram(
-                FileReader.readFile(GLRenderer2D.class.getClassLoader().getResourceAsStream("BatchVertexShader.glsl")),
-                FileReader.readFile(GLRenderer2D.class.getClassLoader().getResourceAsStream("BatchFragmentShader.glsl"))
+                FileReader.readFile(GLRenderer2D.class.getClassLoader().getResourceAsStream("opengl/VertexShader.glsl")),
+                FileReader.readFile(GLRenderer2D.class.getClassLoader().getResourceAsStream("opengl/FragmentShader.glsl"))
         );
         defaultGLShaderProgram.prepare();
 
