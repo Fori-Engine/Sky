@@ -87,7 +87,7 @@ public class LVKShaderProgram extends ShaderProgram {
 
 
 
-            throw new RuntimeException("Failed to compile shader because: \n" + shaderc_result_get_error_message(result) + " for " + shaderType);
+            throw new RuntimeException(shaderType + ": " + shaderc_result_get_error_message(result));
         }
 
         shaderc_compiler_release(compiler);

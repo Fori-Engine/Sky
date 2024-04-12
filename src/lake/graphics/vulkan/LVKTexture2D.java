@@ -43,6 +43,7 @@ public class LVKTexture2D extends Texture2D {
         //TODO: Wth does this do?
     }
     public LVKTexture2D(String path, Texture2D.Filter filter) {
+
         Disposer.add("managedResources", this);
         device = LVKRenderer2D.getDeviceWithIndices().device;
         isInitialized = true;
@@ -59,13 +60,14 @@ public class LVKTexture2D extends Texture2D {
         IntBuffer channelsInFile = BufferUtils.createIntBuffer(1);
 
         ByteBuffer texture = STBImage.stbi_load(path, w, h, channelsInFile, 4);
-        System.out.println(STBImage.stbi_failure_reason());
-
         int width = w.get();
         int height = h.get();
-
-
         setProperties(path, width, height);
+
+        checkSTBError();
+
+
+
 
 
 

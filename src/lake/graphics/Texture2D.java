@@ -2,6 +2,7 @@ package lake.graphics;
 
 import lake.graphics.opengl.GLTexture2D;
 import lake.graphics.vulkan.LVKTexture2D;
+import org.lwjgl.stb.STBImage;
 
 import java.awt.*;
 import java.awt.Color;
@@ -116,6 +117,16 @@ public abstract class Texture2D implements Disposable {
         if(Renderer2D.getAPI() == RendererType.VULKAN) return new LVKTexture2D(path, filter);
 
         return null;
+    }
+
+    protected void checkSTBError(){
+        String message = STBImage.stbi_failure_reason();
+
+        if(message != null){
+
+
+            throw new RuntimeException(path + " " + message);
+        }
     }
 
     public static Texture2D newTexture(int width, int height){

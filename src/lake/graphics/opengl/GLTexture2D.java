@@ -39,11 +39,10 @@ public class GLTexture2D extends Texture2D {
         IntBuffer h = BufferUtils.createIntBuffer(1);
         IntBuffer channelsInFile = BufferUtils.createIntBuffer(1);
         ByteBuffer texture = STBImage.stbi_load(path, w, h, channelsInFile, 4);
-        System.out.println(STBImage.stbi_failure_reason());
         int width = w.get();
         int height = h.get();
-
         setProperties(path, width, height);
+        checkSTBError();
 
         texID = glGenTextures();
 
