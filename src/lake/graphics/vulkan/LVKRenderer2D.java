@@ -71,7 +71,10 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
         Disposer.add("renderer", this);
 
-        instance = FastVK.createInstance(getClass().getName(), "LakeEngine", true);
+        String appEngineInfoName = "LakeEngine";
+
+        FlightRecorder.info(LVKRenderer2D.class, "Using appInfoEngineName of " + appEngineInfoName);
+        instance = FastVK.createInstance(getClass().getName(), appEngineInfoName, true);
         FastVK.setupDebugMessenger(instance, true);
         surface = FastVK.createSurface(instance, window);
         physicalDevice = FastVK.pickPhysicalDevice(instance, surface);
@@ -1159,7 +1162,6 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
         vkDestroyDescriptorSetLayout(deviceWithIndices.device, descriptorSetLayout.get(), null);
 
-        System.out.println("Nuking device");
         vkDestroyDevice(deviceWithIndices.device, null);
         FastVK.cleanupDebugMessenger(instance, true);
 
