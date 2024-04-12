@@ -31,14 +31,7 @@ void main()
 
     }
     else {
-
-        vec4 color;
-
-
-        color = texture(u_textures[index], f_uv) * f_color;
-
-
-        FragColor = color;
+        FragColor = texture(u_textures[index], f_uv) * f_color;
     }
 
 }
