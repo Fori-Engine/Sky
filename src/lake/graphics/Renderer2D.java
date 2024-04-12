@@ -1,5 +1,6 @@
 package lake.graphics;
 
+import lake.FlightRecorder;
 import lake.graphics.opengl.*;
 import lake.graphics.vulkan.LVKRenderer2D;
 import org.joml.Matrix4f;
@@ -108,6 +109,8 @@ public abstract class Renderer2D {
 
     public static Renderer2D createRenderer(RendererType type, StandaloneWindow window, int width, int height, boolean msaa){
         api = type;
+        FlightRecorder.info(Renderer2D.class, "Using renderer backend " + api);
+
         if(type == RendererType.OPENGL){
             return new GLRenderer2D(width, height, msaa);
         }
@@ -115,6 +118,7 @@ public abstract class Renderer2D {
             return new LVKRenderer2D(window, width, height, msaa);
         }
 
+        FlightRecorder.meltdown(Renderer2D.class, "User requested renderer backend " + type + " but no backend could be initialized!");
         return null;
     }
 

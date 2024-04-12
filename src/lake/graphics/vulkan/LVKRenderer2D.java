@@ -1,6 +1,7 @@
 package lake.graphics.vulkan;
 
 import lake.FileReader;
+import lake.FlightRecorder;
 import lake.graphics.*;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
@@ -83,6 +84,8 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
         swapchainFramebuffers = FastVK.createFramebuffers(deviceWithIndices.device, swapchain, swapchainImageViews, renderPass);
         commandPool = FastVK.createCommandPool(deviceWithIndices);
         textureLookup = new FastTextureLookup(maxTextures);
+
+
 
         LVKCommandRunner.setup(deviceWithIndices, graphicsQueue);
 

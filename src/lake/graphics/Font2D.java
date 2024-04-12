@@ -1,6 +1,7 @@
 package lake.graphics;
 
 import lake.FileReader;
+import lake.FlightRecorder;
 import lake.graphics.opengl.GLTexture2D;
 
 import java.awt.*;
@@ -42,7 +43,7 @@ public class Font2D {
             Map<String, String> parameters = getParameters(line);
 
             if(line.startsWith("chars")){
-                System.out.println("Stub [chars]");
+                FlightRecorder.todo(Font2D.class, "Attribute 'chars' not implemented in Font2D");
             }
 
             else if(line.startsWith("char")){
@@ -60,7 +61,7 @@ public class Font2D {
 
 
                 glyphs.put(id, new Glyph(x, y, w, h, xo, yo, xAdvance));
-                System.out.println("New Glyph [" + id + "]" + " x [" + x + "]");
+
             }
 
         }

@@ -89,7 +89,7 @@ public class Animation {
             if(playmode == Playmode.PLAY){
                 if(currentIndex != (numOfFrames - 1))
                     currentIndex++;
-                System.out.println(currentIndex);
+
             }
 
             start = 0;

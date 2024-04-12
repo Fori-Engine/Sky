@@ -20,7 +20,7 @@ public class BitmapFont2DRenderer {
 
         if(spaceXAdvance == 0){
             spaceXAdvance = glyphs.get((int) ' ').getXAdvance();
-            System.out.println(spaceXAdvance);
+
         }
 
         for(char c : text.toCharArray()){

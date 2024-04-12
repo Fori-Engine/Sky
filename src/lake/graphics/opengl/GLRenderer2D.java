@@ -1,5 +1,6 @@
 package lake.graphics.opengl;
 
+import lake.FlightRecorder;
 import lake.graphics.*;
 import org.joml.*;
 import org.lwjgl.BufferUtils;
@@ -82,7 +83,8 @@ public class GLRenderer2D extends Renderer2D implements Disposable {
                     new GLVertexAttribute(5, 1, false, "v_bloom")
             );
 
-            System.out.println("Stride: " + vertexArray.getStride());
+
+            FlightRecorder.info(GLRenderer2D.class, "Calculated vertex stride is " + vertexArray.getStride() + " bytes");
 
             vertexBuffer = new GLVertexBuffer(1000, vertexArray.getStride() / Float.BYTES);
             vertexArray.build();

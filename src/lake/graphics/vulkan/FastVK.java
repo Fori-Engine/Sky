@@ -4,6 +4,7 @@
 
 package lake.graphics.vulkan;
 
+import lake.FlightRecorder;
 import lake.graphics.StandaloneWindow;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
@@ -24,7 +25,7 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 import static org.lwjgl.vulkan.EXTDebugUtils.*;
 import static org.lwjgl.vulkan.KHRSurface.*;
 import static org.lwjgl.vulkan.KHRSwapchain.*;
-import static org.lwjgl.vulkan.VK10.*;
+import static org.lwjgl.vulkan.VK13.*;
 
 public class FastVK {
     private FastVK(){}
@@ -394,7 +395,7 @@ public class FastVK {
 
             vkGetDeviceQueue(deviceConfig.device, deviceConfig.queueFamilyIndices.presentFamily, 0, pPresentQueue);
 
-            System.out.println(deviceConfig.device);
+
 
 
             presentQueue = new VkQueue(pPresentQueue.get(0), deviceConfig.device);
@@ -665,6 +666,7 @@ public class FastVK {
         System.err.println("FastVK.chooseSwapSurfaceFormat() // " + "Unable to find sRGB VkSurfaceFormatKHR, using default. Colors may look incorrect.");
 
         return availableFormats.get(0);
+
     }
 
     private static int chooseSwapPresentMode(IntBuffer availablePresentModes) {
@@ -722,7 +724,7 @@ public class FastVK {
 
         VkDebugUtilsMessengerCallbackDataEXT callbackData = VkDebugUtilsMessengerCallbackDataEXT.create(pCallbackData);
 
-        System.err.println("Validation layer: " + callbackData.pMessageString());
+        FlightRecorder.info(FastVK.class, callbackData.pMessageString());
 
         return VK_FALSE;
     }
