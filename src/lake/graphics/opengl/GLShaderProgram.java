@@ -36,13 +36,19 @@ public class GLShaderProgram extends ShaderProgram {
         int vertexShaderProg = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertexShaderProg, vertexShaderSource);
         glCompileShader(vertexShaderProg);
-        System.err.println(glGetShaderInfoLog(vertexShaderProg));
+        String vertexShaderInfoLog = glGetShaderInfoLog(vertexShaderProg);
+        if(!vertexShaderInfoLog.isEmpty()){
+            throw new RuntimeException("Vertex Shader: " + vertexShaderInfoLog);
+        }
 
 
         int fragmentShaderProg = glCreateShader(GL_FRAGMENT_SHADER);
         glShaderSource(fragmentShaderProg, fragmentShaderSource);
         glCompileShader(fragmentShaderProg);
-        System.err.println(glGetShaderInfoLog(fragmentShaderProg));
+        String fragmentShaderInfoLog = glGetShaderInfoLog(fragmentShaderProg);
+        if(!fragmentShaderInfoLog.isEmpty()){
+            throw new RuntimeException("Fragment Shader: " + fragmentShaderInfoLog);
+        }
 
 
         shaderProgram = glCreateProgram();
