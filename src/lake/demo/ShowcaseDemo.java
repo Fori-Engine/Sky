@@ -23,7 +23,7 @@ public class ShowcaseDemo {
 
         ArrayList<Texture2D> textures = new ArrayList<>();
         Texture2D logo = Texture2D.newTexture("assets/logo.png");
-        Texture2D opengl = Texture2D.newTexture("project/texture.png");
+        Texture2D opengl = Texture2D.newTexture(Renderer2D.getAPI() == RendererType.OPENGL ? "demo_assets/opengl.png" : "demo_assets/vulkan.png");
 
 
         for (int i = 0; i < 32; i++) {
@@ -41,11 +41,11 @@ public class ShowcaseDemo {
         float rotation = 0f;
 
 
-        ParticleSourceConfig particleSourceConfig = new ParticleSourceConfig(10, 10, 3500, 2, 10, 10);
+        ParticleSourceConfig particleSourceConfig = new ParticleSourceConfig(100, 100, 3500, 7, 10, 10);
         ParticleSource particleSource = new ParticleSource(particleSourceConfig, new Vector2f(700f, 700f));
         particleSource.addParticles(200);
 
-        Animation animation = new Animation(Texture2D.newTexture("project/img.png", Texture2D.Filter.NEAREST));
+        Animation animation = new Animation(Texture2D.newTexture("demo_assets/sprites.png", Texture2D.Filter.NEAREST));
         animation.create(2, 2, 4);
         animation.setDelay(150);
         animation.setPlaymode(Animation.Playmode.PLAY_REPEAT);
@@ -53,7 +53,10 @@ public class ShowcaseDemo {
 
         while (!window.shouldClose()) {
             renderer2D.clear(new Color(0.5f, 0.5f, 0.5f, 1.0f));
-            renderer2D.drawText(0, 0, " \"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. \nUt enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. \nDuis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. \nExcepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\" FPS: " + window.getFPS(), Color.BLUE, Font2D.getDefault());
+
+
+            renderer2D.drawText(0, 0, "FPS: " + window.getFPS(), Color.RED, Font2D.getDefault());
+            renderer2D.drawText(window.getMouseX(), window.getMouseY(), " \"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. \nUt enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. \nDuis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. \nExcepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\" FPS: " + window.getFPS(), Color.BLUE, Font2D.getDefault());
 
             
             
