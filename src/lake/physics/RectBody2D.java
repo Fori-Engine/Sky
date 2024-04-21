@@ -9,28 +9,26 @@ public class RectBody2D extends RigidBody2D {
 
     private Rect2D rect2D;
 
-    public RectBody2D(World world, Rect2D rect2D, Type bodyType, boolean canRotate) {
+
+
+    public RectBody2D(float screen2Physics, World world, Rect2D rect2D, Type bodyType, boolean canRotate) {
+        this.screen2Physics = screen2Physics;
         this.rect2D = rect2D;
         this.bodyType = bodyType;
 
         BodyDef bodyDef = new BodyDef();
         bodyDef.setFixedRotation(!canRotate);
         bodyDef.type = toBox2DType(bodyType);
-        bodyDef.position.set(rect2D.x, rect2D.y);
+        bodyDef.position.set(rect2D.x * screen2Physics, rect2D.y * screen2Physics);
         body = world.createBody(bodyDef);
-        body.createFixture(Fixtures.Box(rect2D.w / 2f, rect2D.h / 2f, 0.1f, 0.4f, 0.9f));
     }
 
     @Override
-    public void setPhysics(float density, float friction, float res) {
-        super.setPhysics(density, friction, res);
-        body.createFixture(Fixtures.Box(rect2D.w / 2f, rect2D.h / 2f, density, friction, res));
+    public void setPhysicalProps(float density, float friction, float res) {
+        super.setPhysicalProps(density, friction, res);
+        body.createFixture(Fixtures.Box((rect2D.w * screen2Physics) / 2f, (rect2D.h * screen2Physics) / 2f, density, friction, res));
     }
 
-    @Override
-    public Vector2f getOrigin() {
-        return PhysicsUtil.toVector2f(body.getPosition());
-    }
 
     public float getWidth(){
         return rect2D.w;
@@ -40,7 +38,8 @@ public class RectBody2D extends RigidBody2D {
         return rect2D.h;
     }
 
+
     public Vector2f getPosition(){
-        return PhysicsUtil.toVector2f(body.getPosition());
+        return PhysicsUtil.toVector2f(body.getPosition().mul(1 / screen2Physics));
     }
 }

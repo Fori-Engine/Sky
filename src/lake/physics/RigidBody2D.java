@@ -9,18 +9,34 @@ public abstract class RigidBody2D {
     protected float density;
     protected float friction;
     protected float res;
-
+    boolean canRotate;
+    float screen2Physics;
     public enum Type {
         DYNAMIC,
         STATIC,
         KINEMATIC
     }
     Type bodyType;
-    public abstract Vector2f getOrigin();
+
+
+    public void setPhysicalProps(float density, float friction, float res){
+        this.density = density;
+        this.friction = friction;
+        this.res = res;
+    }
+
+
+    public void setPosition(Vector2f pos){
+        body.setTransform(PhysicsUtil.toVec2(pos).mul(screen2Physics), body.getAngle());
+    }
     public abstract Vector2f getPosition();
 
-    boolean canRotate;
-
+    public Vector2f getOrigin() {
+        return PhysicsUtil.toVector2f(body.getPosition().mul(1 / screen2Physics));
+    }
+    public boolean canRotate() {
+        return canRotate;
+    }
     public float getRotation(){
         return body.getAngle();
     }
@@ -45,13 +61,5 @@ public abstract class RigidBody2D {
         body.applyLinearImpulse(PhysicsUtil.toVec2(force), body.getWorldPoint(body.getLocalCenter()), true);
     }
 
-    public void setPhysics(float density, float friction, float res){
-        this.density = density;
-        this.friction = friction;
-        this.res = res;
-    }
 
-    public boolean isCanRotate() {
-        return canRotate;
-    }
 }

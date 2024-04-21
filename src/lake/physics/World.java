@@ -2,7 +2,6 @@ package lake.physics;
 
 import org.jbox2d.callbacks.ContactImpulse;
 import org.jbox2d.collision.Manifold;
-import org.jbox2d.dynamics.World;
 import org.jbox2d.dynamics.contacts.Contact;
 import org.joml.Vector2f;
 import lake.Time;
@@ -10,29 +9,20 @@ import lake.graphics.Rect2D;
 
 import java.util.ArrayList;
 
-/***
- * A Scene2D represents a Physics World which can simulate RigidBody2Ds.
- */
-public class Scene2D {
-    private World world;
+public class World {
+    private org.jbox2d.dynamics.World world;
     private float accumulator = 0f;
-    private float physicsToScreenScale;
+    private float screen2Physics;
 
     private int velocityIterations = 8;
-    private int positionIterations = 2;
+    private int positionIterations = 3;
 
     private ArrayList<ContactListener> contactListeners = new ArrayList<>();
 
 
-    /***
-     * Creates a Scene2D with the specified scale and gravity
-     *
-     * @param physicsToScreenScale How many meters represent a pixel
-     * @param gravity
-     */
-    public Scene2D(float physicsToScreenScale, Vector2f gravity){
-        setPhysicsToScreenScale(physicsToScreenScale);
-        world = new World(PhysicsUtil.toVec2(gravity));
+    public World(float screen2PhysicsMultiplier, Vector2f gravity){
+        setScreen2Physics(screen2PhysicsMultiplier);
+        world = new org.jbox2d.dynamics.World(PhysicsUtil.toVec2(gravity));
 
         world.setContactListener(new org.jbox2d.callbacks.ContactListener() {
             @Override
@@ -61,11 +51,14 @@ public class Scene2D {
         });
     }
 
-    /***
-     * Update the simulation with the specified fixed-time step. Scene2D will automatically handle keeping the
-     * time-step in sync with rendering. The recommended value is 1/60f, or 0.016 seconds.
-     * @param step
-     */
+    public RectBody2D newRectBody2D(Rect2D rect2D, RigidBody2D.Type bodyType, boolean canRotate){
+        return new RectBody2D(screen2Physics, world, rect2D, bodyType, canRotate);
+    }
+
+    public CircleBody2D newCircleBody2D(Vector2f pos, float radius, RigidBody2D.Type bodyType, boolean canRotate) {
+        return new CircleBody2D(screen2Physics, world, radius, pos, bodyType, canRotate);
+    }
+
     public void update(float step){
         //Prevent skipping the Box2D simulation too far into the future if the
         //Frame-rate gets slowed because of the Rendering side
@@ -94,15 +87,6 @@ public class Scene2D {
     public void setPositionIterations(int positionIterations) {
         this.positionIterations = positionIterations;
     }
-
-    public RectBody2D newRectBody2D(Rect2D rect2D, RigidBody2D.Type bodyType, boolean canRotate){
-        return new RectBody2D(world, rect2D.mul(getPhysicsToScreenScale()), bodyType, canRotate);
-    }
-
-    public CircleBody2D newCircleBody2D(Vector2f pos, float radius, RigidBody2D.Type bodyType, boolean canRotate) {
-        return new CircleBody2D(world, radius * getPhysicsToScreenScale(), pos.mul(getPhysicsToScreenScale()), bodyType, canRotate);
-    }
-
     public void addContactListener(ContactListener contactListener){
         contactListeners.add(contactListener);
     }
@@ -111,19 +95,19 @@ public class Scene2D {
         contactListeners.remove(contactListener);
     }
 
-    public float getPhysicsToScreenScale() {
-        return physicsToScreenScale;
+    public float getScreen2Physics() {
+        return screen2Physics;
     }
 
-    public void setPhysicsToScreenScale(float physicsToScreenScale) {
-        this.physicsToScreenScale = physicsToScreenScale;
+    public void setScreen2Physics(float screen2Physics) {
+        this.screen2Physics = screen2Physics;
     }
 
     public Vector2f getGravity(){
         return PhysicsUtil.toVector2f(world.getGravity());
     }
 
-    public World getWorld() {
+    public org.jbox2d.dynamics.World getWorld() {
         return world;
     }
 }
