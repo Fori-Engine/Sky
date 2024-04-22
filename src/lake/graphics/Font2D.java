@@ -18,7 +18,7 @@ public class Font2D {
     private String texturePath, fntPath;
     private Texture2D texture;
     private HashMap<Integer, Glyph> glyphs = new HashMap<>();
-
+    private float defaultLineHeight;
 
 
 
@@ -42,10 +42,13 @@ public class Font2D {
 
             Map<String, String> parameters = getParameters(line);
 
-            if(line.startsWith("chars")){
+
+            if(line.startsWith("common")){
+                defaultLineHeight = Float.parseFloat(parameters.get("lineHeight"));
+            }
+            else if(line.startsWith("chars")){
                 FlightRecorder.todo(Font2D.class, "Attribute 'chars' not implemented in Font2D");
             }
-
             else if(line.startsWith("char")){
                 int id = Integer.parseInt(parameters.get("id"));
 
@@ -76,6 +79,10 @@ public class Font2D {
 
     public HashMap<Integer, Glyph> getGlyphs() {
         return glyphs;
+    }
+
+    public float getDefaultLineHeight() {
+        return defaultLineHeight;
     }
 
     private Map<String, String> getParameters(String text) {
@@ -113,7 +120,13 @@ public class Font2D {
 
 
     public float getLineHeight(String line){
-        return stringHeight(line);
+
+        float stringHeight = stringHeight(line);
+        if(stringHeight == 0){
+            stringHeight = getDefaultLineHeight();
+        }
+
+        return stringHeight;
     }
 
 

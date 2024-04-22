@@ -1,5 +1,7 @@
 package lake.graphics;
 
+import lake.FlightRecorder;
+
 import java.util.Map;
 
 public class BitmapFont2DRenderer {
@@ -18,10 +20,8 @@ public class BitmapFont2DRenderer {
 
         String line = "";
 
-        if(spaceXAdvance == 0){
-            spaceXAdvance = glyphs.get((int) ' ').getXAdvance();
+        spaceXAdvance = glyphs.get((int) ' ').getXAdvance();
 
-        }
 
         for(char c : text.toCharArray()){
 
@@ -38,19 +38,21 @@ public class BitmapFont2DRenderer {
             Glyph glyph = glyphs.get((int) c);
 
             if(c == '\n'){
-                y += font.getLineHeight(line);
+
+                float height = font.getLineHeight(line);
+
+                y += height;
+
+                FlightRecorder.info(BitmapFont2DRenderer.class, "Advancing line-y by: " + height + "px" + " [" + line + "]");
+
                 line = "";
                 xc = x;
                 continue;
             }
 
 
-
-
-
-
-            float xt = glyph.getX();// + glyph.getxOffset();
-            float yt = glyph.getY();// + glyph.getyOffset();
+            float xt = glyph.getX();
+            float yt = glyph.getY();
 
             float texX = xt / glyphTexture.getWidth();
             float texY = yt / glyphTexture.getHeight();
