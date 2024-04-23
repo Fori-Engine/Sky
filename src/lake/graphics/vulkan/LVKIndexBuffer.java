@@ -2,6 +2,7 @@ package lake.graphics.vulkan;
 
 import lake.graphics.Disposable;
 import lake.graphics.Disposer;
+import lake.graphics.IndexBuffer;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
@@ -10,7 +11,7 @@ import java.nio.LongBuffer;
 
 import static org.lwjgl.vulkan.VK10.*;
 
-public class LVKIndexBuffer implements Disposable {
+public class LVKIndexBuffer extends IndexBuffer implements Disposable {
 
     private VkDeviceWithIndices deviceWithIndices;
     private VkPhysicalDevice physicalDevice;

@@ -18,6 +18,7 @@ import static org.lwjgl.opengl.GL46.*;
 public class GLRenderer2D extends Renderer2D implements Disposable {
     private GLVertexArray vertexArray;
     private GLVertexBuffer vertexBuffer;
+    private GLIndexBuffer indexBuffer;
     private float[] vertexData;
     private int maxTextureSlots;
     public GLShaderProgram defaultGLShaderProgram, currentGLShaderProgram;
@@ -86,7 +87,11 @@ public class GLRenderer2D extends Renderer2D implements Disposable {
 
             FlightRecorder.info(GLRenderer2D.class, "Calculated vertex stride is " + vertexArray.getStride() + " bytes");
 
-            vertexBuffer = new GLVertexBuffer(1000, vertexArray.getStride() / Float.BYTES);
+            vertexBuffer = new GLVertexBuffer(310, vertexArray.getStride() / Float.BYTES);
+            indexBuffer = new GLIndexBuffer(310);
+
+
+
             vertexArray.build();
 
             vertexData = new float[vertexBuffer.getNumOfVertices() * vertexBuffer.getVertexDataSize()];
@@ -395,7 +400,7 @@ public class GLRenderer2D extends Renderer2D implements Disposable {
             offset += 4;
         }
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, getVertexBuffer().myEbo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.myEbo);
         glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, indices);
 
         glDrawElements(GL_TRIANGLES, indices.length, GL_UNSIGNED_INT, 0);

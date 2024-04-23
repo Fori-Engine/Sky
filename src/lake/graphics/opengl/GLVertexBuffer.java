@@ -11,13 +11,11 @@ import static org.lwjgl.opengl.GL46.*;
  */
 public class GLVertexBuffer extends lake.graphics.VertexBuffer implements Disposable {
     public int myVbo;
-    public int myEbo;
     private int numOfVertices;
 
     public GLVertexBuffer(int maxQuads, int vertexDataSize) {
         super(maxQuads, vertexDataSize);
         Disposer.add("managedResources", this);
-
 
         build();
     }
@@ -34,17 +32,11 @@ public class GLVertexBuffer extends lake.graphics.VertexBuffer implements Dispos
         glBindBuffer(GL_ARRAY_BUFFER, myVbo);
         glBufferData(GL_ARRAY_BUFFER, maxQuads * 4 * vertexDataSize * Float.BYTES, GL_DYNAMIC_DRAW);
         numOfVertices = maxQuads * 4;
-
-        myEbo = glGenBuffers();
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, myEbo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, maxQuads * 6L * Integer.BYTES, GL_DYNAMIC_DRAW);
-
     }
 
     @Override
     public void dispose() {
         glDeleteBuffers(myVbo);
-        glDeleteBuffers(myEbo);
     }
 
 }
