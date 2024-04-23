@@ -1,23 +1,17 @@
 package lake.graphics.opengl;
 
-import lake.graphics.Disposable;
-import lake.graphics.Disposer;
 import lake.graphics.IndexBuffer;
 
-import static org.lwjgl.opengl.GL15.*;
-import static org.lwjgl.opengl.GL15.GL_DYNAMIC_DRAW;
+import static org.lwjgl.opengl.GL46.*;
 
-public class GLIndexBuffer extends IndexBuffer implements Disposable {
-
-
+public class GLIndexBuffer extends IndexBuffer {
     public int myEbo;
-
-    public GLIndexBuffer(int maxQuads){
-        Disposer.add("managedResources", this);
+    public GLIndexBuffer(int maxQuads, int indicesPerQuad, int indexSizeBytes){
+        super(maxQuads, indicesPerQuad, indexSizeBytes);
 
         myEbo = glGenBuffers();
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, myEbo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, maxQuads * 6L * Integer.BYTES, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, maxQuads * indicesPerQuad * indexSizeBytes, GL_DYNAMIC_DRAW);
     }
 
     @Override

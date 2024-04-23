@@ -104,7 +104,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
         //Found it, wth is this 1?
-        vertexBuffer = new LVKVertexBuffer(1000, 10);
+        vertexBuffer = new LVKVertexBuffer(310, 10);
         {
             vertexBuffer.setDeviceWithIndices(deviceWithIndices);
             vertexBuffer.setCommandPool(commandPool);
@@ -112,7 +112,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
             vertexBuffer.setPhysicalDevice(physicalDevice);
             vertexBuffer.build();
         }
-        indexBuffer = new LVKIndexBuffer(1000, 6, Integer.BYTES);
+        indexBuffer = new LVKIndexBuffer(310, 6, Integer.BYTES);
         {
             indexBuffer.setDeviceWithIndices(deviceWithIndices);
             indexBuffer.setCommandPool(commandPool);
@@ -461,7 +461,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
                     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                             pipeline.pipelineLayout, 0, stack.longs(descriptorSets.get(i)), null);
-                    vkCmdDrawIndexed(commandBuffer, indexBuffer.getIndicesPerQuad() * indexBuffer.getTargetQuads(), 1, 0, 0, 0);
+                    vkCmdDrawIndexed(commandBuffer, indexBuffer.getIndicesPerQuad() * indexBuffer.getMaxQuads(), 1, 0, 0, 0);
 
 
 
@@ -808,8 +808,6 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
                 vkUpdateDescriptorSets(deviceWithIndices.device, descriptorWrites, null);
-
-
             }
 
 
@@ -836,6 +834,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
     }
 
 
+    private int log = 0;
 
     private void drawQuad(float x,
                           float y,
@@ -897,6 +896,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
 
+
             vertexData[(quadIndex * dataPerQuad) + 0] = topLeft.x;
             vertexData[(quadIndex * dataPerQuad) + 1] = topLeft.y;
             vertexData[(quadIndex * dataPerQuad) + 2] = copy.x;
@@ -948,6 +948,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
         quadIndex++;
 
 
+        log++;
         //if(quadIndex == vertexBuffer.maxQuads()) render("Next Batch Render");
     }
 
@@ -973,6 +974,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
     public void render(String renderName) {
 
 
+
         if(updateCmdBuffers) {
             recordCmdBuffers();
             updateCmdBuffers = false;
@@ -989,7 +991,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
         int numOfIndices = quadIndex * 6;
-        int[] indices = new int[indexBuffer.getIndicesPerQuad() * indexBuffer.getTargetQuads()];
+        int[] indices = new int[indexBuffer.getIndicesPerQuad() * indexBuffer.getMaxQuads()];
         int offset = 0;
 
         for (int j = 0; j < numOfIndices; j += 6) {
@@ -1094,6 +1096,9 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
         }
 
 
+        System.out.println("Hmmmmmmm?");
+        FlightRecorder.info(LVKRenderer2D.class, "Calls to drawQuad: " + log);
+        log = 0;
 
         vertexData = new float[vertexData.length];
         quadIndex = 0;

@@ -88,7 +88,7 @@ public class GLRenderer2D extends Renderer2D implements Disposable {
             FlightRecorder.info(GLRenderer2D.class, "Calculated vertex stride is " + vertexArray.getStride() + " bytes");
 
             vertexBuffer = new GLVertexBuffer(310, vertexArray.getStride() / Float.BYTES);
-            indexBuffer = new GLIndexBuffer(310);
+            indexBuffer = new GLIndexBuffer(310, 6, Integer.BYTES);
 
 
 

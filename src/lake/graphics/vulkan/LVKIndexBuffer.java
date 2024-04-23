@@ -11,7 +11,7 @@ import java.nio.LongBuffer;
 
 import static org.lwjgl.vulkan.VK10.*;
 
-public class LVKIndexBuffer extends IndexBuffer implements Disposable {
+public class LVKIndexBuffer extends IndexBuffer  {
 
     private VkDeviceWithIndices deviceWithIndices;
     private VkPhysicalDevice physicalDevice;
@@ -22,15 +22,9 @@ public class LVKIndexBuffer extends IndexBuffer implements Disposable {
     private VkQueue graphicsQueue;
     private long commandPool;
 
-    private int indexSizeBytes;
-    private int indicesPerQuad;
-    private int targetQuads;
 
-    public LVKIndexBuffer(int targetQuads, int indicesPerQuad, int indexSizeBytes) {
-        this.targetQuads = targetQuads;
-        this.indicesPerQuad = indicesPerQuad;
-        this.indexSizeBytes = indexSizeBytes;
-        Disposer.add("managedResources", this);
+    public LVKIndexBuffer(int maxQuads, int indicesPerQuad, int indexSizeBytes) {
+        super(maxQuads, indicesPerQuad, indexSizeBytes);
     }
 
     public VkDeviceWithIndices getDeviceWithIndices() {
@@ -72,13 +66,10 @@ public class LVKIndexBuffer extends IndexBuffer implements Disposable {
         return indicesPerQuad;
     }
 
-    public int getTargetQuads() {
-        return targetQuads;
-    }
 
     public void build() {
 
-        int indicesSizeBytes = indexSizeBytes * indicesPerQuad * targetQuads;
+        int indicesSizeBytes = indexSizeBytes * indicesPerQuad * maxQuads;
 
         data = MemoryUtil.memAllocPointer(1);
 
