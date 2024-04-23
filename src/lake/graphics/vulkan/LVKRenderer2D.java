@@ -22,7 +22,7 @@ import static org.lwjgl.vulkan.KHRSurface.vkDestroySurfaceKHR;
 import static org.lwjgl.vulkan.KHRSwapchain.*;
 import static org.lwjgl.vulkan.VK13.*;
 
-public class LVKRenderer2D extends Renderer2D implements Disposable {
+public class LVKRenderer2D extends Renderer2D {
     private int MAX_FRAMES_IN_FLIGHT = 2;
 
     long UINT64_MAX = 0xFFFFFFFFFFFFFFFFL;
@@ -69,7 +69,6 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
     public LVKRenderer2D(StandaloneWindow window, int width, int height, boolean msaa) {
         super(width, height, msaa);
 
-        Disposer.add("renderer", this);
 
         String appEngineInfoName = "LakeEngine";
 

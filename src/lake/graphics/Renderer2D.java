@@ -12,7 +12,7 @@ import java.util.List;
 import static org.lwjgl.opengl.GL31.glDrawElementsInstanced;
 import static org.lwjgl.opengl.GL44.glClearTexImage;
 
-public abstract class Renderer2D {
+public abstract class Renderer2D implements Disposable {
 
     private int width;
     private int height;
@@ -32,6 +32,7 @@ public abstract class Renderer2D {
         this.width = width;
         this.height = height;
         this.msaa = msaa;
+        Disposer.add("renderer", this);
     }
 
     public abstract void setShader(ShaderProgram shaderProgram);
