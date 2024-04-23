@@ -13,61 +13,17 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public class LVKIndexBuffer extends IndexBuffer  {
 
-    private VkDeviceWithIndices deviceWithIndices;
-    private VkPhysicalDevice physicalDevice;
     private long indexBufferMemory, stagingBufferMemory;
     private PointerBuffer data;
     private LVKGenericBuffer buffer;
     private LVKGenericBuffer stagingBuffer;
-    private VkQueue graphicsQueue;
-    private long commandPool;
 
+    private VkDevice device;
 
-    public LVKIndexBuffer(int maxQuads, int indicesPerQuad, int indexSizeBytes) {
+    public LVKIndexBuffer(int maxQuads, int indicesPerQuad, int indexSizeBytes, VkDevice device, long commandPool, VkQueue graphicsQueue, VkPhysicalDevice physicalDevice) {
         super(maxQuads, indicesPerQuad, indexSizeBytes);
-    }
+        this.device = device;
 
-    public VkDeviceWithIndices getDeviceWithIndices() {
-        return deviceWithIndices;
-    }
-
-    public void setDeviceWithIndices(VkDeviceWithIndices deviceWithIndices) {
-        this.deviceWithIndices = deviceWithIndices;
-    }
-
-    public void setCommandPool(long commandPool) {
-        this.commandPool = commandPool;
-    }
-
-    public long getCommandPool() {
-        return commandPool;
-    }
-    public VkQueue getGraphicsQueue() {
-        return graphicsQueue;
-    }
-
-    public void setGraphicsQueue(VkQueue graphicsQueue) {
-        this.graphicsQueue = graphicsQueue;
-    }
-
-    public VkPhysicalDevice getPhysicalDevice() {
-        return physicalDevice;
-    }
-
-    public void setPhysicalDevice(VkPhysicalDevice physicalDevice) {
-        this.physicalDevice = physicalDevice;
-    }
-
-    public PointerBuffer getMappingBuffer() {
-        return data;
-    }
-
-    public int getIndicesPerQuad() {
-        return indicesPerQuad;
-    }
-
-
-    public void build() {
 
         int indicesSizeBytes = indexSizeBytes * indicesPerQuad * maxQuads;
 
@@ -77,7 +33,7 @@ public class LVKIndexBuffer extends IndexBuffer  {
 
         LongBuffer pStagingBufferMemory = MemoryUtil.memAllocLong(1);
         stagingBuffer = FastVK.createBuffer(
-                deviceWithIndices.device,
+                device,
                 physicalDevice,
                 indicesSizeBytes,
                 VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
@@ -89,7 +45,7 @@ public class LVKIndexBuffer extends IndexBuffer  {
 
         LongBuffer pIndexBufferMemory = MemoryUtil.memAllocLong(1);
         buffer = FastVK.createBuffer(
-                deviceWithIndices.device,
+                device,
                 physicalDevice,
                 indicesSizeBytes,
                 VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
@@ -97,7 +53,7 @@ public class LVKIndexBuffer extends IndexBuffer  {
                 pIndexBufferMemory
         );
         indexBufferMemory = pIndexBufferMemory.get(0);
-        VkSubmitInfo submitInfo = FastVK.transfer(indicesSizeBytes, commandPool, deviceWithIndices.device, buffer.handle, stagingBuffer.handle);
+        VkSubmitInfo submitInfo = FastVK.transfer(indicesSizeBytes, commandPool, device, buffer.handle, stagingBuffer.handle);
 
 
         if(vkQueueSubmit(graphicsQueue, submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
@@ -107,12 +63,12 @@ public class LVKIndexBuffer extends IndexBuffer  {
         vkQueueWaitIdle(graphicsQueue);
     }
 
-
+    public PointerBuffer getMappingBuffer() {
+        return data;
+    }
     public LVKGenericBuffer getMainBuffer(){
         return buffer;
     }
-
-
 
 
     public long getIndexBufferMemory() {
@@ -128,11 +84,11 @@ public class LVKIndexBuffer extends IndexBuffer  {
     public void dispose() {
         MemoryUtil.memFree(data);
 
-        vkDestroyBuffer(deviceWithIndices.device, buffer.handle, null);
-        vkDestroyBuffer(deviceWithIndices.device, stagingBuffer.handle, null);
+        vkDestroyBuffer(device, buffer.handle, null);
+        vkDestroyBuffer(device, stagingBuffer.handle, null);
 
-        vkFreeMemory(deviceWithIndices.device, getIndexBufferMemory(), null);
-        vkFreeMemory(deviceWithIndices.device, getStagingBufferMemory(), null);
+        vkFreeMemory(device, getIndexBufferMemory(), null);
+        vkFreeMemory(device, getStagingBufferMemory(), null);
 
 
     }

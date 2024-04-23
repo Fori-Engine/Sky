@@ -11,71 +11,17 @@ import java.nio.LongBuffer;
 
 import static org.lwjgl.vulkan.VK10.*;
 
-public class LVKVertexBuffer extends VertexBuffer implements Disposable {
+public class LVKVertexBuffer extends VertexBuffer {
 
-    private VkDeviceWithIndices deviceWithIndices;
-    private VkPhysicalDevice physicalDevice;
     private long vertexBufferMemory, stagingBufferMemory;
     private PointerBuffer data;
     private LVKGenericBuffer buffer;
     private LVKGenericBuffer stagingBuffer;
-    private VkQueue graphicsQueue;
-    private long commandPool;
+    private VkDevice device;
 
-
-
-    public LVKVertexBuffer(int maxQuads, int vertexDataSize) {
+    public LVKVertexBuffer(int maxQuads, int vertexDataSize, VkDevice device, long commandPool, VkQueue graphicsQueue, VkPhysicalDevice physicalDevice) {
         super(maxQuads, vertexDataSize);
-        Disposer.add("managedResources", this);
-    }
-
-    public VkDeviceWithIndices getDeviceWithIndices() {
-        return deviceWithIndices;
-    }
-
-    public void setDeviceWithIndices(VkDeviceWithIndices deviceWithIndices) {
-        this.deviceWithIndices = deviceWithIndices;
-    }
-
-    public void setCommandPool(long commandPool) {
-        this.commandPool = commandPool;
-    }
-
-    public long getCommandPool() {
-        return commandPool;
-    }
-
-    public VkQueue getGraphicsQueue() {
-        return graphicsQueue;
-    }
-
-    public void setGraphicsQueue(VkQueue graphicsQueue) {
-        this.graphicsQueue = graphicsQueue;
-    }
-
-    public VkPhysicalDevice getPhysicalDevice() {
-        return physicalDevice;
-    }
-
-    public void setPhysicalDevice(VkPhysicalDevice physicalDevice) {
-        this.physicalDevice = physicalDevice;
-    }
-
-    public PointerBuffer getMappingBuffer() {
-        return data;
-    }
-
-
-
-
-    @Override
-    public int getNumOfVertices() {
-        return maxQuads * 4;
-    }
-
-
-    @Override
-    public void build() {
+        this.device = device;
 
         int verticesSizeBytes = (vertexDataSize * Float.BYTES) * maxQuads * 4;
         data = MemoryUtil.memAllocPointer(1);
@@ -84,7 +30,7 @@ public class LVKVertexBuffer extends VertexBuffer implements Disposable {
 
         LongBuffer pStagingBufferMemory = MemoryUtil.memAllocLong(1);
         stagingBuffer = FastVK.createBuffer(
-                deviceWithIndices.device,
+                device,
                 physicalDevice,
                 verticesSizeBytes,
                 VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
@@ -96,22 +42,32 @@ public class LVKVertexBuffer extends VertexBuffer implements Disposable {
 
         LongBuffer pVertexBufferMemory = MemoryUtil.memAllocLong(1);
         buffer = FastVK.createBuffer(
-                deviceWithIndices.device,
+                device,
                 physicalDevice,
                 verticesSizeBytes,
                 VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                 pVertexBufferMemory
         );
+
+        numOfVertices = maxQuads * 4;
+
         vertexBufferMemory = pVertexBufferMemory.get(0);
-        VkSubmitInfo submitInfo = FastVK.transfer(verticesSizeBytes, commandPool, deviceWithIndices.device, buffer.handle, stagingBuffer.handle);
+        VkSubmitInfo submitInfo = FastVK.transfer(verticesSizeBytes, commandPool, device, buffer.handle, stagingBuffer.handle);
 
         if(vkQueueSubmit(graphicsQueue, submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
             throw new RuntimeException("Failed to submit copy command buffer");
         }
 
         vkQueueWaitIdle(graphicsQueue);
+
     }
+
+    public PointerBuffer getMappingBuffer() {
+        return data;
+    }
+
+
 
     public LVKGenericBuffer getMainBuffer(){
         return buffer;
@@ -130,11 +86,11 @@ public class LVKVertexBuffer extends VertexBuffer implements Disposable {
     public void dispose() {
         MemoryUtil.memFree(data);
 
-        vkDestroyBuffer(deviceWithIndices.device, buffer.handle, null);
-        vkDestroyBuffer(deviceWithIndices.device, stagingBuffer.handle, null);
+        vkDestroyBuffer(device, buffer.handle, null);
+        vkDestroyBuffer(device, stagingBuffer.handle, null);
 
-        vkFreeMemory(deviceWithIndices.device, getVertexBufferMemory(), null);
-        vkFreeMemory(deviceWithIndices.device, getStagingBufferMemory(), null);
+        vkFreeMemory(device, getVertexBufferMemory(), null);
+        vkFreeMemory(device, getStagingBufferMemory(), null);
 
     }
 

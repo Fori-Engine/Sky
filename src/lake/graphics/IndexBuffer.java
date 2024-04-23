@@ -12,6 +12,8 @@ public abstract class IndexBuffer implements Disposable {
         Disposer.add("managedResources", this);
     }
 
+
+
     public int getMaxQuads() {
         return maxQuads;
     }

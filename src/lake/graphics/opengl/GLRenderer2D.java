@@ -354,7 +354,7 @@ public class GLRenderer2D extends Renderer2D implements Disposable {
         quadIndex++;
 
 
-        if(quadIndex == vertexBuffer.maxQuads()) render("Next Batch Render");
+        if(quadIndex == vertexBuffer.getMaxQuads()) render("Next Batch Render");
     }
 
 

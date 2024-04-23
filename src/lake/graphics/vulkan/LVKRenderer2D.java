@@ -103,23 +103,23 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
 
-        //Found it, wth is this 1?
-        vertexBuffer = new LVKVertexBuffer(310, 10);
-        {
-            vertexBuffer.setDeviceWithIndices(deviceWithIndices);
-            vertexBuffer.setCommandPool(commandPool);
-            vertexBuffer.setGraphicsQueue(graphicsQueue);
-            vertexBuffer.setPhysicalDevice(physicalDevice);
-            vertexBuffer.build();
-        }
-        indexBuffer = new LVKIndexBuffer(310, 6, Integer.BYTES);
-        {
-            indexBuffer.setDeviceWithIndices(deviceWithIndices);
-            indexBuffer.setCommandPool(commandPool);
-            indexBuffer.setGraphicsQueue(graphicsQueue);
-            indexBuffer.setPhysicalDevice(physicalDevice);
-            indexBuffer.build();
-        }
+        vertexBuffer = new LVKVertexBuffer(
+                310,
+                10,
+                deviceWithIndices.device,
+                commandPool,
+                graphicsQueue,
+                physicalDevice);
+
+        indexBuffer = new LVKIndexBuffer(
+                310,
+                6,
+                Integer.BYTES,
+                deviceWithIndices.device,
+                commandPool,
+                graphicsQueue,
+                physicalDevice);
+
 
         vertexBufferData = vertexBuffer.getMainBuffer().mapAndGet(deviceWithIndices.device, vertexBuffer.getMappingBuffer());
         indexBufferData = indexBuffer.getMainBuffer().mapAndGet(deviceWithIndices.device, indexBuffer.getMappingBuffer());
@@ -461,7 +461,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
                     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                             pipeline.pipelineLayout, 0, stack.longs(descriptorSets.get(i)), null);
-                    vkCmdDrawIndexed(commandBuffer, indexBuffer.getIndicesPerQuad() * indexBuffer.getMaxQuads(), 1, 0, 0, 0);
+                    vkCmdDrawIndexed(commandBuffer, indexBuffer.indicesPerQuad * indexBuffer.getMaxQuads(), 1, 0, 0, 0);
 
 
 
@@ -991,7 +991,7 @@ public class LVKRenderer2D extends Renderer2D implements Disposable {
 
 
         int numOfIndices = quadIndex * 6;
-        int[] indices = new int[indexBuffer.getIndicesPerQuad() * indexBuffer.getMaxQuads()];
+        int[] indices = new int[indexBuffer.indicesPerQuad * indexBuffer.getMaxQuads()];
         int offset = 0;
 
         for (int j = 0; j < numOfIndices; j += 6) {
