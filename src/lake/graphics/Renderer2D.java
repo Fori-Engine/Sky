@@ -107,6 +107,7 @@ public abstract class Renderer2D implements Disposable {
         return originY;
     }
     public abstract void drawText(float x, float y, String text, Color color, Font2D font);
+    public abstract String getDeviceName();
 
     public static Renderer2D createRenderer(RendererType type, StandaloneWindow window, int width, int height, boolean msaa){
         api = type;

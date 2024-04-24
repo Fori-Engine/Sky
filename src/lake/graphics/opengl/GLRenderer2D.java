@@ -428,6 +428,11 @@ public class GLRenderer2D extends Renderer2D {
     }
 
     @Override
+    public String getDeviceName() {
+        return glGetString(GL_RENDERER);
+    }
+
+    @Override
     public void dispose() {
 
     }

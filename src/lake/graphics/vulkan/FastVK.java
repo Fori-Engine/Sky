@@ -838,4 +838,11 @@ public class FastVK {
 
     }
 
+    public static VkPhysicalDeviceProperties getPhysicalDeviceProperties(VkPhysicalDevice physicalDevice) {
+        VkPhysicalDeviceProperties physicalDeviceProperties = VkPhysicalDeviceProperties.create();
+        vkGetPhysicalDeviceProperties(physicalDevice, physicalDeviceProperties);
+
+
+        return physicalDeviceProperties;
+    }
 }

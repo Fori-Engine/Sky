@@ -60,11 +60,13 @@ public class LVKRenderer2D extends Renderer2D {
 
     private FastTextureLookup textureLookup;
     private int nextTextureSlot;
-
     private VkDescriptorImageInfo.Buffer imageInfos;
-
     private boolean updateCmdBuffers;
 
+    private VkPhysicalDeviceProperties physicalDeviceProperties;
+
+    private LVKTexture2D msaaTexture;
+    private int maxSampleCount;
 
     public LVKRenderer2D(StandaloneWindow window, int width, int height, boolean msaa) {
         super(width, height, msaa);
@@ -82,13 +84,18 @@ public class LVKRenderer2D extends Renderer2D {
         presentQueue = FastVK.getPresentQueue(deviceWithIndices);
         swapchain = FastVK.createSwapChain(physicalDevice, deviceWithIndices.device, surface, width, height);
         swapchainImageViews = FastVK.createImageViews(deviceWithIndices.device, swapchain);
+
+
+
+
+        physicalDeviceProperties = FastVK.getPhysicalDeviceProperties(physicalDevice);
+
+
+
         renderPass = FastVK.createRenderPass(deviceWithIndices.device, swapchain);
         swapchainFramebuffers = FastVK.createFramebuffers(deviceWithIndices.device, swapchain, swapchainImageViews, renderPass);
         commandPool = FastVK.createCommandPool(deviceWithIndices);
         textureLookup = new FastTextureLookup(maxTextures);
-
-
-
         LVKCommandRunner.setup(deviceWithIndices, graphicsQueue);
 
 
@@ -102,8 +109,13 @@ public class LVKRenderer2D extends Renderer2D {
 
 
 
+
+
+
+
+
         vertexBuffer = new LVKVertexBuffer(
-                310,
+                20000,
                 10,
                 deviceWithIndices.device,
                 commandPool,
@@ -111,7 +123,7 @@ public class LVKRenderer2D extends Renderer2D {
                 physicalDevice);
 
         indexBuffer = new LVKIndexBuffer(
-                310,
+                20000,
                 6,
                 Integer.BYTES,
                 deviceWithIndices.device,
@@ -618,7 +630,7 @@ public class LVKRenderer2D extends Renderer2D {
             {
                 multisampling.sType(VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO);
                 multisampling.sampleShadingEnable(false);
-                multisampling.rasterizationSamples(VK_SAMPLE_COUNT_1_BIT);
+                //multisampling.rasterizationSamples(maxSampleCount);
             }
             // ===> COLOR BLENDING <===
 
@@ -833,7 +845,7 @@ public class LVKRenderer2D extends Renderer2D {
     }
 
 
-    private int log = 0;
+
 
     private void drawQuad(float x,
                           float y,
@@ -947,7 +959,7 @@ public class LVKRenderer2D extends Renderer2D {
         quadIndex++;
 
 
-        log++;
+
         //if(quadIndex == vertexBuffer.maxQuads()) render("Next Batch Render");
     }
 
@@ -1095,9 +1107,9 @@ public class LVKRenderer2D extends Renderer2D {
         }
 
 
-        System.out.println("Hmmmmmmm?");
-        FlightRecorder.info(LVKRenderer2D.class, "Calls to drawQuad: " + log);
-        log = 0;
+
+
+
 
         vertexData = new float[vertexData.length];
         quadIndex = 0;
@@ -1114,6 +1126,11 @@ public class LVKRenderer2D extends Renderer2D {
 
     public void drawText(float x, float y, String text, Color color, Font2D font) {
         BitmapFont2DRenderer.drawText(x, y, text, color, font, this);
+    }
+
+    @Override
+    public String getDeviceName() {
+        return physicalDeviceProperties.deviceNameString();
     }
 
 
@@ -1137,8 +1154,10 @@ public class LVKRenderer2D extends Renderer2D {
     public void dispose() {
 
         LVKCommandRunner.cleanup(deviceWithIndices.device);
+        physicalDeviceProperties.free();
 
         vkDestroyDescriptorPool(deviceWithIndices.device, descriptorPool, null);
+
 
 
         renderSyncInfo.inFlightFrames.forEach(frame -> {
