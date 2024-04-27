@@ -16,6 +16,7 @@ import java.nio.LongBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.KHRSurface.vkDestroySurfaceKHR;
@@ -33,7 +34,7 @@ public class LVKRenderer2D extends Renderer2D {
     private long surface;
     private LVKSwapchain swapchain;
     private List<Long> swapchainImageViews;
-    private LVKPipeline pipeline;
+    private LVKPipeline currentPipeline;
     private long renderPass;
     private List<Long> swapchainFramebuffers;
     private long commandPool;
@@ -61,12 +62,11 @@ public class LVKRenderer2D extends Renderer2D {
     private FastTextureLookup textureLookup;
     private int nextTextureSlot;
     private VkDescriptorImageInfo.Buffer imageInfos;
-    private boolean updateCmdBuffers;
+
 
     private VkPhysicalDeviceProperties physicalDeviceProperties;
 
-    private LVKTexture2D msaaTexture;
-    private int maxSampleCount;
+    private Map<ShaderProgram, LVKPipeline> pipelineCache = new HashMap<>();
 
     public LVKRenderer2D(StandaloneWindow window, int width, int height, boolean msaa) {
         super(width, height, msaa);
@@ -382,8 +382,8 @@ public class LVKRenderer2D extends Renderer2D {
         shaderProgram.setDevice(deviceWithIndices.device);
         shaderProgram.prepare();
 
-        pipeline = createPipeline(deviceWithIndices.device, swapchain, shaderProgram.getShaderStages(), renderPass, descriptorSetLayout);
-        shaderProgram.disposeShaderModules();
+        currentPipeline = createPipeline(deviceWithIndices.device, swapchain, shaderProgram.getShaderStages(), renderPass, descriptorSetLayout);
+        pipelineCache.put(shaderProgram, currentPipeline);
 
         currentShaderProgram = shaderProgram;
         defaultShaderProgram = shaderProgram;
@@ -459,7 +459,7 @@ public class LVKRenderer2D extends Renderer2D {
                 vkCmdBeginRenderPass(commandBuffer, renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
                 {
 
-                    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
+                    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, currentPipeline.pipeline);
 
 
 
@@ -471,7 +471,7 @@ public class LVKRenderer2D extends Renderer2D {
                     vkCmdBindIndexBuffer(commandBuffer, indexBuffer.getMainBuffer().handle, 0, VK_INDEX_TYPE_UINT32);
 
                     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            pipeline.pipelineLayout, 0, stack.longs(descriptorSets.get(i)), null);
+                            currentPipeline.pipelineLayout, 0, stack.longs(descriptorSets.get(i)), null);
                     vkCmdDrawIndexed(commandBuffer, indexBuffer.indicesPerQuad * indexBuffer.getMaxQuads(), 1, 0, 0, 0);
 
 
@@ -630,7 +630,7 @@ public class LVKRenderer2D extends Renderer2D {
             {
                 multisampling.sType(VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO);
                 multisampling.sampleShadingEnable(false);
-                //multisampling.rasterizationSamples(maxSampleCount);
+                multisampling.rasterizationSamples(1);
             }
             // ===> COLOR BLENDING <===
 
@@ -708,6 +708,31 @@ public class LVKRenderer2D extends Renderer2D {
 
     @Override
     public void setShader(ShaderProgram shaderProgram) {
+
+
+
+
+        if(pipelineCache.containsKey(shaderProgram)) {
+            currentPipeline = pipelineCache.get(shaderProgram);
+        }
+        else {
+
+            LVKShaderProgram lvkShaderProgram = (LVKShaderProgram) shaderProgram;
+
+            LVKPipeline newPipeline = createPipeline(
+                    deviceWithIndices.device,
+                    swapchain,
+                    lvkShaderProgram.getShaderStages(),
+                    renderPass,
+                    descriptorSetLayout);
+
+            lvkShaderProgram.setDevice(deviceWithIndices.device);
+            pipelineCache.put(shaderProgram, newPipeline);
+            currentPipeline = newPipeline;
+        }
+
+
+
 
     }
 
@@ -984,12 +1009,7 @@ public class LVKRenderer2D extends Renderer2D {
     @Override
     public void render(String renderName) {
 
-
-
-        if(updateCmdBuffers) {
-            recordCmdBuffers();
-            updateCmdBuffers = false;
-        }
+        recordCmdBuffers();
 
 
         vertexBufferData.clear();
@@ -1120,7 +1140,6 @@ public class LVKRenderer2D extends Renderer2D {
     @Override
     public void clear(Color color) {
         this.clearColor = color;
-        updateCmdBuffers = true;
     }
 
 
@@ -1142,12 +1161,13 @@ public class LVKRenderer2D extends Renderer2D {
         return physicalDevice;
     }
 
-    private void cleanupSwapchain(){
-        swapchainFramebuffers.forEach(framebuffer -> vkDestroyFramebuffer(deviceWithIndices.device, framebuffer, null));
+
+
+    private void destroyPipeline(LVKPipeline pipeline){
+
         vkDestroyPipeline(deviceWithIndices.device, pipeline.pipeline, null);
         vkDestroyPipelineLayout(deviceWithIndices.device, pipeline.pipelineLayout, null);
-        swapchainImageViews.forEach(imageView -> vkDestroyImageView(deviceWithIndices.device, imageView, null));
-        vkDestroySwapchainKHR(deviceWithIndices.device, swapchain.swapChain, null);
+
     }
 
     @Override
@@ -1157,6 +1177,11 @@ public class LVKRenderer2D extends Renderer2D {
         physicalDeviceProperties.free();
 
         vkDestroyDescriptorPool(deviceWithIndices.device, descriptorPool, null);
+
+        vkDeviceWaitIdle(deviceWithIndices.device);
+        for(LVKPipeline pipeline : pipelineCache.values()){
+            destroyPipeline(pipeline);
+        }
 
 
 
@@ -1181,7 +1206,9 @@ public class LVKRenderer2D extends Renderer2D {
         vkDestroyRenderPass(deviceWithIndices.device, renderPass, null);
         vkDestroyCommandPool(deviceWithIndices.device, commandPool, null);
 
-        cleanupSwapchain();
+        swapchainFramebuffers.forEach(framebuffer -> vkDestroyFramebuffer(deviceWithIndices.device, framebuffer, null));
+        swapchainImageViews.forEach(imageView -> vkDestroyImageView(deviceWithIndices.device, imageView, null));
+        vkDestroySwapchainKHR(deviceWithIndices.device, swapchain.swapChain, null);
 
         vkDestroyDescriptorSetLayout(deviceWithIndices.device, descriptorSetLayout.get(), null);
 

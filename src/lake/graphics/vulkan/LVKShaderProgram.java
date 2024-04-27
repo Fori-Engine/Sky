@@ -42,6 +42,7 @@ public class LVKShaderProgram extends ShaderProgram {
 
     @Override
     public void prepare() {
+        setDevice(LVKRenderer2D.getDeviceWithIndices().device);
         entryPoint = MemoryUtil.memUTF8("main");
 
 
@@ -175,6 +176,7 @@ public class LVKShaderProgram extends ShaderProgram {
 
     @Override
     public void dispose() {
+        disposeShaderModules();
         MemoryUtil.memFree(entryPoint);
     }
 }
