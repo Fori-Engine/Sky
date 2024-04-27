@@ -35,15 +35,19 @@ public class LVKTexture2D extends Texture2D {
         this(path, Filter.LINEAR);
     }
 
-    public LVKTexture2D(int width, int height) {
+    public LVKTexture2D(int width, int height){
+        this(width, height, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+    }
+
+    public LVKTexture2D(int width, int height, int samples, int usage) {
         Disposer.add("managedResources", this);
         device = LVKRenderer2D.getDeviceWithIndices().device;
         setProperties(null, width, height);
         isInitialized = false;
-        //TODO: Wth does this do?
+
+        createTextureResources(width, height, samples, usage);
     }
     public LVKTexture2D(String path, Texture2D.Filter filter) {
-
         Disposer.add("managedResources", this);
         device = LVKRenderer2D.getDeviceWithIndices().device;
         isInitialized = true;
@@ -53,7 +57,7 @@ public class LVKTexture2D extends Texture2D {
 
         sampler = new LVKSampler(device, minFilter, magFilter);
 
-        VkPhysicalDevice physicalDevice = LVKRenderer2D.getPhysicalDevice();
+
 
         IntBuffer w = BufferUtils.createIntBuffer(1);
         IntBuffer h = BufferUtils.createIntBuffer(1);
@@ -65,11 +69,6 @@ public class LVKTexture2D extends Texture2D {
         setProperties(path, width, height);
 
         checkSTBError();
-
-
-
-
-
 
         int size = texture.remaining();
 
@@ -101,6 +100,15 @@ public class LVKTexture2D extends Texture2D {
         stagingBuffer.mapAndUpload(device, data, bytes);
 
 
+        createTextureResources(width, height, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+        copyBufferToImage();
+
+        STBImage.stbi_image_free(texture);
+    }
+
+    public void createTextureResources(int width, int height, int samples, int usage){
+
+        VkPhysicalDevice physicalDevice = LVKRenderer2D.getPhysicalDevice();
         try(MemoryStack stack = stackPush()) {
 
             pTextureImage = stack.mallocLong(1);
@@ -118,8 +126,8 @@ public class LVKTexture2D extends Texture2D {
             imageInfo.format(VK_FORMAT_R8G8B8A8_SRGB);
             imageInfo.tiling(VK_IMAGE_TILING_OPTIMAL);
             imageInfo.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
-            imageInfo.usage(VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-            imageInfo.samples(VK_SAMPLE_COUNT_1_BIT);
+            imageInfo.usage(usage);
+            imageInfo.samples(samples);
             imageInfo.sharingMode(VK_SHARING_MODE_EXCLUSIVE);
 
             if(vkCreateImage(device, imageInfo, null, pTextureImage) != VK_SUCCESS) {
@@ -151,6 +159,15 @@ public class LVKTexture2D extends Texture2D {
 
 
 
+
+        }
+
+    }
+
+    public void copyBufferToImage(){
+
+        try(MemoryStack stack = stackPush()) {
+
             LVKCommandRunner.run(device, stack, (commandBuffer) -> {
 
                 transition(textureImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, commandBuffer, stack);
@@ -165,12 +182,11 @@ public class LVKTexture2D extends Texture2D {
                     region.imageSubresource().baseArrayLayer(0);
                     region.imageSubresource().layerCount(1);
                     region.imageOffset().set(0, 0, 0);
-                    region.imageExtent(VkExtent3D.calloc(stack).set(width, height, 1));
+                    region.imageExtent(VkExtent3D.calloc(stack).set(getWidth(), getHeight(), 1));
 
                     vkCmdCopyBufferToImage(commandBuffer, stagingBuffer.handle, textureImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, region);
                 }
                 transition(textureImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, commandBuffer, stack);
-
 
 
                 int format = VK_FORMAT_R8G8B8A8_SRGB;
@@ -203,9 +219,6 @@ public class LVKTexture2D extends Texture2D {
             });
 
         }
-
-
-        STBImage.stbi_image_free(texture);
     }
 
     public long getTextureImage() {
