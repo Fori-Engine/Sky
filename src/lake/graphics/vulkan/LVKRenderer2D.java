@@ -68,18 +68,20 @@ public class LVKRenderer2D extends Renderer2D {
 
     private Map<ShaderProgram, LVKPipeline> pipelineCache = new HashMap<>();
 
-    public LVKRenderer2D(StandaloneWindow window, int width, int height, boolean msaa) {
-        super(width, height, msaa);
+
+
+    public LVKRenderer2D(StandaloneWindow window, int width, int height, RenderSettings settings) {
+        super(width, height, settings);
 
 
         String appEngineInfoName = "LakeEngine";
 
         FlightRecorder.info(LVKRenderer2D.class, "Using appInfoEngineName of " + appEngineInfoName);
-        instance = FastVK.createInstance(getClass().getName(), appEngineInfoName, true);
-        FastVK.setupDebugMessenger(instance, true);
+        instance = FastVK.createInstance(getClass().getName(), appEngineInfoName, settings.enableValidation);
+        FastVK.setupDebugMessenger(instance, settings.enableValidation);
         surface = FastVK.createSurface(instance, window);
         physicalDevice = FastVK.pickPhysicalDevice(instance, surface);
-        deviceWithIndices = FastVK.createLogicalDevice(physicalDevice, true, surface);
+        deviceWithIndices = FastVK.createLogicalDevice(physicalDevice, settings.enableValidation, surface);
         graphicsQueue = FastVK.getGraphicsQueue(deviceWithIndices);
         presentQueue = FastVK.getPresentQueue(deviceWithIndices);
         swapchain = FastVK.createSwapChain(physicalDevice, deviceWithIndices.device, surface, width, height);
@@ -115,7 +117,7 @@ public class LVKRenderer2D extends Renderer2D {
 
 
         vertexBuffer = new LVKVertexBuffer(
-                20000,
+                settings.quadsPerBatch,
                 10,
                 deviceWithIndices.device,
                 commandPool,
@@ -123,7 +125,7 @@ public class LVKRenderer2D extends Renderer2D {
                 physicalDevice);
 
         indexBuffer = new LVKIndexBuffer(
-                20000,
+                settings.quadsPerBatch,
                 6,
                 Integer.BYTES,
                 deviceWithIndices.device,

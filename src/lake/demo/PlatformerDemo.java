@@ -1,19 +1,12 @@
 package lake.demo;
 
-import lake.FileReader;
 import lake.FlightRecorder;
 import lake.graphics.*;
-import lake.graphics.Color;
-import static org.lwjgl.nuklear.Nuklear.*;
-
-import lake.graphics.vulkan.LVKRenderer2D;
 import lake.physics.CircleBody2D;
 import lake.physics.RectBody2D;
 import lake.physics.RigidBody2D;
 import lake.physics.World;
 import org.joml.Vector2f;
-import org.lwjgl.nuklear.Nuklear;
-
 
 import java.util.ArrayList;
 
@@ -28,7 +21,7 @@ public class PlatformerDemo {
 
 
         StandaloneWindow window = new StandaloneWindow(1920, 1080, "Showcase Demo", false, true);
-        Renderer2D renderer2D = Renderer2D.createRenderer(RendererType.OPENGL, window, window.getWidth(), window.getHeight(), true);
+        Renderer2D renderer2D = Renderer2D.createRenderer(RendererType.OPENGL, window, window.getWidth(), window.getHeight(), new RenderSettings().msaa(true));
 
 
         /*ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(

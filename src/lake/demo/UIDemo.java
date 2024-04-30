@@ -1,18 +1,18 @@
 package lake.demo;
 
-import lake.graphics.Color;
-import lake.graphics.Renderer2D;
-import lake.graphics.RendererType;
-import lake.graphics.StandaloneWindow;
+import lake.FlightRecorder;
+import lake.graphics.*;
+import lake.graphics.vulkan.LVKRenderer2D;
 
 import static lake.graphics.ui.IngridUI.*;
 
 public class UIDemo {
     public static void main(String[] args) {
 
+        FlightRecorder.setEnabled(true);
 
         StandaloneWindow window = new StandaloneWindow(1920, 1080, "UI Demo", false, true);
-        Renderer2D renderer2D = Renderer2D.createRenderer(RendererType.OPENGL, window, window.getWidth(), window.getHeight(), true);
+        Renderer2D renderer2D = Renderer2D.createRenderer(RendererType.OPENGL, window, window.getWidth(), window.getHeight(), new RenderSettings().msaa(true));
 
 
         float value = 0;
@@ -109,33 +109,6 @@ public class UIDemo {
                     }
                     endPanel();
 
-                    startPanel("lineLayout", Color.BLUE, Horizontal);
-                    {
-
-                        text("A button");
-                        if(button("Quit")){
-                            System.exit(1);
-                        }
-                    }
-                    endPanel();
-
-                    startPanel("lineLayout", Color.BLUE, Horizontal);
-                    {
-
-                        text("A slider");
-                        value = slider("This is a slider", value, 0, 10, false);
-                    }
-                    endPanel();
-
-                    startPanel("lineLayout", Color.BLUE, Horizontal);
-                    {
-
-                        text("A button");
-                        if(button("Quit")){
-                            System.exit(1);
-                        }
-                    }
-                    endPanel();
 
                     startPanel("lineLayout", Color.BLUE, Horizontal);
                     {

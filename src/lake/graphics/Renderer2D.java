@@ -22,7 +22,6 @@ public abstract class Renderer2D implements Disposable {
     protected Matrix4f translation;
     private ArrayList<String> renderCallNames = new ArrayList<>(50);
     private boolean debug = false;
-    private boolean msaa;
 
     private static RendererType api;
 
@@ -31,10 +30,9 @@ public abstract class Renderer2D implements Disposable {
     private static float spaceXAdvance = 0;
     private static final int spacesPerTab = 4;
 
-    public Renderer2D(int width, int height, boolean msaa){
+    public Renderer2D(int width, int height, RenderSettings renderSettings){
         this.width = width;
         this.height = height;
-        this.msaa = msaa;
         Disposer.add("renderer", this);
     }
 
@@ -169,15 +167,18 @@ public abstract class Renderer2D implements Disposable {
 
     public abstract String getDeviceName();
 
-    public static Renderer2D createRenderer(RendererType type, StandaloneWindow window, int width, int height, boolean msaa){
+    public static Renderer2D createRenderer(RendererType type, StandaloneWindow window, int width, int height) {
+        return createRenderer(type, window, width, height, new RenderSettings());
+    }
+    public static Renderer2D createRenderer(RendererType type, StandaloneWindow window, int width, int height, RenderSettings settings){
         api = type;
         FlightRecorder.info(Renderer2D.class, "Using renderer backend " + api);
 
         if(type == RendererType.OPENGL){
-            return new GLRenderer2D(width, height, msaa);
+            return new GLRenderer2D(width, height, settings);
         }
         else if(type == RendererType.VULKAN){
-            return new LVKRenderer2D(window, width, height, msaa);
+            return new LVKRenderer2D(window, width, height, settings);
         }
 
         FlightRecorder.meltdown(Renderer2D.class, "User requested renderer backend " + type + " but no backend could be initialized!");

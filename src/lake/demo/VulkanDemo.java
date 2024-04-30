@@ -1,10 +1,7 @@
 package lake.demo;
 
 import lake.Time;
-import lake.graphics.Color;
-import lake.graphics.Renderer2D;
-import lake.graphics.RendererType;
-import lake.graphics.StandaloneWindow;
+import lake.graphics.*;
 
 public class VulkanDemo {
 
@@ -14,7 +11,7 @@ public class VulkanDemo {
 
 
         StandaloneWindow window = new StandaloneWindow(640, 480, "Vulkan Demo", false, false);
-        Renderer2D renderer2D = Renderer2D.createRenderer(RendererType.VULKAN, window, window.getWidth(), window.getHeight(), true);
+        Renderer2D renderer2D = Renderer2D.createRenderer(RendererType.VULKAN, window, window.getWidth(), window.getHeight(), new RenderSettings().msaa(true));
 
 
 

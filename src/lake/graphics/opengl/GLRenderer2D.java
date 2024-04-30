@@ -5,6 +5,7 @@ import lake.graphics.*;
 import org.joml.*;
 import org.lwjgl.BufferUtils;
 import lake.FileReader;
+import org.lwjgl.opengl.GLUtil;
 
 import java.lang.Math;
 import java.nio.IntBuffer;
@@ -29,17 +30,18 @@ public class GLRenderer2D extends Renderer2D {
     private Framebuffer2D framebuffer2D;
 
 
-    public GLRenderer2D(int width, int height, boolean msaa, Framebuffer2D framebuffer2D){
-        this(width, height, msaa);
+    public GLRenderer2D(int width, int height, Framebuffer2D framebuffer2D, RenderSettings settings){
+        this(width, height, settings);
         this.framebuffer2D = framebuffer2D;
     }
 
-    public GLRenderer2D(int width, int height, boolean msaa) {
-        super(width, height, msaa);
+    public GLRenderer2D(int width, int height, RenderSettings settings) {
+        super(width, height, settings);
 
-        //GLUtil.setupDebugMessageCallback();
+        if(settings.enableValidation)
+            GLUtil.setupDebugMessageCallback();
 
-        if(msaa)
+        if(settings.msaa)
             glEnable(GL_MULTISAMPLE);
         else
             glDisable(GL_MULTISAMPLE);
@@ -86,8 +88,8 @@ public class GLRenderer2D extends Renderer2D {
 
             FlightRecorder.info(GLRenderer2D.class, "Calculated vertex stride is " + vertexArray.getStride() + " bytes");
 
-            vertexBuffer = new GLVertexBuffer(310, vertexArray.getStride() / Float.BYTES);
-            indexBuffer = new GLIndexBuffer(310, 6, Integer.BYTES);
+            vertexBuffer = new GLVertexBuffer(settings.quadsPerBatch, vertexArray.getStride() / Float.BYTES);
+            indexBuffer = new GLIndexBuffer(settings.quadsPerBatch, 6, Integer.BYTES);
 
 
 
