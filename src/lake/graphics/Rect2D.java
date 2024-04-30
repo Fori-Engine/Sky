@@ -20,6 +20,14 @@ public class Rect2D {
         return this;
     }
 
+
+    public void set(float x, float y, float w, float h){
+        this.x = x;
+        this.y = y;
+        this.w = w;
+        this.h = h;
+    }
+
     public boolean overlaps(Rect2D other){
         return contains(other.x, other.y)
                 || contains(other.x + other.w, other.y)
