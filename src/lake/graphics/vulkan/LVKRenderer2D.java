@@ -707,7 +707,7 @@ public class LVKRenderer2D extends Renderer2D {
 
 
     @Override
-    public void setShader(ShaderProgram shaderProgram) {
+    public void setShaderProgram(ShaderProgram shaderProgram) {
 
 
 
@@ -742,7 +742,7 @@ public class LVKRenderer2D extends Renderer2D {
     }
 
     @Override
-    public ShaderProgram getDefaultShader() {
+    public ShaderProgram getDefaultShaderProgram() {
         return defaultShaderProgram;
     }
 

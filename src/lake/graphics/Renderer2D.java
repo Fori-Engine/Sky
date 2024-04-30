@@ -38,9 +38,9 @@ public abstract class Renderer2D implements Disposable {
         Disposer.add("renderer", this);
     }
 
-    public abstract void setShader(ShaderProgram shaderProgram);
+    public abstract void setShaderProgram(ShaderProgram shaderProgram);
     public abstract void updateCamera2D();
-    public abstract ShaderProgram getDefaultShader();
+    public abstract ShaderProgram getDefaultShaderProgram();
     public abstract ShaderProgram getCurrentShaderProgram();
     public int getWidth() {
         return width;

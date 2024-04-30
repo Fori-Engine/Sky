@@ -99,7 +99,7 @@ public class GLRenderer2D extends Renderer2D {
     }
 
     @Override
-    public void setShader(ShaderProgram shaderProgram) {
+    public void setShaderProgram(ShaderProgram shaderProgram) {
         if(currentGLShaderProgram != shaderProgram) {
             currentGLShaderProgram = (GLShaderProgram) shaderProgram;
             currentGLShaderProgram.bind();
@@ -115,7 +115,7 @@ public class GLRenderer2D extends Renderer2D {
     }
 
     @Override
-    public ShaderProgram getDefaultShader() {
+    public ShaderProgram getDefaultShaderProgram() {
         return defaultGLShaderProgram;
     }
 
