@@ -1,6 +1,7 @@
 package lake.demo;
 
 import lake.Animation;
+import lake.FlightRecorder;
 import lake.Time;
 import lake.graphics.*;
 import lake.particles.Particle;
@@ -14,6 +15,7 @@ import java.util.List;
 public class ShowcaseDemo {
     public static void main(String[] args) {
 
+        FlightRecorder.setEnabled(true);
 
         StandaloneWindow window = new StandaloneWindow(1920, 1080, "Showcase Demo", false, false);
         Renderer2D renderer2D = Renderer2D.createRenderer(RendererType.VULKAN, window, window.getWidth(), window.getHeight(), false);
