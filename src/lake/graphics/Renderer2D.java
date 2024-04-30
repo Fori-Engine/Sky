@@ -8,6 +8,7 @@ import org.joml.Vector2f;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.lwjgl.opengl.GL31.glDrawElementsInstanced;
 import static org.lwjgl.opengl.GL44.glClearTexImage;
@@ -27,6 +28,8 @@ public abstract class Renderer2D implements Disposable {
 
     protected Matrix4f transform = new Matrix4f().identity();
     protected float originX, originY;
+    private static float spaceXAdvance = 0;
+    private static final int spacesPerTab = 4;
 
     public Renderer2D(int width, int height, boolean msaa){
         this.width = width;
@@ -106,7 +109,64 @@ public abstract class Renderer2D implements Disposable {
     public float getOriginY() {
         return originY;
     }
-    public abstract void drawText(float x, float y, String text, Color color, Font2D font);
+
+    public void drawText(float x, float y, String text, Color color, Font2D font) {
+
+        Texture2D glyphTexture = font.getTexture();
+        Map<Integer, Glyph> glyphs = font.getGlyphs();
+        float xc = x;
+
+        String line = "";
+
+        spaceXAdvance = glyphs.get((int) ' ').getXAdvance();
+
+
+        for(char c : text.toCharArray()){
+
+            if(c == '\t'){
+                xc += spaceXAdvance * spacesPerTab;
+                continue;
+            }
+
+            if(c == '\r'){
+                xc = x;
+                continue;
+            }
+
+            Glyph glyph = glyphs.get((int) c);
+
+            if(c == '\n'){
+
+                float height = font.getLineHeight(line);
+
+                y += height;
+
+
+                line = "";
+                xc = x;
+                continue;
+            }
+
+
+            float xt = glyph.getX();
+            float yt = glyph.getY();
+
+            float texX = xt / glyphTexture.getWidth();
+            float texY = yt / glyphTexture.getHeight();
+
+            float texW = (xt + glyph.getW()) / glyphTexture.getWidth();
+            float texH = (yt + glyph.getH()) / glyphTexture.getHeight();
+
+            drawTexture(xc + glyph.getxOffset(), y + (glyph.getyOffset()), glyph.getW(), glyph.getH(), glyphTexture, color, new Rect2D(texX, texY, texW, texH), false, false);
+
+
+            xc += glyph.getXAdvance();
+
+            line += c;
+        }
+
+    }
+
     public abstract String getDeviceName();
 
     public static Renderer2D createRenderer(RendererType type, StandaloneWindow window, int width, int height, boolean msaa){

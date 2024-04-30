@@ -423,9 +423,6 @@ public class GLRenderer2D extends Renderer2D {
         glClearColor(color.r, color.g, color.b, color.a);
     }
 
-    public void drawText(float x, float y, String text, Color color, Font2D font) {
-        BitmapFont2DRenderer.drawText(x, y, text, color, font, this);
-    }
 
     @Override
     public String getDeviceName() {
