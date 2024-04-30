@@ -23,7 +23,7 @@ public class CircleBody2D extends RigidBody2D {
     public void setPhysicalProps(float density, float friction, float res) {
         super.setPhysicalProps(density, friction, res);
 
-        System.out.println(radius * screen2Physics);
+
         body.createFixture(Fixtures.Circle(radius * screen2Physics, density, friction, res));
     }
 
