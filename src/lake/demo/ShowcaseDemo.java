@@ -18,14 +18,14 @@ public class ShowcaseDemo {
         FlightRecorder.setEnabled(true);
 
         StandaloneWindow window = new StandaloneWindow(1920, 1080, "Showcase Demo", false, false);
-        Renderer2D renderer2D = Renderer2D.createRenderer(RendererType.VULKAN, window, window.getWidth(), window.getHeight(), new RenderSettings().msaa(true));
+        Renderer2D renderer2D = Renderer2D.createRenderer(window, window.getWidth(), window.getHeight(), new RenderSettings(RendererBackend.Vulkan).msaa(true));
 
-        window.setTitle("LakeEngine Demo [" + Renderer2D.getAPI() + "]");
+        window.setTitle("LakeEngine Demo [" + Renderer2D.getRenderBackend() + "]");
 
 
         ArrayList<Texture2D> textures = new ArrayList<>();
         Texture2D logo = Texture2D.newTexture("assets/logo.png");
-        Texture2D opengl = Texture2D.newTexture(Renderer2D.getAPI() == RendererType.OPENGL ? "demo_assets/opengl.png" : "demo_assets/vulkan.png");
+        Texture2D opengl = Texture2D.newTexture(Renderer2D.getRenderBackend() == RendererBackend.OpenGL ? "demo_assets/opengl.png" : "demo_assets/vulkan.png");
 
 
         for (int i = 0; i < 32; i++) {

@@ -1,5 +1,6 @@
 package lake.demo;
 
+import lake.FileReader;
 import lake.FlightRecorder;
 import lake.graphics.*;
 import lake.physics.CircleBody2D;
@@ -20,17 +21,17 @@ public class PlatformerDemo {
 
 
 
-        StandaloneWindow window = new StandaloneWindow(1920, 1080, "Showcase Demo", false, true);
-        Renderer2D renderer2D = Renderer2D.createRenderer(RendererType.OPENGL, window, window.getWidth(), window.getHeight(), new RenderSettings().msaa(true));
+        StandaloneWindow window = new StandaloneWindow(1920, 1080, "Showcase Demo", false, false);
+        Renderer2D renderer2D = Renderer2D.createRenderer(window, window.getWidth(), window.getHeight(), new RenderSettings(RendererBackend.Vulkan).msaa(true));
 
 
-        /*ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(
+        ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(
                 FileReader.readFile("test/VertexShader.glsl"),
                 FileReader.readFile("test/FragmentShader.glsl"));
         shaderProgram.prepare();
 
 
-         */
+
 
         World world = new World(0.1f, new Vector2f(0,9.8f * 12));
 
@@ -85,7 +86,7 @@ public class PlatformerDemo {
 
 
 
-            //renderer2D.setShader(shaderProgram);
+            renderer2D.setShaderProgram(shaderProgram);
 
 
 
@@ -141,7 +142,7 @@ public class PlatformerDemo {
             }
 
 
-            //renderer2D.render();
+            renderer2D.render();
 
 
 
@@ -149,8 +150,8 @@ public class PlatformerDemo {
 
 
 
-            //renderer2D.setShader(renderer2D.getDefaultShader());
-            //renderer2D.drawText(0, 0, "This is some text boi", Color.GREEN, Font2D.getDefault());
+            renderer2D.setShaderProgram(renderer2D.getDefaultShaderProgram());
+            renderer2D.drawText(0, 0, "This is some text boi", Color.GREEN, Font2D.getDefault());
             renderer2D.render();
 
 

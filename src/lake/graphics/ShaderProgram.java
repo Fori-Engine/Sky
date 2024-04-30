@@ -37,8 +37,8 @@ public abstract class ShaderProgram implements Disposable {
     public abstract void dispose();
 
     public static ShaderProgram newShaderProgram(String vertexShaderSource, String fragmentShaderSource){
-        if(Renderer2D.getAPI() == RendererType.OPENGL) return new GLShaderProgram(vertexShaderSource, fragmentShaderSource);
-        if(Renderer2D.getAPI() == RendererType.VULKAN) return new LVKShaderProgram(vertexShaderSource, fragmentShaderSource);
+        if(Renderer2D.getRenderBackend() == RendererBackend.OpenGL) return new GLShaderProgram(vertexShaderSource, fragmentShaderSource);
+        if(Renderer2D.getRenderBackend() == RendererBackend.Vulkan) return new LVKShaderProgram(vertexShaderSource, fragmentShaderSource);
 
         return null;
     }

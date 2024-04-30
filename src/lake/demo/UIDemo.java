@@ -2,7 +2,6 @@ package lake.demo;
 
 import lake.FlightRecorder;
 import lake.graphics.*;
-import lake.graphics.vulkan.LVKRenderer2D;
 
 import static lake.graphics.ui.IngridUI.*;
 
@@ -11,8 +10,8 @@ public class UIDemo {
 
         FlightRecorder.setEnabled(true);
 
-        StandaloneWindow window = new StandaloneWindow(1920, 1080, "UI Demo", false, true);
-        Renderer2D renderer2D = Renderer2D.createRenderer(RendererType.OPENGL, window, window.getWidth(), window.getHeight(), new RenderSettings().msaa(true));
+        StandaloneWindow window = new StandaloneWindow(1920, 1080, "UI Demo", false, false);
+        Renderer2D renderer2D = Renderer2D.createRenderer(window, window.getWidth(), window.getHeight(), new RenderSettings(RendererBackend.Vulkan).msaa(true));
 
 
         float value = 0;
@@ -38,7 +37,7 @@ public class UIDemo {
                         System.out.println("Shut up please " + i++);
                     }
 
-                    button("Hey I just met you and this is crazy, \nbut here's my number so call me maybe?", West);
+                    button("Test test test test!", West);
                 }
                 endPanel(North);
 

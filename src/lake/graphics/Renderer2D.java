@@ -23,7 +23,7 @@ public abstract class Renderer2D implements Disposable {
     private ArrayList<String> renderCallNames = new ArrayList<>(50);
     private boolean debug = false;
 
-    private static RendererType api;
+    private static RendererBackend backend;
 
     protected Matrix4f transform = new Matrix4f().identity();
     protected float originX, originY;
@@ -89,6 +89,10 @@ public abstract class Renderer2D implements Disposable {
     public abstract void drawFilledRect(float x, float y, float w, float h, Color color);
     public abstract void drawFilledEllipse(float x, float y, float w, float h, Color color);
     public abstract void drawEllipse(float x, float y, float w, float h, Color color, float thickness);
+
+
+
+
     public abstract void render();
     public abstract void render(String renderName);
     public List<String> getRenderCalls(){
@@ -167,25 +171,29 @@ public abstract class Renderer2D implements Disposable {
 
     public abstract String getDeviceName();
 
-    public static Renderer2D createRenderer(RendererType type, StandaloneWindow window, int width, int height) {
-        return createRenderer(type, window, width, height, new RenderSettings());
-    }
-    public static Renderer2D createRenderer(RendererType type, StandaloneWindow window, int width, int height, RenderSettings settings){
-        api = type;
-        FlightRecorder.info(Renderer2D.class, "Using renderer backend " + api);
+    public static Renderer2D createRenderer(StandaloneWindow window, int width, int height, RenderSettings settings){
+        backend = settings.backend;
+        FlightRecorder.info(Renderer2D.class, "Using renderer backend " + backend);
 
-        if(type == RendererType.OPENGL){
+        if(settings.backend == RendererBackend.OpenGL){
             return new GLRenderer2D(width, height, settings);
         }
-        else if(type == RendererType.VULKAN){
+        else if(settings.backend == RendererBackend.Vulkan){
             return new LVKRenderer2D(window, width, height, settings);
         }
+        else if(settings.backend == null){
+            FlightRecorder.meltdown(Renderer2D.class, "The target graphics API was not specified in RenderSettings!");
+        }
+        else {
+            FlightRecorder.meltdown(Renderer2D.class, "User requested renderer backend " + settings.backend + " but no backend could be initialized!");
+        }
 
-        FlightRecorder.meltdown(Renderer2D.class, "User requested renderer backend " + type + " but no backend could be initialized!");
+
+
         return null;
     }
 
-    public static RendererType getAPI() {
-        return api;
+    public static RendererBackend getRenderBackend() {
+        return backend;
     }
 }
