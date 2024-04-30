@@ -16,8 +16,8 @@ public class LVKShaderProgram extends ShaderProgram {
 
     private VkPipelineShaderStageCreateInfo.Buffer shaderStages;
     private VkDevice device;
-    private LVKSPRIV vertShaderSPIRV;
-    private LVKSPRIV fragShaderSPIRV;
+    private LVKSpir5Binary vertShaderSPIRV;
+    private LVKSpir5Binary fragShaderSPIRV;
 
     private ByteBuffer entryPoint;
 
@@ -72,7 +72,7 @@ public class LVKShaderProgram extends ShaderProgram {
     }
 
 
-    public static LVKSPRIV compileShaderToSPIRV(String source, int kind){
+    public static LVKSpir5Binary compileShaderToSPIRV(String source, int kind){
         long compiler = shaderc_compiler_initialize();
         if(compiler == MemoryUtil.NULL){
             throw new RuntimeException("Failed to init shaderc compiler");
@@ -94,7 +94,7 @@ public class LVKShaderProgram extends ShaderProgram {
         shaderc_compiler_release(compiler);
 
 
-        return new LVKSPRIV(result, shaderc_result_get_bytes(result));
+        return new LVKSpir5Binary(result, shaderc_result_get_bytes(result));
     }
 
     private static String getShaderType(int kind) {
@@ -105,11 +105,11 @@ public class LVKShaderProgram extends ShaderProgram {
         return null;
     }
 
-    public static class LVKSPRIV {
+    public static class LVKSpir5Binary {
         public long handle;
         public ByteBuffer bytecode;
 
-        public LVKSPRIV(long handle, ByteBuffer bytecode) {
+        public LVKSpir5Binary(long handle, ByteBuffer bytecode) {
             this.handle = handle;
             this.bytecode = bytecode;
         }
