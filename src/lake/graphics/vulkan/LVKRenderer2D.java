@@ -407,7 +407,7 @@ public class LVKRenderer2D extends Renderer2D {
 
 
     }
-    private void recordCmdBuffers() {
+    private void recordCmdBuffers(int indexCount) {
 
         final int commandBuffersCount = swapchainFramebuffers.size();
 
@@ -459,7 +459,7 @@ public class LVKRenderer2D extends Renderer2D {
 
                     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                             currentPipeline.pipelineLayout, 0, stack.longs(descriptorSets.get(i)), null);
-                    vkCmdDrawIndexed(commandBuffer, indexBuffer.indicesPerQuad * indexBuffer.getMaxQuads(), 1, 0, 0, 0);
+                    vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
 
 
 
@@ -903,12 +903,15 @@ public class LVKRenderer2D extends Renderer2D {
     }
     @Override
     public void render() {
+
+
+
         render("Final Render");
     }
     @Override
     public void render(String renderName) {
 
-        recordCmdBuffers();
+
 
 
         vertexBufferData.clear();
@@ -919,25 +922,6 @@ public class LVKRenderer2D extends Renderer2D {
         }
 
 
-        /*
-
-        int numOfIndices = quadIndex * 6;
-        int[] indices = new int[indexBuffer.indicesPerQuad * indexBuffer.getMaxQuads()];
-        int offset = 0;
-
-        for (int j = 0; j < numOfIndices; j += 6) {
-
-            indices[j] = offset;
-            indices[j + 1] = 1 + offset;
-            indices[j + 2] = 2 + offset;
-            indices[j + 3] = 2 + offset;
-            indices[j + 4] = 3 + offset;
-            indices[j + 5] = offset;
-
-            offset += 4;
-        }
-
-         */
 
         int[] indices = generateIndices(quadIndex);
 
@@ -945,6 +929,8 @@ public class LVKRenderer2D extends Renderer2D {
             indexBufferData.putInt(i);
         }
 
+
+        recordCmdBuffers(indices.length);
 
         try(MemoryStack stack = stackPush()) {
 
