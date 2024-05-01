@@ -1,7 +1,9 @@
 package lake.graphics;
 
 import lake.FlightRecorder;
+import lake.graphics.opengl.GLContext;
 import lake.graphics.opengl.GLRenderer2D;
+import lake.graphics.vulkan.LVKContext;
 import lake.graphics.vulkan.LVKRenderer2D;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
@@ -277,14 +279,16 @@ public abstract class Renderer2D implements Disposable {
 
     public abstract String getDeviceName();
 
-    public static Renderer2D createRenderer(StandaloneWindow window, int width, int height, RenderSettings settings){
+    public static Renderer2D createRenderer(Window window, int width, int height, RenderSettings settings){
         backend = settings.backend;
         FlightRecorder.info(Renderer2D.class, "Using renderer backend " + backend);
 
         if(settings.backend == RendererBackend.OpenGL){
+            window.setContext(new GLContext());
             return new GLRenderer2D(width, height, settings);
         }
         else if(settings.backend == RendererBackend.Vulkan){
+            window.setContext(new LVKContext());
             return new LVKRenderer2D(window, width, height, settings);
         }
         else if(settings.backend == null){

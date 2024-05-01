@@ -5,7 +5,7 @@
 package lake.graphics.vulkan;
 
 import lake.FlightRecorder;
-import lake.graphics.StandaloneWindow;
+import lake.graphics.Window;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
@@ -404,7 +404,7 @@ public class FastVK {
         return presentQueue;
     }
 
-    public static long createSurface(VkInstance instance, StandaloneWindow window) {
+    public static long createSurface(VkInstance instance, Window window) {
 
         long surface;
 

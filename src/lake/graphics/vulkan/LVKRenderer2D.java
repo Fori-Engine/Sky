@@ -56,7 +56,7 @@ public class LVKRenderer2D extends Renderer2D {
     private VkDescriptorImageInfo.Buffer imageInfos;
     private VkPhysicalDeviceProperties physicalDeviceProperties;
     private Map<ShaderProgram, LVKPipeline> pipelineCache = new HashMap<>();
-    public LVKRenderer2D(StandaloneWindow window, int width, int height, RenderSettings settings) {
+    public LVKRenderer2D(Window window, int width, int height, RenderSettings settings) {
         super(width, height, settings);
 
 

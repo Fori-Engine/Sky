@@ -203,6 +203,7 @@ public class IngridUI {
                 if(bounds.contains(window.getMouseX(), window.getMouseY())){
 
 
+                    /*
 
                     if(window.isMouseJustPressed(Input.MOUSE_BUTTON_1)) {
                         color = Color.LIGHT_GRAY;
@@ -212,12 +213,23 @@ public class IngridUI {
                         color = Color.GRAY;
                         contextBasedEventMap.get(currentContext).put(myID, new Buttons.ButtonEvent(false));
                     }
+
+                     */
                 }
 
                 float width = font.getWidthOf(text);
                 float height = font.getHeightOf(text);
 
+
+
                 renderer.drawFilledRect(bounds.x, bounds.y, bounds.w, bounds.h, color);
+
+
+
+
+
+
+
                 renderer.drawText( x + (w / 2f - width / 2), y + (h / 2f - height / 2), text, Color.WHITE, font);
 
             }

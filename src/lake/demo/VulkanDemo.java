@@ -10,7 +10,7 @@ public class VulkanDemo {
     public static void main(String[] args) {
 
 
-        StandaloneWindow window = new StandaloneWindow(640, 480, "Vulkan Demo", false, false);
+        Window window = new Window(640, 480, "Vulkan Demo", false);
         Renderer2D renderer2D = Renderer2D.createRenderer(window, window.getWidth(), window.getHeight(), new RenderSettings(RendererBackend.Vulkan).msaa(true));
 
 

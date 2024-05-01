@@ -21,8 +21,8 @@ public class PlatformerDemo {
 
 
 
-        StandaloneWindow window = new StandaloneWindow(1920, 1080, "Showcase Demo", false, false);
-        Renderer2D renderer2D = Renderer2D.createRenderer(window, window.getWidth(), window.getHeight(), new RenderSettings(RendererBackend.Vulkan).msaa(true));
+        Window window = new Window(1920, 1080, "Showcase Demo", false);
+        Renderer2D renderer2D = Renderer2D.createRenderer(window, window.getWidth(), window.getHeight(), new RenderSettings(RendererBackend.OpenGL).msaa(true));
 
 
         ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(
