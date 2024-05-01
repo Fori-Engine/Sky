@@ -98,12 +98,6 @@ public abstract class Renderer2D implements Disposable {
     public List<String> getRenderCalls(){
         return new ArrayList<>(renderCallNames);
     }
-    public boolean isDebug() {
-        return debug;
-    }
-    public void setDebug(boolean debug) {
-        this.debug = debug;
-    }
     public abstract void clear(Color color);
     public float getOriginX() {
         return originX;

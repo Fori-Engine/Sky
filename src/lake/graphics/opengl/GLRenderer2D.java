@@ -23,7 +23,7 @@ public class GLRenderer2D extends Renderer2D {
     private float[] vertexData;
     private int maxTextureSlots;
     public GLShaderProgram defaultGLShaderProgram, currentGLShaderProgram;
-    private ArrayList<String> renderCallNames = new ArrayList<>(50);
+
     private int RECT = -1;
     private int CIRCLE = -2;
     private FastTextureLookup textureLookup;
@@ -361,21 +361,12 @@ public class GLRenderer2D extends Renderer2D {
 
     public void render() {
         render("Final Draw Call [rebel.engine.graphics.Renderer2D.render()]");
-        if(isDebug()){
-            System.out.println("Renderer2D (" + this + ") - Debug");
-
-            for(String call : getRenderCalls()){
-                System.out.print("\t" + call + "\n");
-            }
-            System.out.println("\n");
-        }
-        renderCallNames.clear();
 
         if(framebuffer2D != null)
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
     public void render(String renderName) {
-        renderCallNames.add(renderName);
+
 
 
         currentGLShaderProgram.bind();
