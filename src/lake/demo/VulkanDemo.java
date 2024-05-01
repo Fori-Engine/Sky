@@ -18,7 +18,7 @@ public class VulkanDemo {
         float t = 0;
         while(!window.shouldClose()){
             renderer2D.clear(Color.BLACK);
-            System.out.println(window.getFPS());
+            System.out.println(Time.framesPerSecond());
 
             renderer2D.drawFilledRect(0, 0, 100, 100, Color.BLUE);
 

@@ -1,6 +1,7 @@
 package lake.demo;
 
 import lake.FlightRecorder;
+import lake.Time;
 import lake.graphics.*;
 
 import static lake.graphics.ui.IngridUI.*;
@@ -23,7 +24,7 @@ public class UIDemo {
 
 
 
-            window.setTitle("UI Demo" + "[" + window.getFPS() + "]");
+            window.setTitle("UI Demo" + "[" + Time.deltaTime() + "]");
 
             beginContext(renderer2D, window, "HUD");
 

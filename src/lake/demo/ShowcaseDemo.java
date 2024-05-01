@@ -18,7 +18,7 @@ public class ShowcaseDemo {
         FlightRecorder.setEnabled(true);
 
         Window window = new Window(1920, 1080, "Showcase Demo", false);
-        Renderer2D renderer2D = Renderer2D.createRenderer(window, window.getWidth(), window.getHeight(), new RenderSettings(RendererBackend.Vulkan).msaa(true));
+        Renderer2D renderer2D = Renderer2D.createRenderer(window, window.getWidth(), window.getHeight(), new RenderSettings(RendererBackend.OpenGL).msaa(true));
 
         window.setIcon("assets/logo.png");
         window.setTitle("LakeEngine Demo [" + Renderer2D.getRenderBackend() + "]");
@@ -58,8 +58,8 @@ public class ShowcaseDemo {
             renderer2D.clear(new Color(0.5f, 0.5f, 0.5f, 1.0f));
 
 
-            renderer2D.drawText(0, 0, "FPS: " + window.getFPS(), Color.RED, Font2D.getDefault());
-            renderer2D.drawText(window.getMouseX(), window.getMouseY(), " \"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. \nUt enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. \nDuis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. \nExcepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\" FPS: " + window.getFPS(), Color.BLUE, Font2D.getDefault());
+            renderer2D.drawText(0, 0, "FPS: " + Time.framesPerSecond(), Color.RED, Font2D.getDefault());
+            renderer2D.drawText(window.getMouseX(), window.getMouseY(), " \"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. \nUt enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. \nDuis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. \nExcepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\" FPS: " + Time.framesPerSecond(), Color.BLUE, Font2D.getDefault());
 
             
             

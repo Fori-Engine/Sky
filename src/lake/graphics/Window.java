@@ -185,9 +185,6 @@ public class Window {
         }
     }
 
-    public int getFPS() {
-        return (int) (1 / Time.deltaTime);
-    }
 
     /***
      * Closes the Window, and destroys the GLFW and OpenGL context
