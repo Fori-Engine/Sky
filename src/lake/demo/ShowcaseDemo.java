@@ -20,6 +20,7 @@ public class ShowcaseDemo {
         StandaloneWindow window = new StandaloneWindow(1920, 1080, "Showcase Demo", false, false);
         Renderer2D renderer2D = Renderer2D.createRenderer(window, window.getWidth(), window.getHeight(), new RenderSettings(RendererBackend.Vulkan).msaa(true));
 
+        window.setIcon("assets/logo.png");
         window.setTitle("LakeEngine Demo [" + Renderer2D.getRenderBackend() + "]");
 
 
@@ -43,7 +44,7 @@ public class ShowcaseDemo {
         float rotation = 0f;
 
 
-        ParticleSourceConfig particleSourceConfig = new ParticleSourceConfig(100, 100, 3500, 7, 10, 10);
+        ParticleSourceConfig particleSourceConfig = new ParticleSourceConfig(100, 100, 3500, 7, 5, 10);
         ParticleSource particleSource = new ParticleSource(particleSourceConfig, new Vector2f(700f, 700f));
         particleSource.addParticles(200);
 

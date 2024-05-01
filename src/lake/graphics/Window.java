@@ -22,6 +22,7 @@ public interface Window {
     boolean isMouseJustPressed(int button);
     boolean isMouseReleased(int button);
 
+    void setIcon(String path);
     int getFPS();
     void close();
 }

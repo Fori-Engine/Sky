@@ -23,6 +23,7 @@ public class UIDemo {
 
 
 
+            window.setTitle("UI Demo" + "[" + window.getFPS() + "]");
 
             beginContext(renderer2D, window, "HUD");
 

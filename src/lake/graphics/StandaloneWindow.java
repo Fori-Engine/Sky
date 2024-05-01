@@ -2,12 +2,17 @@ package lake.graphics;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFWErrorCallback;
+import org.lwjgl.glfw.GLFWImage;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GLUtil;
 import lake.Time;
+import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.Callback;
+import org.lwjgl.system.MemoryStack;
 
+import java.nio.ByteBuffer;
 import java.nio.DoubleBuffer;
+import java.nio.IntBuffer;
 import java.util.HashMap;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
@@ -191,6 +196,36 @@ public class StandaloneWindow implements Window {
 
     public boolean isMouseReleased(int button){
         return glfwGetMouseButton(window, button) == GLFW_RELEASE;
+    }
+
+    @Override
+    public void setIcon(String path) {
+        try(MemoryStack stack = MemoryStack.stackPush()){
+
+            GLFWImage.Buffer icon = GLFWImage.calloc(1, stack);
+
+            IntBuffer w = BufferUtils.createIntBuffer(1);
+            IntBuffer h = BufferUtils.createIntBuffer(1);
+            IntBuffer channelsInFile = BufferUtils.createIntBuffer(1);
+            ByteBuffer texture = STBImage.stbi_load(path, w, h, channelsInFile, 4);
+            String error = STBImage.stbi_failure_reason();
+
+            if(error != null){
+                throw new RuntimeException("Failed to set GLFW window icon: " + error + " (" + path + ")");
+            }
+            int width = w.get();
+            int height = h.get();
+
+            icon.width(width);
+            icon.height(height);
+            icon.pixels(texture);
+
+
+            glfwSetWindowIcon(window, icon);
+
+
+
+        }
     }
 
     public int getFPS() {
