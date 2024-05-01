@@ -29,6 +29,8 @@ public abstract class Renderer2D implements Disposable {
     protected float originX, originY;
     private static float spaceXAdvance = 0;
     private static final int spacesPerTab = 4;
+    protected int quadIndex;
+    protected float[] vertexData;
 
     public Renderer2D(int width, int height, RenderSettings renderSettings){
         this.width = width;
@@ -40,6 +42,27 @@ public abstract class Renderer2D implements Disposable {
     public abstract void updateCamera2D();
     public abstract ShaderProgram getDefaultShaderProgram();
     public abstract ShaderProgram getCurrentShaderProgram();
+
+    protected int[] generateIndices(int quadIndex){
+        int numOfIndices = quadIndex * 6;
+        int[] indices = new int[numOfIndices];
+        int offset = 0;
+
+        for (int j = 0; j < numOfIndices; j += 6) {
+
+            indices[j] =         offset;
+            indices[j + 1] = 1 + offset;
+            indices[j + 2] = 2 + offset;
+            indices[j + 3] = 2 + offset;
+            indices[j + 4] = 3 + offset;
+            indices[j + 5] =     offset;
+
+            offset += 4;
+        }
+
+        return indices;
+    }
+
     public int getWidth() {
         return width;
     }

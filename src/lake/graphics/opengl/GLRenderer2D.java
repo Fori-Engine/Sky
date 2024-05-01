@@ -9,7 +9,6 @@ import org.lwjgl.opengl.GLUtil;
 
 import java.lang.Math;
 import java.nio.IntBuffer;
-import java.util.ArrayList;
 
 import static org.lwjgl.opengl.GL46.*;
 /***
@@ -20,10 +19,8 @@ public class GLRenderer2D extends Renderer2D {
     private GLVertexArray vertexArray;
     private GLVertexBuffer vertexBuffer;
     private GLIndexBuffer indexBuffer;
-    private float[] vertexData;
     private int maxTextureSlots;
-    public GLShaderProgram defaultGLShaderProgram, currentGLShaderProgram;
-
+    public GLShaderProgram defaultShaderProgram, currentShaderProgram;
     private int RECT = -1;
     private int CIRCLE = -2;
     private FastTextureLookup textureLookup;
@@ -37,6 +34,8 @@ public class GLRenderer2D extends Renderer2D {
 
     public GLRenderer2D(int width, int height, RenderSettings settings) {
         super(width, height, settings);
+
+
 
         if(settings.enableValidation)
             GLUtil.setupDebugMessageCallback();
@@ -63,14 +62,14 @@ public class GLRenderer2D extends Renderer2D {
 
 
 
-        defaultGLShaderProgram = new GLShaderProgram(
+        defaultShaderProgram = new GLShaderProgram(
                 FileReader.readFile("assets/shaders/opengl/VertexShader.glsl"),
                 FileReader.readFile("assets/shaders/opengl/FragmentShader.glsl")
         );
-        defaultGLShaderProgram.prepare();
+        defaultShaderProgram.prepare();
 
-        currentGLShaderProgram = defaultGLShaderProgram;
-        currentGLShaderProgram.bind();
+        currentShaderProgram = defaultShaderProgram;
+        currentShaderProgram.bind();
         updateCamera2D();
 
         {
@@ -102,28 +101,28 @@ public class GLRenderer2D extends Renderer2D {
 
     @Override
     public void setShaderProgram(ShaderProgram shaderProgram) {
-        if(currentGLShaderProgram != shaderProgram) {
-            currentGLShaderProgram = (GLShaderProgram) shaderProgram;
-            currentGLShaderProgram.bind();
+        if(currentShaderProgram != shaderProgram) {
+            currentShaderProgram = (GLShaderProgram) shaderProgram;
+            currentShaderProgram.bind();
             updateCamera2D();
         }
     }
 
     public void updateCamera2D(){
-        currentGLShaderProgram.setMatrix4f("v_model", getTranslation());
-        currentGLShaderProgram.setMatrix4f("v_view", getView());
-        currentGLShaderProgram.setMatrix4f("v_projection", getProj());
-        currentGLShaderProgram.setIntArray("u_textures", createTextureSlots());
+        currentShaderProgram.setMatrix4f("v_model", getTranslation());
+        currentShaderProgram.setMatrix4f("v_view", getView());
+        currentShaderProgram.setMatrix4f("v_projection", getProj());
+        currentShaderProgram.setIntArray("u_textures", createTextureSlots());
     }
 
     @Override
     public ShaderProgram getDefaultShaderProgram() {
-        return defaultGLShaderProgram;
+        return defaultShaderProgram;
     }
 
     @Override
     public ShaderProgram getCurrentShaderProgram() {
-        return currentGLShaderProgram;
+        return currentShaderProgram;
     }
 
     private int[] createTextureSlots() {
@@ -144,7 +143,6 @@ public class GLRenderer2D extends Renderer2D {
     public boolean isUsingFramebuffer(){
         return getFramebuffer2D() != null;
     }
-    private int quadIndex;
     private int nextTextureSlot;
     public void drawTexture(float x, float y, float w, float h, Texture2D texture){
         drawTexture(x, y, w, h, texture, Color.WHITE);
@@ -223,7 +221,7 @@ public class GLRenderer2D extends Renderer2D {
         if(isUniqueTexture) nextTextureSlot++;
 
         if(nextTextureSlot == maxTextureSlots)
-            render("Next Batch Render [No more rebel.engine.graphics.Texture slots out of " + maxTextureSlots + "]");
+            render("Next Batch Render");
 
     }
     public void drawFilledRect(float x, float y, float w, float h, Color color){
@@ -360,7 +358,7 @@ public class GLRenderer2D extends Renderer2D {
 
 
     public void render() {
-        render("Final Draw Call [rebel.engine.graphics.Renderer2D.render()]");
+        render("Final Render");
 
         if(framebuffer2D != null)
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -369,28 +367,14 @@ public class GLRenderer2D extends Renderer2D {
 
 
 
-        currentGLShaderProgram.bind();
+        currentShaderProgram.bind();
         vertexArray.bind();
 
         glBindBuffer(GL_ARRAY_BUFFER, getVertexBuffer().myVbo);
         glBufferSubData(GL_ARRAY_BUFFER, 0, vertexData);
 
 
-        int numOfIndices = quadIndex * 6;
-        int[] indices = new int[numOfIndices];
-        int offset = 0;
-
-        for (int j = 0; j < numOfIndices; j += 6) {
-
-            indices[j] =         offset;
-            indices[j + 1] = 1 + offset;
-            indices[j + 2] = 2 + offset;
-            indices[j + 3] = 2 + offset;
-            indices[j + 4] = 3 + offset;
-            indices[j + 5] =     offset;
-
-            offset += 4;
-        }
+        int[] indices = generateIndices(quadIndex);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.myEbo);
         glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, indices);

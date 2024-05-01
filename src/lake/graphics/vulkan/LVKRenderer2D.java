@@ -45,17 +45,11 @@ public class LVKRenderer2D extends Renderer2D {
     private int currentFrame;
     private LongBuffer descriptorSetLayout;
     private long descriptorPool;
-
     private List<Long> descriptorSets;
-    private float[] vertexData;
-    private int quadIndex;
-
     private Color clearColor = Color.BLACK;
-
     private ByteBuffer vertexBufferData, indexBufferData;
     private LVKShaderProgram currentShaderProgram, defaultShaderProgram;
     private int maxTextures = 32;
-
     private int RECT = -1;
     private int CIRCLE = -2;
 
@@ -1022,6 +1016,7 @@ public class LVKRenderer2D extends Renderer2D {
         }
 
 
+        /*
 
         int numOfIndices = quadIndex * 6;
         int[] indices = new int[indexBuffer.indicesPerQuad * indexBuffer.getMaxQuads()];
@@ -1038,6 +1033,10 @@ public class LVKRenderer2D extends Renderer2D {
 
             offset += 4;
         }
+
+         */
+
+        int[] indices = generateIndices(quadIndex);
 
         for (int i : indices) {
             indexBufferData.putInt(i);
