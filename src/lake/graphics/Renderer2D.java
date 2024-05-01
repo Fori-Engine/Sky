@@ -1,17 +1,15 @@
 package lake.graphics;
 
 import lake.FlightRecorder;
-import lake.graphics.opengl.*;
+import lake.graphics.opengl.GLRenderer2D;
 import lake.graphics.vulkan.LVKRenderer2D;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
+import org.joml.Vector4f;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import static org.lwjgl.opengl.GL31.glDrawElementsInstanced;
-import static org.lwjgl.opengl.GL44.glClearTexImage;
 
 public abstract class Renderer2D implements Disposable {
 
@@ -63,6 +61,98 @@ public abstract class Renderer2D implements Disposable {
         return indices;
     }
 
+    public RenderData applyTransformations(float x,
+                                           float y,
+                                           float w,
+                                           float h,
+                                           float originX,
+                                           float originY,
+                                           Rect2D region,
+                                           boolean xFlip,
+                                           boolean yFlip){
+        Rect2D copy = new Rect2D(region.x, region.y, region.w, region.h);
+
+        if(xFlip){
+            float temp = copy.x;
+            copy.x = copy.w;
+            copy.w = temp;
+        }
+
+        if(yFlip){
+            float temp = copy.y;
+            copy.y = copy.h;
+            copy.h = temp;
+        }
+
+        Vector4f topLeft = new Vector4f(x - originX, y - originY, 0, 1);
+        Vector4f topRight = new Vector4f(x + w - originX, y - originY, 0, 1);
+        Vector4f bottomLeft = new Vector4f(x - originX, y + h - originY, 0, 1);
+        Vector4f bottomRight = new Vector4f(x + w - originX, y + h - originY, 0, 1);
+
+        topLeft.mul(transform);
+        topRight.mul(transform);
+        bottomLeft.mul(transform);
+        bottomRight.mul(transform);
+
+
+
+        //Translate forward by origin back to the current position
+        topLeft.x += originX;
+        topRight.x += originX;
+        bottomLeft.x += originX;
+        bottomRight.x += originX;
+
+        topLeft.y += originY;
+        topRight.y += originY;
+        bottomLeft.y += originY;
+        bottomRight.y += originY;
+
+        return new RenderData(new Vector4f[]{topLeft, topRight, bottomLeft, bottomRight}, copy);
+    }
+
+    protected class RenderData {
+        public Vector4f[] transformedPoints;
+        public Rect2D copy;
+
+        public RenderData(Vector4f[] transformedPoints, Rect2D copy) {
+            this.transformedPoints = transformedPoints;
+            this.copy = copy;
+        }
+    }
+
+    public void drawLine(float x1, float y1, float x2, float y2, Color color, int thickness, boolean round){
+
+        float ox = originX;
+        float oy = originY;
+
+        {
+            float dx = x2 - x1;
+            float dy = y2 - y1;
+
+            float angle = (float) Math.atan2(dy, dx);
+
+            setOrigin(ox + x1, oy + y1);
+            rotate(angle);
+
+            float hypotenuse = (float) Math.sqrt((dx * dx) + (dy * dy));
+
+            drawFilledRect(x1, y1 - (thickness / 2), hypotenuse, thickness, color);
+
+            rotate(-angle);
+            setOrigin(ox, oy);
+        }
+
+        if(round){
+            drawFilledEllipse(x1 - (thickness / 2f), y1 - (thickness / 2f), thickness, thickness, color);
+            drawFilledEllipse(x2 - (thickness / 2f), y2 - (thickness / 2f), thickness, thickness, color);
+        }
+
+
+
+
+    }
+
+
     public int getWidth() {
         return width;
     }
@@ -106,7 +196,6 @@ public abstract class Renderer2D implements Disposable {
         this.originY = vector2f.y;
     }
     public abstract void drawRect(float x, float y, float w, float h, Color color, int thickness);
-    public abstract void drawLine(float x1, float y1, float x2, float y2, Color color, int thickness, boolean round);
     public abstract void drawTexture(float x, float y, float w, float h, Texture2D texture, Color color);
     public abstract void drawTexture(float x, float y, float w, float h, Texture2D texture, Color color, Rect2D rect2D, boolean xFlip, boolean yFlip);
     public abstract void drawFilledRect(float x, float y, float w, float h, Color color);

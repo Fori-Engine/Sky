@@ -25,7 +25,6 @@ import static org.lwjgl.vulkan.VK13.*;
 
 public class LVKRenderer2D extends Renderer2D {
     private int MAX_FRAMES_IN_FLIGHT = 2;
-
     long UINT64_MAX = 0xFFFFFFFFFFFFFFFFL;
     private VkQueue graphicsQueue, presentQueue;
     private static VkDeviceWithIndices deviceWithIndices;
@@ -52,18 +51,11 @@ public class LVKRenderer2D extends Renderer2D {
     private int maxTextures = 32;
     private int RECT = -1;
     private int CIRCLE = -2;
-
     private FastTextureLookup textureLookup;
     private int nextTextureSlot;
     private VkDescriptorImageInfo.Buffer imageInfos;
-
-
     private VkPhysicalDeviceProperties physicalDeviceProperties;
-
     private Map<ShaderProgram, LVKPipeline> pipelineCache = new HashMap<>();
-
-
-
     public LVKRenderer2D(StandaloneWindow window, int width, int height, RenderSettings settings) {
         super(width, height, settings);
 
@@ -415,7 +407,6 @@ public class LVKRenderer2D extends Renderer2D {
 
 
     }
-
     private void recordCmdBuffers() {
 
         final int commandBuffersCount = swapchainFramebuffers.size();
@@ -485,12 +476,6 @@ public class LVKRenderer2D extends Renderer2D {
         }
 
     }
-
-
-
-
-
-
     private LVKPipeline createPipeline(VkDevice device, LVKSwapchain swapchain, VkPipelineShaderStageCreateInfo.Buffer shaderStages, long renderPass, LongBuffer descriptorSetLayout){
 
 
@@ -700,8 +685,6 @@ public class LVKRenderer2D extends Renderer2D {
 
         return new LVKPipeline(pipelineLayout, graphicsPipeline);
     }
-
-
     @Override
     public void setShaderProgram(ShaderProgram shaderProgram) {
 
@@ -731,17 +714,14 @@ public class LVKRenderer2D extends Renderer2D {
 
 
     }
-
     @Override
     public void updateCamera2D() {
 
     }
-
     @Override
     public ShaderProgram getDefaultShaderProgram() {
         return defaultShaderProgram;
     }
-
     @Override
     public ShaderProgram getCurrentShaderProgram() {
         return currentShaderProgram;
@@ -759,37 +739,6 @@ public class LVKRenderer2D extends Renderer2D {
         drawFilledRect(x, y - ((float) thickness / 2) + h, w, thickness, color);
         //Right
         drawFilledRect(x - ((float) thickness / 2) + w, y, thickness, h, color);
-
-    }
-    public void drawLine(float x1, float y1, float x2, float y2, Color color, int thickness, boolean round){
-
-        float ox = originX;
-        float oy = originY;
-
-        {
-            float dx = x2 - x1;
-            float dy = y2 - y1;
-
-            float angle = (float) Math.atan2(dy, dx);
-
-            setOrigin(ox + x1, oy + y1);
-            rotate(angle);
-
-            float hypotenuse = (float) Math.sqrt((dx * dx) + (dy * dy));
-
-            drawFilledRect(x1, y1 - (thickness / 2), hypotenuse, thickness, color);
-
-            rotate(-angle);
-            setOrigin(ox, oy);
-        }
-
-        if(round){
-            drawFilledEllipse(x1 - (thickness / 2f), y1 - (thickness / 2f), thickness, thickness, color);
-            drawFilledEllipse(x2 - (thickness / 2f), y2 - (thickness / 2f), thickness, thickness, color);
-        }
-
-
-
 
     }
     public void drawTexture(float x, float y, float w, float h, Texture2D texture, Color color){
@@ -864,10 +813,6 @@ public class LVKRenderer2D extends Renderer2D {
     public void drawEllipse(float x, float y, float w, float h, Color color, float thickness) {
         drawQuad(x, y, w, h, CIRCLE, color, originX, originY, new Rect2D(0, 0, 1, 1), thickness, false, false, 0);
     }
-
-
-
-
     private void drawQuad(float x,
                           float y,
                           float w,
@@ -884,43 +829,16 @@ public class LVKRenderer2D extends Renderer2D {
 
 
 
-        Rect2D copy = new Rect2D(region.x, region.y, region.w, region.h);
 
-        if(xFlip){
-            float temp = copy.x;
-            copy.x = copy.w;
-            copy.w = temp;
-        }
+        RenderData renderData = applyTransformations(x, y, w, h, originX, originY, region, xFlip, yFlip);
 
-        if(yFlip){
-            float temp = copy.y;
-            copy.y = copy.h;
-            copy.h = temp;
-        }
+        Vector4f[] transformedPoints = renderData.transformedPoints;
+        Rect2D copy = renderData.copy;
 
-        Vector4f topLeft = new Vector4f(x - originX, y - originY, 0, 1);
-        Vector4f topRight = new Vector4f(x + w - originX, y - originY, 0, 1);
-        Vector4f bottomLeft = new Vector4f(x - originX, y + h - originY, 0, 1);
-        Vector4f bottomRight = new Vector4f(x + w - originX, y + h - originY, 0, 1);
-
-        topLeft.mul(transform);
-        topRight.mul(transform);
-        bottomLeft.mul(transform);
-        bottomRight.mul(transform);
-
-
-
-        //Translate forward by origin back to the current position
-        topLeft.x += originX;
-        topRight.x += originX;
-        bottomLeft.x += originX;
-        bottomRight.x += originX;
-
-        topLeft.y += originY;
-        topRight.y += originY;
-        bottomLeft.y += originY;
-        bottomRight.y += originY;
-
+        Vector4f topLeft = transformedPoints[0];
+        Vector4f topRight = transformedPoints[1];
+        Vector4f bottomLeft = transformedPoints[2];
+        Vector4f bottomRight = transformedPoints[3];
 
         {
 
@@ -983,25 +901,10 @@ public class LVKRenderer2D extends Renderer2D {
 
         //if(quadIndex == vertexBuffer.maxQuads()) render("Next Batch Render");
     }
-
-
-
-    public void reset(){
-        vertexData = new float[vertexData.length];
-        quadIndex = 0;
-        nextTextureSlot = 0;
-        textureLookup.clear();
-    }
-
-
     @Override
     public void render() {
         render("Final Render");
     }
-
-
-
-
     @Override
     public void render(String renderName) {
 
@@ -1137,37 +1040,26 @@ public class LVKRenderer2D extends Renderer2D {
         nextTextureSlot = 0;
         textureLookup.clear();
     }
-
     @Override
     public void clear(Color color) {
         this.clearColor = color;
     }
-
-
-
     @Override
     public String getDeviceName() {
         return physicalDeviceProperties.deviceNameString();
     }
-
-
     public static VkDeviceWithIndices getDeviceWithIndices() {
         return deviceWithIndices;
     }
-
     public static VkPhysicalDevice getPhysicalDevice() {
         return physicalDevice;
     }
-
-
-
     private void destroyPipeline(LVKPipeline pipeline){
 
         vkDestroyPipeline(deviceWithIndices.device, pipeline.pipeline, null);
         vkDestroyPipelineLayout(deviceWithIndices.device, pipeline.pipelineLayout, null);
 
     }
-
     @Override
     public void dispose() {
 

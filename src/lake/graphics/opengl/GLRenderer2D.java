@@ -25,13 +25,10 @@ public class GLRenderer2D extends Renderer2D {
     private int CIRCLE = -2;
     private FastTextureLookup textureLookup;
     private Framebuffer2D framebuffer2D;
-
-
     public GLRenderer2D(int width, int height, Framebuffer2D framebuffer2D, RenderSettings settings){
         this(width, height, settings);
         this.framebuffer2D = framebuffer2D;
     }
-
     public GLRenderer2D(int width, int height, RenderSettings settings) {
         super(width, height, settings);
 
@@ -98,7 +95,6 @@ public class GLRenderer2D extends Renderer2D {
         }
 
     }
-
     @Override
     public void setShaderProgram(ShaderProgram shaderProgram) {
         if(currentShaderProgram != shaderProgram) {
@@ -107,24 +103,20 @@ public class GLRenderer2D extends Renderer2D {
             updateCamera2D();
         }
     }
-
     public void updateCamera2D(){
         currentShaderProgram.setMatrix4f("v_model", getTranslation());
         currentShaderProgram.setMatrix4f("v_view", getView());
         currentShaderProgram.setMatrix4f("v_projection", getProj());
         currentShaderProgram.setIntArray("u_textures", createTextureSlots());
     }
-
     @Override
     public ShaderProgram getDefaultShaderProgram() {
         return defaultShaderProgram;
     }
-
     @Override
     public ShaderProgram getCurrentShaderProgram() {
         return currentShaderProgram;
     }
-
     private int[] createTextureSlots() {
         int[] slots = new int[maxTextureSlots];
         for (int i = 0; i < maxTextureSlots; i++) {
@@ -135,11 +127,9 @@ public class GLRenderer2D extends Renderer2D {
     public GLVertexBuffer getVertexBuffer() {
         return vertexBuffer;
     }
-
     public Framebuffer2D getFramebuffer2D() {
         return framebuffer2D;
     }
-
     public boolean isUsingFramebuffer(){
         return getFramebuffer2D() != null;
     }
@@ -157,37 +147,6 @@ public class GLRenderer2D extends Renderer2D {
         drawFilledRect(x, y - ((float) thickness / 2) + h, w, thickness, color);
         //Right
         drawFilledRect(x - ((float) thickness / 2) + w, y, thickness, h, color);
-
-    }
-    public void drawLine(float x1, float y1, float x2, float y2, Color color, int thickness, boolean round){
-
-        float ox = originX;
-        float oy = originY;
-
-        {
-            float dx = x2 - x1;
-            float dy = y2 - y1;
-
-            float angle = (float) Math.atan2(dy, dx);
-
-            setOrigin(ox + x1, oy + y1);
-            rotate(angle);
-
-            float hypotenuse = (float) Math.sqrt((dx * dx) + (dy * dy));
-
-            drawFilledRect(x1, y1 - (thickness / 2), hypotenuse, thickness, color);
-
-            rotate(-angle);
-            setOrigin(ox, oy);
-        }
-
-        if(round){
-            drawFilledEllipse(x1 - (thickness / 2f), y1 - (thickness / 2f), thickness, thickness, color);
-            drawFilledEllipse(x2 - (thickness / 2f), y2 - (thickness / 2f), thickness, thickness, color);
-        }
-
-
-
 
     }
     public void drawTexture(float x, float y, float w, float h, Texture2D texture, Color color){
@@ -233,7 +192,6 @@ public class GLRenderer2D extends Renderer2D {
     public void drawEllipse(float x, float y, float w, float h, Color color, float thickness) {
         drawQuad(x, y, w, h, CIRCLE, color, originX, originY, new Rect2D(0, 0, 1, 1), thickness, false, false, 0);
     }
-
     public void drawQuad(float x,
                          float y,
                          float w,
@@ -249,49 +207,18 @@ public class GLRenderer2D extends Renderer2D {
                          float bloom){
 
 
-        //TODO: Bloom
+        RenderData renderData = applyTransformations(x, y, w, h, originX, originY, region, xFlip, yFlip);
+
+        Vector4f[] transformedPoints = renderData.transformedPoints;
+        Rect2D copy = renderData.copy;
+
+        Vector4f topLeft = transformedPoints[0];
+        Vector4f topRight = transformedPoints[1];
+        Vector4f bottomLeft = transformedPoints[2];
+        Vector4f bottomRight = transformedPoints[3];
 
 
 
-        //Translate back by origin (for rotation math)
-        //This usually takes everything near (0, 0)
-
-        Rect2D copy = new Rect2D(region.x, region.y, region.w, region.h);
-
-        if(xFlip){
-            float temp = copy.x;
-            copy.x = copy.w;
-            copy.w = temp;
-        }
-
-        if(yFlip){
-            float temp = copy.y;
-            copy.y = copy.h;
-            copy.h = temp;
-        }
-
-        Vector4f topLeft = new Vector4f(x - originX, y - originY, 0, 1);
-        Vector4f topRight = new Vector4f(x + w - originX, y - originY, 0, 1);
-        Vector4f bottomLeft = new Vector4f(x - originX, y + h - originY, 0, 1);
-        Vector4f bottomRight = new Vector4f(x + w - originX, y + h - originY, 0, 1);
-
-        topLeft.mul(transform);
-        topRight.mul(transform);
-        bottomLeft.mul(transform);
-        bottomRight.mul(transform);
-
-
-
-        //Translate forward by origin back to the current position
-        topLeft.x += originX;
-        topRight.x += originX;
-        bottomLeft.x += originX;
-        bottomRight.x += originX;
-
-        topLeft.y += originY;
-        topRight.y += originY;
-        bottomLeft.y += originY;
-        bottomRight.y += originY;
 
 
         {
@@ -355,8 +282,6 @@ public class GLRenderer2D extends Renderer2D {
 
         if(quadIndex == vertexBuffer.getMaxQuads()) render("Next Batch Render");
     }
-
-
     public void render() {
         render("Final Render");
 
@@ -399,13 +324,10 @@ public class GLRenderer2D extends Renderer2D {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(color.r, color.g, color.b, color.a);
     }
-
-
     @Override
     public String getDeviceName() {
         return glGetString(GL_RENDERER);
     }
-
     @Override
     public void dispose() {
 
