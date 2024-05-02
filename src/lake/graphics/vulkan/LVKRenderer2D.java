@@ -46,8 +46,7 @@ public class LVKRenderer2D extends Renderer2D {
     private ByteBuffer vertexBufferData, indexBufferData;
     private LVKShaderProgram currentShaderProgram, defaultShaderProgram;
     private int maxTextures = 32;
-    private int RECT = -1;
-    private int CIRCLE = -2;
+
     private FastTextureLookup textureLookup;
     private int nextTextureSlot;
     private VkDescriptorImageInfo.Buffer imageInfos;
@@ -739,24 +738,9 @@ public class LVKRenderer2D extends Renderer2D {
     public ShaderProgram getCurrentShaderProgram() {
         return currentShaderProgram;
     }
-    public void drawTexture(float x, float y, float w, float h, Texture2D texture){
-        drawTexture(x, y, w, h, texture, Color.WHITE);
-    }
-    public void drawRect(float x, float y, float w, float h, Color color, int thickness){
 
-        //Left
-        drawFilledRect(x - ((float) thickness / 2), y, thickness, h, color);
-        //Top
-        drawFilledRect(x, y - ((float) thickness / 2), w, thickness, color);
-        //Bottom
-        drawFilledRect(x, y - ((float) thickness / 2) + h, w, thickness, color);
-        //Right
-        drawFilledRect(x - ((float) thickness / 2) + w, y, thickness, h, color);
 
-    }
-    public void drawTexture(float x, float y, float w, float h, Texture2D texture, Color color){
-        drawTexture(x, y, w, h, texture, color, new Rect2D(0, 0, 1, 1), false, false);
-    }
+    @Override
     public void drawTexture(float x, float y, float w, float h, Texture2D texture, Color color, Rect2D rect2D, boolean xFlip, boolean yFlip) {
 
         LVKTexture2D lvkTexture2D = (LVKTexture2D) texture;
@@ -817,16 +801,9 @@ public class LVKRenderer2D extends Renderer2D {
 
 
     }
-    public void drawFilledRect(float x, float y, float w, float h, Color color){
-        drawQuad(x, y, w, h, RECT, color, originX, originY, new Rect2D(0, 0, 1, 1), -1, false, false, 0);
-    }
-    public void drawFilledEllipse(float x, float y, float w, float h, Color color) {
-        drawQuad(x, y, w, h, CIRCLE, color, originX, originY, new Rect2D(0, 0, 1, 1), 1, false, false, 0);
-    }
-    public void drawEllipse(float x, float y, float w, float h, Color color, float thickness) {
-        drawQuad(x, y, w, h, CIRCLE, color, originX, originY, new Rect2D(0, 0, 1, 1), thickness, false, false, 0);
-    }
-    private void drawQuad(float x,
+
+    @Override
+    public void drawQuad(float x,
                           float y,
                           float w,
                           float h,

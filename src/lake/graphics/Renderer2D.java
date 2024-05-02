@@ -31,6 +31,8 @@ public abstract class Renderer2D implements Disposable {
     private static final int spacesPerTab = 4;
     protected int quadIndex;
     protected float[] vertexData;
+    protected int RECT = -1;
+    protected int CIRCLE = -2;
 
     public Renderer2D(int width, int height, RenderSettings renderSettings){
         this.width = width;
@@ -188,7 +190,7 @@ public abstract class Renderer2D implements Disposable {
     public void resetTransform(){
         setTransform(new Matrix4f().identity());
     }
-    public abstract void drawTexture(float x, float y, float w, float h, Texture2D texture);
+
     public void setOrigin(float x, float y){
         this.originX = x;
         this.originY = y;
@@ -197,13 +199,51 @@ public abstract class Renderer2D implements Disposable {
         this.originX = vector2f.x;
         this.originY = vector2f.y;
     }
-    public abstract void drawRect(float x, float y, float w, float h, Color color, int thickness);
-    public abstract void drawTexture(float x, float y, float w, float h, Texture2D texture, Color color);
-    public abstract void drawTexture(float x, float y, float w, float h, Texture2D texture, Color color, Rect2D rect2D, boolean xFlip, boolean yFlip);
-    public abstract void drawFilledRect(float x, float y, float w, float h, Color color);
-    public abstract void drawFilledEllipse(float x, float y, float w, float h, Color color);
-    public abstract void drawEllipse(float x, float y, float w, float h, Color color, float thickness);
+    public void drawRect(float x, float y, float w, float h, Color color, int thickness){
 
+        //Left
+        drawFilledRect(x - ((float) thickness / 2), y, thickness, h, color);
+        //Top
+        drawFilledRect(x, y - ((float) thickness / 2), w, thickness, color);
+        //Bottom
+        drawFilledRect(x, y - ((float) thickness / 2) + h, w, thickness, color);
+        //Right
+        drawFilledRect(x - ((float) thickness / 2) + w, y, thickness, h, color);
+
+    }
+
+    public void drawTexture(float x, float y, float w, float h, Texture2D texture){
+        drawTexture(x, y, w, h, texture, Color.WHITE);
+    }
+
+    public void drawTexture(float x, float y, float w, float h, Texture2D texture, Color color){
+        drawTexture(x, y, w, h, texture, color, new Rect2D(0, 0, 1, 1), false, false);
+    }
+    public abstract void drawTexture(float x, float y, float w, float h, Texture2D texture, Color color, Rect2D rect2D, boolean xFlip, boolean yFlip);
+
+    public void drawFilledRect(float x, float y, float w, float h, Color color){
+        drawQuad(x, y, w, h, RECT, color, originX, originY, new Rect2D(0, 0, 1, 1), -1, false, false, 0);
+    }
+    public void drawFilledEllipse(float x, float y, float w, float h, Color color) {
+        drawQuad(x, y, w, h, CIRCLE, color, originX, originY, new Rect2D(0, 0, 1, 1), 1, false, false, 0);
+    }
+    public void drawEllipse(float x, float y, float w, float h, Color color, float thickness) {
+        drawQuad(x, y, w, h, CIRCLE, color, originX, originY, new Rect2D(0, 0, 1, 1), thickness, false, false, 0);
+    }
+
+    public abstract void drawQuad(float x,
+                          float y,
+                          float w,
+                          float h,
+                          int slot,
+                          Color color,
+                          float originX,
+                          float originY,
+                          Rect2D region,
+                          float thickness,
+                          boolean xFlip,
+                          boolean yFlip,
+                          float bloom);
 
 
 
