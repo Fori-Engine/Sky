@@ -23,7 +23,7 @@ public class LVKRenderFrame {
     private final long imageAvailableSemaphore;
     private final long renderFinishedSemaphore;
     private final long fence;
-    private ArrayList<LVKFrameUniforms> uniformBuffers = new ArrayList<>();
+    private LVKFrameUniforms uniforms;
 
 
     public static class LVKFrameUniforms {
@@ -56,6 +56,14 @@ public class LVKRenderFrame {
         this.fence = fence;
     }
 
+    public LVKFrameUniforms getUniforms() {
+        return uniforms;
+    }
+
+    public void setUniforms(LVKFrameUniforms uniforms) {
+        this.uniforms = uniforms;
+    }
+
     public long imageAvailableSemaphore() {
         return imageAvailableSemaphore;
     }
@@ -72,7 +80,6 @@ public class LVKRenderFrame {
         return stackGet().longs(renderFinishedSemaphore);
     }
 
-    public List<LVKFrameUniforms> uniformBuffers(){ return uniformBuffers;}
 
     public long fence() {
         return fence;

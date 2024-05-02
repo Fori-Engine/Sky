@@ -159,7 +159,7 @@ public class LVKRenderer2D extends Renderer2D {
                 LongBuffer pMemoryBuffer = stack.mallocLong(1);
                 LVKGenericBuffer uniformsBuffer = FastVK.createBuffer(deviceWithIndices.device, physicalDevice, LVKRenderFrame.LVKFrameUniforms.SIZE, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, pMemoryBuffer);
                 LVKRenderFrame.LVKFrameUniforms uniforms = new LVKRenderFrame.LVKFrameUniforms(uniformsBuffer, pMemoryBuffer.get());
-                frame.uniformBuffers().add(uniforms);
+                frame.setUniforms(uniforms);
             }
 
         }
@@ -342,16 +342,12 @@ public class LVKRenderer2D extends Renderer2D {
                     }
 
 
-                    for (LVKRenderFrame.LVKFrameUniforms uniforms : frame.uniformBuffers()) {
-
-
-
-
-                        bufferInfo.buffer(uniforms.getBuffer().handle);
-                        vkUpdateDescriptorSets(deviceWithIndices.device, descriptorWrites, null);
-                        descriptorSets.add(descriptorSet);
-                    }
+                    bufferInfo.buffer(frame.getUniforms().getBuffer().handle);
+                    vkUpdateDescriptorSets(deviceWithIndices.device, descriptorWrites, null);
+                    descriptorSets.add(descriptorSet);
                 }
+
+
 
 
 
@@ -478,6 +474,7 @@ public class LVKRenderer2D extends Renderer2D {
     }
     private LVKPipeline createPipeline(VkDevice device, LVKSwapchain swapchain, VkPipelineShaderStageCreateInfo.Buffer shaderStages, long renderPass, LongBuffer descriptorSetLayout){
 
+        FlightRecorder.info(LVKRenderer2D.class, "Creating new pipeline...");
 
         long pipelineLayout;
         long graphicsPipeline = 0;
@@ -940,16 +937,16 @@ public class LVKRenderer2D extends Renderer2D {
 
             //Uniforms
             {
-                for(LVKRenderFrame.LVKFrameUniforms uniforms : thisFrame.uniformBuffers()){
 
-                    PointerBuffer data = stack.mallocPointer(1);
+                PointerBuffer data = stack.mallocPointer(1);
 
-                    ByteBuffer buffer = uniforms.getBuffer().mapAndGet(deviceWithIndices.device, data);
-                    proj.get(buffer);
-                    uniforms.getBuffer().unmap(deviceWithIndices.device);
-                }
+                ByteBuffer buffer = thisFrame.getUniforms().getBuffer().mapAndGet(deviceWithIndices.device, data);
+                proj.get(buffer);
+                thisFrame.getUniforms().getBuffer().unmap(deviceWithIndices.device);
 
             }
+
+
 
 
 
@@ -1067,10 +1064,8 @@ public class LVKRenderer2D extends Renderer2D {
             vkDestroySemaphore(deviceWithIndices.device, frame.imageAvailableSemaphore(), null);
             vkDestroyFence(deviceWithIndices.device, frame.fence(), null);
 
-            for(LVKRenderFrame.LVKFrameUniforms uniforms : frame.uniformBuffers()){
-                vkDestroyBuffer(deviceWithIndices.device, uniforms.getBuffer().handle, null);
-                vkFreeMemory(deviceWithIndices.device, uniforms.getpMemory(), null);
-            }
+            vkDestroyBuffer(deviceWithIndices.device, frame.getUniforms().getBuffer().handle, null);
+            vkFreeMemory(deviceWithIndices.device, frame.getUniforms().getpMemory(), null);
 
 
 
