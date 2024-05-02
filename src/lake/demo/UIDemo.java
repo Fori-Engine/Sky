@@ -12,7 +12,7 @@ public class UIDemo {
         FlightRecorder.setEnabled(true);
 
         Window window = new Window(1920, 1080, "UI Demo", false);
-        Renderer2D renderer2D = Renderer2D.createRenderer(window, window.getWidth(), window.getHeight(), new RenderSettings(RendererBackend.Vulkan).msaa(true));
+        Renderer2D renderer2D = Renderer2D.createRenderer(window, window.getWidth(), window.getHeight(), new RenderSettings(RenderAPI.Vulkan).msaa(true));
 
 
         float value = 0;
@@ -53,6 +53,10 @@ public class UIDemo {
 
                         text("A slider");
                         value = slider("This is a slider", value, 0, 10, false);
+
+                        if(value >= 5){
+                            button("This is going to break everything");
+                        }
                     }
                     endPanel();
 

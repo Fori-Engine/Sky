@@ -1,6 +1,6 @@
 package lake.graphics;
 
-public enum RendererBackend {
+public enum RenderAPI {
     OpenGL,
     Vulkan
 }

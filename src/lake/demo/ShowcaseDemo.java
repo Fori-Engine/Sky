@@ -18,18 +18,18 @@ public class ShowcaseDemo {
         FlightRecorder.setEnabled(true);
 
         Window window = new Window(1920, 1080, "Showcase Demo", false);
-        Renderer2D renderer2D = Renderer2D.createRenderer(window, window.getWidth(), window.getHeight(), new RenderSettings(RendererBackend.OpenGL).msaa(true));
+        Renderer2D renderer2D = Renderer2D.createRenderer(window, window.getWidth(), window.getHeight(), new RenderSettings(RenderAPI.OpenGL).msaa(true));
 
         window.setIcon("assets/logo.png");
-        window.setTitle("LakeEngine Demo [" + Renderer2D.getRenderBackend() + "]");
+        window.setTitle("LakeEngine Demo [" + Renderer2D.getRenderAPI() + "]");
 
 
         ArrayList<Texture2D> textures = new ArrayList<>();
         Texture2D logo = Texture2D.newTexture("assets/logo.png");
-        Texture2D opengl = Texture2D.newTexture(Renderer2D.getRenderBackend() == RendererBackend.OpenGL ? "demo_assets/opengl.png" : "demo_assets/vulkan.png");
+        Texture2D opengl = Texture2D.newTexture(Renderer2D.getRenderAPI() == RenderAPI.OpenGL ? "demo_assets/opengl.png" : "demo_assets/vulkan.png");
 
 
-        for (int i = 0; i < 32; i++) {
+        for (int i = 0; i < 64; i++) {
             textures.add(i % 2 == 0 ? logo : opengl);
         }
 
@@ -53,9 +53,14 @@ public class ShowcaseDemo {
         animation.setDelay(150);
         animation.setPlaymode(Animation.Playmode.PLAY_REPEAT);
 
+        //renderer2D.getView().rotate((float) Math.toRadians(45f / 4), 0, 0, 1);
+        renderer2D.updateMatrices();
+
 
         while (!window.shouldClose()) {
             renderer2D.clear(new Color(0.5f, 0.5f, 0.5f, 1.0f));
+            renderer2D.drawFilledRect(renderer2D.getHeight() - 300, 0, 300, 300, new Color(0.5f, 0.5f, 0.5f, 1.0f));
+            //renderer2D.updateCamera2D();
 
 
             renderer2D.drawText(0, 0, "FPS: " + Time.framesPerSecond(), Color.RED, Font2D.getDefault());
@@ -104,6 +109,8 @@ public class ShowcaseDemo {
 
 
             }
+
+
 
 
             {

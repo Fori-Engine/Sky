@@ -4,9 +4,9 @@ public class RenderSettings {
     public boolean enableValidation = true;
     public int quadsPerBatch = 20000;
     public boolean msaa = false;
-    public RendererBackend backend;
+    public RenderAPI backend;
 
-    public RenderSettings(RendererBackend backend) {
+    public RenderSettings(RenderAPI backend) {
         this.backend = backend;
     }
 
@@ -20,7 +20,7 @@ public class RenderSettings {
         return this;
     }
 
-    public RenderSettings backend(RendererBackend backend){
+    public RenderSettings backend(RenderAPI backend){
         this.backend = backend;
         return this;
     }

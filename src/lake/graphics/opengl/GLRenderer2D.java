@@ -62,7 +62,7 @@ public class GLRenderer2D extends Renderer2D {
 
         currentShaderProgram = defaultShaderProgram;
         currentShaderProgram.bind();
-        updateCamera2D();
+        updateMatrices();
 
         {
             vertexArray = new GLVertexArray();
@@ -95,10 +95,10 @@ public class GLRenderer2D extends Renderer2D {
         if(currentShaderProgram != shaderProgram) {
             currentShaderProgram = (GLShaderProgram) shaderProgram;
             currentShaderProgram.bind();
-            updateCamera2D();
+            updateMatrices();
         }
     }
-    public void updateCamera2D(){
+    public void updateMatrices(){
         currentShaderProgram.setMatrix4f("v_model", getModel());
         currentShaderProgram.setMatrix4f("v_view", getView());
         currentShaderProgram.setMatrix4f("v_projection", getProj());
@@ -180,10 +180,10 @@ public class GLRenderer2D extends Renderer2D {
                          float bloom){
 
 
-        RenderData renderData = applyTransformations(x, y, w, h, originX, originY, region, xFlip, yFlip);
+        Quad quad = applyTransformations(x, y, w, h, originX, originY, region, xFlip, yFlip);
 
-        Vector4f[] transformedPoints = renderData.transformedPoints;
-        Rect2D copy = renderData.copy;
+        Vector4f[] transformedPoints = quad.transformedPoints;
+        Rect2D copy = quad.textureCoords;
 
         Vector4f topLeft = transformedPoints[0];
         Vector4f topRight = transformedPoints[1];
@@ -286,16 +286,18 @@ public class GLRenderer2D extends Renderer2D {
         textureLookup.clear();
 
     }
-    public void clear(Color color) {
+    public void clear(Color clearColor) {
+        super.clear(clearColor);
+
 
         if(framebuffer2D != null){
             framebuffer2D.bind();
-            glClearTexImage(framebuffer2D.getTexture2D().getTexID(), 0, GL_RGBA, GL_FLOAT, new float[]{color.r, color.g, color.b, color.a});
+            glClearTexImage(framebuffer2D.getTexture2D().getTexID(), 0, GL_RGBA, GL_FLOAT, new float[]{clearColor.r, clearColor.g, clearColor.b, clearColor.a});
             return;
         }
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glClearColor(color.r, color.g, color.b, color.a);
+        glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
     }
     @Override
     public String getDeviceName() {

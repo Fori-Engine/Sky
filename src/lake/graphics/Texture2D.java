@@ -106,15 +106,15 @@ public abstract class Texture2D implements Disposable {
     }
 
     public static Texture2D newTexture(String path){
-        if(Renderer2D.getRenderBackend() == RendererBackend.OpenGL) return new GLTexture2D(path);
-        if(Renderer2D.getRenderBackend() == RendererBackend.Vulkan) return new LVKTexture2D(path);
+        if(Renderer2D.getRenderAPI() == RenderAPI.OpenGL) return new GLTexture2D(path);
+        if(Renderer2D.getRenderAPI() == RenderAPI.Vulkan) return new LVKTexture2D(path);
 
         return null;
     }
 
     public static Texture2D newTexture(String path, Filter filter){
-        if(Renderer2D.getRenderBackend() == RendererBackend.OpenGL) return new GLTexture2D(path, filter);
-        if(Renderer2D.getRenderBackend() == RendererBackend.Vulkan) return new LVKTexture2D(path, filter);
+        if(Renderer2D.getRenderAPI() == RenderAPI.OpenGL) return new GLTexture2D(path, filter);
+        if(Renderer2D.getRenderAPI() == RenderAPI.Vulkan) return new LVKTexture2D(path, filter);
 
         return null;
     }
@@ -130,8 +130,8 @@ public abstract class Texture2D implements Disposable {
     }
 
     public static Texture2D newTexture(int width, int height){
-        if(Renderer2D.getRenderBackend() == RendererBackend.OpenGL) return new GLTexture2D(width, height);
-        if(Renderer2D.getRenderBackend() == RendererBackend.Vulkan) return new LVKTexture2D(width, height);
+        if(Renderer2D.getRenderAPI() == RenderAPI.OpenGL) return new GLTexture2D(width, height);
+        if(Renderer2D.getRenderAPI() == RenderAPI.Vulkan) return new LVKTexture2D(width, height);
 
         return null;
     }

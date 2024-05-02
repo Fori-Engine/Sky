@@ -42,7 +42,7 @@ public class LVKRenderer2D extends Renderer2D {
     private LongBuffer descriptorSetLayout;
     private long descriptorPool;
     private List<Long> descriptorSets;
-    private Color clearColor = Color.BLACK;
+
     private ByteBuffer vertexBufferData, indexBufferData;
     private LVKShaderProgram currentShaderProgram, defaultShaderProgram;
     private int maxTextures = 32;
@@ -369,7 +369,7 @@ public class LVKRenderer2D extends Renderer2D {
         defaultShaderProgram = shaderProgram;
 
         proj = new Matrix4f().ortho(0, getWidth(), 0, getHeight(), 0, 1, true);
-        updateCamera2D();
+        updateMatrices();
 
         vertexData = new float[vertexBuffer.getNumOfVertices() * vertexBuffer.getVertexDataSize()];
 
@@ -709,7 +709,7 @@ public class LVKRenderer2D extends Renderer2D {
 
     }
     @Override
-    public void updateCamera2D() {
+    public void updateMatrices() {
 
         for(LVKRenderFrame thisFrame : renderSyncInfo.inFlightFrames) {
 
@@ -820,10 +820,10 @@ public class LVKRenderer2D extends Renderer2D {
 
 
 
-        RenderData renderData = applyTransformations(x, y, w, h, originX, originY, region, xFlip, yFlip);
+        Quad quad = applyTransformations(x, y, w, h, originX, originY, region, xFlip, yFlip);
 
-        Vector4f[] transformedPoints = renderData.transformedPoints;
-        Rect2D copy = renderData.copy;
+        Vector4f[] transformedPoints = quad.transformedPoints;
+        Rect2D copy = quad.textureCoords;
 
         Vector4f topLeft = transformedPoints[0];
         Vector4f topRight = transformedPoints[1];
@@ -1006,7 +1006,7 @@ public class LVKRenderer2D extends Renderer2D {
     }
     @Override
     public void clear(Color color) {
-        this.clearColor = color;
+        super.clear(color);
     }
     @Override
     public String getDeviceName() {

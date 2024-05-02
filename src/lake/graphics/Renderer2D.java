@@ -9,8 +9,6 @@ import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 public abstract class Renderer2D implements Disposable {
@@ -20,11 +18,7 @@ public abstract class Renderer2D implements Disposable {
     protected Matrix4f proj;
     protected Camera camera = new Camera();
     protected Matrix4f model = new Matrix4f().identity();
-    private ArrayList<String> renderCallNames = new ArrayList<>(50);
-    private boolean debug = false;
-
-    private static RendererBackend backend;
-
+    private static RenderAPI api;
     protected Matrix4f transform = new Matrix4f().identity();
     protected float originX, originY;
     private static float spaceXAdvance = 0;
@@ -33,6 +27,7 @@ public abstract class Renderer2D implements Disposable {
     protected float[] vertexData;
     protected int RECT = -1;
     protected int CIRCLE = -2;
+    protected Color clearColor;
 
     public Renderer2D(int width, int height, RenderSettings renderSettings){
         this.width = width;
@@ -41,7 +36,7 @@ public abstract class Renderer2D implements Disposable {
     }
 
     public abstract void setShaderProgram(ShaderProgram shaderProgram);
-    public abstract void updateCamera2D();
+    public abstract void updateMatrices();
     public abstract ShaderProgram getDefaultShaderProgram();
     public abstract ShaderProgram getCurrentShaderProgram();
 
@@ -65,15 +60,15 @@ public abstract class Renderer2D implements Disposable {
         return indices;
     }
 
-    public RenderData applyTransformations(float x,
-                                           float y,
-                                           float w,
-                                           float h,
-                                           float originX,
-                                           float originY,
-                                           Rect2D region,
-                                           boolean xFlip,
-                                           boolean yFlip){
+    public Quad applyTransformations(float x,
+                                     float y,
+                                     float w,
+                                     float h,
+                                     float originX,
+                                     float originY,
+                                     Rect2D region,
+                                     boolean xFlip,
+                                     boolean yFlip){
         Rect2D copy = new Rect2D(region.x, region.y, region.w, region.h);
 
         if(xFlip){
@@ -111,16 +106,16 @@ public abstract class Renderer2D implements Disposable {
         bottomLeft.y += originY;
         bottomRight.y += originY;
 
-        return new RenderData(new Vector4f[]{topLeft, topRight, bottomLeft, bottomRight}, copy);
+        return new Quad(new Vector4f[]{topLeft, topRight, bottomLeft, bottomRight}, copy);
     }
 
-    protected class RenderData {
+    protected class Quad {
         public Vector4f[] transformedPoints;
-        public Rect2D copy;
+        public Rect2D textureCoords;
 
-        public RenderData(Vector4f[] transformedPoints, Rect2D copy) {
+        public Quad(Vector4f[] transformedPoints, Rect2D textureCoords) {
             this.transformedPoints = transformedPoints;
-            this.copy = copy;
+            this.textureCoords = textureCoords;
         }
     }
 
@@ -178,6 +173,12 @@ public abstract class Renderer2D implements Disposable {
     public Matrix4f getTransform() {
         return transform;
     }
+
+    public Color getClearColor() {
+        return clearColor;
+    }
+
+
     public void setTransform(Matrix4f transform) {
         this.transform = transform;
     }
@@ -249,10 +250,10 @@ public abstract class Renderer2D implements Disposable {
 
     public abstract void render();
     public abstract void render(String renderName);
-    public List<String> getRenderCalls(){
-        return new ArrayList<>(renderCallNames);
+
+    public void clear(Color clearColor){
+        this.clearColor = clearColor;
     }
-    public abstract void clear(Color color);
     public float getOriginX() {
         return originX;
     }
@@ -320,14 +321,14 @@ public abstract class Renderer2D implements Disposable {
     public abstract String getDeviceName();
 
     public static Renderer2D createRenderer(Window window, int width, int height, RenderSettings settings){
-        backend = settings.backend;
-        FlightRecorder.info(Renderer2D.class, "Using renderer backend " + backend);
+        api = settings.backend;
+        FlightRecorder.info(Renderer2D.class, "Using renderer backend " + api);
 
-        if(settings.backend == RendererBackend.OpenGL){
+        if(settings.backend == RenderAPI.OpenGL){
             window.setContext(new GLContext());
             return new GLRenderer2D(width, height, settings);
         }
-        else if(settings.backend == RendererBackend.Vulkan){
+        else if(settings.backend == RenderAPI.Vulkan){
             window.setContext(new LVKContext());
             return new LVKRenderer2D(window, width, height, settings);
         }
@@ -343,7 +344,7 @@ public abstract class Renderer2D implements Disposable {
         return null;
     }
 
-    public static RendererBackend getRenderBackend() {
-        return backend;
+    public static RenderAPI getRenderAPI() {
+        return api;
     }
 }
