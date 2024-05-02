@@ -18,8 +18,8 @@ public abstract class Renderer2D implements Disposable {
     private int width;
     private int height;
     protected Matrix4f proj;
-    protected Camera camera;
-    protected Matrix4f translation;
+    protected Camera camera = new Camera();
+    protected Matrix4f model = new Matrix4f().identity();
     private ArrayList<String> renderCallNames = new ArrayList<>(50);
     private boolean debug = false;
 
@@ -170,8 +170,8 @@ public abstract class Renderer2D implements Disposable {
     public Matrix4f getView() {
         return camera.getViewMatrix();
     }
-    public Matrix4f getTranslation() {
-        return translation;
+    public Matrix4f getModel() {
+        return model;
     }
     public Matrix4f getTransform() {
         return transform;

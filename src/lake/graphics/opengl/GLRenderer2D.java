@@ -7,7 +7,6 @@ import org.lwjgl.BufferUtils;
 import lake.FileReader;
 import org.lwjgl.opengl.GLUtil;
 
-import java.lang.Math;
 import java.nio.IntBuffer;
 
 import static org.lwjgl.opengl.GL46.*;
@@ -48,8 +47,6 @@ public class GLRenderer2D extends Renderer2D {
 
 
         proj = new Matrix4f().ortho(0, width, height, 0, 0, 1);
-        camera = new Camera();
-        translation = new Matrix4f().identity();
 
 
         IntBuffer d = BufferUtils.createIntBuffer(1);
@@ -104,7 +101,7 @@ public class GLRenderer2D extends Renderer2D {
         }
     }
     public void updateCamera2D(){
-        currentShaderProgram.setMatrix4f("v_model", getTranslation());
+        currentShaderProgram.setMatrix4f("v_model", getModel());
         currentShaderProgram.setMatrix4f("v_view", getView());
         currentShaderProgram.setMatrix4f("v_projection", getProj());
         currentShaderProgram.setIntArray("u_textures", createTextureSlots());

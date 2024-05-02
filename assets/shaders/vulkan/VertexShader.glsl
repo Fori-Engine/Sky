@@ -1,7 +1,9 @@
 #version 450
 
 layout(binding = 0) uniform LVKFrameUniforms {
-    mat4 proj;
+    mat4 m_model;
+    mat4 m_view;
+    mat4 m_projection;
 } lfu;
 
 layout(location = 0) in vec2 v_pos;
@@ -25,5 +27,5 @@ void main() {
     f_thickness = v_thickness;
 
 
-    gl_Position = lfu.proj * vec4(v_pos, 0.0, 1.0);
+    gl_Position = lfu.m_projection * lfu.m_view * lfu.m_model * vec4(v_pos, 0.0, 1.0);
 }

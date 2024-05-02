@@ -13,10 +13,7 @@ import org.lwjgl.vulkan.*;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.KHRSurface.vkDestroySurfaceKHR;
@@ -157,7 +154,7 @@ public class LVKRenderer2D extends Renderer2D {
 
             for(LVKRenderFrame frame : renderSyncInfo.inFlightFrames){
                 LongBuffer pMemoryBuffer = stack.mallocLong(1);
-                LVKGenericBuffer uniformsBuffer = FastVK.createBuffer(deviceWithIndices.device, physicalDevice, LVKRenderFrame.LVKFrameUniforms.SIZE, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, pMemoryBuffer);
+                LVKGenericBuffer uniformsBuffer = FastVK.createBuffer(deviceWithIndices.device, physicalDevice, LVKRenderFrame.LVKFrameUniforms.TOTAL_SIZE_BYTES, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, pMemoryBuffer);
                 LVKRenderFrame.LVKFrameUniforms uniforms = new LVKRenderFrame.LVKFrameUniforms(uniformsBuffer, pMemoryBuffer.get());
                 frame.setUniforms(uniforms);
             }
@@ -306,7 +303,7 @@ public class LVKRenderer2D extends Renderer2D {
                 VkDescriptorBufferInfo.Buffer bufferInfo = VkDescriptorBufferInfo.calloc(1, stack);
                 bufferInfo.offset(0);
 
-                bufferInfo.range(LVKRenderFrame.LVKFrameUniforms.SIZE);
+                bufferInfo.range(LVKRenderFrame.LVKFrameUniforms.TOTAL_SIZE_BYTES);
 
                 VkWriteDescriptorSet.Buffer descriptorWrites = VkWriteDescriptorSet.calloc(2, stack);
 
@@ -373,6 +370,7 @@ public class LVKRenderer2D extends Renderer2D {
         defaultShaderProgram = shaderProgram;
 
         proj = new Matrix4f().ortho(0, getWidth(), 0, getHeight(), 0, 1, true);
+        updateCamera2D();
 
         vertexData = new float[vertexBuffer.getNumOfVertices() * vertexBuffer.getVertexDataSize()];
 
@@ -714,7 +712,25 @@ public class LVKRenderer2D extends Renderer2D {
     @Override
     public void updateCamera2D() {
 
+        for(LVKRenderFrame thisFrame : renderSyncInfo.inFlightFrames) {
+
+
+            try (MemoryStack stack = stackPush()) {
+                PointerBuffer data = stack.mallocPointer(1);
+
+                ByteBuffer buffer = thisFrame.getUniforms().getBuffer().mapAndGet(deviceWithIndices.device, data);
+
+                model.get(buffer);
+                camera.getViewMatrix().get(LVKRenderFrame.LVKFrameUniforms.MATRIX_SIZE_BYTES, buffer);
+                proj.get(2 * LVKRenderFrame.LVKFrameUniforms.MATRIX_SIZE_BYTES, buffer);
+
+
+                thisFrame.getUniforms().getBuffer().unmap(deviceWithIndices.device);
+            }
+        }
+
     }
+
     @Override
     public ShaderProgram getDefaultShaderProgram() {
         return defaultShaderProgram;
@@ -933,18 +949,6 @@ public class LVKRenderer2D extends Renderer2D {
 
             LVKRenderFrame thisFrame = renderSyncInfo.inFlightFrames.get(currentFrame);
 
-
-
-            //Uniforms
-            {
-
-                PointerBuffer data = stack.mallocPointer(1);
-
-                ByteBuffer buffer = thisFrame.getUniforms().getBuffer().mapAndGet(deviceWithIndices.device, data);
-                proj.get(buffer);
-                thisFrame.getUniforms().getBuffer().unmap(deviceWithIndices.device);
-
-            }
 
 
 
