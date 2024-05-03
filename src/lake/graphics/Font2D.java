@@ -2,12 +2,7 @@ package lake.graphics;
 
 import lake.FileReader;
 import lake.FlightRecorder;
-import lake.graphics.opengl.GLTexture2D;
 
-import java.awt.*;
-import java.awt.image.*;
-import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,7 +21,7 @@ public class Font2D {
         this.texturePath = texturePath;
         this.fntPath = fntPath;
 
-        texture = Texture2D.newTexture(texturePath);
+        texture = Texture2D.newTexture2D(texturePath);
         createGlyphs();
 
     }

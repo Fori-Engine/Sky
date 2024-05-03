@@ -18,19 +18,19 @@ public class ShowcaseDemo {
         FlightRecorder.setEnabled(true);
 
         Window window = new Window(1920, 1080, "Showcase Demo", false);
-        Renderer2D renderer2D = Renderer2D.createRenderer(window, window.getWidth(), window.getHeight(), new RenderSettings(RenderAPI.OpenGL).msaa(true));
+        Renderer2D renderer2D = Renderer2D.newRenderer2D(window, window.getWidth(), window.getHeight(), new RenderSettings(RenderAPI.OpenGL).msaa(true));
 
         window.setIcon("assets/logo.png");
         window.setTitle("LakeEngine Demo [" + Renderer2D.getRenderAPI() + "]");
 
 
         ArrayList<Texture2D> textures = new ArrayList<>();
-        Texture2D logo = Texture2D.newTexture("assets/logo.png");
-        Texture2D opengl = Texture2D.newTexture(Renderer2D.getRenderAPI() == RenderAPI.OpenGL ? "demo_assets/opengl.png" : "demo_assets/vulkan.png");
+        Texture2D logo = Texture2D.newTexture2D("assets/logo.png");
+        Texture2D opengl = Texture2D.newTexture2D(Renderer2D.getRenderAPI() == RenderAPI.OpenGL ? "demo_assets/opengl.png" : "demo_assets/vulkan.png");
 
 
         for (int i = 0; i < 64; i++) {
-            textures.add(i % 2 == 0 ? logo : opengl);
+            textures.add(Math.random() > 0.5 ? logo : opengl);
         }
 
 
@@ -44,11 +44,11 @@ public class ShowcaseDemo {
         float rotation = 0f;
 
 
-        ParticleSourceConfig particleSourceConfig = new ParticleSourceConfig(100, 100, 3500, 7, 5, 10);
+        ParticleSourceConfig particleSourceConfig = new ParticleSourceConfig(10, 10, 1500, 7, 10, 10);
         ParticleSource particleSource = new ParticleSource(particleSourceConfig, new Vector2f(700f, 700f));
-        particleSource.addParticles(200);
+        particleSource.addParticles(2500);
 
-        Animation animation = new Animation(Texture2D.newTexture("demo_assets/sprites.png", Texture2D.Filter.NEAREST));
+        Animation animation = new Animation(Texture2D.newTexture2D("demo_assets/sprites.png", Texture2D.Filter.NEAREST));
         animation.create(2, 2, 4);
         animation.setDelay(150);
         animation.setPlaymode(Animation.Playmode.PLAY_REPEAT);

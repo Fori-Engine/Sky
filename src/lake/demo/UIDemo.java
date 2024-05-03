@@ -12,7 +12,7 @@ public class UIDemo {
         FlightRecorder.setEnabled(true);
 
         Window window = new Window(1920, 1080, "UI Demo", false);
-        Renderer2D renderer2D = Renderer2D.createRenderer(window, window.getWidth(), window.getHeight(), new RenderSettings(RenderAPI.Vulkan).msaa(true));
+        Renderer2D renderer2D = Renderer2D.newRenderer2D(window, window.getWidth(), window.getHeight(), new RenderSettings(RenderAPI.Vulkan).msaa(true));
 
 
         float value = 0;

@@ -105,16 +105,23 @@ public abstract class Texture2D implements Disposable {
         return imageBuffer;
     }
 
-    public static Texture2D newTexture(String path){
+    public static Texture2D newTexture2D(String path){
         if(Renderer2D.getRenderAPI() == RenderAPI.OpenGL) return new GLTexture2D(path);
         if(Renderer2D.getRenderAPI() == RenderAPI.Vulkan) return new LVKTexture2D(path);
 
         return null;
     }
 
-    public static Texture2D newTexture(String path, Filter filter){
+    public static Texture2D newTexture2D(String path, Filter filter){
         if(Renderer2D.getRenderAPI() == RenderAPI.OpenGL) return new GLTexture2D(path, filter);
         if(Renderer2D.getRenderAPI() == RenderAPI.Vulkan) return new LVKTexture2D(path, filter);
+
+        return null;
+    }
+
+    public static Texture2D newTexture2D(int width, int height){
+        if(Renderer2D.getRenderAPI() == RenderAPI.OpenGL) return new GLTexture2D(width, height);
+        if(Renderer2D.getRenderAPI() == RenderAPI.Vulkan) return new LVKTexture2D(width, height);
 
         return null;
     }
@@ -129,10 +136,7 @@ public abstract class Texture2D implements Disposable {
         }
     }
 
-    public static Texture2D newTexture(int width, int height){
-        if(Renderer2D.getRenderAPI() == RenderAPI.OpenGL) return new GLTexture2D(width, height);
-        if(Renderer2D.getRenderAPI() == RenderAPI.Vulkan) return new LVKTexture2D(width, height);
-
-        return null;
-    }
 }
+
+
+

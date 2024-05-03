@@ -320,7 +320,7 @@ public abstract class Renderer2D implements Disposable {
 
     public abstract String getDeviceName();
 
-    public static Renderer2D createRenderer(Window window, int width, int height, RenderSettings settings){
+    public static Renderer2D newRenderer2D(Window window, int width, int height, RenderSettings settings){
         api = settings.backend;
         FlightRecorder.info(Renderer2D.class, "Using renderer backend " + api);
 

@@ -271,7 +271,7 @@ public class LVKRenderer2D extends Renderer2D {
 
 
                 {
-                    LVKTexture2D emptyTexture = (LVKTexture2D) Texture2D.newTexture("assets/empty.png");
+                    LVKTexture2D emptyTexture = (LVKTexture2D) Texture2D.newTexture2D("assets/empty.png");
 
                     for (int i = 0; i < maxTextures; i++) {
 
