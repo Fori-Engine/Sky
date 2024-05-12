@@ -203,13 +203,17 @@ public abstract class Renderer2D implements Disposable {
     public void drawRect(float x, float y, float w, float h, Color color, int thickness){
 
         //Left
-        drawFilledRect(x - ((float) thickness / 2), y, thickness, h, color);
+        drawFilledRect(x, y, thickness, h, color);
+
         //Top
-        drawFilledRect(x, y - ((float) thickness / 2), w, thickness, color);
+        drawFilledRect(x, y, w, thickness, color);
+
         //Bottom
-        drawFilledRect(x, y - ((float) thickness / 2) + h, w, thickness, color);
+        drawFilledRect(x, y + (h - thickness), w, thickness, color);
+
         //Right
-        drawFilledRect(x - ((float) thickness / 2) + w, y, thickness, h, color);
+        drawFilledRect(x + (w - thickness), y, thickness, h, color);
+
 
     }
 
