@@ -23,7 +23,7 @@ public abstract class Renderer2D implements Disposable {
     protected float originX, originY;
     private static float spaceXAdvance = 0;
     private static final int spacesPerTab = 4;
-    protected int quadIndex;
+    protected int quadCount;
 
     protected int RECT = -1;
     protected int CIRCLE = -2;

@@ -885,7 +885,7 @@ public class LVKRenderer2D extends Renderer2D {
             vertexBufferData.putFloat(thickness);
 
         }
-        quadIndex++;
+        quadCount++;
 
 
 
@@ -909,7 +909,7 @@ public class LVKRenderer2D extends Renderer2D {
 
 
 
-        int[] indices = generateIndices(quadIndex);
+        int[] indices = generateIndices(quadCount);
 
         for (int i : indices) {
             indexBufferData.putInt(i);
@@ -996,7 +996,7 @@ public class LVKRenderer2D extends Renderer2D {
 
 
         vertexBufferData.clear();
-        quadIndex = 0;
+        quadCount = 0;
         nextTextureSlot = 0;
         textureLookup.clear();
     }

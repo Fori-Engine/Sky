@@ -198,7 +198,7 @@ public class GLRenderer2D extends Renderer2D {
 
         int dataPerQuad = vertexBuffer.getVertexDataSize() * 4;
 
-        glBufferSubData(GL_ARRAY_BUFFER, quadIndex * dataPerQuad * Float.BYTES, new float[]{
+        glBufferSubData(GL_ARRAY_BUFFER, quadCount * dataPerQuad * Float.BYTES, new float[]{
                 topLeft.x,
                 topLeft.y,
                 copy.x,
@@ -246,10 +246,10 @@ public class GLRenderer2D extends Renderer2D {
         });
 
 
-        quadIndex++;
+        quadCount++;
 
 
-        if(quadIndex == vertexBuffer.getMaxQuads()) render("Next Batch Render");
+        if(quadCount == vertexBuffer.getMaxQuads()) render("Next Batch Render");
     }
     public void render() {
         render("Final Render");
@@ -267,7 +267,7 @@ public class GLRenderer2D extends Renderer2D {
         glBindBuffer(GL_ARRAY_BUFFER, getVertexBuffer().myVbo);
 
 
-        int[] indices = generateIndices(quadIndex);
+        int[] indices = generateIndices(quadCount);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.myEbo);
         glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, indices);
@@ -276,7 +276,7 @@ public class GLRenderer2D extends Renderer2D {
 
 
 
-        quadIndex = 0;
+        quadCount = 0;
         nextTextureSlot = 0;
         textureLookup.clear();
 
