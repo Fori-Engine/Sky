@@ -79,6 +79,7 @@ public class GLRenderer2D extends Renderer2D {
 
             FlightRecorder.info(GLRenderer2D.class, "Calculated vertex stride is " + vertexArray.getStride() + " bytes");
 
+
             vertexBuffer = new GLVertexBuffer(settings.quadsPerBatch, vertexArray.getStride() / Float.BYTES);
             indexBuffer = new GLIndexBuffer(settings.quadsPerBatch, 6, Integer.BYTES);
 
@@ -86,7 +87,8 @@ public class GLRenderer2D extends Renderer2D {
 
             vertexArray.build();
 
-            vertexData = new float[vertexBuffer.getNumOfVertices() * vertexBuffer.getVertexDataSize()];
+
+
         }
 
     }
@@ -164,6 +166,8 @@ public class GLRenderer2D extends Renderer2D {
 
     }
 
+
+
     @Override
     public void drawQuad(float x,
                          float y,
@@ -192,64 +196,56 @@ public class GLRenderer2D extends Renderer2D {
 
 
 
+        int dataPerQuad = vertexBuffer.getVertexDataSize() * 4;
+
+        glBufferSubData(GL_ARRAY_BUFFER, quadIndex * dataPerQuad * Float.BYTES, new float[]{
+                topLeft.x,
+                topLeft.y,
+                copy.x,
+                copy.y,
+                slot,
+                color.r,
+                color.g,
+                color.b,
+                color.a,
+                thickness,
+                bloom,
+                bottomLeft.x,
+                bottomLeft.y,
+                copy.x,
+                copy.h,
+                slot,
+                color.r,
+                color.g,
+                color.b,
+                color.a,
+                thickness,
+                bloom,
+                bottomRight.x,
+                bottomRight.y,
+                copy.w,
+                copy.h,
+                slot,
+                color.r,
+                color.g,
+                color.b,
+                color.a,
+                thickness,
+                bloom,
+                topRight.x,
+                topRight.y,
+                copy.w,
+                copy.y,
+                slot,
+                color.r,
+                color.g,
+                color.b,
+                color.a,
+                thickness,
+                bloom,
+        });
 
 
-        {
-            int dataPerQuad = vertexBuffer.getVertexDataSize() * 4;
-
-
-            vertexData[(quadIndex * dataPerQuad) + 0] = topLeft.x;
-            vertexData[(quadIndex * dataPerQuad) + 1] = topLeft.y;
-            vertexData[(quadIndex * dataPerQuad) + 2] = copy.x;
-            vertexData[(quadIndex * dataPerQuad) + 3] = copy.y;
-            vertexData[(quadIndex * dataPerQuad) + 4] = slot;
-            vertexData[(quadIndex * dataPerQuad) + 5] = color.r;
-            vertexData[(quadIndex * dataPerQuad) + 6] = color.g;
-            vertexData[(quadIndex * dataPerQuad) + 7] = color.b;
-            vertexData[(quadIndex * dataPerQuad) + 8] = color.a;
-            vertexData[(quadIndex * dataPerQuad) + 9] = thickness;
-            vertexData[(quadIndex * dataPerQuad) + 10] = bloom;
-
-
-            vertexData[(quadIndex * dataPerQuad) + 11] = bottomLeft.x;
-            vertexData[(quadIndex * dataPerQuad) + 12] = bottomLeft.y;
-            vertexData[(quadIndex * dataPerQuad) + 13] = copy.x;
-            vertexData[(quadIndex * dataPerQuad) + 14] = copy.h;
-            vertexData[(quadIndex * dataPerQuad) + 15] = slot;
-            vertexData[(quadIndex * dataPerQuad) + 16] = color.r;
-            vertexData[(quadIndex * dataPerQuad) + 17] = color.g;
-            vertexData[(quadIndex * dataPerQuad) + 18] = color.b;
-            vertexData[(quadIndex * dataPerQuad) + 19] = color.a;
-            vertexData[(quadIndex * dataPerQuad) + 20] = thickness;
-            vertexData[(quadIndex * dataPerQuad) + 21] = bloom;
-
-
-            vertexData[(quadIndex * dataPerQuad) + 22] = bottomRight.x;
-            vertexData[(quadIndex * dataPerQuad) + 23] = bottomRight.y;
-            vertexData[(quadIndex * dataPerQuad) + 24] = copy.w;
-            vertexData[(quadIndex * dataPerQuad) + 25] = copy.h;
-            vertexData[(quadIndex * dataPerQuad) + 26] = slot;
-            vertexData[(quadIndex * dataPerQuad) + 27] = color.r;
-            vertexData[(quadIndex * dataPerQuad) + 28] = color.g;
-            vertexData[(quadIndex * dataPerQuad) + 29] = color.b;
-            vertexData[(quadIndex * dataPerQuad) + 30] = color.a;
-            vertexData[(quadIndex * dataPerQuad) + 31] = thickness;
-            vertexData[(quadIndex * dataPerQuad) + 32] = bloom;
-
-
-            vertexData[(quadIndex * dataPerQuad) + 33] = topRight.x;
-            vertexData[(quadIndex * dataPerQuad) + 34] = topRight.y;
-            vertexData[(quadIndex * dataPerQuad) + 35] = copy.w;
-            vertexData[(quadIndex * dataPerQuad) + 36] = copy.y;
-            vertexData[(quadIndex * dataPerQuad) + 37] = slot;
-            vertexData[(quadIndex * dataPerQuad) + 38] = color.r;
-            vertexData[(quadIndex * dataPerQuad) + 39] = color.g;
-            vertexData[(quadIndex * dataPerQuad) + 40] = color.b;
-            vertexData[(quadIndex * dataPerQuad) + 41] = color.a;
-            vertexData[(quadIndex * dataPerQuad) + 42] = thickness;
-            vertexData[(quadIndex * dataPerQuad) + 43] = bloom;
-
-        }
         quadIndex++;
 
 
@@ -269,7 +265,6 @@ public class GLRenderer2D extends Renderer2D {
         vertexArray.bind();
 
         glBindBuffer(GL_ARRAY_BUFFER, getVertexBuffer().myVbo);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, vertexData);
 
 
         int[] indices = generateIndices(quadIndex);
@@ -280,7 +275,7 @@ public class GLRenderer2D extends Renderer2D {
         glDrawElements(GL_TRIANGLES, indices.length, GL_UNSIGNED_INT, 0);
 
 
-        vertexData = new float[vertexBuffer.getNumOfVertices() * vertexBuffer.getVertexDataSize()];
+
         quadIndex = 0;
         nextTextureSlot = 0;
         textureLookup.clear();

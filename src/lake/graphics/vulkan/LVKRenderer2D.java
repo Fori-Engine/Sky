@@ -371,7 +371,7 @@ public class LVKRenderer2D extends Renderer2D {
         proj = new Matrix4f().ortho(0, getWidth(), 0, getHeight(), 0, 1, true);
         updateMatrices();
 
-        vertexData = new float[vertexBuffer.getNumOfVertices() * vertexBuffer.getVertexDataSize()];
+
 
         final int commandBuffersCount = swapchainFramebuffers.size();
 
@@ -832,57 +832,57 @@ public class LVKRenderer2D extends Renderer2D {
 
         {
 
-            int dataPerQuad = vertexBuffer.getVertexDataSize() * 4;
+            //int dataPerQuad = vertexBuffer.getVertexDataSize() * 4;
 
 
 
 
-            vertexData[(quadIndex * dataPerQuad) + 0] = topLeft.x;
-            vertexData[(quadIndex * dataPerQuad) + 1] = topLeft.y;
-            vertexData[(quadIndex * dataPerQuad) + 2] = copy.x;
-            vertexData[(quadIndex * dataPerQuad) + 3] = copy.y;
-            vertexData[(quadIndex * dataPerQuad) + 4] = slot;
-            vertexData[(quadIndex * dataPerQuad) + 5] = color.r;
-            vertexData[(quadIndex * dataPerQuad) + 6] = color.g;
-            vertexData[(quadIndex * dataPerQuad) + 7] = color.b;
-            vertexData[(quadIndex * dataPerQuad) + 8] = color.a;
-            vertexData[(quadIndex * dataPerQuad) + 9] = thickness;
+            vertexBufferData.putFloat(topLeft.x);
+            vertexBufferData.putFloat(topLeft.y);
+            vertexBufferData.putFloat(copy.x);
+            vertexBufferData.putFloat(copy.y);
+            vertexBufferData.putFloat(slot);
+            vertexBufferData.putFloat(color.r);
+            vertexBufferData.putFloat(color.g);
+            vertexBufferData.putFloat(color.b);
+            vertexBufferData.putFloat(color.a);
+            vertexBufferData.putFloat(thickness);
 
 
-            vertexData[(quadIndex * dataPerQuad) + 10] = bottomLeft.x;
-            vertexData[(quadIndex * dataPerQuad) + 11] = bottomLeft.y;
-            vertexData[(quadIndex * dataPerQuad) + 12] = copy.x;
-            vertexData[(quadIndex * dataPerQuad) + 13] = copy.h;
-            vertexData[(quadIndex * dataPerQuad) + 14] = slot;
-            vertexData[(quadIndex * dataPerQuad) + 15] = color.r;
-            vertexData[(quadIndex * dataPerQuad) + 16] = color.g;
-            vertexData[(quadIndex * dataPerQuad) + 17] = color.b;
-            vertexData[(quadIndex * dataPerQuad) + 18] = color.a;
-            vertexData[(quadIndex * dataPerQuad) + 19] = thickness;
+            vertexBufferData.putFloat(bottomLeft.x);
+            vertexBufferData.putFloat(bottomLeft.y);
+            vertexBufferData.putFloat(copy.x);
+            vertexBufferData.putFloat(copy.h);
+            vertexBufferData.putFloat(slot);
+            vertexBufferData.putFloat(color.r);
+            vertexBufferData.putFloat(color.g);
+            vertexBufferData.putFloat(color.b);
+            vertexBufferData.putFloat(color.a);
+            vertexBufferData.putFloat(thickness);
 
 
-            vertexData[(quadIndex * dataPerQuad) + 20] = bottomRight.x;
-            vertexData[(quadIndex * dataPerQuad) + 21] = bottomRight.y;
-            vertexData[(quadIndex * dataPerQuad) + 22] = copy.w;
-            vertexData[(quadIndex * dataPerQuad) + 23] = copy.h;
-            vertexData[(quadIndex * dataPerQuad) + 24] = slot;
-            vertexData[(quadIndex * dataPerQuad) + 25] = color.r;
-            vertexData[(quadIndex * dataPerQuad) + 26] = color.g;
-            vertexData[(quadIndex * dataPerQuad) + 27] = color.b;
-            vertexData[(quadIndex * dataPerQuad) + 28] = color.a;
-            vertexData[(quadIndex * dataPerQuad) + 29] = thickness;
+            vertexBufferData.putFloat(bottomRight.x);
+            vertexBufferData.putFloat(bottomRight.y);
+            vertexBufferData.putFloat(copy.w);
+            vertexBufferData.putFloat(copy.h);
+            vertexBufferData.putFloat(slot);
+            vertexBufferData.putFloat(color.r);
+            vertexBufferData.putFloat(color.g);
+            vertexBufferData.putFloat(color.b);
+            vertexBufferData.putFloat(color.a);
+            vertexBufferData.putFloat(thickness);
 
 
-            vertexData[(quadIndex * dataPerQuad) + 30] = topRight.x;
-            vertexData[(quadIndex * dataPerQuad) + 31] = topRight.y;
-            vertexData[(quadIndex * dataPerQuad) + 32] = copy.w;
-            vertexData[(quadIndex * dataPerQuad) + 33] = copy.y;
-            vertexData[(quadIndex * dataPerQuad) + 34] = slot;
-            vertexData[(quadIndex * dataPerQuad) + 35] = color.r;
-            vertexData[(quadIndex * dataPerQuad) + 36] = color.g;
-            vertexData[(quadIndex * dataPerQuad) + 37] = color.b;
-            vertexData[(quadIndex * dataPerQuad) + 38] = color.a;
-            vertexData[(quadIndex * dataPerQuad) + 39] = thickness;
+            vertexBufferData.putFloat(topRight.x);
+            vertexBufferData.putFloat(topRight.y);
+            vertexBufferData.putFloat(copy.w);
+            vertexBufferData.putFloat(copy.y);
+            vertexBufferData.putFloat(slot);
+            vertexBufferData.putFloat(color.r);
+            vertexBufferData.putFloat(color.g);
+            vertexBufferData.putFloat(color.b);
+            vertexBufferData.putFloat(color.a);
+            vertexBufferData.putFloat(thickness);
 
         }
         quadIndex++;
@@ -904,12 +904,8 @@ public class LVKRenderer2D extends Renderer2D {
 
 
 
-        vertexBufferData.clear();
-        indexBufferData.clear();
 
-        for (float f : vertexData) {
-            vertexBufferData.putFloat(f);
-        }
+        indexBufferData.clear();
 
 
 
@@ -999,7 +995,7 @@ public class LVKRenderer2D extends Renderer2D {
 
 
 
-        vertexData = new float[vertexData.length];
+        vertexBufferData.clear();
         quadIndex = 0;
         nextTextureSlot = 0;
         textureLookup.clear();
