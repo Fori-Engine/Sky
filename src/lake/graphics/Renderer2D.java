@@ -25,8 +25,8 @@ public abstract class Renderer2D implements Disposable {
     private static final int spacesPerTab = 4;
     protected int quadCount;
 
-    protected int RECT = -1;
-    protected int CIRCLE = -2;
+    protected int ColoredQuad = -1;
+    protected int ColoredCircle = -2;
     protected Color clearColor;
 
     public Renderer2D(int width, int height, RenderSettings renderSettings){
@@ -227,20 +227,20 @@ public abstract class Renderer2D implements Disposable {
     public abstract void drawTexture(float x, float y, float w, float h, Texture2D texture, Color color, Rect2D rect2D, boolean xFlip, boolean yFlip);
 
     public void drawFilledRect(float x, float y, float w, float h, Color color){
-        drawQuad(x, y, w, h, RECT, color, originX, originY, new Rect2D(0, 0, 1, 1), -1, false, false);
+        drawQuad(x, y, w, h, ColoredQuad, color, originX, originY, new Rect2D(0, 0, 1, 1), -1, false, false);
     }
     public void drawFilledEllipse(float x, float y, float w, float h, Color color) {
-        drawQuad(x, y, w, h, CIRCLE, color, originX, originY, new Rect2D(0, 0, 1, 1), 1, false, false);
+        drawQuad(x, y, w, h, ColoredCircle, color, originX, originY, new Rect2D(0, 0, 1, 1), 1, false, false);
     }
     public void drawEllipse(float x, float y, float w, float h, Color color, float thickness) {
-        drawQuad(x, y, w, h, CIRCLE, color, originX, originY, new Rect2D(0, 0, 1, 1), thickness, false, false);
+        drawQuad(x, y, w, h, ColoredCircle, color, originX, originY, new Rect2D(0, 0, 1, 1), thickness, false, false);
     }
 
     public abstract void drawQuad(float x,
                           float y,
                           float w,
                           float h,
-                          int slot,
+                          int quadTypeOrTextureIndex,
                           Color color,
                           float originX,
                           float originY,

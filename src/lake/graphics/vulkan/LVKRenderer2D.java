@@ -807,7 +807,7 @@ public class LVKRenderer2D extends Renderer2D {
                           float y,
                           float w,
                           float h,
-                          int slot,
+                          int quadTypeOrTextureIndex,
                           Color color,
                           float originX,
                           float originY,
@@ -840,7 +840,7 @@ public class LVKRenderer2D extends Renderer2D {
             vertexBufferData.putFloat(topLeft.y);
             vertexBufferData.putFloat(copy.x);
             vertexBufferData.putFloat(copy.y);
-            vertexBufferData.putFloat(slot);
+            vertexBufferData.putFloat(quadTypeOrTextureIndex);
             vertexBufferData.putFloat(color.r);
             vertexBufferData.putFloat(color.g);
             vertexBufferData.putFloat(color.b);
@@ -852,7 +852,7 @@ public class LVKRenderer2D extends Renderer2D {
             vertexBufferData.putFloat(bottomLeft.y);
             vertexBufferData.putFloat(copy.x);
             vertexBufferData.putFloat(copy.h);
-            vertexBufferData.putFloat(slot);
+            vertexBufferData.putFloat(quadTypeOrTextureIndex);
             vertexBufferData.putFloat(color.r);
             vertexBufferData.putFloat(color.g);
             vertexBufferData.putFloat(color.b);
@@ -864,7 +864,7 @@ public class LVKRenderer2D extends Renderer2D {
             vertexBufferData.putFloat(bottomRight.y);
             vertexBufferData.putFloat(copy.w);
             vertexBufferData.putFloat(copy.h);
-            vertexBufferData.putFloat(slot);
+            vertexBufferData.putFloat(quadTypeOrTextureIndex);
             vertexBufferData.putFloat(color.r);
             vertexBufferData.putFloat(color.g);
             vertexBufferData.putFloat(color.b);
@@ -876,7 +876,7 @@ public class LVKRenderer2D extends Renderer2D {
             vertexBufferData.putFloat(topRight.y);
             vertexBufferData.putFloat(copy.w);
             vertexBufferData.putFloat(copy.y);
-            vertexBufferData.putFloat(slot);
+            vertexBufferData.putFloat(quadTypeOrTextureIndex);
             vertexBufferData.putFloat(color.r);
             vertexBufferData.putFloat(color.g);
             vertexBufferData.putFloat(color.b);
