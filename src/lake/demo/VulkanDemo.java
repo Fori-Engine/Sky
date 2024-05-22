@@ -14,6 +14,7 @@ public class VulkanDemo {
         Renderer2D renderer2D = Renderer2D.newRenderer2D(window, window.getWidth(), window.getHeight(), new RenderSettings(RenderAPI.Vulkan).msaa(true));
 
 
+        window.setTitle(renderer2D.getDeviceName());
 
         float t = 0;
         while(!window.shouldClose()){

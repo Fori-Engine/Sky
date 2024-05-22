@@ -7,7 +7,6 @@ uniform sampler2D u_textures[32];
 in float f_texindex;
 in vec4 f_color;
 in float f_thickness;
-in float f_bloom;
 
 //gl_FragCoord goes y-axis up, but the engine uses y-axis down...
 layout(origin_upper_left) in vec4 gl_FragCoord;

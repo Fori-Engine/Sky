@@ -72,8 +72,8 @@ public class GLRenderer2D extends Renderer2D {
                     new GLVertexAttribute(1, 2, false, "v_uv"),
                     new GLVertexAttribute(2, 1, false, "v_texindex"),
                     new GLVertexAttribute(3, 4, false, "v_color"),
-                    new GLVertexAttribute(4, 1, false, "v_thickness"),
-                    new GLVertexAttribute(5, 1, false, "v_bloom")
+                    new GLVertexAttribute(4, 1, false, "v_thickness")
+                    //new GLVertexAttribute(5, 1, false, "v_bloom")
             );
 
 
@@ -157,7 +157,7 @@ public class GLRenderer2D extends Renderer2D {
         }
 
 
-        drawQuad(x, y, w, h, slot, color, originX, originY, rect2D, -1, xFlip, yFlip, 0);
+        drawQuad(x, y, w, h, slot, color, originX, originY, rect2D, -1, xFlip, yFlip);
 
         if(isUniqueTexture) nextTextureSlot++;
 
@@ -180,8 +180,7 @@ public class GLRenderer2D extends Renderer2D {
                          Rect2D region,
                          float thickness,
                          boolean xFlip,
-                         boolean yFlip,
-                         float bloom){
+                         boolean yFlip){
 
 
         Quad quad = applyTransformations(x, y, w, h, originX, originY, region, xFlip, yFlip);
@@ -209,7 +208,6 @@ public class GLRenderer2D extends Renderer2D {
                 color.b,
                 color.a,
                 thickness,
-                bloom,
                 bottomLeft.x,
                 bottomLeft.y,
                 copy.x,
@@ -220,7 +218,6 @@ public class GLRenderer2D extends Renderer2D {
                 color.b,
                 color.a,
                 thickness,
-                bloom,
                 bottomRight.x,
                 bottomRight.y,
                 copy.w,
@@ -231,7 +228,6 @@ public class GLRenderer2D extends Renderer2D {
                 color.b,
                 color.a,
                 thickness,
-                bloom,
                 topRight.x,
                 topRight.y,
                 copy.w,
@@ -242,7 +238,6 @@ public class GLRenderer2D extends Renderer2D {
                 color.b,
                 color.a,
                 thickness,
-                bloom,
         });
 
 

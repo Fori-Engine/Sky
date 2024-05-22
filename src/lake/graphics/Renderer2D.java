@@ -227,13 +227,13 @@ public abstract class Renderer2D implements Disposable {
     public abstract void drawTexture(float x, float y, float w, float h, Texture2D texture, Color color, Rect2D rect2D, boolean xFlip, boolean yFlip);
 
     public void drawFilledRect(float x, float y, float w, float h, Color color){
-        drawQuad(x, y, w, h, RECT, color, originX, originY, new Rect2D(0, 0, 1, 1), -1, false, false, 0);
+        drawQuad(x, y, w, h, RECT, color, originX, originY, new Rect2D(0, 0, 1, 1), -1, false, false);
     }
     public void drawFilledEllipse(float x, float y, float w, float h, Color color) {
-        drawQuad(x, y, w, h, CIRCLE, color, originX, originY, new Rect2D(0, 0, 1, 1), 1, false, false, 0);
+        drawQuad(x, y, w, h, CIRCLE, color, originX, originY, new Rect2D(0, 0, 1, 1), 1, false, false);
     }
     public void drawEllipse(float x, float y, float w, float h, Color color, float thickness) {
-        drawQuad(x, y, w, h, CIRCLE, color, originX, originY, new Rect2D(0, 0, 1, 1), thickness, false, false, 0);
+        drawQuad(x, y, w, h, CIRCLE, color, originX, originY, new Rect2D(0, 0, 1, 1), thickness, false, false);
     }
 
     public abstract void drawQuad(float x,
@@ -247,8 +247,7 @@ public abstract class Renderer2D implements Disposable {
                           Rect2D region,
                           float thickness,
                           boolean xFlip,
-                          boolean yFlip,
-                          float bloom);
+                          boolean yFlip);
 
 
 

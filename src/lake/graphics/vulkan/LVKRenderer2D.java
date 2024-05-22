@@ -794,7 +794,7 @@ public class LVKRenderer2D extends Renderer2D {
         }
 
 
-        drawQuad(x, y, w, h, slot, color, originX, originY, rect2D, -1, xFlip, yFlip, 0);
+        drawQuad(x, y, w, h, slot, color, originX, originY, rect2D, -1, xFlip, yFlip);
 
         if(isUniqueTexture) nextTextureSlot++;
 
@@ -814,8 +814,7 @@ public class LVKRenderer2D extends Renderer2D {
                           Rect2D region,
                           float thickness,
                           boolean xFlip,
-                          boolean yFlip,
-                          float bloom){
+                          boolean yFlip){
 
 
 
