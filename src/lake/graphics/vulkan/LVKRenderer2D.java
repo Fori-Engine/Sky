@@ -354,9 +354,15 @@ public class LVKRenderer2D extends Renderer2D {
 
 
         }
+
+        ShaderReader.ShaderSources shaderSources = ShaderReader.readCombinedVertexFragmentSources(
+                FileReader.readFile("assets/shaders/vulkan/Default.glsl")
+        );
+
+
         LVKShaderProgram shaderProgram = new LVKShaderProgram(
-                FileReader.readFile("assets/shaders/vulkan/VertexShader.glsl"),
-                FileReader.readFile("assets/shaders/vulkan/FragmentShader.glsl")
+                shaderSources.vertexShader,
+                shaderSources.fragmentShader
         );
 
         shaderProgram.setDevice(deviceWithIndices.device);

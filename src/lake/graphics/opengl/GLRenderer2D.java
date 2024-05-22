@@ -53,10 +53,14 @@ public class GLRenderer2D extends Renderer2D {
         textureLookup = new FastTextureLookup(maxTextureSlots);
 
 
+        ShaderReader.ShaderSources shaderSources = ShaderReader.readCombinedVertexFragmentSources(
+                FileReader.readFile("assets/shaders/opengl/Default.glsl")
+        );
+
 
         defaultShaderProgram = new GLShaderProgram(
-                FileReader.readFile("assets/shaders/opengl/VertexShader.glsl"),
-                FileReader.readFile("assets/shaders/opengl/FragmentShader.glsl")
+                shaderSources.vertexShader,
+                shaderSources.fragmentShader
         );
         defaultShaderProgram.prepare();
 
