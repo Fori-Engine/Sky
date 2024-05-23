@@ -1,5 +1,7 @@
 package lake.graphics.vulkan;
 
+import lake.asset.Asset;
+import lake.asset.TextureData;
 import lake.graphics.Disposer;
 import lake.graphics.Texture2D;
 import org.lwjgl.BufferUtils;
@@ -13,6 +15,7 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 
+import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
@@ -26,85 +29,55 @@ public class LVKTexture2D extends Texture2D {
     private VkDevice device;
     private long textureImage, textureImageMemory;
     private long textureImageView;
-
+    private PointerBuffer data;
     private LVKSampler sampler;
-
     private boolean isInitialized;
 
-    public LVKTexture2D(String path){
-        this(path, Filter.LINEAR);
-    }
 
     public LVKTexture2D(int width, int height){
-        this(width, height, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-    }
+        super(width, height);
 
-    public LVKTexture2D(int width, int height, int samples, int usage) {
-        Disposer.add("managedResources", this);
-        device = LVKRenderer2D.getDeviceWithIndices().device;
-        setProperties(null, width, height);
-        isInitialized = false;
-
-        createTextureResources(width, height, samples, usage);
-    }
-    public LVKTexture2D(String path, Texture2D.Filter filter) {
-        Disposer.add("managedResources", this);
         device = LVKRenderer2D.getDeviceWithIndices().device;
         isInitialized = true;
+        createResources(width * height * 4);
+        createTextureResources(width, height, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+    }
 
-        int minFilter = filter == Filter.LINEAR ? VK_FILTER_LINEAR : VK_FILTER_NEAREST;
-        int magFilter = filter == Filter.LINEAR ? VK_FILTER_LINEAR : VK_FILTER_NEAREST;
+    public LVKTexture2D(Asset<TextureData> textureData, Filter filter) {
+        super(textureData, filter);
+
+        device = LVKRenderer2D.getDeviceWithIndices().device;
+        isInitialized = true;
+        createResources(textureData.asset.data.length);
+
+
+        stagingBuffer.mapAndUpload(device, data, textureData.asset.data);
+        createTextureResources(width, height, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+        copyBufferToImage();
+    }
+
+    public void createResources(int sizeBytes){
+
+        int minFilter = filter == Filter.Linear ? VK_FILTER_LINEAR : VK_FILTER_NEAREST;
+        int magFilter = filter == Filter.Linear ? VK_FILTER_LINEAR : VK_FILTER_NEAREST;
 
         sampler = new LVKSampler(device, minFilter, magFilter);
 
-
-
-        IntBuffer w = BufferUtils.createIntBuffer(1);
-        IntBuffer h = BufferUtils.createIntBuffer(1);
-        IntBuffer channelsInFile = BufferUtils.createIntBuffer(1);
-
-        ByteBuffer texture = STBImage.stbi_load(path, w, h, channelsInFile, 4);
-        int width = w.get();
-        int height = h.get();
-        setProperties(path, width, height);
-
-        checkSTBError();
-
-        int size = texture.remaining();
 
         LongBuffer pStagingBufferMemory = MemoryUtil.memAllocLong(1);
         stagingBuffer = FastVK.createBuffer(
                 device,
                 LVKRenderer2D.getPhysicalDevice(),
-                size,
+                sizeBytes,
                 VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                 pStagingBufferMemory
         );
         stagingBufferMemory = pStagingBufferMemory.get(0);
 
-
-
-        PointerBuffer data = MemoryUtil.memAllocPointer(1);
-
-
-
-
-        byte[] bytes = new byte[size];
-
-
-        texture.limit(size);
-        texture.get(bytes);
-        texture.limit(texture.capacity()).rewind();
-
-        stagingBuffer.mapAndUpload(device, data, bytes);
-
-
-        createTextureResources(width, height, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-        copyBufferToImage();
-
-        STBImage.stbi_image_free(texture);
+        data = MemoryUtil.memAllocPointer(1);
     }
+
 
     public void createTextureResources(int width, int height, int samples, int usage){
 
@@ -277,8 +250,9 @@ public class LVKTexture2D extends Texture2D {
     }
 
 
+
     @Override
-    public void setData(ByteBuffer data, int width, int height) {
+    public void setData(byte[] data) {
 
     }
 

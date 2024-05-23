@@ -48,7 +48,6 @@ public class FlightRecorder {
     }
     public static void meltdown(Class source, String message){
         logGeneric(source.getSimpleName(), "!!MELTDOWN!!", message);
-        System.exit(1);
     }
 
     public static void todo(Class source, String message){

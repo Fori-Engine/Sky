@@ -2,6 +2,8 @@ package lake.graphics.vulkan;
 
 import lake.FileReader;
 import lake.FlightRecorder;
+import lake.asset.AssetPacks;
+import lake.asset.TextureData;
 import lake.graphics.*;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
@@ -271,7 +273,7 @@ public class LVKRenderer2D extends Renderer2D {
 
 
                 {
-                    LVKTexture2D emptyTexture = (LVKTexture2D) Texture2D.newTexture2D("assets/empty.png");
+                    LVKTexture2D emptyTexture = (LVKTexture2D) Texture2D.newTexture2D(AssetPacks.getAsset("core:assets/empty.png"), Texture2D.Filter.Nearest);
 
                     for (int i = 0; i < maxTextures; i++) {
 
@@ -356,7 +358,7 @@ public class LVKRenderer2D extends Renderer2D {
         }
 
         ShaderReader.ShaderSources shaderSources = ShaderReader.readCombinedVertexFragmentSources(
-                FileReader.readFile("assets/shaders/vulkan/Default.glsl")
+                AssetPacks.<String> getAsset("core:assets/shaders/vulkan/Default.glsl").asset
         );
 
 

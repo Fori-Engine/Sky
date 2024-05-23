@@ -1,10 +1,10 @@
 package lake.graphics.opengl;
 
 import lake.FlightRecorder;
+import lake.asset.AssetPacks;
 import lake.graphics.*;
 import org.joml.*;
 import org.lwjgl.BufferUtils;
-import lake.FileReader;
 import org.lwjgl.opengl.GLUtil;
 
 import java.nio.IntBuffer;
@@ -54,7 +54,7 @@ public class GLRenderer2D extends Renderer2D {
 
 
         ShaderReader.ShaderSources shaderSources = ShaderReader.readCombinedVertexFragmentSources(
-                FileReader.readFile("assets/shaders/opengl/Default.glsl")
+                AssetPacks.<String> getAsset("core:assets/shaders/opengl/Default.glsl").asset
         );
 
 
@@ -67,6 +67,8 @@ public class GLRenderer2D extends Renderer2D {
         currentShaderProgram = defaultShaderProgram;
         currentShaderProgram.bind();
         updateMatrices();
+
+
 
         {
             vertexArray = new GLVertexArray();

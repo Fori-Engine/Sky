@@ -2,6 +2,9 @@ package lake.graphics;
 
 import lake.FileReader;
 import lake.FlightRecorder;
+import lake.asset.Asset;
+import lake.asset.AssetPacks;
+import lake.asset.TextureData;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -10,18 +13,19 @@ import java.util.Map;
  * Represents a Font that can be rendered to the screen. This class can also interoperate with AWT Fonts, as well as load TrueType (.ttf) fonts from disk.
  */
 public class Font2D {
-    private String texturePath, fntPath;
+    private Asset<TextureData> textureAsset;
+    private Asset<String> fnt;
     private Texture2D texture;
     private HashMap<Integer, Glyph> glyphs = new HashMap<>();
     private float defaultLineHeight;
 
 
 
-    public Font2D(String texturePath, String fntPath) {
-        this.texturePath = texturePath;
-        this.fntPath = fntPath;
+    public Font2D(Asset<TextureData> textureAsset, Asset<String> fnt) {
+        this.textureAsset = textureAsset;
+        this.fnt = fnt;
 
-        texture = Texture2D.newTexture2D(texturePath);
+        texture = Texture2D.newTexture2D(textureAsset, Texture2D.Filter.Linear);
         createGlyphs();
 
     }
@@ -30,7 +34,7 @@ public class Font2D {
 
 
     public void createGlyphs(){
-        String text = FileReader.readFile(this.fntPath);
+        String text = fnt.asset;
 
         for (String line : text.split("\n")){
 
@@ -101,10 +105,14 @@ public class Font2D {
     private static Font2D defaultFont2D;
 
     public static Font2D getDefault(){
+
+
+
+
         if(defaultFont2D == null){
             defaultFont2D = new Font2D(
-                    "assets/fonts/arial/default.png",
-                    "assets/fonts/arial/default.fnt"
+                    AssetPacks.getAsset("core:assets/fonts/arial/default.png"),
+                    AssetPacks.getAsset("core:assets/fonts/arial/default.fnt")
             );
         }
 
