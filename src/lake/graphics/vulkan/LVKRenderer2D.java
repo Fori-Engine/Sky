@@ -41,17 +41,14 @@ public class LVKRenderer2D extends Renderer2D {
     private List<VkCommandBuffer> commandBuffers;
     private LVKRenderSync renderSyncInfo;
     private int currentFrame;
-    private LongBuffer descriptorSetLayout;
-    private long descriptorPool;
-    private List<Long> descriptorSets;
+
 
     private ByteBuffer vertexBufferData, indexBufferData;
     private LVKShaderProgram currentShaderProgram, defaultShaderProgram;
-    private int maxTextures = 32;
 
     private FastTextureLookup textureLookup;
     private int nextTextureSlot;
-    private VkDescriptorImageInfo.Buffer imageInfos;
+
     private VkPhysicalDeviceProperties physicalDeviceProperties;
     private Map<ShaderProgram, LVKPipeline> pipelineCache = new HashMap<>();
     public LVKRenderer2D(Window window, int width, int height, RenderSettings settings) {
@@ -81,7 +78,7 @@ public class LVKRenderer2D extends Renderer2D {
         renderPass = FastVK.createRenderPass(deviceWithIndices.device, swapchain);
         swapchainFramebuffers = FastVK.createFramebuffers(deviceWithIndices.device, swapchain, swapchainImageViews, renderPass);
         commandPool = FastVK.createCommandPool(deviceWithIndices);
-        textureLookup = new FastTextureLookup(maxTextures);
+        textureLookup = new FastTextureLookup(32);
         LVKCommandRunner.setup(deviceWithIndices, graphicsQueue);
 
 
@@ -165,197 +162,7 @@ public class LVKRenderer2D extends Renderer2D {
 
 
 
-        //Descriptor Set Layout stuff
-        {
-            try(MemoryStack stack = stackPush()) {
 
-                VkDescriptorSetLayoutBinding.Buffer bindings = VkDescriptorSetLayoutBinding.calloc(2, stack);
-
-                VkDescriptorSetLayoutBinding uboLayoutBinding = bindings.get(0);
-
-                uboLayoutBinding.binding(0);
-                uboLayoutBinding.descriptorCount(1);
-                uboLayoutBinding.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-                uboLayoutBinding.pImmutableSamplers(null);
-                uboLayoutBinding.stageFlags(VK_SHADER_STAGE_VERTEX_BIT);
-
-
-                VkDescriptorSetLayoutBinding samplerLayoutBinding = bindings.get(1);
-
-                samplerLayoutBinding.binding(1);
-                samplerLayoutBinding.descriptorCount(maxTextures);
-                samplerLayoutBinding.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-                samplerLayoutBinding.pImmutableSamplers(null);
-                samplerLayoutBinding.stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT);
-
-                VkDescriptorSetLayoutCreateInfo layoutInfo = VkDescriptorSetLayoutCreateInfo.calloc(stack);
-                layoutInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO);
-                layoutInfo.pBindings(bindings);
-
-                LongBuffer pDescriptorSetLayout = MemoryUtil.memAllocLong(1);
-
-                if(vkCreateDescriptorSetLayout(deviceWithIndices.device, layoutInfo, null, pDescriptorSetLayout) != VK_SUCCESS) {
-                    throw new RuntimeException("Failed to create descriptor set layout");
-                }
-                descriptorSetLayout = pDescriptorSetLayout;
-            }
-
-        }
-
-        //Descriptor Pool stuff
-        {
-            try(MemoryStack stack = stackPush()) {
-
-                VkDescriptorPoolSize.Buffer poolSizes = VkDescriptorPoolSize.calloc(2, stack);
-
-
-                VkDescriptorPoolSize poolSize0 = poolSizes.get(0);
-                poolSize0.type(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-                poolSize0.descriptorCount(MAX_FRAMES_IN_FLIGHT);
-
-                VkDescriptorPoolSize poolSize1 = poolSizes.get(1);
-                poolSize1.type(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-                poolSize1.descriptorCount(MAX_FRAMES_IN_FLIGHT * maxTextures);
-
-                VkDescriptorPoolCreateInfo poolInfo = VkDescriptorPoolCreateInfo.calloc(stack);
-                poolInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO);
-                poolInfo.pPoolSizes(poolSizes);
-                poolInfo.maxSets(MAX_FRAMES_IN_FLIGHT);
-
-                LongBuffer pDescriptorPool = stack.mallocLong(1);
-
-                if(vkCreateDescriptorPool(deviceWithIndices.device, poolInfo, null, pDescriptorPool) != VK_SUCCESS) {
-                    throw new RuntimeException("Failed to create descriptor pool");
-                }
-
-                descriptorPool = pDescriptorPool.get(0);
-            }
-        }
-
-        //Descriptor Set stuff
-        {
-
-
-            try(MemoryStack stack = stackPush()) {
-
-                LongBuffer layouts = stack.mallocLong(MAX_FRAMES_IN_FLIGHT);
-                for(int i = 0; i < layouts.capacity();i++) {
-                    layouts.put(i, descriptorSetLayout.get(0));
-                }
-
-                VkDescriptorSetAllocateInfo allocInfo = VkDescriptorSetAllocateInfo.calloc(stack);
-                allocInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO);
-                allocInfo.descriptorPool(descriptorPool);
-                allocInfo.pSetLayouts(layouts);
-
-
-                LongBuffer pDescriptorSets = stack.mallocLong(MAX_FRAMES_IN_FLIGHT);
-
-                if(vkAllocateDescriptorSets(deviceWithIndices.device, allocInfo, pDescriptorSets) != VK_SUCCESS) {
-                    throw new RuntimeException("Failed to allocate descriptor sets");
-                }
-
-
-
-
-
-
-                descriptorSets = new ArrayList<>(pDescriptorSets.capacity());
-
-
-
-
-
-
-
-
-                imageInfos = VkDescriptorImageInfo.create(maxTextures);
-
-
-                {
-                    LVKTexture2D emptyTexture = (LVKTexture2D) Texture2D.newTexture2D(AssetPacks.getAsset("core:assets/empty.png"), Texture2D.Filter.Nearest);
-
-                    for (int i = 0; i < maxTextures; i++) {
-
-                        VkDescriptorImageInfo imageInfo = imageInfos.get(i);
-
-                        imageInfo.imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-                        imageInfo.imageView(emptyTexture.getTextureImageView());
-                        imageInfo.sampler(emptyTexture.getSampler().getTextureSampler());
-
-                    }
-
-                }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                VkDescriptorBufferInfo.Buffer bufferInfo = VkDescriptorBufferInfo.calloc(1, stack);
-                bufferInfo.offset(0);
-
-                bufferInfo.range(LVKRenderFrame.LVKFrameUniforms.TOTAL_SIZE_BYTES);
-
-                VkWriteDescriptorSet.Buffer descriptorWrites = VkWriteDescriptorSet.calloc(2, stack);
-
-                VkWriteDescriptorSet descriptorWrite0 = descriptorWrites.get(0);
-                descriptorWrite0.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
-                descriptorWrite0.dstBinding(0);
-                descriptorWrite0.dstArrayElement(0);
-                descriptorWrite0.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-                descriptorWrite0.descriptorCount(1);
-                descriptorWrite0.pBufferInfo(bufferInfo);
-
-
-                VkWriteDescriptorSet descriptorWrite1 = descriptorWrites.get(1);
-                descriptorWrite1.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
-                descriptorWrite1.dstBinding(1);
-                descriptorWrite1.dstArrayElement(0);
-                descriptorWrite1.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-                descriptorWrite1.descriptorCount(maxTextures);
-                descriptorWrite1.pImageInfo(imageInfos);
-
-
-
-
-                List<LVKRenderFrame> inFlightFrames = renderSyncInfo.inFlightFrames;
-
-
-                for (int i = 0; i < inFlightFrames.size(); i++) {
-                    LVKRenderFrame frame = inFlightFrames.get(i);
-                    long descriptorSet = pDescriptorSets.get(i);
-
-                    for(VkWriteDescriptorSet descriptorWrite : descriptorWrites){
-                        descriptorWrite.dstSet(descriptorSet);
-                    }
-
-
-                    bufferInfo.buffer(frame.getUniforms().getBuffer().handle);
-                    vkUpdateDescriptorSets(deviceWithIndices.device, descriptorWrites, null);
-                    descriptorSets.add(descriptorSet);
-                }
-
-
-
-
-
-
-
-
-            }
-
-
-        }
 
         ShaderReader.ShaderSources shaderSources = ShaderReader.readCombinedVertexFragmentSources(
                 AssetPacks.<String> getAsset("core:assets/shaders/vulkan/Default.glsl").asset
@@ -367,14 +174,18 @@ public class LVKRenderer2D extends Renderer2D {
                 shaderSources.fragmentShader
         );
 
+
         shaderProgram.setDevice(deviceWithIndices.device);
         shaderProgram.prepare();
+        shaderProgram.createDescriptors(renderSyncInfo);
 
-        currentPipeline = createPipeline(deviceWithIndices.device, swapchain, shaderProgram.getShaderStages(), renderPass, descriptorSetLayout);
-        pipelineCache.put(shaderProgram, currentPipeline);
 
         currentShaderProgram = shaderProgram;
         defaultShaderProgram = shaderProgram;
+
+        currentPipeline = createPipeline(deviceWithIndices.device, swapchain, shaderProgram.getShaderStages(), renderPass, shaderProgram.getDescriptorSetLayout());
+        pipelineCache.put(shaderProgram, currentPipeline);
+
 
         proj = new Matrix4f().ortho(0, getWidth(), 0, getHeight(), 0, 1, true);
         updateMatrices();
@@ -459,7 +270,7 @@ public class LVKRenderer2D extends Renderer2D {
                     vkCmdBindIndexBuffer(commandBuffer, indexBuffer.getMainBuffer().handle, 0, VK_INDEX_TYPE_UINT32);
 
                     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            currentPipeline.pipelineLayout, 0, stack.longs(descriptorSets.get(i)), null);
+                            currentPipeline.pipelineLayout, 0, stack.longs(currentShaderProgram.getDescriptorSets().get(i)), null);
                     vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
 
 
@@ -705,9 +516,10 @@ public class LVKRenderer2D extends Renderer2D {
                     swapchain,
                     lvkShaderProgram.getShaderStages(),
                     renderPass,
-                    descriptorSetLayout);
+                    ((LVKShaderProgram) shaderProgram).getDescriptorSetLayout());
 
             lvkShaderProgram.setDevice(deviceWithIndices.device);
+            lvkShaderProgram.createDescriptors(renderSyncInfo);
             pipelineCache.put(shaderProgram, newPipeline);
             currentPipeline = newPipeline;
         }
@@ -783,7 +595,7 @@ public class LVKRenderer2D extends Renderer2D {
 
                 VkWriteDescriptorSet descriptorWrite1 = descriptorWrites.get(0);
                 descriptorWrite1.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
-                descriptorWrite1.dstSet(descriptorSets.get(currentFrame));
+                descriptorWrite1.dstSet(currentShaderProgram.getDescriptorSets().get(currentFrame));
                 descriptorWrite1.dstBinding(1);
                 descriptorWrite1.dstArrayElement(slot);
                 descriptorWrite1.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
@@ -1033,12 +845,17 @@ public class LVKRenderer2D extends Renderer2D {
         LVKCommandRunner.cleanup(deviceWithIndices.device);
         physicalDeviceProperties.free();
 
-        vkDestroyDescriptorPool(deviceWithIndices.device, descriptorPool, null);
 
         vkDeviceWaitIdle(deviceWithIndices.device);
-        for(LVKPipeline pipeline : pipelineCache.values()){
-            destroyPipeline(pipeline);
+
+        for(ShaderProgram sp : pipelineCache.keySet()){
+            LVKShaderProgram shaderProgram = (LVKShaderProgram) sp;
+            vkDestroyDescriptorPool(deviceWithIndices.device, shaderProgram.getDescriptorPool(), null);
+            destroyPipeline(pipelineCache.get(shaderProgram));
         }
+
+
+
 
 
 
@@ -1065,7 +882,12 @@ public class LVKRenderer2D extends Renderer2D {
         swapchainImageViews.forEach(imageView -> vkDestroyImageView(deviceWithIndices.device, imageView, null));
         vkDestroySwapchainKHR(deviceWithIndices.device, swapchain.swapChain, null);
 
-        vkDestroyDescriptorSetLayout(deviceWithIndices.device, descriptorSetLayout.get(), null);
+        for(ShaderProgram sp : pipelineCache.keySet()){
+            LVKShaderProgram shaderProgram = (LVKShaderProgram) sp;
+            vkDestroyDescriptorSetLayout(deviceWithIndices.device, shaderProgram.getDescriptorSetLayout().get(), null);
+        }
+
+
 
         vkDestroyDevice(deviceWithIndices.device, null);
         FastVK.cleanupDebugMessenger(instance, true);
