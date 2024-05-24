@@ -180,12 +180,14 @@ public class LVKRenderer2D extends Renderer2D {
 
 
 
-        shaderProgram.addResource(new ShaderResource(0, true, LVKRenderFrame.LVKFrameUniforms.TOTAL_SIZE_BYTES)
+        shaderProgram.addResource(new ShaderResource(0)
+                .type(ShaderResource.Type.UniformBuffer)
                 .shaderStage(ShaderResource.ShaderStage.VertexStage)
+                .sizeBytes(LVKRenderFrame.LVKFrameUniforms.TOTAL_SIZE_BYTES)
                 .count(1)
         );
 
-        shaderProgram.addResource(new ShaderResource(1, false, -1)
+        shaderProgram.addResource(new ShaderResource(1)
                 .type(ShaderResource.Type.CombinedSampler)
                 .shaderStage(ShaderResource.ShaderStage.FragmentStage)
                 .count(32)

@@ -58,7 +58,7 @@ public class LVKShaderProgram extends ShaderProgram {
         super.addResource(resource);
 
 
-        if(resource.isUniformBuffer) {
+        if(resource.type == ShaderResource.Type.UniformBuffer) {
 
             try(MemoryStack stack = stackPush()) {
 
@@ -86,11 +86,8 @@ public class LVKShaderProgram extends ShaderProgram {
     }
 
     private int toDescriptorType(ShaderResource shaderResource){
-        if(shaderResource.isUniformBuffer) return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        else {
-            if(shaderResource.type == ShaderResource.Type.CombinedSampler) return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-
-        }
+        if(shaderResource.type == ShaderResource.Type.UniformBuffer) return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        if(shaderResource.type == ShaderResource.Type.CombinedSampler) return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 
         return 0;
     }
@@ -197,12 +194,6 @@ public class LVKShaderProgram extends ShaderProgram {
                 descriptorSets = new ArrayList<>(pDescriptorSets.capacity());
 
 
-
-
-
-
-
-
                 imageInfos = VkDescriptorImageInfo.create(maxTextures);
 
 
@@ -220,18 +211,6 @@ public class LVKShaderProgram extends ShaderProgram {
                     }
 
                 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
