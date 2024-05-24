@@ -3,8 +3,8 @@ package lake.graphics;
 import lake.graphics.opengl.GLShaderProgram;
 import lake.graphics.vulkan.LVKShaderProgram;
 import org.joml.Matrix4f;
-import org.lwjgl.PointerBuffer;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 public abstract class ShaderProgram implements Disposable {
@@ -27,6 +27,8 @@ public abstract class ShaderProgram implements Disposable {
         resources.remove(resource);
     }
 
+    public abstract ByteBuffer[] mapUniformBuffer(ShaderResource resource);
+    public abstract void unmapUniformBuffer(ShaderResource resource, ByteBuffer[] byteBuffers);
 
     public abstract void prepare();
 

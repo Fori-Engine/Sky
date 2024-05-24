@@ -3,9 +3,11 @@ package lake.graphics.opengl;
 import lake.graphics.ShaderProgram;
 import lake.graphics.Disposable;
 import lake.graphics.Disposer;
+import lake.graphics.ShaderResource;
 import org.joml.Matrix4f;
 import org.lwjgl.BufferUtils;
 
+import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 
 import static org.lwjgl.opengl.GL46.*;
@@ -24,6 +26,16 @@ public class GLShaderProgram extends ShaderProgram {
     public GLShaderProgram(String vertexShaderSource, String fragmentShaderSource) {
         super(vertexShaderSource, fragmentShaderSource);
         Disposer.add("managedResources", this);
+    }
+
+    @Override
+    public ByteBuffer[] mapUniformBuffer(ShaderResource resource) {
+        return new ByteBuffer[0];
+    }
+
+    @Override
+    public void unmapUniformBuffer(ShaderResource resource, ByteBuffer[] byteBuffers) {
+
     }
 
 

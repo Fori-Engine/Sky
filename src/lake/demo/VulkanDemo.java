@@ -17,7 +17,7 @@ public class VulkanDemo {
     public static void main(String[] args) {
 
         FlightRecorder.setEnabled(true);
-        FlightRecorder.useFile(new File("test.log"));
+
 
         AssetPacks.open("core", AssetPack.openLocal(new File("assets")));
 

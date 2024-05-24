@@ -23,7 +23,7 @@ import static org.lwjgl.vulkan.KHRSwapchain.*;
 import static org.lwjgl.vulkan.VK13.*;
 
 public class LVKRenderer2D extends Renderer2D {
-    private int MAX_FRAMES_IN_FLIGHT = 2;
+    public static int MAX_FRAMES_IN_FLIGHT = 2;
     long UINT64_MAX = 0xFFFFFFFFFFFFFFFFL;
     private VkQueue graphicsQueue, presentQueue;
     private static VkDeviceWithIndices deviceWithIndices;
@@ -41,16 +41,17 @@ public class LVKRenderer2D extends Renderer2D {
     private List<VkCommandBuffer> commandBuffers;
     private LVKRenderSync renderSyncInfo;
     private int currentFrame;
-
-
     private ByteBuffer vertexBufferData, indexBufferData;
     private LVKShaderProgram currentShaderProgram, defaultShaderProgram;
-
     private FastTextureLookup textureLookup;
     private int nextTextureSlot;
-
     private VkPhysicalDeviceProperties physicalDeviceProperties;
     private Map<ShaderProgram, LVKPipeline> pipelineCache = new HashMap<>();
+
+
+    public static ShaderResource modelViewProj;
+
+
     public LVKRenderer2D(Window window, int width, int height, RenderSettings settings) {
         super(width, height, settings);
 
@@ -179,13 +180,13 @@ public class LVKRenderer2D extends Renderer2D {
         shaderProgram.prepare();
 
 
-
-        shaderProgram.addResource(new ShaderResource(0)
+        modelViewProj = new ShaderResource(0)
                 .type(ShaderResource.Type.UniformBuffer)
                 .shaderStage(ShaderResource.ShaderStage.VertexStage)
                 .sizeBytes(LVKRenderFrame.LVKFrameUniforms.TOTAL_SIZE_BYTES)
-                .count(1)
-        );
+                .count(1);
+
+        shaderProgram.addResource(modelViewProj);
 
         shaderProgram.addResource(new ShaderResource(1)
                 .type(ShaderResource.Type.CombinedSampler)
@@ -554,23 +555,15 @@ public class LVKRenderer2D extends Renderer2D {
     @Override
     public void updateMatrices() {
 
-        for(LVKRenderFrame thisFrame : renderSyncInfo.inFlightFrames) {
+        ByteBuffer[] buffers = currentShaderProgram.mapUniformBuffer(modelViewProj);
 
-
-            try (MemoryStack stack = stackPush()) {
-                PointerBuffer data = stack.mallocPointer(1);
-
-                ByteBuffer buffer = thisFrame.getUniforms().getBuffer().mapAndGet(deviceWithIndices.device, data);
-
-                model.get(buffer);
-                camera.getViewMatrix().get(LVKRenderFrame.LVKFrameUniforms.MATRIX_SIZE_BYTES, buffer);
-                proj.get(2 * LVKRenderFrame.LVKFrameUniforms.MATRIX_SIZE_BYTES, buffer);
-
-
-                thisFrame.getUniforms().getBuffer().unmap(deviceWithIndices.device);
-            }
+        for(ByteBuffer buffer : buffers) {
+            model.get(buffer);
+            camera.getViewMatrix().get(LVKRenderFrame.LVKFrameUniforms.MATRIX_SIZE_BYTES, buffer);
+            proj.get(2 * LVKRenderFrame.LVKFrameUniforms.MATRIX_SIZE_BYTES, buffer);
         }
 
+        currentShaderProgram.unmapUniformBuffer(modelViewProj, buffers);
     }
 
     @Override
