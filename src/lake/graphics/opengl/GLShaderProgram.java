@@ -1,9 +1,6 @@
 package lake.graphics.opengl;
 
-import lake.graphics.ShaderProgram;
-import lake.graphics.Disposable;
-import lake.graphics.Disposer;
-import lake.graphics.ShaderResource;
+import lake.graphics.*;
 import org.joml.Matrix4f;
 import org.lwjgl.BufferUtils;
 
@@ -35,6 +32,16 @@ public class GLShaderProgram extends ShaderProgram {
 
     @Override
     public void unmapUniformBuffer(ShaderResource resource, ByteBuffer[] byteBuffers) {
+
+    }
+
+    @Override
+    public void updateEntireSampler2DArrayWithOnly(ShaderResource resource, Texture2D texture) {
+
+    }
+
+    @Override
+    public void updateSampler2DArray(ShaderResource resource, int index, Texture2D texture2D) {
 
     }
 

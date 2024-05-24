@@ -44,6 +44,10 @@ layout(location = 3) flat in float f_thickness;
 layout(location = 0) out vec4 FragColor;
 layout(binding = 1) uniform sampler2D u_textures[32];
 
+layout(binding = 2) uniform Color {
+    vec4 color;
+} color;
+
 
 
 
@@ -72,6 +76,6 @@ void main()
         FragColor = texture(u_textures[index], f_uv) * f_color;
     }
 
-    //FragColor *= color.color;
+    FragColor *= color.color;
 
 }

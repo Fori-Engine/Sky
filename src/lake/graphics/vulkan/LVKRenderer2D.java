@@ -1,9 +1,7 @@
 package lake.graphics.vulkan;
 
-import lake.FileReader;
 import lake.FlightRecorder;
 import lake.asset.AssetPacks;
-import lake.asset.TextureData;
 import lake.graphics.*;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
@@ -50,6 +48,7 @@ public class LVKRenderer2D extends Renderer2D {
 
 
     public static ShaderResource modelViewProj;
+    public static ShaderResource sampler2DArray;
 
 
     public LVKRenderer2D(Window window, int width, int height, RenderSettings settings) {
@@ -186,16 +185,38 @@ public class LVKRenderer2D extends Renderer2D {
                 .sizeBytes(LVKRenderFrame.LVKFrameUniforms.TOTAL_SIZE_BYTES)
                 .count(1);
 
-        shaderProgram.addResource(modelViewProj);
-
-        shaderProgram.addResource(new ShaderResource(1)
+        sampler2DArray = new ShaderResource(1)
                 .type(ShaderResource.Type.CombinedSampler)
                 .shaderStage(ShaderResource.ShaderStage.FragmentStage)
-                .count(32)
-        );
+                .count(32);
+
+        ShaderResource color = new ShaderResource(2)
+                .type(ShaderResource.Type.UniformBuffer)
+                .shaderStage(ShaderResource.ShaderStage.FragmentStage)
+                .sizeBytes(4 * Float.BYTES)
+                .count(1);
+
+        shaderProgram.addResource(modelViewProj);
+        shaderProgram.addResource(sampler2DArray);
+        shaderProgram.addResource(color);
 
         shaderProgram.createDescriptors(renderSyncInfo);
 
+        LVKTexture2D emptyTexture = (LVKTexture2D) Texture2D.newTexture2D(AssetPacks.getAsset("core:assets/empty.png"), Texture2D.Filter.Nearest);
+        shaderProgram.updateEntireSampler2DArrayWithOnly(sampler2DArray, emptyTexture);
+
+
+
+        ByteBuffer[] colorBuffer = shaderProgram.mapUniformBuffer(color);
+
+        for(ByteBuffer buffer : colorBuffer){
+            buffer.putFloat(0.91f);
+            buffer.putFloat(0.01f);
+            buffer.putFloat(0.01f);
+            buffer.putFloat(1f);
+        }
+
+        shaderProgram.unmapUniformBuffer(color, colorBuffer);
 
 
 
@@ -593,38 +614,7 @@ public class LVKRenderer2D extends Renderer2D {
 
         //Unique Texture
         else {
-
-
-            try(MemoryStack stack = stackPush()){
-
-                VkDescriptorImageInfo.Buffer newImageInfos = VkDescriptorImageInfo.calloc(1);
-
-                VkDescriptorImageInfo imageInfo = newImageInfos.get(0);
-
-                imageInfo.imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-                imageInfo.imageView(lvkTexture2D.getTextureImageView());
-                imageInfo.sampler(lvkTexture2D.getSampler().getTextureSampler());
-
-
-
-                VkWriteDescriptorSet.Buffer descriptorWrites = VkWriteDescriptorSet.calloc(1, stack);
-
-                VkWriteDescriptorSet descriptorWrite1 = descriptorWrites.get(0);
-                descriptorWrite1.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
-                descriptorWrite1.dstSet(currentShaderProgram.getDescriptorSets().get(currentFrame));
-                descriptorWrite1.dstBinding(1);
-                descriptorWrite1.dstArrayElement(slot);
-                descriptorWrite1.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-                descriptorWrite1.descriptorCount(1);
-                descriptorWrite1.pImageInfo(newImageInfos);
-
-
-
-
-                vkUpdateDescriptorSets(deviceWithIndices.device, descriptorWrites, null);
-            }
-
-
+            currentShaderProgram.updateSampler2DArray(sampler2DArray, slot, texture);
             textureLookup.registerTexture(lvkTexture2D, slot);
             isUniqueTexture = true;
         }

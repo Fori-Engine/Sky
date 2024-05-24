@@ -29,22 +29,15 @@ public class LVKShaderProgram extends ShaderProgram {
     private VkDevice device;
     private LVKSpir5Binary vertShaderSPIRV;
     private LVKSpir5Binary fragShaderSPIRV;
-
     private ByteBuffer entryPoint;
-
     private long vertShaderModule;
     private long fragShaderModule;
-    private VkDescriptorImageInfo.Buffer imageInfos;
-
     private LongBuffer descriptorSetLayout;
     private long descriptorPool;
     private List<Long> descriptorSets;
-
-
+    private LVKRenderSync renderSyncInfo;
+    private LongBuffer pDescriptorSets;
     private HashMap<ShaderResource, LVKGenericBuffer>[] frameUniformBuffers = new HashMap[MAX_FRAMES_IN_FLIGHT];
-
-
-
 
 
     public LVKShaderProgram(String vertexShaderSource, String fragmentShaderSource) {
@@ -54,7 +47,6 @@ public class LVKShaderProgram extends ShaderProgram {
         for (int i = 0; i < frameUniformBuffers.length; i++) {
             frameUniformBuffers[i] = new HashMap<>();
         }
-
     }
 
     @Override
@@ -104,6 +96,86 @@ public class LVKShaderProgram extends ShaderProgram {
         }
     }
 
+    @Override
+    public void updateEntireSampler2DArrayWithOnly(ShaderResource resource, Texture2D tex) {
+        LVKTexture2D texture = (LVKTexture2D) tex;
+
+        try(MemoryStack stack = stackPush()) {
+
+            VkDescriptorImageInfo.Buffer imageInfos = VkDescriptorImageInfo.calloc(resource.count);
+
+            for (int i = 0; i < resource.count; i++) {
+
+                VkDescriptorImageInfo imageInfo = imageInfos.get(i);
+
+                imageInfo.imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                imageInfo.imageView(texture.getTextureImageView());
+                imageInfo.sampler(texture.getSampler().getTextureSampler());
+
+            }
+
+            //Set Textures, this should go into another method
+            for (int i = 0; i < renderSyncInfo.inFlightFrames.size(); i++) {
+
+                long descriptorSet = pDescriptorSets.get(i);
+
+
+                VkWriteDescriptorSet.Buffer descriptorWrites = VkWriteDescriptorSet.calloc(1, stack);
+
+                VkWriteDescriptorSet descriptorWrite1 = descriptorWrites.get(0);
+                descriptorWrite1.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
+                descriptorWrite1.dstBinding(1);
+                descriptorWrite1.dstArrayElement(0);
+                descriptorWrite1.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+                descriptorWrite1.descriptorCount(resource.count);
+                descriptorWrite1.pImageInfo(imageInfos);
+
+
+                for (VkWriteDescriptorSet descriptorWrite : descriptorWrites) {
+                    descriptorWrite.dstSet(descriptorSet);
+                }
+
+                vkUpdateDescriptorSets(LVKRenderer2D.getDeviceWithIndices().device, descriptorWrites, null);
+            }
+        }
+    }
+
+    @Override
+    public void updateSampler2DArray(ShaderResource resource, int index, Texture2D tex) {
+        LVKTexture2D lvkTexture2D = (LVKTexture2D) tex;
+
+        for (int i = 0; i < renderSyncInfo.inFlightFrames.size(); i++) {
+
+            long descriptorSet = pDescriptorSets.get(i);
+
+            try (MemoryStack stack = stackPush()) {
+
+                VkDescriptorImageInfo.Buffer newImageInfos = VkDescriptorImageInfo.calloc(1);
+
+                VkDescriptorImageInfo imageInfo = newImageInfos.get(0);
+
+                imageInfo.imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                imageInfo.imageView(lvkTexture2D.getTextureImageView());
+                imageInfo.sampler(lvkTexture2D.getSampler().getTextureSampler());
+
+
+                VkWriteDescriptorSet.Buffer descriptorWrites = VkWriteDescriptorSet.calloc(1, stack);
+
+                VkWriteDescriptorSet descriptorWrite1 = descriptorWrites.get(0);
+                descriptorWrite1.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
+                descriptorWrite1.dstSet(descriptorSet);
+                descriptorWrite1.dstBinding(1);
+                descriptorWrite1.dstArrayElement(index);
+                descriptorWrite1.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+                descriptorWrite1.descriptorCount(1);
+                descriptorWrite1.pImageInfo(newImageInfos);
+
+
+                vkUpdateDescriptorSets(LVKRenderer2D.getDeviceWithIndices().device, descriptorWrites, null);
+            }
+        }
+    }
+
     private int toStageFlags(ShaderResource.ShaderStage shaderStage){
         if(shaderStage == ShaderResource.ShaderStage.VertexStage) return VK_SHADER_STAGE_VERTEX_BIT;
         if(shaderStage == ShaderResource.ShaderStage.FragmentStage) return VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -121,6 +193,7 @@ public class LVKShaderProgram extends ShaderProgram {
 
 
     public void createDescriptors(LVKRenderSync renderSyncInfo){
+        this.renderSyncInfo = renderSyncInfo;
 
 
 
@@ -202,79 +275,52 @@ public class LVKShaderProgram extends ShaderProgram {
                 allocInfo.pSetLayouts(layouts);
 
 
-                LongBuffer pDescriptorSets = stack.mallocLong(MAX_FRAMES_IN_FLIGHT);
+                pDescriptorSets = MemoryUtil.memAllocLong(MAX_FRAMES_IN_FLIGHT);
 
                 if(vkAllocateDescriptorSets(LVKRenderer2D.getDeviceWithIndices().device, allocInfo, pDescriptorSets) != VK_SUCCESS) {
                     throw new RuntimeException("Failed to allocate descriptor sets");
                 }
-
-
                 descriptorSets = new ArrayList<>(pDescriptorSets.capacity());
 
-
-                imageInfos = VkDescriptorImageInfo.create(32);
-
-
-                {
-                    LVKTexture2D emptyTexture = (LVKTexture2D) Texture2D.newTexture2D(AssetPacks.getAsset("core:assets/empty.png"), Texture2D.Filter.Nearest);
-
-                    for (int i = 0; i < 32; i++) {
-
-                        VkDescriptorImageInfo imageInfo = imageInfos.get(i);
-
-                        imageInfo.imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-                        imageInfo.imageView(emptyTexture.getTextureImageView());
-                        imageInfo.sampler(emptyTexture.getSampler().getTextureSampler());
-
-                    }
-
-                }
-
                 List<LVKRenderFrame> inFlightFrames = renderSyncInfo.inFlightFrames;
-
+                //Bind Memory
                 for (int i = 0; i < inFlightFrames.size(); i++) {
-
+                    HashMap<ShaderResource, LVKGenericBuffer> buffers = frameUniformBuffers[i];
                     long descriptorSet = pDescriptorSets.get(i);
 
+                    for(ShaderResource shaderResource : buffers.keySet()) {
 
-                    VkDescriptorBufferInfo.Buffer bufferInfo = VkDescriptorBufferInfo.calloc(1, stack);
-                    bufferInfo.offset(0);
-                    bufferInfo.range(LVKRenderFrame.LVKFrameUniforms.TOTAL_SIZE_BYTES);
-                    bufferInfo.buffer(frameUniformBuffers[i].get(LVKRenderer2D.modelViewProj).handle);
+                        if(shaderResource.type == ShaderResource.Type.UniformBuffer) {
 
-                    VkWriteDescriptorSet.Buffer descriptorWrites = VkWriteDescriptorSet.calloc(2, stack);
+                            VkDescriptorBufferInfo.Buffer bufferInfo = VkDescriptorBufferInfo.calloc(1, stack);
+                            bufferInfo.offset(0);
+                            bufferInfo.range(shaderResource.sizeBytes);
+                            bufferInfo.buffer(buffers.get(shaderResource).handle/*frameUniformBuffers[i].get(LVKRenderer2D.modelViewProj).handle*/);
 
-                    VkWriteDescriptorSet descriptorWrite0 = descriptorWrites.get(0);
-                    descriptorWrite0.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
-                    descriptorWrite0.dstBinding(0);
-                    descriptorWrite0.dstArrayElement(0);
-                    descriptorWrite0.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-                    descriptorWrite0.descriptorCount(1);
-                    descriptorWrite0.pBufferInfo(bufferInfo);
+                            VkWriteDescriptorSet.Buffer descriptorWrites = VkWriteDescriptorSet.calloc(1, stack);
 
-
-
-                    VkWriteDescriptorSet descriptorWrite1 = descriptorWrites.get(1);
-                    descriptorWrite1.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
-                    descriptorWrite1.dstBinding(1);
-                    descriptorWrite1.dstArrayElement(0);
-                    descriptorWrite1.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-                    descriptorWrite1.descriptorCount(32);
-                    descriptorWrite1.pImageInfo(imageInfos);
+                            VkWriteDescriptorSet descriptorWrite0 = descriptorWrites.get(0);
+                            descriptorWrite0.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
+                            descriptorWrite0.dstBinding(shaderResource.binding);
+                            descriptorWrite0.dstArrayElement(0);
+                            descriptorWrite0.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+                            descriptorWrite0.descriptorCount(shaderResource.count);
+                            descriptorWrite0.pBufferInfo(bufferInfo);
 
 
-                    for(VkWriteDescriptorSet descriptorWrite : descriptorWrites){
-                        descriptorWrite.dstSet(descriptorSet);
+                            for (VkWriteDescriptorSet descriptorWrite : descriptorWrites) {
+                                descriptorWrite.dstSet(descriptorSet);
+                            }
+
+                            vkUpdateDescriptorSets(LVKRenderer2D.getDeviceWithIndices().device, descriptorWrites, null);
+                        }
                     }
 
 
 
-                    vkUpdateDescriptorSets(LVKRenderer2D.getDeviceWithIndices().device, descriptorWrites, null);
+
                     descriptorSets.add(descriptorSet);
                 }
-
-
-
             }
         }
     }
@@ -439,6 +485,15 @@ public class LVKShaderProgram extends ShaderProgram {
     @Override
     public void dispose() {
         disposeShaderModules();
+        for(HashMap<ShaderResource, LVKGenericBuffer> frameUniformBuffer : frameUniformBuffers){
+            for(LVKGenericBuffer buffer : frameUniformBuffer.values()){
+                vkDestroyBuffer(device, buffer.handle, null);
+                vkFreeMemory(device, buffer.pMemory, null);
+            }
+        }
+
+
+
         MemoryUtil.memFree(entryPoint);
     }
 }

@@ -29,6 +29,8 @@ public abstract class ShaderProgram implements Disposable {
 
     public abstract ByteBuffer[] mapUniformBuffer(ShaderResource resource);
     public abstract void unmapUniformBuffer(ShaderResource resource, ByteBuffer[] byteBuffers);
+    public abstract void updateEntireSampler2DArrayWithOnly(ShaderResource resource, Texture2D texture);
+    public abstract void updateSampler2DArray(ShaderResource resource, int index, Texture2D texture2D);
 
     public abstract void prepare();
 
