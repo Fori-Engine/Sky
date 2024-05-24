@@ -46,6 +46,8 @@ layout(binding = 1) uniform sampler2D u_textures[32];
 
 
 
+
+
 void main()
 {
     int index = int(f_texindex);
@@ -69,5 +71,7 @@ void main()
     else {
         FragColor = texture(u_textures[index], f_uv) * f_color;
     }
+
+    //FragColor *= color.color;
 
 }

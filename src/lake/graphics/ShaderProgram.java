@@ -3,17 +3,29 @@ package lake.graphics;
 import lake.graphics.opengl.GLShaderProgram;
 import lake.graphics.vulkan.LVKShaderProgram;
 import org.joml.Matrix4f;
+import org.lwjgl.PointerBuffer;
+
+import java.util.ArrayList;
 
 public abstract class ShaderProgram implements Disposable {
 
     protected String vertexShaderSource = null;
     protected String fragmentShaderSource = null;
+    protected ArrayList<ShaderResource> resources = new ArrayList<>();
+
 
     public ShaderProgram(String vertexShaderSource, String fragmentShaderSource){
         this.vertexShaderSource = vertexShaderSource;
         this.fragmentShaderSource = fragmentShaderSource;
     }
 
+    public void addResource(ShaderResource resource){
+        resources.add(resource);
+    }
+
+    public void removeResource(ShaderResource resource){
+        resources.remove(resource);
+    }
 
 
     public abstract void prepare();
@@ -25,6 +37,11 @@ public abstract class ShaderProgram implements Disposable {
     public String getFragmentShaderSource() {
         return fragmentShaderSource;
     }
+
+
+
+    //public abstract PointerBuffer getUniformBuffer(ShaderResource shaderResource);
+
 
 
     public abstract void bind();

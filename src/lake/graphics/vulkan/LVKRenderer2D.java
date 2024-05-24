@@ -177,7 +177,28 @@ public class LVKRenderer2D extends Renderer2D {
 
         shaderProgram.setDevice(deviceWithIndices.device);
         shaderProgram.prepare();
+
+
+
+        shaderProgram.addResource(new ShaderResource(0, true, LVKRenderFrame.LVKFrameUniforms.TOTAL_SIZE_BYTES)
+                .shaderStage(ShaderResource.ShaderStage.VertexStage)
+                .count(1)
+        );
+
+        shaderProgram.addResource(new ShaderResource(1, false, -1)
+                .type(ShaderResource.Type.CombinedSampler)
+                .shaderStage(ShaderResource.ShaderStage.FragmentStage)
+                .count(32)
+        );
+
         shaderProgram.createDescriptors(renderSyncInfo);
+
+
+
+
+
+
+
 
 
         currentShaderProgram = shaderProgram;

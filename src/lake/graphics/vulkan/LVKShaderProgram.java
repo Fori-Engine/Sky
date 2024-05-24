@@ -3,6 +3,7 @@ package lake.graphics.vulkan;
 import lake.asset.AssetPacks;
 import lake.graphics.ShaderProgram;
 import lake.graphics.Disposer;
+import lake.graphics.ShaderResource;
 import lake.graphics.Texture2D;
 import org.joml.Matrix4f;
 import org.lwjgl.system.MemoryStack;
@@ -14,6 +15,7 @@ import static org.lwjgl.util.shaderc.Shaderc.*;
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import static org.lwjgl.vulkan.VK10.*;
@@ -38,6 +40,9 @@ public class LVKShaderProgram extends ShaderProgram {
     private List<Long> descriptorSets;
     private int MAX_FRAMES_IN_FLIGHT = 2;
 
+    private HashMap<ShaderResource, LVKGenericBuffer> uniformBuffers = new HashMap<>();
+
+
 
 
 
@@ -48,78 +53,118 @@ public class LVKShaderProgram extends ShaderProgram {
 
     }
 
+    @Override
+    public void addResource(ShaderResource resource) {
+        super.addResource(resource);
+
+
+        if(resource.isUniformBuffer) {
+
+            try(MemoryStack stack = stackPush()) {
+
+                LongBuffer pMemoryBuffer = stack.mallocLong(1);
+                LVKGenericBuffer uniformsBuffer = FastVK.createBuffer(
+                        LVKRenderer2D.getDeviceWithIndices().device,
+                        LVKRenderer2D.getPhysicalDevice(),
+                        resource.sizeBytes,
+                        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                        pMemoryBuffer
+                );
+
+                uniformBuffers.put(resource, uniformsBuffer);
+            }
+        }
+
+    }
+
+    private int toStageFlags(ShaderResource.ShaderStage shaderStage){
+        if(shaderStage == ShaderResource.ShaderStage.VertexStage) return VK_SHADER_STAGE_VERTEX_BIT;
+        if(shaderStage == ShaderResource.ShaderStage.FragmentStage) return VK_SHADER_STAGE_FRAGMENT_BIT;
+
+        return 0;
+    }
+
+    private int toDescriptorType(ShaderResource shaderResource){
+        if(shaderResource.isUniformBuffer) return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        else {
+            if(shaderResource.type == ShaderResource.Type.CombinedSampler) return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+
+        }
+
+        return 0;
+    }
+
+
+
     public void createDescriptors(LVKRenderSync renderSyncInfo){
 
 
 
+        try(MemoryStack stack = stackPush()){
+            VkDescriptorSetLayoutBinding.Buffer bindings = VkDescriptorSetLayoutBinding.calloc(resources.size(), stack);
+            for (int i = 0; i < resources.size(); i++) {
+                ShaderResource shaderResource = resources.get(i);
 
+                VkDescriptorSetLayoutBinding binding = bindings.get(i);
 
-        //Descriptor Set Layout stuff
-        {
-            try(MemoryStack stack = stackPush()) {
-
-                VkDescriptorSetLayoutBinding.Buffer bindings = VkDescriptorSetLayoutBinding.calloc(2, stack);
-
-                VkDescriptorSetLayoutBinding uboLayoutBinding = bindings.get(0);
-
-                uboLayoutBinding.binding(0);
-                uboLayoutBinding.descriptorCount(1);
-                uboLayoutBinding.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-                uboLayoutBinding.pImmutableSamplers(null);
-                uboLayoutBinding.stageFlags(VK_SHADER_STAGE_VERTEX_BIT);
-
-
-                VkDescriptorSetLayoutBinding samplerLayoutBinding = bindings.get(1);
-
-                samplerLayoutBinding.binding(1);
-                samplerLayoutBinding.descriptorCount(maxTextures);
-                samplerLayoutBinding.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-                samplerLayoutBinding.pImmutableSamplers(null);
-                samplerLayoutBinding.stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT);
-
-                VkDescriptorSetLayoutCreateInfo layoutInfo = VkDescriptorSetLayoutCreateInfo.calloc(stack);
-                layoutInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO);
-                layoutInfo.pBindings(bindings);
-
-                LongBuffer pDescriptorSetLayout = MemoryUtil.memAllocLong(1);
-
-                if(vkCreateDescriptorSetLayout(LVKRenderer2D.getDeviceWithIndices().device, layoutInfo, null, pDescriptorSetLayout) != VK_SUCCESS) {
-                    throw new RuntimeException("Failed to create descriptor set layout");
-                }
-                descriptorSetLayout = pDescriptorSetLayout;
+                binding.binding(shaderResource.binding);
+                binding.descriptorCount(shaderResource.count);
+                binding.descriptorType(toDescriptorType(shaderResource));
+                binding.pImmutableSamplers(null);
+                binding.stageFlags(toStageFlags(shaderResource.shaderStage));
             }
 
-        }
-
-        //Descriptor Pool stuff
-        {
-            try(MemoryStack stack = stackPush()) {
-
-                VkDescriptorPoolSize.Buffer poolSizes = VkDescriptorPoolSize.calloc(2, stack);
 
 
-                VkDescriptorPoolSize poolSize0 = poolSizes.get(0);
-                poolSize0.type(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-                poolSize0.descriptorCount(MAX_FRAMES_IN_FLIGHT);
 
-                VkDescriptorPoolSize poolSize1 = poolSizes.get(1);
-                poolSize1.type(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-                poolSize1.descriptorCount(MAX_FRAMES_IN_FLIGHT * maxTextures);
 
-                VkDescriptorPoolCreateInfo poolInfo = VkDescriptorPoolCreateInfo.calloc(stack);
-                poolInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO);
-                poolInfo.pPoolSizes(poolSizes);
-                poolInfo.maxSets(MAX_FRAMES_IN_FLIGHT);
+            VkDescriptorSetLayoutCreateInfo layoutInfo = VkDescriptorSetLayoutCreateInfo.calloc(stack);
+            layoutInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO);
+            layoutInfo.pBindings(bindings);
 
-                LongBuffer pDescriptorPool = stack.mallocLong(1);
+            LongBuffer pDescriptorSetLayout = MemoryUtil.memAllocLong(1);
 
-                if(vkCreateDescriptorPool(LVKRenderer2D.getDeviceWithIndices().device, poolInfo, null, pDescriptorPool) != VK_SUCCESS) {
-                    throw new RuntimeException("Failed to create descriptor pool");
-                }
-
-                descriptorPool = pDescriptorPool.get(0);
+            if(vkCreateDescriptorSetLayout(LVKRenderer2D.getDeviceWithIndices().device, layoutInfo, null, pDescriptorSetLayout) != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create descriptor set layout");
             }
+            descriptorSetLayout = pDescriptorSetLayout;
+
+            VkDescriptorPoolSize.Buffer poolSizes = VkDescriptorPoolSize.calloc(resources.size(), stack);
+
+            for (int i = 0; i < resources.size(); i++) {
+                ShaderResource shaderResource = resources.get(i);
+
+                VkDescriptorPoolSize poolSize = poolSizes.get(i);
+                poolSize.type(toDescriptorType(shaderResource));
+                poolSize.descriptorCount(MAX_FRAMES_IN_FLIGHT * shaderResource.count);
+            }
+
+
+            VkDescriptorPoolCreateInfo poolInfo = VkDescriptorPoolCreateInfo.calloc(stack);
+            poolInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO);
+            poolInfo.pPoolSizes(poolSizes);
+            poolInfo.maxSets(MAX_FRAMES_IN_FLIGHT);
+
+            LongBuffer pDescriptorPool = stack.mallocLong(1);
+
+            if(vkCreateDescriptorPool(LVKRenderer2D.getDeviceWithIndices().device, poolInfo, null, pDescriptorPool) != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create descriptor pool");
+            }
+
+            descriptorPool = pDescriptorPool.get(0);
         }
+
+
+
+
+
+
+
+
+
+
+
 
         //Descriptor Set stuff
         {
@@ -204,6 +249,7 @@ public class LVKShaderProgram extends ShaderProgram {
                 descriptorWrite0.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
                 descriptorWrite0.descriptorCount(1);
                 descriptorWrite0.pBufferInfo(bufferInfo);
+
 
 
                 VkWriteDescriptorSet descriptorWrite1 = descriptorWrites.get(1);
