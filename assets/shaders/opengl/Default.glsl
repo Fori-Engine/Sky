@@ -14,6 +14,7 @@ out float f_texindex;
 out vec4 f_color;
 out float f_thickness;
 
+
 uniform mat4 v_model;
 uniform mat4 v_view;
 uniform mat4 v_projection;
@@ -44,7 +45,13 @@ in float f_texindex;
 in vec4 f_color;
 in float f_thickness;
 
-uniform sampler2D u_textures[32];
+layout(binding = 1) uniform sampler2D u_textures[32];
+
+layout(binding = 2) uniform Color {
+    vec4 color;
+} test;
+
+
 
 
 void main()
@@ -102,5 +109,10 @@ void main()
             if(index == 31) color = texture(u_textures[31], f_uv) * f_color;
         }
         FragColor = color;
+
+
     }
+
+    FragColor *= test.color;
+
 }

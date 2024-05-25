@@ -3,10 +3,12 @@ package lake.graphics.opengl;
 import lake.FlightRecorder;
 import lake.asset.AssetPacks;
 import lake.graphics.*;
+import lake.graphics.vulkan.LVKRenderFrame;
 import org.joml.*;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GLUtil;
 
+import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
 import static org.lwjgl.opengl.GL46.*;
@@ -21,6 +23,14 @@ public class GLRenderer2D extends Renderer2D {
     private int maxTextureSlots;
     private FastTextureLookup textureLookup;
     private Framebuffer2D framebuffer2D;
+
+    public static ShaderResource sampler2DArray;
+
+
+
+
+
+
     public GLRenderer2D(int width, int height, Framebuffer2D framebuffer2D, RenderSettings settings){
         this(width, height, settings);
         this.framebuffer2D = framebuffer2D;
@@ -57,13 +67,38 @@ public class GLRenderer2D extends Renderer2D {
         );
 
 
+        sampler2DArray = new ShaderResource(1)
+                .count(32)
+                .type(ShaderResource.Type.CombinedSampler)
+                .shaderStage(ShaderResource.ShaderStage.FragmentStage);
+
+        ShaderResource color = new ShaderResource(2)
+                .type(ShaderResource.Type.UniformBuffer)
+                .shaderStage(ShaderResource.ShaderStage.FragmentStage)
+                .sizeBytes(4 * Float.BYTES)
+                .count(1);
+
         defaultShaderProgram = new GLShaderProgram(
                 shaderSources.vertexShader,
                 shaderSources.fragmentShader
         );
         defaultShaderProgram.prepare();
+        defaultShaderProgram.addResource(sampler2DArray);
+        defaultShaderProgram.addResource(color);
+
 
         setShaderProgram(defaultShaderProgram);
+
+        ByteBuffer[] colorBuffer = currentShaderProgram.mapUniformBuffer(color);
+
+        for(ByteBuffer buffer : colorBuffer){
+            buffer.putFloat(0.91f);
+            buffer.putFloat(0.01f);
+            buffer.putFloat(0.01f);
+            buffer.putFloat(1f);
+        }
+
+        currentShaderProgram.unmapUniformBuffer(color, colorBuffer);
 
 
 
@@ -96,10 +131,19 @@ public class GLRenderer2D extends Renderer2D {
 
     }
     @Override
-    public void setShaderProgram(ShaderProgram shaderProgram) {
+    public void setShaderProgram(ShaderProgram sp) {
+
+        GLShaderProgram shaderProgram = (GLShaderProgram) sp;
+
         if(currentShaderProgram != shaderProgram) {
             currentShaderProgram = shaderProgram;
             currentShaderProgram.bind();
+
+            if(!shaderProgram.isUbosInitialized()){
+                shaderProgram.createUniformBufferMemory();
+                shaderProgram.setUbosInitialized(true);
+            }
+
             updateMatrices();
         }
     }
@@ -144,9 +188,7 @@ public class GLRenderer2D extends Renderer2D {
 
         //Unique Texture
         else {
-            glActiveTexture(GL_TEXTURE0 + slot);
-            glTexture2D.bind();
-            glTexture2D.setSlot(slot);
+            currentShaderProgram.updateSampler2DArray(sampler2DArray, slot, glTexture2D);
             textureLookup.registerTexture(glTexture2D, slot);
             isUniqueTexture = true;
         }
