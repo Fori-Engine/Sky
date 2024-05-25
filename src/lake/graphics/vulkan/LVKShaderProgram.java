@@ -124,7 +124,7 @@ public class LVKShaderProgram extends ShaderProgram {
 
                 VkWriteDescriptorSet descriptorWrite1 = descriptorWrites.get(0);
                 descriptorWrite1.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
-                descriptorWrite1.dstBinding(1);
+                descriptorWrite1.dstBinding(resource.binding);
                 descriptorWrite1.dstArrayElement(0);
                 descriptorWrite1.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
                 descriptorWrite1.descriptorCount(resource.count);
@@ -164,7 +164,7 @@ public class LVKShaderProgram extends ShaderProgram {
                 VkWriteDescriptorSet descriptorWrite1 = descriptorWrites.get(0);
                 descriptorWrite1.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
                 descriptorWrite1.dstSet(descriptorSet);
-                descriptorWrite1.dstBinding(1);
+                descriptorWrite1.dstBinding(resource.binding);
                 descriptorWrite1.dstArrayElement(index);
                 descriptorWrite1.descriptorType(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
                 descriptorWrite1.descriptorCount(1);
