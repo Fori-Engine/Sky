@@ -40,7 +40,6 @@ public class LVKRenderer2D extends Renderer2D {
     private LVKRenderSync renderSyncInfo;
     private int currentFrame;
     private ByteBuffer vertexBufferData, indexBufferData;
-    private LVKShaderProgram currentShaderProgram, defaultShaderProgram;
     private FastTextureLookup textureLookup;
     private int nextTextureSlot;
     private VkPhysicalDeviceProperties physicalDeviceProperties;
@@ -200,7 +199,9 @@ public class LVKRenderer2D extends Renderer2D {
         shaderProgram.addResource(sampler2DArray);
         shaderProgram.addResource(color);
 
-        shaderProgram.createDescriptors(renderSyncInfo);
+
+        setShaderProgram(shaderProgram);
+
 
         LVKTexture2D emptyTexture = (LVKTexture2D) Texture2D.newTexture2D(AssetPacks.getAsset("core:assets/empty.png"), Texture2D.Filter.Nearest);
         shaderProgram.updateEntireSampler2DArrayWithOnly(sampler2DArray, emptyTexture);
@@ -226,10 +227,8 @@ public class LVKRenderer2D extends Renderer2D {
 
 
         currentShaderProgram = shaderProgram;
-        defaultShaderProgram = shaderProgram;
 
-        currentPipeline = createPipeline(deviceWithIndices.device, swapchain, shaderProgram.getShaderStages(), renderPass, shaderProgram.getDescriptorSetLayout());
-        pipelineCache.put(shaderProgram, currentPipeline);
+
 
 
         proj = new Matrix4f().ortho(0, getWidth(), 0, getHeight(), 0, 1, true);
@@ -315,7 +314,7 @@ public class LVKRenderer2D extends Renderer2D {
                     vkCmdBindIndexBuffer(commandBuffer, indexBuffer.getMainBuffer().handle, 0, VK_INDEX_TYPE_UINT32);
 
                     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            currentPipeline.pipelineLayout, 0, stack.longs(currentShaderProgram.getDescriptorSets().get(i)), null);
+                            currentPipeline.pipelineLayout, 0, stack.longs(((LVKShaderProgram)currentShaderProgram).getDescriptorSets().get(i)), null);
                     vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
 
 
@@ -554,8 +553,14 @@ public class LVKRenderer2D extends Renderer2D {
         }
         else {
 
+
+
             LVKShaderProgram lvkShaderProgram = (LVKShaderProgram) shaderProgram;
 
+
+
+            lvkShaderProgram.setDevice(deviceWithIndices.device);
+            lvkShaderProgram.createDescriptors(renderSyncInfo);
             LVKPipeline newPipeline = createPipeline(
                     deviceWithIndices.device,
                     swapchain,
@@ -563,10 +568,9 @@ public class LVKRenderer2D extends Renderer2D {
                     renderPass,
                     ((LVKShaderProgram) shaderProgram).getDescriptorSetLayout());
 
-            lvkShaderProgram.setDevice(deviceWithIndices.device);
-            lvkShaderProgram.createDescriptors(renderSyncInfo);
             pipelineCache.put(shaderProgram, newPipeline);
             currentPipeline = newPipeline;
+            currentShaderProgram = shaderProgram;
         }
 
 
@@ -586,16 +590,6 @@ public class LVKRenderer2D extends Renderer2D {
 
         currentShaderProgram.unmapUniformBuffer(modelViewProj, buffers);
     }
-
-    @Override
-    public ShaderProgram getDefaultShaderProgram() {
-        return defaultShaderProgram;
-    }
-    @Override
-    public ShaderProgram getCurrentShaderProgram() {
-        return currentShaderProgram;
-    }
-
 
     @Override
     public void drawTexture(float x, float y, float w, float h, Texture2D texture, Color color, Rect2D rect2D, boolean xFlip, boolean yFlip) {

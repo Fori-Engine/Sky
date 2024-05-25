@@ -19,7 +19,6 @@ public class GLRenderer2D extends Renderer2D {
     private GLVertexBuffer vertexBuffer;
     private GLIndexBuffer indexBuffer;
     private int maxTextureSlots;
-    public GLShaderProgram defaultShaderProgram, currentShaderProgram;
     private FastTextureLookup textureLookup;
     private Framebuffer2D framebuffer2D;
     public GLRenderer2D(int width, int height, Framebuffer2D framebuffer2D, RenderSettings settings){
@@ -64,9 +63,7 @@ public class GLRenderer2D extends Renderer2D {
         );
         defaultShaderProgram.prepare();
 
-        currentShaderProgram = defaultShaderProgram;
-        currentShaderProgram.bind();
-        updateMatrices();
+        setShaderProgram(defaultShaderProgram);
 
 
 
@@ -101,7 +98,7 @@ public class GLRenderer2D extends Renderer2D {
     @Override
     public void setShaderProgram(ShaderProgram shaderProgram) {
         if(currentShaderProgram != shaderProgram) {
-            currentShaderProgram = (GLShaderProgram) shaderProgram;
+            currentShaderProgram = shaderProgram;
             currentShaderProgram.bind();
             updateMatrices();
         }
@@ -111,14 +108,6 @@ public class GLRenderer2D extends Renderer2D {
         currentShaderProgram.setMatrix4f("v_view", getView());
         currentShaderProgram.setMatrix4f("v_projection", getProj());
         currentShaderProgram.setIntArray("u_textures", createTextureSlots());
-    }
-    @Override
-    public ShaderProgram getDefaultShaderProgram() {
-        return defaultShaderProgram;
-    }
-    @Override
-    public ShaderProgram getCurrentShaderProgram() {
-        return currentShaderProgram;
     }
     private int[] createTextureSlots() {
         int[] slots = new int[maxTextureSlots];

@@ -24,6 +24,7 @@ public abstract class Renderer2D implements Disposable {
     private static float spaceXAdvance = 0;
     private static final int spacesPerTab = 4;
     protected int quadCount;
+    protected ShaderProgram currentShaderProgram, defaultShaderProgram;
 
     protected int ColoredQuad = -1;
     protected int ColoredCircle = -2;
@@ -37,8 +38,14 @@ public abstract class Renderer2D implements Disposable {
 
     public abstract void setShaderProgram(ShaderProgram shaderProgram);
     public abstract void updateMatrices();
-    public abstract ShaderProgram getDefaultShaderProgram();
-    public abstract ShaderProgram getCurrentShaderProgram();
+
+    public ShaderProgram getCurrentShaderProgram() {
+        return currentShaderProgram;
+    }
+
+    public ShaderProgram getDefaultShaderProgram() {
+        return defaultShaderProgram;
+    }
 
     protected int[] generateIndices(int quadIndex){
         int numOfIndices = quadIndex * 6;
