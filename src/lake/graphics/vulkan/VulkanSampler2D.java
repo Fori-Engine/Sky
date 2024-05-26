@@ -10,12 +10,12 @@ import java.nio.LongBuffer;
 
 import static org.lwjgl.vulkan.VK10.*;
 
-public class LVKSampler implements Disposable {
+public class VulkanSampler2D implements Disposable {
 
     private final VkDevice device;
     private long textureSampler;
 
-    public LVKSampler(VkDevice device, int minFilter, int magFilter){
+    public VulkanSampler2D(VkDevice device, int minFilter, int magFilter){
         Disposer.add("managedResources", this);
         this.device = device;
 

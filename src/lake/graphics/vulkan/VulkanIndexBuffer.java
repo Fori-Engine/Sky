@@ -1,8 +1,6 @@
 package lake.graphics.vulkan;
 
-import lake.graphics.Disposable;
-import lake.graphics.Disposer;
-import lake.graphics.VertexBuffer;
+import lake.graphics.IndexBuffer;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
@@ -11,19 +9,22 @@ import java.nio.LongBuffer;
 
 import static org.lwjgl.vulkan.VK10.*;
 
-public class LVKVertexBuffer extends VertexBuffer {
+public class VulkanIndexBuffer extends IndexBuffer  {
 
-    private long vertexBufferMemory, stagingBufferMemory;
+    private long indexBufferMemory, stagingBufferMemory;
     private PointerBuffer data;
     private LVKGenericBuffer buffer;
     private LVKGenericBuffer stagingBuffer;
+
     private VkDevice device;
 
-    public LVKVertexBuffer(int maxQuads, int vertexDataSize, VkDevice device, long commandPool, VkQueue graphicsQueue, VkPhysicalDevice physicalDevice) {
-        super(maxQuads, vertexDataSize);
+    public VulkanIndexBuffer(int maxQuads, int indicesPerQuad, int indexSizeBytes, VkDevice device, long commandPool, VkQueue graphicsQueue, VkPhysicalDevice physicalDevice) {
+        super(maxQuads, indicesPerQuad, indexSizeBytes);
         this.device = device;
 
-        int verticesSizeBytes = (vertexDataSize * Float.BYTES) * maxQuads * 4;
+
+        int indicesSizeBytes = indexSizeBytes * indicesPerQuad * maxQuads;
+
         data = MemoryUtil.memAllocPointer(1);
 
 
@@ -32,7 +33,7 @@ public class LVKVertexBuffer extends VertexBuffer {
         stagingBuffer = FastVK.createBuffer(
                 device,
                 physicalDevice,
-                verticesSizeBytes,
+                indicesSizeBytes,
                 VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                 pStagingBufferMemory
@@ -40,47 +41,42 @@ public class LVKVertexBuffer extends VertexBuffer {
         stagingBufferMemory = pStagingBufferMemory.get(0);
 
 
-        LongBuffer pVertexBufferMemory = MemoryUtil.memAllocLong(1);
+        LongBuffer pIndexBufferMemory = MemoryUtil.memAllocLong(1);
         buffer = FastVK.createBuffer(
                 device,
                 physicalDevice,
-                verticesSizeBytes,
-                VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                indicesSizeBytes,
+                VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                pVertexBufferMemory
+                pIndexBufferMemory
         );
+        indexBufferMemory = pIndexBufferMemory.get(0);
+        VkSubmitInfo submitInfo = FastVK.transfer(indicesSizeBytes, commandPool, device, buffer.handle, stagingBuffer.handle);
 
-        numOfVertices = maxQuads * 4;
-
-        vertexBufferMemory = pVertexBufferMemory.get(0);
-        VkSubmitInfo submitInfo = FastVK.transfer(verticesSizeBytes, commandPool, device, buffer.handle, stagingBuffer.handle);
 
         if(vkQueueSubmit(graphicsQueue, submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
             throw new RuntimeException("Failed to submit copy command buffer");
         }
 
         vkQueueWaitIdle(graphicsQueue);
-
     }
 
     public PointerBuffer getMappingBuffer() {
         return data;
     }
-
-
-
     public LVKGenericBuffer getMainBuffer(){
         return buffer;
     }
 
 
-    public long getVertexBufferMemory() {
-        return vertexBufferMemory;
+    public long getIndexBufferMemory() {
+        return indexBufferMemory;
     }
 
     public long getStagingBufferMemory() {
         return stagingBufferMemory;
     }
+
 
     @Override
     public void dispose() {
@@ -89,9 +85,9 @@ public class LVKVertexBuffer extends VertexBuffer {
         vkDestroyBuffer(device, buffer.handle, null);
         vkDestroyBuffer(device, stagingBuffer.handle, null);
 
-        vkFreeMemory(device, getVertexBufferMemory(), null);
+        vkFreeMemory(device, getIndexBufferMemory(), null);
         vkFreeMemory(device, getStagingBufferMemory(), null);
 
-    }
 
+    }
 }

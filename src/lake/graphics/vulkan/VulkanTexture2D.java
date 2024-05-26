@@ -2,24 +2,18 @@ package lake.graphics.vulkan;
 
 import lake.asset.Asset;
 import lake.asset.TextureData;
-import lake.graphics.Disposer;
 import lake.graphics.Texture2D;
-import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
-import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
 
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 
-import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
-public class LVKTexture2D extends Texture2D {
+public class VulkanTexture2D extends Texture2D {
 
 
     private LVKGenericBuffer stagingBuffer;
@@ -30,23 +24,23 @@ public class LVKTexture2D extends Texture2D {
     private long textureImage, textureImageMemory;
     private long textureImageView;
     private PointerBuffer data;
-    private LVKSampler sampler;
+    private VulkanSampler2D sampler;
     private boolean isInitialized;
 
 
-    public LVKTexture2D(int width, int height){
+    public VulkanTexture2D(int width, int height){
         super(width, height);
 
-        device = LVKRenderer2D.getDeviceWithIndices().device;
+        device = VulkanRenderer2D.getDeviceWithIndices().device;
         isInitialized = true;
         createResources(width * height * 4);
         createTextureResources(width, height, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
     }
 
-    public LVKTexture2D(Asset<TextureData> textureData, Filter filter) {
+    public VulkanTexture2D(Asset<TextureData> textureData, Filter filter) {
         super(textureData, filter);
 
-        device = LVKRenderer2D.getDeviceWithIndices().device;
+        device = VulkanRenderer2D.getDeviceWithIndices().device;
         isInitialized = true;
         createResources(textureData.asset.data.length);
 
@@ -61,13 +55,13 @@ public class LVKTexture2D extends Texture2D {
         int minFilter = filter == Filter.Linear ? VK_FILTER_LINEAR : VK_FILTER_NEAREST;
         int magFilter = filter == Filter.Linear ? VK_FILTER_LINEAR : VK_FILTER_NEAREST;
 
-        sampler = new LVKSampler(device, minFilter, magFilter);
+        sampler = new VulkanSampler2D(device, minFilter, magFilter);
 
 
         LongBuffer pStagingBufferMemory = MemoryUtil.memAllocLong(1);
         stagingBuffer = FastVK.createBuffer(
                 device,
-                LVKRenderer2D.getPhysicalDevice(),
+                VulkanRenderer2D.getPhysicalDevice(),
                 sizeBytes,
                 VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -81,7 +75,7 @@ public class LVKTexture2D extends Texture2D {
 
     public void createTextureResources(int width, int height, int samples, int usage){
 
-        VkPhysicalDevice physicalDevice = LVKRenderer2D.getPhysicalDevice();
+        VkPhysicalDevice physicalDevice = VulkanRenderer2D.getPhysicalDevice();
         try(MemoryStack stack = stackPush()) {
 
             pTextureImage = stack.mallocLong(1);
@@ -256,7 +250,7 @@ public class LVKTexture2D extends Texture2D {
 
     }
 
-    public LVKSampler getSampler() {
+    public VulkanSampler2D getSampler() {
         return sampler;
     }
 

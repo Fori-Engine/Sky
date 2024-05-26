@@ -1,6 +1,5 @@
 package lake.graphics.vulkan;
 
-import lake.asset.AssetPacks;
 import lake.graphics.ShaderProgram;
 import lake.graphics.Disposer;
 import lake.graphics.ShaderResource;
@@ -11,7 +10,7 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
 
-import static lake.graphics.vulkan.LVKRenderer2D.MAX_FRAMES_IN_FLIGHT;
+import static lake.graphics.vulkan.VulkanRenderer2D.MAX_FRAMES_IN_FLIGHT;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.util.shaderc.Shaderc.*;
 import java.nio.ByteBuffer;
@@ -23,7 +22,7 @@ import java.util.List;
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK10.vkDestroyShaderModule;
 
-public class LVKShaderProgram extends ShaderProgram {
+public class VulkanShaderProgram extends ShaderProgram {
 
     private VkPipelineShaderStageCreateInfo.Buffer shaderStages;
     private VkDevice device;
@@ -40,7 +39,7 @@ public class LVKShaderProgram extends ShaderProgram {
     private HashMap<ShaderResource, LVKGenericBuffer>[] frameUniformBuffers = new HashMap[MAX_FRAMES_IN_FLIGHT];
 
 
-    public LVKShaderProgram(String vertexShaderSource, String fragmentShaderSource) {
+    public VulkanShaderProgram(String vertexShaderSource, String fragmentShaderSource) {
         super(vertexShaderSource, fragmentShaderSource);
         Disposer.add("managedResources", this);
 
@@ -62,8 +61,8 @@ public class LVKShaderProgram extends ShaderProgram {
 
                     LongBuffer pMemoryBuffer = stack.mallocLong(1);
                     LVKGenericBuffer uniformsBuffer = FastVK.createBuffer(
-                            LVKRenderer2D.getDeviceWithIndices().device,
-                            LVKRenderer2D.getPhysicalDevice(),
+                            VulkanRenderer2D.getDeviceWithIndices().device,
+                            VulkanRenderer2D.getPhysicalDevice(),
                             resource.sizeBytes,
                             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -87,7 +86,7 @@ public class LVKShaderProgram extends ShaderProgram {
         ByteBuffer[] byteBuffers = new ByteBuffer[MAX_FRAMES_IN_FLIGHT];
         for (int i = 0; i < byteBuffers.length; i++) {
             PointerBuffer data = MemoryUtil.memAllocPointer(1);
-            byteBuffers[i] = frameUniformBuffers[i].get(resource).mapAndGet(LVKRenderer2D.getDeviceWithIndices().device, data);
+            byteBuffers[i] = frameUniformBuffers[i].get(resource).mapAndGet(VulkanRenderer2D.getDeviceWithIndices().device, data);
         }
 
         return byteBuffers;
@@ -96,13 +95,13 @@ public class LVKShaderProgram extends ShaderProgram {
     @Override
     public void unmapUniformBuffer(ShaderResource resource, ByteBuffer[] byteBuffers) {
         for(int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++){
-            frameUniformBuffers[i].get(resource).unmap(LVKRenderer2D.getDeviceWithIndices().device);
+            frameUniformBuffers[i].get(resource).unmap(VulkanRenderer2D.getDeviceWithIndices().device);
         }
     }
 
     @Override
     public void updateEntireSampler2DArrayWithOnly(ShaderResource resource, Texture2D tex) {
-        LVKTexture2D texture = (LVKTexture2D) tex;
+        VulkanTexture2D texture = (VulkanTexture2D) tex;
 
         try(MemoryStack stack = stackPush()) {
 
@@ -139,14 +138,14 @@ public class LVKShaderProgram extends ShaderProgram {
                     descriptorWrite.dstSet(descriptorSet);
                 }
 
-                vkUpdateDescriptorSets(LVKRenderer2D.getDeviceWithIndices().device, descriptorWrites, null);
+                vkUpdateDescriptorSets(VulkanRenderer2D.getDeviceWithIndices().device, descriptorWrites, null);
             }
         }
     }
 
     @Override
     public void updateSampler2DArray(ShaderResource resource, int index, Texture2D tex) {
-        LVKTexture2D lvkTexture2D = (LVKTexture2D) tex;
+        VulkanTexture2D vulkanTexture2D = (VulkanTexture2D) tex;
 
         for (int i = 0; i < renderSyncInfo.inFlightFrames.size(); i++) {
 
@@ -159,8 +158,8 @@ public class LVKShaderProgram extends ShaderProgram {
                 VkDescriptorImageInfo imageInfo = newImageInfos.get(0);
 
                 imageInfo.imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-                imageInfo.imageView(lvkTexture2D.getTextureImageView());
-                imageInfo.sampler(lvkTexture2D.getSampler().getTextureSampler());
+                imageInfo.imageView(vulkanTexture2D.getTextureImageView());
+                imageInfo.sampler(vulkanTexture2D.getSampler().getTextureSampler());
 
 
                 VkWriteDescriptorSet.Buffer descriptorWrites = VkWriteDescriptorSet.calloc(1, stack);
@@ -175,7 +174,7 @@ public class LVKShaderProgram extends ShaderProgram {
                 descriptorWrite1.pImageInfo(newImageInfos);
 
 
-                vkUpdateDescriptorSets(LVKRenderer2D.getDeviceWithIndices().device, descriptorWrites, null);
+                vkUpdateDescriptorSets(VulkanRenderer2D.getDeviceWithIndices().device, descriptorWrites, null);
             }
         }
     }
@@ -221,7 +220,7 @@ public class LVKShaderProgram extends ShaderProgram {
 
             LongBuffer pDescriptorSetLayout = MemoryUtil.memAllocLong(1);
 
-            if(vkCreateDescriptorSetLayout(LVKRenderer2D.getDeviceWithIndices().device, layoutInfo, null, pDescriptorSetLayout) != VK_SUCCESS) {
+            if(vkCreateDescriptorSetLayout(VulkanRenderer2D.getDeviceWithIndices().device, layoutInfo, null, pDescriptorSetLayout) != VK_SUCCESS) {
                 throw new RuntimeException("Failed to create descriptor set layout");
             }
             descriptorSetLayout = pDescriptorSetLayout;
@@ -244,7 +243,7 @@ public class LVKShaderProgram extends ShaderProgram {
 
             LongBuffer pDescriptorPool = stack.mallocLong(1);
 
-            if(vkCreateDescriptorPool(LVKRenderer2D.getDeviceWithIndices().device, poolInfo, null, pDescriptorPool) != VK_SUCCESS) {
+            if(vkCreateDescriptorPool(VulkanRenderer2D.getDeviceWithIndices().device, poolInfo, null, pDescriptorPool) != VK_SUCCESS) {
                 throw new RuntimeException("Failed to create descriptor pool");
             }
 
@@ -281,7 +280,7 @@ public class LVKShaderProgram extends ShaderProgram {
 
                 pDescriptorSets = MemoryUtil.memAllocLong(MAX_FRAMES_IN_FLIGHT);
 
-                if(vkAllocateDescriptorSets(LVKRenderer2D.getDeviceWithIndices().device, allocInfo, pDescriptorSets) != VK_SUCCESS) {
+                if(vkAllocateDescriptorSets(VulkanRenderer2D.getDeviceWithIndices().device, allocInfo, pDescriptorSets) != VK_SUCCESS) {
                     throw new RuntimeException("Failed to allocate descriptor sets");
                 }
                 descriptorSets = new ArrayList<>(pDescriptorSets.capacity());
@@ -316,7 +315,7 @@ public class LVKShaderProgram extends ShaderProgram {
                                 descriptorWrite.dstSet(descriptorSet);
                             }
 
-                            vkUpdateDescriptorSets(LVKRenderer2D.getDeviceWithIndices().device, descriptorWrites, null);
+                            vkUpdateDescriptorSets(VulkanRenderer2D.getDeviceWithIndices().device, descriptorWrites, null);
                         }
                     }
 
@@ -343,7 +342,7 @@ public class LVKShaderProgram extends ShaderProgram {
 
     @Override
     public void prepare() {
-        setDevice(LVKRenderer2D.getDeviceWithIndices().device);
+        setDevice(VulkanRenderer2D.getDeviceWithIndices().device);
         entryPoint = MemoryUtil.memUTF8("main");
 
 

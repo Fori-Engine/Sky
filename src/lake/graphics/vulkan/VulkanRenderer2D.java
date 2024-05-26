@@ -20,7 +20,7 @@ import static org.lwjgl.vulkan.KHRSurface.vkDestroySurfaceKHR;
 import static org.lwjgl.vulkan.KHRSwapchain.*;
 import static org.lwjgl.vulkan.VK13.*;
 
-public class LVKRenderer2D extends Renderer2D {
+public class VulkanRenderer2D extends Renderer2D {
     public static int MAX_FRAMES_IN_FLIGHT = 2;
     long UINT64_MAX = 0xFFFFFFFFFFFFFFFFL;
     private VkQueue graphicsQueue, presentQueue;
@@ -30,12 +30,12 @@ public class LVKRenderer2D extends Renderer2D {
     private long surface;
     private LVKSwapchain swapchain;
     private List<Long> swapchainImageViews;
-    private LVKPipeline currentPipeline;
+    private VulkanPipeline currentPipeline;
     private long renderPass;
     private List<Long> swapchainFramebuffers;
     private long commandPool;
-    private LVKVertexBuffer vertexBuffer;
-    private LVKIndexBuffer indexBuffer;
+    private VulkanVertexBuffer vertexBuffer;
+    private VulkanIndexBuffer indexBuffer;
     private List<VkCommandBuffer> commandBuffers;
     private LVKRenderSync renderSyncInfo;
     private int currentFrame;
@@ -43,20 +43,20 @@ public class LVKRenderer2D extends Renderer2D {
     private FastTextureLookup textureLookup;
     private int nextTextureSlot;
     private VkPhysicalDeviceProperties physicalDeviceProperties;
-    private Map<ShaderProgram, LVKPipeline> pipelineCache = new HashMap<>();
+    private Map<ShaderProgram, VulkanPipeline> pipelineCache = new HashMap<>();
 
 
     public static ShaderResource modelViewProj;
     public static ShaderResource sampler2DArray;
 
 
-    public LVKRenderer2D(Window window, int width, int height, RenderSettings settings) {
+    public VulkanRenderer2D(Window window, int width, int height, RenderSettings settings) {
         super(width, height, settings);
 
 
         String appEngineInfoName = "LakeEngine";
 
-        FlightRecorder.info(LVKRenderer2D.class, "Using appInfoEngineName of " + appEngineInfoName);
+        FlightRecorder.info(VulkanRenderer2D.class, "Using appInfoEngineName of " + appEngineInfoName);
         instance = FastVK.createInstance(getClass().getName(), appEngineInfoName, settings.enableValidation);
         FastVK.setupDebugMessenger(instance, settings.enableValidation);
         surface = FastVK.createSurface(instance, window);
@@ -96,7 +96,7 @@ public class LVKRenderer2D extends Renderer2D {
 
 
 
-        vertexBuffer = new LVKVertexBuffer(
+        vertexBuffer = new VulkanVertexBuffer(
                 settings.quadsPerBatch,
                 10,
                 deviceWithIndices.device,
@@ -104,7 +104,7 @@ public class LVKRenderer2D extends Renderer2D {
                 graphicsQueue,
                 physicalDevice);
 
-        indexBuffer = new LVKIndexBuffer(
+        indexBuffer = new VulkanIndexBuffer(
                 settings.quadsPerBatch,
                 6,
                 Integer.BYTES,
@@ -168,7 +168,7 @@ public class LVKRenderer2D extends Renderer2D {
         );
 
 
-        LVKShaderProgram shaderProgram = new LVKShaderProgram(
+        VulkanShaderProgram shaderProgram = new VulkanShaderProgram(
                 shaderSources.vertexShader,
                 shaderSources.fragmentShader
         );
@@ -203,7 +203,7 @@ public class LVKRenderer2D extends Renderer2D {
         setShaderProgram(shaderProgram);
 
 
-        LVKTexture2D emptyTexture = (LVKTexture2D) Texture2D.newTexture2D(AssetPacks.getAsset("core:assets/empty.png"), Texture2D.Filter.Nearest);
+        VulkanTexture2D emptyTexture = (VulkanTexture2D) Texture2D.newTexture2D(AssetPacks.getAsset("core:assets/empty.png"), Texture2D.Filter.Nearest);
         shaderProgram.updateEntireSampler2DArrayWithOnly(sampler2DArray, emptyTexture);
 
 
@@ -314,7 +314,7 @@ public class LVKRenderer2D extends Renderer2D {
                     vkCmdBindIndexBuffer(commandBuffer, indexBuffer.getMainBuffer().handle, 0, VK_INDEX_TYPE_UINT32);
 
                     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            currentPipeline.pipelineLayout, 0, stack.longs(((LVKShaderProgram)currentShaderProgram).getDescriptorSets().get(i)), null);
+                            currentPipeline.pipelineLayout, 0, stack.longs(((VulkanShaderProgram)currentShaderProgram).getDescriptorSets().get(i)), null);
                     vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
 
 
@@ -332,9 +332,9 @@ public class LVKRenderer2D extends Renderer2D {
         }
 
     }
-    private LVKPipeline createPipeline(VkDevice device, LVKSwapchain swapchain, VkPipelineShaderStageCreateInfo.Buffer shaderStages, long renderPass, LongBuffer descriptorSetLayout){
+    private VulkanPipeline createPipeline(VkDevice device, LVKSwapchain swapchain, VkPipelineShaderStageCreateInfo.Buffer shaderStages, long renderPass, LongBuffer descriptorSetLayout){
 
-        FlightRecorder.info(LVKRenderer2D.class, "Creating new pipeline...");
+        FlightRecorder.info(VulkanRenderer2D.class, "Creating new pipeline...");
 
         long pipelineLayout;
         long graphicsPipeline = 0;
@@ -540,7 +540,7 @@ public class LVKRenderer2D extends Renderer2D {
 
         }
 
-        return new LVKPipeline(pipelineLayout, graphicsPipeline);
+        return new VulkanPipeline(pipelineLayout, graphicsPipeline);
     }
     @Override
     public void setShaderProgram(ShaderProgram shaderProgram) {
@@ -555,18 +555,18 @@ public class LVKRenderer2D extends Renderer2D {
 
 
 
-            LVKShaderProgram lvkShaderProgram = (LVKShaderProgram) shaderProgram;
+            VulkanShaderProgram vulkanShaderProgram = (VulkanShaderProgram) shaderProgram;
 
 
 
-            lvkShaderProgram.setDevice(deviceWithIndices.device);
-            lvkShaderProgram.createDescriptors(renderSyncInfo);
-            LVKPipeline newPipeline = createPipeline(
+            vulkanShaderProgram.setDevice(deviceWithIndices.device);
+            vulkanShaderProgram.createDescriptors(renderSyncInfo);
+            VulkanPipeline newPipeline = createPipeline(
                     deviceWithIndices.device,
                     swapchain,
-                    lvkShaderProgram.getShaderStages(),
+                    vulkanShaderProgram.getShaderStages(),
                     renderPass,
-                    ((LVKShaderProgram) shaderProgram).getDescriptorSetLayout());
+                    ((VulkanShaderProgram) shaderProgram).getDescriptorSetLayout());
 
             pipelineCache.put(shaderProgram, newPipeline);
             currentPipeline = newPipeline;
@@ -594,7 +594,7 @@ public class LVKRenderer2D extends Renderer2D {
     @Override
     public void drawTexture(float x, float y, float w, float h, Texture2D texture, Color color, Rect2D rect2D, boolean xFlip, boolean yFlip) {
 
-        LVKTexture2D lvkTexture2D = (LVKTexture2D) texture;
+        VulkanTexture2D vulkanTexture2D = (VulkanTexture2D) texture;
 
         int slot = nextTextureSlot;
         boolean isUniqueTexture = false;
@@ -602,14 +602,14 @@ public class LVKRenderer2D extends Renderer2D {
 
 
         //Existing texture
-        if (textureLookup.hasTexture(lvkTexture2D)) {
-            slot = textureLookup.getTexture(lvkTexture2D);
+        if (textureLookup.hasTexture(vulkanTexture2D)) {
+            slot = textureLookup.getTexture(vulkanTexture2D);
         }
 
         //Unique Texture
         else {
             currentShaderProgram.updateSampler2DArray(sampler2DArray, slot, texture);
-            textureLookup.registerTexture(lvkTexture2D, slot);
+            textureLookup.registerTexture(vulkanTexture2D, slot);
             isUniqueTexture = true;
         }
 
@@ -833,7 +833,7 @@ public class LVKRenderer2D extends Renderer2D {
     public static VkPhysicalDevice getPhysicalDevice() {
         return physicalDevice;
     }
-    private void destroyPipeline(LVKPipeline pipeline){
+    private void destroyPipeline(VulkanPipeline pipeline){
 
         vkDestroyPipeline(deviceWithIndices.device, pipeline.pipeline, null);
         vkDestroyPipelineLayout(deviceWithIndices.device, pipeline.pipelineLayout, null);
@@ -849,7 +849,7 @@ public class LVKRenderer2D extends Renderer2D {
         vkDeviceWaitIdle(deviceWithIndices.device);
 
         for(ShaderProgram sp : pipelineCache.keySet()){
-            LVKShaderProgram shaderProgram = (LVKShaderProgram) sp;
+            VulkanShaderProgram shaderProgram = (VulkanShaderProgram) sp;
             vkDestroyDescriptorPool(deviceWithIndices.device, shaderProgram.getDescriptorPool(), null);
             destroyPipeline(pipelineCache.get(shaderProgram));
         }
@@ -883,7 +883,7 @@ public class LVKRenderer2D extends Renderer2D {
         vkDestroySwapchainKHR(deviceWithIndices.device, swapchain.swapChain, null);
 
         for(ShaderProgram sp : pipelineCache.keySet()){
-            LVKShaderProgram shaderProgram = (LVKShaderProgram) sp;
+            VulkanShaderProgram shaderProgram = (VulkanShaderProgram) sp;
             vkDestroyDescriptorSetLayout(deviceWithIndices.device, shaderProgram.getDescriptorSetLayout().get(), null);
         }
 
