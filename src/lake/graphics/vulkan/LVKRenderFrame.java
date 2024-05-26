@@ -14,47 +14,12 @@ public class LVKRenderFrame {
     private final long imageAvailableSemaphore;
     private final long renderFinishedSemaphore;
     private final long fence;
-    private LVKFrameUniforms uniforms;
-
-
-    public static class LVKFrameUniforms {
-        private LVKGenericBuffer buffer;
-        private long pMemory;
-        public static int TOTAL_SIZE_BYTES = 3 * 16 * Float.BYTES;
-        public static int MATRIX_SIZE_BYTES = 16 * Float.BYTES;
-
-        public LVKFrameUniforms(LVKGenericBuffer buffer, long pMemory) {
-            this.buffer = buffer;
-            this.pMemory = pMemory;
-        }
-
-
-        public LVKGenericBuffer getBuffer() {
-            return buffer;
-        }
-
-        public long getpMemory() {
-            return pMemory;
-        }
-    }
-
-
-
 
     public LVKRenderFrame(long imageAvailableSemaphore, long renderFinishedSemaphore, long fence) {
         this.imageAvailableSemaphore = imageAvailableSemaphore;
         this.renderFinishedSemaphore = renderFinishedSemaphore;
         this.fence = fence;
     }
-
-    public LVKFrameUniforms getUniforms() {
-        return uniforms;
-    }
-
-    public void setUniforms(LVKFrameUniforms uniforms) {
-        this.uniforms = uniforms;
-    }
-
     public long imageAvailableSemaphore() {
         return imageAvailableSemaphore;
     }

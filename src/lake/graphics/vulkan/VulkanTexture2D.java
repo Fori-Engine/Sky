@@ -16,7 +16,7 @@ import static org.lwjgl.vulkan.VK10.*;
 public class VulkanTexture2D extends Texture2D {
 
 
-    private LVKGenericBuffer stagingBuffer;
+    private VulkanBuffer stagingBuffer;
     private long stagingBufferMemory;
     private LongBuffer pTextureImage;
     private LongBuffer pTextureImageMemory;
@@ -135,7 +135,7 @@ public class VulkanTexture2D extends Texture2D {
 
         try(MemoryStack stack = stackPush()) {
 
-            LVKCommandRunner.run(device, stack, (commandBuffer) -> {
+            FastVK.run(device, stack, (commandBuffer) -> {
 
                 transition(textureImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, commandBuffer, stack);
                 //Buffer -> Image

@@ -13,8 +13,8 @@ public class VulkanIndexBuffer extends IndexBuffer  {
 
     private long indexBufferMemory, stagingBufferMemory;
     private PointerBuffer data;
-    private LVKGenericBuffer buffer;
-    private LVKGenericBuffer stagingBuffer;
+    private VulkanBuffer buffer;
+    private VulkanBuffer stagingBuffer;
 
     private VkDevice device;
 
@@ -64,7 +64,7 @@ public class VulkanIndexBuffer extends IndexBuffer  {
     public PointerBuffer getMappingBuffer() {
         return data;
     }
-    public LVKGenericBuffer getMainBuffer(){
+    public VulkanBuffer getMainBuffer(){
         return buffer;
     }
 

@@ -13,8 +13,8 @@ public class VulkanVertexBuffer extends VertexBuffer {
 
     private long vertexBufferMemory, stagingBufferMemory;
     private PointerBuffer data;
-    private LVKGenericBuffer buffer;
-    private LVKGenericBuffer stagingBuffer;
+    private VulkanBuffer buffer;
+    private VulkanBuffer stagingBuffer;
     private VkDevice device;
 
     public VulkanVertexBuffer(int maxQuads, int vertexDataSize, VkDevice device, long commandPool, VkQueue graphicsQueue, VkPhysicalDevice physicalDevice) {
@@ -67,7 +67,7 @@ public class VulkanVertexBuffer extends VertexBuffer {
 
 
 
-    public LVKGenericBuffer getMainBuffer(){
+    public VulkanBuffer getMainBuffer(){
         return buffer;
     }
 

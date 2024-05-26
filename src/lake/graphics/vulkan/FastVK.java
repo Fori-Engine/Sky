@@ -243,7 +243,7 @@ public class FastVK {
 
 
 
-    public static ArrayList<Long> createFramebuffers(VkDevice device, LVKSwapchain swapchain, List<Long> swapChainImageViews, long renderPass) {
+    public static ArrayList<Long> createFramebuffers(VkDevice device, VulkanSwapchain swapchain, List<Long> swapChainImageViews, long renderPass) {
 
         ArrayList<Long> swapChainFramebuffers = new ArrayList<>(swapChainImageViews.size());
 
@@ -435,7 +435,7 @@ public class FastVK {
 
         throw new RuntimeException("Failed to find suitable memory type");
     }
-    public static LVKGenericBuffer createBuffer(VkDevice device, VkPhysicalDevice physicalDevice, long size, int usage, int properties, LongBuffer pBufferMemory) {
+    public static VulkanBuffer createBuffer(VkDevice device, VkPhysicalDevice physicalDevice, long size, int usage, int properties, LongBuffer pBufferMemory) {
 
         LongBuffer pBuffer = MemoryUtil.memAllocLong(1);
 
@@ -463,14 +463,14 @@ public class FastVK {
 
         vkBindBufferMemory(device, pBuffer.get(0), pBufferMemory.get(0), 0);
 
-        LVKGenericBuffer genericBuffer =  new LVKGenericBuffer(pBuffer.get(0), bufferInfo, pBufferMemory.get(0));
+        VulkanBuffer genericBuffer =  new VulkanBuffer(pBuffer.get(0), bufferInfo, pBufferMemory.get(0));
 
         MemoryUtil.memFree(pBuffer);
         return genericBuffer;
     }
 
 
-    public static List<Long> createImageViews(VkDevice device, LVKSwapchain swapchain) {
+    public static List<Long> createImageViews(VkDevice device, VulkanSwapchain swapchain) {
 
         List<Long> swapChainImageViews = new ArrayList<>(swapchain.swapChainImages.size());
 
@@ -511,7 +511,7 @@ public class FastVK {
     }
 
 
-    public static long createRenderPass(VkDevice device, LVKSwapchain swapchain) {
+    public static long createRenderPass(VkDevice device, VulkanSwapchain swapchain) {
 
         long renderPass;
 
@@ -578,9 +578,9 @@ public class FastVK {
         return details;
     }
 
-    public static LVKSwapchain createSwapChain(VkPhysicalDevice physicalDevice, VkDevice device, long surface, int width, int height) {
+    public static VulkanSwapchain createSwapChain(VkPhysicalDevice physicalDevice, VkDevice device, long surface, int width, int height) {
 
-        LVKSwapchain swapchain = new LVKSwapchain();
+        VulkanSwapchain swapchain = new VulkanSwapchain();
 
         try(MemoryStack stack = stackPush()) {
 
@@ -845,4 +845,67 @@ public class FastVK {
 
         return physicalDeviceProperties;
     }
+
+    public static long commandPool;
+    private static VkQueue graphicsQueue;
+
+    public static void setup(VkDeviceWithIndices deviceWithIndices, VkQueue graphicsQueue){
+        commandPool = FastVK.createCommandPool(deviceWithIndices);
+        FastVK.graphicsQueue = graphicsQueue;
+    }
+
+
+
+    public static void run(VkDevice device, MemoryStack stack, Command r){
+        PointerBuffer pCommandBuffer = stack.mallocPointer(1);
+
+        VkCommandBufferAllocateInfo allocInfo = VkCommandBufferAllocateInfo.calloc(stack);
+        allocInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
+        allocInfo.commandPool(commandPool);
+        allocInfo.level(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+        allocInfo.commandBufferCount(1);
+
+        if(vkAllocateCommandBuffers(device, allocInfo, pCommandBuffer) != VK_SUCCESS) {
+            throw new RuntimeException("Failed to allocate command buffers");
+        }
+
+        VkCommandBuffer commandBuffer = new VkCommandBuffer(pCommandBuffer.get(), device);
+
+        VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
+        beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
+
+        if(vkBeginCommandBuffer(commandBuffer, beginInfo) != VK_SUCCESS) {
+            throw new RuntimeException("Failed to begin recording command buffer");
+        }
+
+        r.run(commandBuffer);
+
+        if(vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+            throw new RuntimeException("Failed to record command buffer");
+        }
+
+        VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
+        {
+            submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
+            submitInfo.pCommandBuffers(stack.pointers(commandBuffer));
+        }
+
+
+
+        if(vkQueueSubmit(graphicsQueue, submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
+            throw new RuntimeException("Failed to submit command buffer");
+        }
+
+        vkQueueWaitIdle(graphicsQueue);
+
+    }
+
+    public static void cleanup(VkDevice device){
+        vkDestroyCommandPool(device, commandPool, null);
+    }
+
+    public interface Command {
+        void run(VkCommandBuffer commandBuffer);
+    }
+
 }

@@ -9,13 +9,13 @@ import java.nio.ByteBuffer;
 import static org.lwjgl.vulkan.VK10.vkMapMemory;
 import static org.lwjgl.vulkan.VK10.vkUnmapMemory;
 
-public class LVKGenericBuffer {
+public class VulkanBuffer {
     public long handle;
     public VkBufferCreateInfo bufferInfo;
 
     public long pMemory;
 
-    public LVKGenericBuffer(long handle, VkBufferCreateInfo bufferInfo, long pMemory) {
+    public VulkanBuffer(long handle, VkBufferCreateInfo bufferInfo, long pMemory) {
         this.handle = handle;
         this.bufferInfo = bufferInfo;
         this.pMemory = pMemory;

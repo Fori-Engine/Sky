@@ -28,7 +28,7 @@ public class VulkanRenderer2D extends Renderer2D {
     private static VkPhysicalDevice physicalDevice;
     private VkInstance instance;
     private long surface;
-    private LVKSwapchain swapchain;
+    private VulkanSwapchain swapchain;
     private List<Long> swapchainImageViews;
     private VulkanPipeline currentPipeline;
     private long renderPass;
@@ -48,6 +48,9 @@ public class VulkanRenderer2D extends Renderer2D {
 
     public static ShaderResource modelViewProj;
     public static ShaderResource sampler2DArray;
+
+    public static int TOTAL_SIZE_BYTES = 3 * 16 * Float.BYTES;
+    public static int MATRIX_SIZE_BYTES = 16 * Float.BYTES;
 
 
     public VulkanRenderer2D(Window window, int width, int height, RenderSettings settings) {
@@ -78,7 +81,7 @@ public class VulkanRenderer2D extends Renderer2D {
         swapchainFramebuffers = FastVK.createFramebuffers(deviceWithIndices.device, swapchain, swapchainImageViews, renderPass);
         commandPool = FastVK.createCommandPool(deviceWithIndices);
         textureLookup = new FastTextureLookup(32);
-        LVKCommandRunner.setup(deviceWithIndices, graphicsQueue);
+        FastVK.setup(deviceWithIndices, graphicsQueue);
 
 
 
@@ -149,12 +152,6 @@ public class VulkanRenderer2D extends Renderer2D {
                 renderSyncInfo.inFlightFrames.add(new LVKRenderFrame(pImageAvailableSemaphore.get(0), pRenderFinishedSemaphore.get(0), pFence.get(0)));
             }
 
-            for(LVKRenderFrame frame : renderSyncInfo.inFlightFrames){
-                LongBuffer pMemoryBuffer = stack.mallocLong(1);
-                LVKGenericBuffer uniformsBuffer = FastVK.createBuffer(deviceWithIndices.device, physicalDevice, LVKRenderFrame.LVKFrameUniforms.TOTAL_SIZE_BYTES, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, pMemoryBuffer);
-                LVKRenderFrame.LVKFrameUniforms uniforms = new LVKRenderFrame.LVKFrameUniforms(uniformsBuffer, pMemoryBuffer.get());
-                frame.setUniforms(uniforms);
-            }
 
         }
 
@@ -181,7 +178,7 @@ public class VulkanRenderer2D extends Renderer2D {
         modelViewProj = new ShaderResource(0)
                 .type(ShaderResource.Type.UniformBuffer)
                 .shaderStage(ShaderResource.ShaderStage.VertexStage)
-                .sizeBytes(LVKRenderFrame.LVKFrameUniforms.TOTAL_SIZE_BYTES)
+                .sizeBytes(TOTAL_SIZE_BYTES)
                 .count(1);
 
         sampler2DArray = new ShaderResource(1)
@@ -332,7 +329,7 @@ public class VulkanRenderer2D extends Renderer2D {
         }
 
     }
-    private VulkanPipeline createPipeline(VkDevice device, LVKSwapchain swapchain, VkPipelineShaderStageCreateInfo.Buffer shaderStages, long renderPass, LongBuffer descriptorSetLayout){
+    private VulkanPipeline createPipeline(VkDevice device, VulkanSwapchain swapchain, VkPipelineShaderStageCreateInfo.Buffer shaderStages, long renderPass, LongBuffer descriptorSetLayout){
 
         FlightRecorder.info(VulkanRenderer2D.class, "Creating new pipeline...");
 
@@ -584,8 +581,8 @@ public class VulkanRenderer2D extends Renderer2D {
 
         for(ByteBuffer buffer : buffers) {
             model.get(buffer);
-            camera.getViewMatrix().get(LVKRenderFrame.LVKFrameUniforms.MATRIX_SIZE_BYTES, buffer);
-            proj.get(2 * LVKRenderFrame.LVKFrameUniforms.MATRIX_SIZE_BYTES, buffer);
+            camera.getViewMatrix().get(MATRIX_SIZE_BYTES, buffer);
+            proj.get(2 * MATRIX_SIZE_BYTES, buffer);
         }
 
         currentShaderProgram.unmapUniformBuffer(modelViewProj, buffers);
@@ -842,7 +839,7 @@ public class VulkanRenderer2D extends Renderer2D {
     @Override
     public void dispose() {
 
-        LVKCommandRunner.cleanup(deviceWithIndices.device);
+        FastVK.cleanup(deviceWithIndices.device);
         physicalDeviceProperties.free();
 
 
@@ -855,25 +852,16 @@ public class VulkanRenderer2D extends Renderer2D {
         }
 
 
-
-
-
-
         renderSyncInfo.inFlightFrames.forEach(frame -> {
-
             vkDestroySemaphore(deviceWithIndices.device, frame.renderFinishedSemaphore(), null);
             vkDestroySemaphore(deviceWithIndices.device, frame.imageAvailableSemaphore(), null);
             vkDestroyFence(deviceWithIndices.device, frame.fence(), null);
-
-            vkDestroyBuffer(deviceWithIndices.device, frame.getUniforms().getBuffer().handle, null);
-            vkFreeMemory(deviceWithIndices.device, frame.getUniforms().getpMemory(), null);
-
-
-
-
         });
-        renderSyncInfo.imagesInFlight.clear();
 
+
+
+
+        renderSyncInfo.imagesInFlight.clear();
 
         vkDestroyRenderPass(deviceWithIndices.device, renderPass, null);
         vkDestroyCommandPool(deviceWithIndices.device, commandPool, null);

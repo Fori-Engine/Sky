@@ -36,7 +36,7 @@ public class VulkanShaderProgram extends ShaderProgram {
     private List<Long> descriptorSets;
     private LVKRenderSync renderSyncInfo;
     private LongBuffer pDescriptorSets;
-    private HashMap<ShaderResource, LVKGenericBuffer>[] frameUniformBuffers = new HashMap[MAX_FRAMES_IN_FLIGHT];
+    private HashMap<ShaderResource, VulkanBuffer>[] frameUniformBuffers = new HashMap[MAX_FRAMES_IN_FLIGHT];
 
 
     public VulkanShaderProgram(String vertexShaderSource, String fragmentShaderSource) {
@@ -52,7 +52,7 @@ public class VulkanShaderProgram extends ShaderProgram {
     public void addResource(ShaderResource resource) {
         super.addResource(resource);
 
-        for(HashMap<ShaderResource, LVKGenericBuffer> buffer : frameUniformBuffers) {
+        for(HashMap<ShaderResource, VulkanBuffer> buffer : frameUniformBuffers) {
 
 
             if (resource.type == ShaderResource.Type.UniformBuffer) {
@@ -60,7 +60,7 @@ public class VulkanShaderProgram extends ShaderProgram {
                 try (MemoryStack stack = stackPush()) {
 
                     LongBuffer pMemoryBuffer = stack.mallocLong(1);
-                    LVKGenericBuffer uniformsBuffer = FastVK.createBuffer(
+                    VulkanBuffer uniformsBuffer = FastVK.createBuffer(
                             VulkanRenderer2D.getDeviceWithIndices().device,
                             VulkanRenderer2D.getPhysicalDevice(),
                             resource.sizeBytes,
@@ -288,7 +288,7 @@ public class VulkanShaderProgram extends ShaderProgram {
                 List<LVKRenderFrame> inFlightFrames = renderSyncInfo.inFlightFrames;
                 //Bind Memory
                 for (int i = 0; i < inFlightFrames.size(); i++) {
-                    HashMap<ShaderResource, LVKGenericBuffer> buffers = frameUniformBuffers[i];
+                    HashMap<ShaderResource, VulkanBuffer> buffers = frameUniformBuffers[i];
                     long descriptorSet = pDescriptorSets.get(i);
 
                     for(ShaderResource shaderResource : buffers.keySet()) {
@@ -488,8 +488,8 @@ public class VulkanShaderProgram extends ShaderProgram {
     @Override
     public void dispose() {
         disposeShaderModules();
-        for(HashMap<ShaderResource, LVKGenericBuffer> frameUniformBuffer : frameUniformBuffers){
-            for(LVKGenericBuffer buffer : frameUniformBuffer.values()){
+        for(HashMap<ShaderResource, VulkanBuffer> frameUniformBuffer : frameUniformBuffers){
+            for(VulkanBuffer buffer : frameUniformBuffer.values()){
                 vkDestroyBuffer(device, buffer.handle, null);
                 vkFreeMemory(device, buffer.pMemory, null);
             }
