@@ -21,10 +21,10 @@ public class PlatformerDemo {
         AssetPacks.open("core", AssetPack.openLocal(new File("assets")));
 
         FlightRecorder.setEnabled(true);
-        FlightRecorder.meltdown(PlatformerDemo.class, "Welp, having a meltdown");
-        FlightRecorder.error(PlatformerDemo.class, "Welp, having an error");
-        FlightRecorder.info(PlatformerDemo.class, "Welp, having an info");
-        FlightRecorder.todo(PlatformerDemo.class, "Welp, having an todo");
+        FlightRecorder.meltdown(PlatformerDemo.class, "This is very very bad");
+        FlightRecorder.error(PlatformerDemo.class, "This is very bad");
+        FlightRecorder.info(PlatformerDemo.class, "This isn't bad");
+        FlightRecorder.todo(PlatformerDemo.class, "I'm just being lazy");
 
 
 
