@@ -1,6 +1,6 @@
 package lake.graphics;
 
-import lake.graphics.opengl.GLTexture2D;
+
 
 /***
  * A fast array-based implementation for looking up Textures in existing slots

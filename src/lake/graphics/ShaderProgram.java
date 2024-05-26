@@ -1,6 +1,5 @@
 package lake.graphics;
 
-import lake.graphics.opengl.GLShaderProgram;
 import lake.graphics.vulkan.LVKShaderProgram;
 import org.joml.Matrix4f;
 
@@ -58,7 +57,6 @@ public abstract class ShaderProgram implements Disposable {
     public abstract void dispose();
 
     public static ShaderProgram newShaderProgram(String vertexShaderSource, String fragmentShaderSource){
-        if(Renderer2D.getRenderAPI() == RenderAPI.OpenGL) return new GLShaderProgram(vertexShaderSource, fragmentShaderSource);
         if(Renderer2D.getRenderAPI() == RenderAPI.Vulkan) return new LVKShaderProgram(vertexShaderSource, fragmentShaderSource);
 
         return null;

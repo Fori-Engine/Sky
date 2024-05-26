@@ -24,7 +24,7 @@ public class VulkanDemo {
 
 
         Window window = new Window(640, 480, "Vulkan Demo", false);
-        Renderer2D renderer2D = Renderer2D.newRenderer2D(window, window.getWidth(), window.getHeight(), new RenderSettings(RenderAPI.OpenGL).msaa(true));
+        Renderer2D renderer2D = Renderer2D.newRenderer2D(window, window.getWidth(), window.getHeight(), new RenderSettings(RenderAPI.Vulkan).msaa(true));
 
 
 

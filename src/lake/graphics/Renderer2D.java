@@ -1,8 +1,6 @@
 package lake.graphics;
 
 import lake.FlightRecorder;
-import lake.graphics.opengl.GLContext;
-import lake.graphics.opengl.GLRenderer2D;
 import lake.graphics.vulkan.LVKContext;
 import lake.graphics.vulkan.LVKRenderer2D;
 import org.joml.Matrix4f;
@@ -334,11 +332,7 @@ public abstract class Renderer2D implements Disposable {
         api = settings.backend;
         FlightRecorder.info(Renderer2D.class, "Using renderer backend " + api);
 
-        if(settings.backend == RenderAPI.OpenGL){
-            window.setContext(new GLContext());
-            return new GLRenderer2D(width, height, settings);
-        }
-        else if(settings.backend == RenderAPI.Vulkan){
+        if(settings.backend == RenderAPI.Vulkan){
             window.setContext(new LVKContext());
             return new LVKRenderer2D(window, width, height, settings);
         }
