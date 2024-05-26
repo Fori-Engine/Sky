@@ -30,7 +30,7 @@ public class VulkanIndexBuffer extends IndexBuffer  {
 
 
         LongBuffer pStagingBufferMemory = MemoryUtil.memAllocLong(1);
-        stagingBuffer = FastVK.createBuffer(
+        stagingBuffer = VulkanUtil.createBuffer(
                 device,
                 physicalDevice,
                 indicesSizeBytes,
@@ -42,7 +42,7 @@ public class VulkanIndexBuffer extends IndexBuffer  {
 
 
         LongBuffer pIndexBufferMemory = MemoryUtil.memAllocLong(1);
-        buffer = FastVK.createBuffer(
+        buffer = VulkanUtil.createBuffer(
                 device,
                 physicalDevice,
                 indicesSizeBytes,
@@ -51,7 +51,7 @@ public class VulkanIndexBuffer extends IndexBuffer  {
                 pIndexBufferMemory
         );
         indexBufferMemory = pIndexBufferMemory.get(0);
-        VkSubmitInfo submitInfo = FastVK.transfer(indicesSizeBytes, commandPool, device, buffer.handle, stagingBuffer.handle);
+        VkSubmitInfo submitInfo = VulkanUtil.transfer(indicesSizeBytes, commandPool, device, buffer.handle, stagingBuffer.handle);
 
 
         if(vkQueueSubmit(graphicsQueue, submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {

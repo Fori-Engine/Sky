@@ -9,13 +9,13 @@ import static org.lwjgl.system.MemoryStack.stackGet;
  *
  * This frame's sync objects must be deleted manually
  * */
-public class LVKRenderFrame {
+public class VulkanSyncData {
 
     private final long imageAvailableSemaphore;
     private final long renderFinishedSemaphore;
     private final long fence;
 
-    public LVKRenderFrame(long imageAvailableSemaphore, long renderFinishedSemaphore, long fence) {
+    public VulkanSyncData(long imageAvailableSemaphore, long renderFinishedSemaphore, long fence) {
         this.imageAvailableSemaphore = imageAvailableSemaphore;
         this.renderFinishedSemaphore = renderFinishedSemaphore;
         this.fence = fence;

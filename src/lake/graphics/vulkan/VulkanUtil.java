@@ -27,8 +27,8 @@ import static org.lwjgl.vulkan.KHRSurface.*;
 import static org.lwjgl.vulkan.KHRSwapchain.*;
 import static org.lwjgl.vulkan.VK13.*;
 
-public class FastVK {
-    private FastVK(){}
+public class VulkanUtil {
+    private VulkanUtil(){}
 
     private static List<String> validationLayers = new ArrayList<>();
     private static final Set<String> DEVICE_EXTENSIONS = Stream.of(VK_KHR_SWAPCHAIN_EXTENSION_NAME)
@@ -706,7 +706,7 @@ public class FastVK {
         debugCreateInfo.sType(VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT);
         debugCreateInfo.messageSeverity(VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT);
         debugCreateInfo.messageType(VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT);
-        debugCreateInfo.pfnUserCallback(FastVK::debugCallback);
+        debugCreateInfo.pfnUserCallback(VulkanUtil::debugCallback);
     }
 
     private static PointerBuffer validationLayersAsPointerBuffer(MemoryStack stack) {
@@ -724,7 +724,7 @@ public class FastVK {
 
         VkDebugUtilsMessengerCallbackDataEXT callbackData = VkDebugUtilsMessengerCallbackDataEXT.create(pCallbackData);
 
-        FlightRecorder.info(FastVK.class, callbackData.pMessageString());
+        FlightRecorder.info(VulkanUtil.class, callbackData.pMessageString());
 
         return VK_FALSE;
     }
@@ -849,14 +849,14 @@ public class FastVK {
     public static long commandPool;
     private static VkQueue graphicsQueue;
 
-    public static void setup(VkDeviceWithIndices deviceWithIndices, VkQueue graphicsQueue){
-        commandPool = FastVK.createCommandPool(deviceWithIndices);
-        FastVK.graphicsQueue = graphicsQueue;
+    public static void setupUtilsCommandPool(VkDeviceWithIndices deviceWithIndices, VkQueue graphicsQueue){
+        commandPool = VulkanUtil.createCommandPool(deviceWithIndices);
+        VulkanUtil.graphicsQueue = graphicsQueue;
     }
 
 
 
-    public static void run(VkDevice device, MemoryStack stack, Command r){
+    public static void runCommand(VkDevice device, MemoryStack stack, VulkanCommand r){
         PointerBuffer pCommandBuffer = stack.mallocPointer(1);
 
         VkCommandBufferAllocateInfo allocInfo = VkCommandBufferAllocateInfo.calloc(stack);
@@ -900,11 +900,11 @@ public class FastVK {
 
     }
 
-    public static void cleanup(VkDevice device){
+    public static void cleanupUtilsCommandPool(VkDevice device){
         vkDestroyCommandPool(device, commandPool, null);
     }
 
-    public interface Command {
+    public interface VulkanCommand {
         void run(VkCommandBuffer commandBuffer);
     }
 

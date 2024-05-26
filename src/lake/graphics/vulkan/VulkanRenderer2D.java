@@ -37,15 +37,14 @@ public class VulkanRenderer2D extends Renderer2D {
     private VulkanVertexBuffer vertexBuffer;
     private VulkanIndexBuffer indexBuffer;
     private List<VkCommandBuffer> commandBuffers;
-    private LVKRenderSync renderSyncInfo;
     private int currentFrame;
     private ByteBuffer vertexBufferData, indexBufferData;
     private FastTextureLookup textureLookup;
     private int nextTextureSlot;
     private VkPhysicalDeviceProperties physicalDeviceProperties;
     private Map<ShaderProgram, VulkanPipeline> pipelineCache = new HashMap<>();
-
-
+    public List<VulkanSyncData> inFlightFrames;
+    public Map<Integer, VulkanSyncData> imagesInFlight;
     public static ShaderResource modelViewProj;
     public static ShaderResource sampler2DArray;
 
@@ -60,28 +59,34 @@ public class VulkanRenderer2D extends Renderer2D {
         String appEngineInfoName = "LakeEngine";
 
         FlightRecorder.info(VulkanRenderer2D.class, "Using appInfoEngineName of " + appEngineInfoName);
-        instance = FastVK.createInstance(getClass().getName(), appEngineInfoName, settings.enableValidation);
-        FastVK.setupDebugMessenger(instance, settings.enableValidation);
-        surface = FastVK.createSurface(instance, window);
-        physicalDevice = FastVK.pickPhysicalDevice(instance, surface);
-        deviceWithIndices = FastVK.createLogicalDevice(physicalDevice, settings.enableValidation, surface);
-        graphicsQueue = FastVK.getGraphicsQueue(deviceWithIndices);
-        presentQueue = FastVK.getPresentQueue(deviceWithIndices);
-        swapchain = FastVK.createSwapChain(physicalDevice, deviceWithIndices.device, surface, width, height);
-        swapchainImageViews = FastVK.createImageViews(deviceWithIndices.device, swapchain);
+        instance = VulkanUtil.createInstance(getClass().getName(), appEngineInfoName, settings.enableValidation);
+        VulkanUtil.setupDebugMessenger(instance, settings.enableValidation);
+        surface = VulkanUtil.createSurface(instance, window);
+        physicalDevice = VulkanUtil.pickPhysicalDevice(instance, surface);
+        deviceWithIndices = VulkanUtil.createLogicalDevice(physicalDevice, settings.enableValidation, surface);
+        graphicsQueue = VulkanUtil.getGraphicsQueue(deviceWithIndices);
+        presentQueue = VulkanUtil.getPresentQueue(deviceWithIndices);
+        swapchain = VulkanUtil.createSwapChain(physicalDevice, deviceWithIndices.device, surface, width, height);
+        swapchainImageViews = VulkanUtil.createImageViews(deviceWithIndices.device, swapchain);
 
 
 
 
-        physicalDeviceProperties = FastVK.getPhysicalDeviceProperties(physicalDevice);
+        physicalDeviceProperties = VulkanUtil.getPhysicalDeviceProperties(physicalDevice);
+        FlightRecorder.info(VulkanRenderer2D.class,
+                "Selected Physical Device: " +
+                        physicalDeviceProperties.deviceNameString() +
+                        "\nDriver Version: " +
+                        physicalDeviceProperties.driverVersion()
+                );
 
 
 
-        renderPass = FastVK.createRenderPass(deviceWithIndices.device, swapchain);
-        swapchainFramebuffers = FastVK.createFramebuffers(deviceWithIndices.device, swapchain, swapchainImageViews, renderPass);
-        commandPool = FastVK.createCommandPool(deviceWithIndices);
+        renderPass = VulkanUtil.createRenderPass(deviceWithIndices.device, swapchain);
+        swapchainFramebuffers = VulkanUtil.createFramebuffers(deviceWithIndices.device, swapchain, swapchainImageViews, renderPass);
+        commandPool = VulkanUtil.createCommandPool(deviceWithIndices);
         textureLookup = new FastTextureLookup(32);
-        FastVK.setup(deviceWithIndices, graphicsQueue);
+        VulkanUtil.setupUtilsCommandPool(deviceWithIndices, graphicsQueue);
 
 
 
@@ -121,9 +126,9 @@ public class VulkanRenderer2D extends Renderer2D {
         indexBufferData = indexBuffer.getMainBuffer().mapAndGet(deviceWithIndices.device, indexBuffer.getMappingBuffer());
 
 
-        renderSyncInfo = new LVKRenderSync();
-        renderSyncInfo.inFlightFrames = new ArrayList<>(MAX_FRAMES_IN_FLIGHT);
-        renderSyncInfo.imagesInFlight = new HashMap<>(MAX_FRAMES_IN_FLIGHT);
+        
+        inFlightFrames = new ArrayList<>(MAX_FRAMES_IN_FLIGHT);
+        imagesInFlight = new HashMap<>(MAX_FRAMES_IN_FLIGHT);
 
 
 
@@ -149,7 +154,7 @@ public class VulkanRenderer2D extends Renderer2D {
                     throw new RuntimeException("Failed to create synchronization objects for the frame " + i);
                 }
 
-                renderSyncInfo.inFlightFrames.add(new LVKRenderFrame(pImageAvailableSemaphore.get(0), pRenderFinishedSemaphore.get(0), pFence.get(0)));
+                inFlightFrames.add(new VulkanSyncData(pImageAvailableSemaphore.get(0), pRenderFinishedSemaphore.get(0), pFence.get(0)));
             }
 
 
@@ -197,6 +202,7 @@ public class VulkanRenderer2D extends Renderer2D {
         shaderProgram.addResource(color);
 
 
+        defaultShaderProgram = shaderProgram;
         setShaderProgram(shaderProgram);
 
 
@@ -208,22 +214,13 @@ public class VulkanRenderer2D extends Renderer2D {
         ByteBuffer[] colorBuffer = shaderProgram.mapUniformBuffer(color);
 
         for(ByteBuffer buffer : colorBuffer){
-            buffer.putFloat(0.91f);
-            buffer.putFloat(0.01f);
-            buffer.putFloat(0.01f);
+            buffer.putFloat(1f);
+            buffer.putFloat(1f);
+            buffer.putFloat(1f);
             buffer.putFloat(1f);
         }
 
         shaderProgram.unmapUniformBuffer(color, colorBuffer);
-
-
-
-
-
-
-
-
-        currentShaderProgram = shaderProgram;
 
 
 
@@ -542,36 +539,25 @@ public class VulkanRenderer2D extends Renderer2D {
     @Override
     public void setShaderProgram(ShaderProgram shaderProgram) {
 
-
-
-
         if(pipelineCache.containsKey(shaderProgram)) {
             currentPipeline = pipelineCache.get(shaderProgram);
         }
         else {
-
-
-
             VulkanShaderProgram vulkanShaderProgram = (VulkanShaderProgram) shaderProgram;
 
-
-
             vulkanShaderProgram.setDevice(deviceWithIndices.device);
-            vulkanShaderProgram.createDescriptors(renderSyncInfo);
+            vulkanShaderProgram.createDescriptors();
             VulkanPipeline newPipeline = createPipeline(
                     deviceWithIndices.device,
                     swapchain,
                     vulkanShaderProgram.getShaderStages(),
                     renderPass,
-                    ((VulkanShaderProgram) shaderProgram).getDescriptorSetLayout());
+                    vulkanShaderProgram.getDescriptorSetLayout());
 
             pipelineCache.put(shaderProgram, newPipeline);
             currentPipeline = newPipeline;
             currentShaderProgram = shaderProgram;
         }
-
-
-
 
     }
     @Override
@@ -736,7 +722,7 @@ public class VulkanRenderer2D extends Renderer2D {
 
         try(MemoryStack stack = stackPush()) {
 
-            LVKRenderFrame thisFrame = renderSyncInfo.inFlightFrames.get(currentFrame);
+            VulkanSyncData thisFrame = inFlightFrames.get(currentFrame);
 
 
 
@@ -768,11 +754,11 @@ public class VulkanRenderer2D extends Renderer2D {
             vkAcquireNextImageKHR(deviceWithIndices.device, swapchain.swapChain, UINT64_MAX, thisFrame.imageAvailableSemaphore(), VK_NULL_HANDLE, pImageIndex);
             final int imageIndex = pImageIndex.get(0);
 
-            if(renderSyncInfo.imagesInFlight.containsKey(imageIndex)) {
-                vkWaitForFences(deviceWithIndices.device, renderSyncInfo.imagesInFlight.get(imageIndex).fence(), true, UINT64_MAX);
+            if(imagesInFlight.containsKey(imageIndex)) {
+                vkWaitForFences(deviceWithIndices.device, imagesInFlight.get(imageIndex).fence(), true, UINT64_MAX);
             }
 
-            renderSyncInfo.imagesInFlight.put(imageIndex, thisFrame);
+            imagesInFlight.put(imageIndex, thisFrame);
 
             VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
             {
@@ -839,7 +825,7 @@ public class VulkanRenderer2D extends Renderer2D {
     @Override
     public void dispose() {
 
-        FastVK.cleanup(deviceWithIndices.device);
+        VulkanUtil.cleanupUtilsCommandPool(deviceWithIndices.device);
         physicalDeviceProperties.free();
 
 
@@ -852,7 +838,7 @@ public class VulkanRenderer2D extends Renderer2D {
         }
 
 
-        renderSyncInfo.inFlightFrames.forEach(frame -> {
+        inFlightFrames.forEach(frame -> {
             vkDestroySemaphore(deviceWithIndices.device, frame.renderFinishedSemaphore(), null);
             vkDestroySemaphore(deviceWithIndices.device, frame.imageAvailableSemaphore(), null);
             vkDestroyFence(deviceWithIndices.device, frame.fence(), null);
@@ -861,7 +847,7 @@ public class VulkanRenderer2D extends Renderer2D {
 
 
 
-        renderSyncInfo.imagesInFlight.clear();
+        imagesInFlight.clear();
 
         vkDestroyRenderPass(deviceWithIndices.device, renderPass, null);
         vkDestroyCommandPool(deviceWithIndices.device, commandPool, null);
@@ -878,7 +864,7 @@ public class VulkanRenderer2D extends Renderer2D {
 
 
         vkDestroyDevice(deviceWithIndices.device, null);
-        FastVK.cleanupDebugMessenger(instance, true);
+        VulkanUtil.cleanupDebugMessenger(instance, true);
 
         vkDestroySurfaceKHR(instance, surface, null);
         vkDestroyInstance(instance, null);

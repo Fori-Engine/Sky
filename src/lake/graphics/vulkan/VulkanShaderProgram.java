@@ -34,7 +34,6 @@ public class VulkanShaderProgram extends ShaderProgram {
     private LongBuffer descriptorSetLayout;
     private long descriptorPool;
     private List<Long> descriptorSets;
-    private LVKRenderSync renderSyncInfo;
     private LongBuffer pDescriptorSets;
     private HashMap<ShaderResource, VulkanBuffer>[] frameUniformBuffers = new HashMap[MAX_FRAMES_IN_FLIGHT];
 
@@ -60,7 +59,7 @@ public class VulkanShaderProgram extends ShaderProgram {
                 try (MemoryStack stack = stackPush()) {
 
                     LongBuffer pMemoryBuffer = stack.mallocLong(1);
-                    VulkanBuffer uniformsBuffer = FastVK.createBuffer(
+                    VulkanBuffer uniformsBuffer = VulkanUtil.createBuffer(
                             VulkanRenderer2D.getDeviceWithIndices().device,
                             VulkanRenderer2D.getPhysicalDevice(),
                             resource.sizeBytes,
@@ -118,7 +117,7 @@ public class VulkanShaderProgram extends ShaderProgram {
             }
 
             //Set Textures, this should go into another method
-            for (int i = 0; i < renderSyncInfo.inFlightFrames.size(); i++) {
+            for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 
                 long descriptorSet = pDescriptorSets.get(i);
 
@@ -147,7 +146,7 @@ public class VulkanShaderProgram extends ShaderProgram {
     public void updateSampler2DArray(ShaderResource resource, int index, Texture2D tex) {
         VulkanTexture2D vulkanTexture2D = (VulkanTexture2D) tex;
 
-        for (int i = 0; i < renderSyncInfo.inFlightFrames.size(); i++) {
+        for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 
             long descriptorSet = pDescriptorSets.get(i);
 
@@ -195,8 +194,8 @@ public class VulkanShaderProgram extends ShaderProgram {
 
 
 
-    public void createDescriptors(LVKRenderSync renderSyncInfo){
-        this.renderSyncInfo = renderSyncInfo;
+    public void createDescriptors(){
+
 
 
 
@@ -285,9 +284,8 @@ public class VulkanShaderProgram extends ShaderProgram {
                 }
                 descriptorSets = new ArrayList<>(pDescriptorSets.capacity());
 
-                List<LVKRenderFrame> inFlightFrames = renderSyncInfo.inFlightFrames;
                 //Bind Memory
-                for (int i = 0; i < inFlightFrames.size(); i++) {
+                for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
                     HashMap<ShaderResource, VulkanBuffer> buffers = frameUniformBuffers[i];
                     long descriptorSet = pDescriptorSets.get(i);
 
@@ -349,8 +347,8 @@ public class VulkanShaderProgram extends ShaderProgram {
         vertShaderSPIRV = compileShaderToSPIRV(getVertexShaderSource(), shaderc_glsl_vertex_shader);
         fragShaderSPIRV = compileShaderToSPIRV(getFragmentShaderSource(), shaderc_glsl_fragment_shader);
 
-        vertShaderModule = FastVK.createShaderModule(device, vertShaderSPIRV.bytecode);
-        fragShaderModule = FastVK.createShaderModule(device, fragShaderSPIRV.bytecode);
+        vertShaderModule = VulkanUtil.createShaderModule(device, vertShaderSPIRV.bytecode);
+        fragShaderModule = VulkanUtil.createShaderModule(device, fragShaderSPIRV.bytecode);
 
 
 

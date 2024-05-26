@@ -2,6 +2,8 @@ package lake.demo;
 
 import lake.FileReader;
 import lake.FlightRecorder;
+import lake.asset.AssetPack;
+import lake.asset.AssetPacks;
 import lake.graphics.*;
 import lake.physics.CircleBody2D;
 import lake.physics.RectBody2D;
@@ -9,27 +11,25 @@ import lake.physics.RigidBody2D;
 import lake.physics.World;
 import org.joml.Vector2f;
 
+import java.io.File;
 import java.util.ArrayList;
 
 public class PlatformerDemo {
 
 
     public static void main(String[] args) throws InterruptedException {
+        AssetPacks.open("core", AssetPack.openLocal(new File("assets")));
 
         FlightRecorder.setEnabled(true);
-
+        FlightRecorder.meltdown(PlatformerDemo.class, "Welp, having a meltdown");
+        FlightRecorder.error(PlatformerDemo.class, "Welp, having an error");
+        FlightRecorder.info(PlatformerDemo.class, "Welp, having an info");
+        FlightRecorder.todo(PlatformerDemo.class, "Welp, having an todo");
 
 
 
         Window window = new Window(1920, 1080, "Showcase Demo", false);
         Renderer2D renderer2D = Renderer2D.newRenderer2D(window, window.getWidth(), window.getHeight(), new RenderSettings(RenderAPI.Vulkan).msaa(true));
-
-
-        ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(
-                FileReader.readFile("test/VertexShader.glsl"),
-                FileReader.readFile("test/FragmentShader.glsl"));
-        shaderProgram.prepare();
-
 
 
 
@@ -86,7 +86,7 @@ public class PlatformerDemo {
 
 
 
-            renderer2D.setShaderProgram(shaderProgram);
+
 
 
 
@@ -142,7 +142,6 @@ public class PlatformerDemo {
             }
 
 
-            renderer2D.render();
 
 
 
@@ -150,7 +149,8 @@ public class PlatformerDemo {
 
 
 
-            renderer2D.setShaderProgram(renderer2D.getDefaultShaderProgram());
+
+
             renderer2D.drawText(0, 0, "This is some text boi", Color.GREEN, Font2D.getDefault());
             renderer2D.render();
 

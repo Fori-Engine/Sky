@@ -27,7 +27,7 @@ public class VulkanVertexBuffer extends VertexBuffer {
 
 
         LongBuffer pStagingBufferMemory = MemoryUtil.memAllocLong(1);
-        stagingBuffer = FastVK.createBuffer(
+        stagingBuffer = VulkanUtil.createBuffer(
                 device,
                 physicalDevice,
                 verticesSizeBytes,
@@ -39,7 +39,7 @@ public class VulkanVertexBuffer extends VertexBuffer {
 
 
         LongBuffer pVertexBufferMemory = MemoryUtil.memAllocLong(1);
-        buffer = FastVK.createBuffer(
+        buffer = VulkanUtil.createBuffer(
                 device,
                 physicalDevice,
                 verticesSizeBytes,
@@ -51,7 +51,7 @@ public class VulkanVertexBuffer extends VertexBuffer {
         numOfVertices = maxQuads * 4;
 
         vertexBufferMemory = pVertexBufferMemory.get(0);
-        VkSubmitInfo submitInfo = FastVK.transfer(verticesSizeBytes, commandPool, device, buffer.handle, stagingBuffer.handle);
+        VkSubmitInfo submitInfo = VulkanUtil.transfer(verticesSizeBytes, commandPool, device, buffer.handle, stagingBuffer.handle);
 
         if(vkQueueSubmit(graphicsQueue, submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
             throw new RuntimeException("Failed to submit copy command buffer");

@@ -59,7 +59,7 @@ public class VulkanTexture2D extends Texture2D {
 
 
         LongBuffer pStagingBufferMemory = MemoryUtil.memAllocLong(1);
-        stagingBuffer = FastVK.createBuffer(
+        stagingBuffer = VulkanUtil.createBuffer(
                 device,
                 VulkanRenderer2D.getPhysicalDevice(),
                 sizeBytes,
@@ -111,7 +111,7 @@ public class VulkanTexture2D extends Texture2D {
             VkMemoryAllocateInfo allocInfo = VkMemoryAllocateInfo.calloc(stack);
             allocInfo.sType(VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO);
             allocInfo.allocationSize(memRequirements.size());
-            allocInfo.memoryTypeIndex(FastVK.findMemoryType(memRequirements.memoryTypeBits(), VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, physicalDevice));
+            allocInfo.memoryTypeIndex(VulkanUtil.findMemoryType(memRequirements.memoryTypeBits(), VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, physicalDevice));
 
 
 
@@ -135,7 +135,7 @@ public class VulkanTexture2D extends Texture2D {
 
         try(MemoryStack stack = stackPush()) {
 
-            FastVK.run(device, stack, (commandBuffer) -> {
+            VulkanUtil.runCommand(device, stack, (commandBuffer) -> {
 
                 transition(textureImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, commandBuffer, stack);
                 //Buffer -> Image
