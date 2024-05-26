@@ -8,6 +8,7 @@ import org.lwjgl.system.MemoryStack;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
 import static org.lwjgl.opengl.GL46.*;
@@ -74,11 +75,11 @@ public class GLShaderProgram extends ShaderProgram {
 
             if(resource.type == ShaderResource.Type.UniformBuffer) {
 
-                IntBuffer n = stack.callocInt(1);
+                IntBuffer n = stack.mallocInt(1);
                 glGetProgramiv(shaderProgram, GL_ACTIVE_UNIFORM_BLOCKS, n);
                 int numOfUniformBlocks = n.get(0);
                 for (int i = 0; i < numOfUniformBlocks; i++) {
-                    IntBuffer bindingPoint = stack.callocInt(1);
+                    IntBuffer bindingPoint = stack.mallocInt(1);
                     glGetActiveUniformBlockiv(shaderProgram, i, GL_UNIFORM_BLOCK_BINDING, bindingPoint);
                     if (bindingPoint.get(0) == resource.binding) {
                         bindingToUBOBlockIndex.put(resource.binding, i);
@@ -94,26 +95,10 @@ public class GLShaderProgram extends ShaderProgram {
                 }
             }
             else {
-
-                IntBuffer n = stack.mallocInt(1);
+                IntBuffer n = stack.callocInt(1);
                 glGetProgramiv(shaderProgram, GL_ACTIVE_UNIFORMS, n);
-                int numOfUniform = n.get(0);
-                for (int i = 0; i < numOfUniform; i++) {
-                    IntBuffer bindingPoint = stack.mallocInt(1);
 
-                    glGetUniformiv(shaderProgram, i, bindingPoint);
-
-                    IntBuffer length = stack.mallocInt(1);
-                    IntBuffer size = stack.mallocInt(1);
-                    IntBuffer type = stack.mallocInt(1);
-                    ByteBuffer name = stack.malloc(1);
-
-                    glGetActiveUniform(shaderProgram, i, length, size, type, name);
-
-                    if(bindingPoint.get() == resource.binding){
-                        int location = glGetUniformLocation(shaderProgram, name);
-                        bindingToUniformLocation.put(resource.binding, location);
-                    }
+                System.out.println("Active Uniforms; " + n.get());
 
 
 
@@ -122,42 +107,24 @@ public class GLShaderProgram extends ShaderProgram {
 
 
 
-                }
             }
+
         }
 
     }
 
     public void createUniformBufferMemory(){
 
-        try(MemoryStack stack = MemoryStack.stackPush()) {
 
 
+    }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            for (ShaderResource shaderResource : resources) {
-                if (shaderResource.type == ShaderResource.Type.UniformBuffer) {
-
-                }
-            }
-
-
+    public static int[] createTextureSlots(int num) {
+        int[] slots = new int[num];
+        for (int i = 0; i < num; i++) {
+            slots[i] = i;
         }
-
-
+        return slots;
     }
 
     public boolean isUbosInitialized() {
@@ -232,6 +199,7 @@ public class GLShaderProgram extends ShaderProgram {
 
     public void setIntArray(String name, int[] array) {
         int location = glGetUniformLocation(shaderProgram, name);
+        System.out.println("Location B " + location);
         glUniform1iv(location, array);
     }
     public void setVector2fArray(String name, float[] array) {

@@ -4,6 +4,7 @@ import lake.FlightRecorder;
 import lake.asset.AssetPacks;
 import lake.graphics.*;
 import lake.graphics.vulkan.LVKRenderFrame;
+import lake.graphics.vulkan.LVKTexture2D;
 import org.joml.*;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GLUtil;
@@ -24,6 +25,7 @@ public class GLRenderer2D extends Renderer2D {
     private FastTextureLookup textureLookup;
     private Framebuffer2D framebuffer2D;
 
+    public static ShaderResource modelViewProj;
     public static ShaderResource sampler2DArray;
 
 
@@ -66,6 +68,11 @@ public class GLRenderer2D extends Renderer2D {
                 AssetPacks.<String> getAsset("core:assets/shaders/opengl/Default.glsl").asset
         );
 
+        modelViewProj = new ShaderResource(0)
+                .type(ShaderResource.Type.UniformBuffer)
+                .shaderStage(ShaderResource.ShaderStage.VertexStage)
+                .sizeBytes(LVKRenderFrame.LVKFrameUniforms.TOTAL_SIZE_BYTES)
+                .count(1);
 
         sampler2DArray = new ShaderResource(1)
                 .count(32)
@@ -83,6 +90,7 @@ public class GLRenderer2D extends Renderer2D {
                 shaderSources.fragmentShader
         );
         defaultShaderProgram.prepare();
+        defaultShaderProgram.addResource(modelViewProj);
         defaultShaderProgram.addResource(sampler2DArray);
         defaultShaderProgram.addResource(color);
 
@@ -99,6 +107,10 @@ public class GLRenderer2D extends Renderer2D {
         }
 
         currentShaderProgram.unmapUniformBuffer(color, colorBuffer);
+
+        //This needs to go somewhere to bind each sampler to a texture slot
+        currentShaderProgram.setIntArray("u_textures", GLShaderProgram.createTextureSlots(32));
+
 
 
 
@@ -148,18 +160,17 @@ public class GLRenderer2D extends Renderer2D {
         }
     }
     public void updateMatrices(){
-        currentShaderProgram.setMatrix4f("v_model", getModel());
-        currentShaderProgram.setMatrix4f("v_view", getView());
-        currentShaderProgram.setMatrix4f("v_projection", getProj());
-        currentShaderProgram.setIntArray("u_textures", createTextureSlots());
-    }
-    private int[] createTextureSlots() {
-        int[] slots = new int[maxTextureSlots];
-        for (int i = 0; i < maxTextureSlots; i++) {
-            slots[i] = i;
+        ByteBuffer[] buffers = currentShaderProgram.mapUniformBuffer(modelViewProj);
+
+        for(ByteBuffer buffer : buffers) {
+            model.get(buffer);
+            camera.getViewMatrix().get(LVKRenderFrame.LVKFrameUniforms.MATRIX_SIZE_BYTES, buffer);
+            proj.get(2 * LVKRenderFrame.LVKFrameUniforms.MATRIX_SIZE_BYTES, buffer);
         }
-        return slots;
+
+        currentShaderProgram.unmapUniformBuffer(modelViewProj, buffers);
     }
+
     public GLVertexBuffer getVertexBuffer() {
         return vertexBuffer;
     }
@@ -311,6 +322,7 @@ public class GLRenderer2D extends Renderer2D {
         quadCount = 0;
         nextTextureSlot = 0;
         textureLookup.clear();
+
 
     }
     public void clear(Color clearColor) {

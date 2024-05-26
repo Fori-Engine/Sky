@@ -14,10 +14,12 @@ out float f_texindex;
 out vec4 f_color;
 out float f_thickness;
 
+layout(binding = 0) uniform GLFrameUniforms {
+    mat4 m_model;
+    mat4 m_view;
+    mat4 m_projection;
+} glfu;
 
-uniform mat4 v_model;
-uniform mat4 v_view;
-uniform mat4 v_projection;
 
 
 
@@ -33,7 +35,7 @@ void main() {
 
 
 
-    gl_Position = v_projection * v_view * v_model * vec4(v_pos, 0.0, 1.0);
+    gl_Position = glfu.m_projection * glfu.m_view * glfu.m_model * vec4(v_pos, 0.0, 1.0);
 }
 
 #type fragment
