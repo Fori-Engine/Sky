@@ -34,6 +34,9 @@ public abstract class Renderer2D implements Disposable {
         Disposer.add("renderer", this);
     }
 
+    public abstract void acquireNextImage();
+    public abstract void renderFinished();
+
     public abstract void setShaderProgram(ShaderProgram shaderProgram);
     public abstract void updateMatrices();
 
@@ -257,7 +260,7 @@ public abstract class Renderer2D implements Disposable {
 
 
     public abstract void render();
-    public abstract void render(String renderName);
+
 
     public void clear(Color clearColor){
         this.clearColor = clearColor;

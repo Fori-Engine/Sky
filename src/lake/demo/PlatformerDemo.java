@@ -86,6 +86,10 @@ public class PlatformerDemo {
 
 
         while(!window.shouldClose()){
+            renderer2D.acquireNextImage();
+
+
+
             renderer2D.clear(Color.WHITE);
             renderer2D.drawTexture(0, 0, texture2D.getWidth() * 2, texture2D.getHeight() * 2, texture2D);
 
@@ -161,8 +165,7 @@ public class PlatformerDemo {
             renderer2D.drawText(0, 0, "This is some text boi", Color.GREEN, Font2D.getDefault());
             renderer2D.render();
 
-
-
+            renderer2D.renderFinished();
             window.update();
         }
 

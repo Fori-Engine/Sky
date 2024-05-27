@@ -50,6 +50,7 @@ public class VulkanRenderer2D extends Renderer2D {
 
     public static int TOTAL_SIZE_BYTES = 3 * 16 * Float.BYTES;
     public static int MATRIX_SIZE_BYTES = 16 * Float.BYTES;
+    private IntBuffer pImageIndex;
 
 
     public VulkanRenderer2D(Window window, int width, int height, RenderSettings settings) {
@@ -98,8 +99,7 @@ public class VulkanRenderer2D extends Renderer2D {
 
 
 
-
-
+        pImageIndex = MemoryUtil.memAllocInt(1);
 
 
 
@@ -536,6 +536,9 @@ public class VulkanRenderer2D extends Renderer2D {
 
         return new VulkanPipeline(pipelineLayout, graphicsPipeline);
     }
+
+
+
     @Override
     public void setShaderProgram(ShaderProgram shaderProgram) {
 
@@ -693,15 +696,50 @@ public class VulkanRenderer2D extends Renderer2D {
 
         //if(quadIndex == vertexBuffer.maxQuads()) render("Next Batch Render");
     }
+
+
+
+
+
     @Override
-    public void render() {
+    public void acquireNextImage() {
+
+        VulkanSyncData thisFrame = inFlightFrames.get(currentFrame);
+        vkWaitForFences(deviceWithIndices.device, thisFrame.pFence(), true, UINT64_MAX);
+        vkAcquireNextImageKHR(
+                deviceWithIndices.device,
+                swapchain.swapChain,
+                UINT64_MAX,
+                thisFrame.imageAvailableSemaphore(),
+                VK_NULL_HANDLE,
+                pImageIndex
+        );
 
 
+    }
 
-        render("Final Render");
+    @Override
+    public void renderFinished() {
+
+        try(MemoryStack stack = stackPush()) {
+            VulkanSyncData thisFrame = inFlightFrames.get(currentFrame);
+
+            VkPresentInfoKHR presentInfo = VkPresentInfoKHR.calloc(stack);
+            {
+                presentInfo.sType(VK_STRUCTURE_TYPE_PRESENT_INFO_KHR);
+                presentInfo.pWaitSemaphores(thisFrame.pRenderFinishedSemaphore());
+                presentInfo.swapchainCount(1);
+                presentInfo.pSwapchains(stack.longs(swapchain.swapChain));
+                presentInfo.pImageIndices(pImageIndex);
+            }
+
+            vkQueuePresentKHR(presentQueue, presentInfo);
+            vkDeviceWaitIdle(deviceWithIndices.device);
+            currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+        }
     }
     @Override
-    public void render(String renderName) {
+    public void render() {
 
 
 
@@ -728,31 +766,9 @@ public class VulkanRenderer2D extends Renderer2D {
 
 
 
+            int imageIndex = pImageIndex.get(0);
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            vkWaitForFences(deviceWithIndices.device, thisFrame.pFence(), true, UINT64_MAX);
-
-            IntBuffer pImageIndex = stack.mallocInt(1);
-
-            vkAcquireNextImageKHR(deviceWithIndices.device, swapchain.swapChain, UINT64_MAX, thisFrame.imageAvailableSemaphore(), VK_NULL_HANDLE, pImageIndex);
-            final int imageIndex = pImageIndex.get(0);
 
             if(imagesInFlight.containsKey(imageIndex)) {
                 vkWaitForFences(deviceWithIndices.device, imagesInFlight.get(imageIndex).fence(), true, UINT64_MAX);
@@ -776,20 +792,7 @@ public class VulkanRenderer2D extends Renderer2D {
                 throw new RuntimeException("Failed to submit draw command buffer");
             }
 
-            VkPresentInfoKHR presentInfo = VkPresentInfoKHR.calloc(stack);
-            {
-                presentInfo.sType(VK_STRUCTURE_TYPE_PRESENT_INFO_KHR);
-                presentInfo.pWaitSemaphores(thisFrame.pRenderFinishedSemaphore());
-                presentInfo.swapchainCount(1);
-                presentInfo.pSwapchains(stack.longs(swapchain.swapChain));
-                presentInfo.pImageIndices(pImageIndex);
-            }
 
-            vkQueuePresentKHR(presentQueue, presentInfo);
-
-            currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
-
-            vkDeviceWaitIdle(deviceWithIndices.device);
         }
 
 
