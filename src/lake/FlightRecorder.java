@@ -48,7 +48,7 @@ public class FlightRecorder {
 
     private static void logGeneric(String ansiColor, String source, String type, String message){
         if(enabled) {
-            writer.println(ansiColor + " [" + timeStr() + " " + type + "] " + source + " " + message + ANSI_RESET);
+            writer.println(ansiColor + " [" + timeStr() + " " + type + " " + source + "] " + message + ANSI_RESET);
             writer.flush();
         }
     }
