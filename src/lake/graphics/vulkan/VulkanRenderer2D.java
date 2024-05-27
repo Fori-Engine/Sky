@@ -134,27 +134,25 @@ public class VulkanRenderer2D extends Renderer2D {
 
         try(MemoryStack stack = stackPush()) {
 
-            VkSemaphoreCreateInfo semaphoreInfo = VkSemaphoreCreateInfo.calloc(stack);
-            semaphoreInfo.sType(VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO);
+            VkFenceCreateInfo imageAcquiredFence = VkFenceCreateInfo.calloc(stack);
+            imageAcquiredFence.sType(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
 
-            VkFenceCreateInfo fenceInfo = VkFenceCreateInfo.calloc(stack);
-            fenceInfo.sType(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
-            fenceInfo.flags(VK_FENCE_CREATE_SIGNALED_BIT);
+            VkFenceCreateInfo submissionFence = VkFenceCreateInfo.calloc(stack);
+            submissionFence.sType(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
 
-            LongBuffer pImageAvailableSemaphore = stack.mallocLong(1);
-            LongBuffer pRenderFinishedSemaphore = stack.mallocLong(1);
-            LongBuffer pFence = stack.mallocLong(1);
+            LongBuffer pImageAcquiredFence = stack.mallocLong(1);
+            LongBuffer pSubmissionFence = stack.mallocLong(1);
+
 
             for(int i = 0;i < MAX_FRAMES_IN_FLIGHT;i++) {
 
-                if(vkCreateSemaphore(deviceWithIndices.device, semaphoreInfo, null, pImageAvailableSemaphore) != VK_SUCCESS
-                        || vkCreateSemaphore(deviceWithIndices.device, semaphoreInfo, null, pRenderFinishedSemaphore) != VK_SUCCESS
-                        || vkCreateFence(deviceWithIndices.device, fenceInfo, null, pFence) != VK_SUCCESS) {
+                if(vkCreateFence(deviceWithIndices.device, imageAcquiredFence, null, pImageAcquiredFence) != VK_SUCCESS
+                || vkCreateFence(deviceWithIndices.device, submissionFence, null, pSubmissionFence) != VK_SUCCESS) {
 
                     throw new RuntimeException("Failed to create synchronization objects for the frame " + i);
                 }
 
-                inFlightFrames.add(new VulkanSyncData(pImageAvailableSemaphore.get(0), pRenderFinishedSemaphore.get(0), pFence.get(0)));
+                inFlightFrames.add(new VulkanSyncData(pImageAcquiredFence.get(0), pSubmissionFence.get(0)));
             }
 
 
@@ -703,18 +701,16 @@ public class VulkanRenderer2D extends Renderer2D {
 
     @Override
     public void acquireNextImage() {
-
         VulkanSyncData thisFrame = inFlightFrames.get(currentFrame);
-        vkWaitForFences(deviceWithIndices.device, thisFrame.pFence(), true, UINT64_MAX);
         vkAcquireNextImageKHR(
                 deviceWithIndices.device,
                 swapchain.swapChain,
                 UINT64_MAX,
-                thisFrame.imageAvailableSemaphore(),
                 VK_NULL_HANDLE,
+                thisFrame.imageAcquiredFence,
                 pImageIndex
         );
-
+        vkWaitForFences(deviceWithIndices.device, thisFrame.imageAcquiredFence, true, UINT64_MAX);
 
     }
 
@@ -727,7 +723,6 @@ public class VulkanRenderer2D extends Renderer2D {
             VkPresentInfoKHR presentInfo = VkPresentInfoKHR.calloc(stack);
             {
                 presentInfo.sType(VK_STRUCTURE_TYPE_PRESENT_INFO_KHR);
-                presentInfo.pWaitSemaphores(thisFrame.pRenderFinishedSemaphore());
                 presentInfo.swapchainCount(1);
                 presentInfo.pSwapchains(stack.longs(swapchain.swapChain));
                 presentInfo.pImageIndices(pImageIndex);
@@ -735,6 +730,8 @@ public class VulkanRenderer2D extends Renderer2D {
 
             vkQueuePresentKHR(presentQueue, presentInfo);
             vkDeviceWaitIdle(deviceWithIndices.device);
+            vkResetFences(deviceWithIndices.device, thisFrame.imageAcquiredFence);
+
             currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
         }
     }
@@ -761,38 +758,28 @@ public class VulkanRenderer2D extends Renderer2D {
         try(MemoryStack stack = stackPush()) {
 
             VulkanSyncData thisFrame = inFlightFrames.get(currentFrame);
-
-
-
-
-
             int imageIndex = pImageIndex.get(0);
 
 
-
-            if(imagesInFlight.containsKey(imageIndex)) {
-                vkWaitForFences(deviceWithIndices.device, imagesInFlight.get(imageIndex).fence(), true, UINT64_MAX);
-            }
 
             imagesInFlight.put(imageIndex, thisFrame);
 
             VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
             {
                 submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
-                submitInfo.waitSemaphoreCount(1);
-                submitInfo.pWaitSemaphores(thisFrame.pImageAvailableSemaphore());
+                submitInfo.waitSemaphoreCount(0);
                 submitInfo.pWaitDstStageMask(stack.ints(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT));
-                submitInfo.pSignalSemaphores(thisFrame.pRenderFinishedSemaphore());
                 submitInfo.pCommandBuffers(stack.pointers(commandBuffers.get(imageIndex)));
             }
 
-            vkResetFences(deviceWithIndices.device, thisFrame.pFence());
 
-            if(vkQueueSubmit(graphicsQueue, submitInfo, thisFrame.fence()) != VK_SUCCESS) {
+
+            if(vkQueueSubmit(graphicsQueue, submitInfo, thisFrame.submissionFence) != VK_SUCCESS) {
                 throw new RuntimeException("Failed to submit draw command buffer");
             }
 
-
+            vkWaitForFences(deviceWithIndices.device, thisFrame.submissionFence, true, UINT64_MAX);
+            vkResetFences(deviceWithIndices.device, thisFrame.submissionFence);
         }
 
 
@@ -842,9 +829,12 @@ public class VulkanRenderer2D extends Renderer2D {
 
 
         inFlightFrames.forEach(frame -> {
+            /*
             vkDestroySemaphore(deviceWithIndices.device, frame.renderFinishedSemaphore(), null);
             vkDestroySemaphore(deviceWithIndices.device, frame.imageAvailableSemaphore(), null);
             vkDestroyFence(deviceWithIndices.device, frame.fence(), null);
+
+             */
         });
 
 

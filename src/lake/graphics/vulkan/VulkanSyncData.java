@@ -11,37 +11,17 @@ import static org.lwjgl.system.MemoryStack.stackGet;
  * */
 public class VulkanSyncData {
 
-    private final long imageAvailableSemaphore;
-    private final long renderFinishedSemaphore;
-    private final long fence;
+    public long imageAcquiredFence;
+    public long submissionFence;
 
-    public VulkanSyncData(long imageAvailableSemaphore, long renderFinishedSemaphore, long fence) {
-        this.imageAvailableSemaphore = imageAvailableSemaphore;
-        this.renderFinishedSemaphore = renderFinishedSemaphore;
-        this.fence = fence;
-    }
-    public long imageAvailableSemaphore() {
-        return imageAvailableSemaphore;
-    }
 
-    public LongBuffer pImageAvailableSemaphore() {
-        return stackGet().longs(imageAvailableSemaphore);
-    }
-
-    public long renderFinishedSemaphore() {
-        return renderFinishedSemaphore;
-    }
-
-    public LongBuffer pRenderFinishedSemaphore() {
-        return stackGet().longs(renderFinishedSemaphore);
+    public VulkanSyncData(long imageAcquiredFence, long submissionFence) {
+        this.imageAcquiredFence = imageAcquiredFence;
+        this.submissionFence = submissionFence;
     }
 
 
-    public long fence() {
-        return fence;
-    }
 
-    public LongBuffer pFence() {
-        return stackGet().longs(fence);
-    }
+
+
 }

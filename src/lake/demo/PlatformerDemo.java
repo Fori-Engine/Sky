@@ -2,6 +2,7 @@ package lake.demo;
 
 import lake.FileReader;
 import lake.FlightRecorder;
+import lake.Time;
 import lake.asset.AssetPack;
 import lake.asset.AssetPacks;
 import lake.asset.TextureData;
@@ -82,6 +83,7 @@ public class PlatformerDemo {
         boolean pause = true;
 
 
+        window.setTitle(renderer2D.getDeviceName());
 
 
 
@@ -162,7 +164,7 @@ public class PlatformerDemo {
 
 
 
-            renderer2D.drawText(0, 0, "This is some text boi", Color.GREEN, Font2D.getDefault());
+            renderer2D.drawText(0, 0, "FPS: " + Time.framesPerSecond(), Color.RED, Font2D.getDefault());
             renderer2D.render();
 
             renderer2D.renderFinished();
