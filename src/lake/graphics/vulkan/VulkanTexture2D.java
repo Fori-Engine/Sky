@@ -248,6 +248,12 @@ public class VulkanTexture2D extends Texture2D {
     @Override
     public void setData(byte[] data) {
 
+        try(MemoryStack stack = stackPush()) {
+            PointerBuffer bufferPtr = stack.mallocPointer(1);
+            stagingBuffer.mapAndUpload(device, bufferPtr, data);
+            copyBufferToImage();
+        }
+
     }
 
     public VulkanSampler2D getSampler() {
