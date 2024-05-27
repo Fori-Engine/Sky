@@ -1,15 +1,19 @@
 package lake.graphics;
 
+import lake.asset.Asset;
+import lake.asset.TextureData;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWImage;
 import lake.Time;
 import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 import java.nio.DoubleBuffer;
 import java.nio.IntBuffer;
+import java.util.Collections;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
@@ -156,33 +160,27 @@ public class Window {
     }
 
 
-    public void setIcon(String path) {
-        try(MemoryStack stack = MemoryStack.stackPush()){
 
-            GLFWImage.Buffer icon = GLFWImage.calloc(1, stack);
-
-            IntBuffer w = BufferUtils.createIntBuffer(1);
-            IntBuffer h = BufferUtils.createIntBuffer(1);
-            IntBuffer channelsInFile = BufferUtils.createIntBuffer(1);
-            ByteBuffer texture = STBImage.stbi_load(path, w, h, channelsInFile, 4);
-            String error = STBImage.stbi_failure_reason();
-
-            if(error != null){
-                throw new RuntimeException("Failed to set GLFW window icon: " + error + " (" + path + ")");
-            }
-            int width = w.get();
-            int height = h.get();
-
-            icon.width(width);
-            icon.height(height);
-            icon.pixels(texture);
+    public void setIcon(Asset<TextureData> texture) {
+        GLFWImage.Buffer icon = GLFWImage.create(1);
+        ByteBuffer textureBytes = MemoryUtil.memAlloc(texture.asset.width * texture.asset.height * 4);
 
 
-            glfwSetWindowIcon(window, icon);
+        textureBytes.put(texture.asset.data);
+
+
+        textureBytes.flip();
+
+        icon.width(texture.asset.width);
+        icon.height(texture.asset.height);
+        icon.pixels(textureBytes);
 
 
 
-        }
+        glfwSetWindowIcon(window, icon);
+
+        icon.free();
+        MemoryUtil.memFree(textureBytes);
     }
 
 

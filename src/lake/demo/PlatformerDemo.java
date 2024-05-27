@@ -4,6 +4,7 @@ import lake.FileReader;
 import lake.FlightRecorder;
 import lake.asset.AssetPack;
 import lake.asset.AssetPacks;
+import lake.asset.TextureData;
 import lake.graphics.*;
 import lake.physics.CircleBody2D;
 import lake.physics.RectBody2D;
@@ -29,9 +30,12 @@ public class PlatformerDemo {
 
 
         Window window = new Window(1920, 1080, "Showcase Demo", false);
+
+
+
         Renderer2D renderer2D = Renderer2D.newRenderer2D(window, window.getWidth(), window.getHeight(), new RenderSettings(RenderAPI.Vulkan).msaa(true));
 
-
+        window.setIcon(AssetPacks.getAsset("core:assets/logo.png"));
 
         World world = new World(0.1f, new Vector2f(0,9.8f * 12));
 
@@ -69,6 +73,8 @@ public class PlatformerDemo {
         RectBody2D r3 = world.newRectBody2D(new Rect2D(0, renderer2D.getHeight() - 520, renderer2D.getWidth() / 4f, 20), RigidBody2D.Type.STATIC, true);
         r3.setPhysicalProps(0.5f, 0.4f, 0.01f);
 
+        Texture2D texture2D = Texture2D.newTexture2D(500, 500);
+        texture2D.setData(AssetPacks.<TextureData> getAsset("core:assets/logo.png").asset.data);
 
 
 
@@ -81,6 +87,7 @@ public class PlatformerDemo {
 
         while(!window.shouldClose()){
             renderer2D.clear(Color.WHITE);
+            renderer2D.drawTexture(0, 0, texture2D.getWidth() * 2, texture2D.getHeight() * 2, texture2D);
 
 
 
