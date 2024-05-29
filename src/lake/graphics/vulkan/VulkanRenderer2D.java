@@ -30,12 +30,9 @@ public class VulkanRenderer2D extends Renderer2D {
     private long surface;
     private VulkanSwapchain swapchain;
     private List<Long> swapchainImageViews;
-    private VulkanPipeline currentPipeline;
     private long renderPass;
     private List<Long> swapchainFramebuffers;
     private long commandPool;
-    private VulkanVertexBuffer vertexBuffer;
-    private VulkanIndexBuffer indexBuffer;
     private List<VkCommandBuffer> commandBuffers;
     private int currentFrame;
     private ByteBuffer vertexBufferData, indexBufferData;
@@ -122,11 +119,21 @@ public class VulkanRenderer2D extends Renderer2D {
                 physicalDevice);
 
 
-        vertexBufferData = vertexBuffer.getMainBuffer().mapAndGet(deviceWithIndices.device, vertexBuffer.getMappingBuffer());
-        indexBufferData = indexBuffer.getMainBuffer().mapAndGet(deviceWithIndices.device, indexBuffer.getMappingBuffer());
+
+        vertexBufferData = ((VulkanVertexBuffer) vertexBuffer).getMainBuffer().mapAndGet(deviceWithIndices.device, ((VulkanVertexBuffer) vertexBuffer).getMappingBuffer());
+        indexBufferData = ((VulkanIndexBuffer) indexBuffer).getMainBuffer().mapAndGet(deviceWithIndices.device, ((VulkanIndexBuffer) indexBuffer).getMappingBuffer());
 
 
-        
+
+        int[] indices = generateIndices(settings.quadsPerBatch);
+
+        for (int i : indices) {
+            indexBufferData.putInt(i);
+        }
+
+
+
+
         inFlightFrames = new ArrayList<>(MAX_FRAMES_IN_FLIGHT);
         imagesInFlight = new HashMap<>(MAX_FRAMES_IN_FLIGHT);
 
@@ -162,69 +169,8 @@ public class VulkanRenderer2D extends Renderer2D {
 
 
 
-
-        ShaderReader.ShaderSources shaderSources = ShaderReader.readCombinedVertexFragmentSources(
-                AssetPacks.<String> getAsset("core:assets/shaders/vulkan/Default.glsl").asset
-        );
-
-
-        VulkanShaderProgram shaderProgram = new VulkanShaderProgram(
-                shaderSources.vertexShader,
-                shaderSources.fragmentShader
-        );
-
-
-        shaderProgram.setDevice(deviceWithIndices.device);
-        shaderProgram.prepare();
-
-
-        modelViewProj = new ShaderResource(0)
-                .type(ShaderResource.Type.UniformBuffer)
-                .shaderStage(ShaderResource.ShaderStage.VertexStage)
-                .sizeBytes(TOTAL_SIZE_BYTES)
-                .count(1);
-
-        sampler2DArray = new ShaderResource(1)
-                .type(ShaderResource.Type.CombinedSampler)
-                .shaderStage(ShaderResource.ShaderStage.FragmentStage)
-                .count(32);
-
-        ShaderResource color = new ShaderResource(2)
-                .type(ShaderResource.Type.UniformBuffer)
-                .shaderStage(ShaderResource.ShaderStage.FragmentStage)
-                .sizeBytes(4 * Float.BYTES)
-                .count(1);
-
-        shaderProgram.addResource(modelViewProj);
-        shaderProgram.addResource(sampler2DArray);
-        shaderProgram.addResource(color);
-
-
-        defaultShaderProgram = shaderProgram;
-        setShaderProgram(shaderProgram);
-
-
-        VulkanTexture2D emptyTexture = (VulkanTexture2D) Texture2D.newTexture2D(AssetPacks.getAsset("core:assets/empty.png"), Texture2D.Filter.Nearest);
-        shaderProgram.updateEntireSampler2DArrayWithOnly(sampler2DArray, emptyTexture);
-
-
-
-        ByteBuffer[] colorBuffer = shaderProgram.mapUniformBuffer(color);
-
-        for(ByteBuffer buffer : colorBuffer){
-            buffer.putFloat(1f);
-            buffer.putFloat(1f);
-            buffer.putFloat(1f);
-            buffer.putFloat(1f);
-        }
-
-        shaderProgram.unmapUniformBuffer(color, colorBuffer);
-
-
-
-
         proj = new Matrix4f().ortho(0, getWidth(), 0, getHeight(), 0, 1, true);
-        updateMatrices();
+
 
 
 
@@ -246,81 +192,6 @@ public class VulkanRenderer2D extends Renderer2D {
 
         for(int i = 0;i < commandBuffersCount;i++) {
             commandBuffers.add(new VkCommandBuffer(pCommandBuffers.get(i), deviceWithIndices.device));
-        }
-
-
-
-
-
-
-
-    }
-    private void recordCmdBuffers(int indexCount) {
-
-        final int commandBuffersCount = swapchainFramebuffers.size();
-
-
-
-        try(MemoryStack stack = stackPush()) {
-
-
-
-            VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
-            beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
-
-            VkRenderPassBeginInfo renderPassInfo = VkRenderPassBeginInfo.calloc(stack);
-            renderPassInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO);
-            renderPassInfo.renderPass(renderPass);
-            VkRect2D renderArea = VkRect2D.calloc(stack);
-            renderArea.offset(VkOffset2D.calloc(stack).set(0, 0));
-            renderArea.extent(swapchain.swapChainExtent);
-            renderPassInfo.renderArea(renderArea);
-            VkClearValue.Buffer clearValues = VkClearValue.calloc(1, stack);
-            clearValues.color().float32(stack.floats(clearColor.r, clearColor.g, clearColor.b, clearColor.a));
-            renderPassInfo.pClearValues(clearValues);
-
-
-            for(int i = 0; i < commandBuffersCount;i++) {
-
-                VkCommandBuffer commandBuffer = commandBuffers.get(i);
-
-                if(vkBeginCommandBuffer(commandBuffer, beginInfo) != VK_SUCCESS) {
-                    throw new RuntimeException("Failed to begin recording command buffer");
-                }
-
-                renderPassInfo.framebuffer(swapchainFramebuffers.get(i));
-
-
-                vkCmdBeginRenderPass(commandBuffer, renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-                {
-
-                    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, currentPipeline.pipeline);
-
-
-
-                    LongBuffer vertexBuffers = stack.longs(vertexBuffer.getMainBuffer().handle);
-
-
-                    LongBuffer offsets = stack.longs(0);
-                    vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
-                    vkCmdBindIndexBuffer(commandBuffer, indexBuffer.getMainBuffer().handle, 0, VK_INDEX_TYPE_UINT32);
-
-                    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            currentPipeline.pipelineLayout, 0, stack.longs(((VulkanShaderProgram)currentShaderProgram).getDescriptorSets().get(i)), null);
-                    vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
-
-
-
-                }
-                vkCmdEndRenderPass(commandBuffer);
-
-
-                if(vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-                    throw new RuntimeException("Failed to record command buffer");
-                }
-
-            }
-
         }
 
     }
@@ -538,33 +409,9 @@ public class VulkanRenderer2D extends Renderer2D {
 
 
     @Override
-    public void setShaderProgram(ShaderProgram shaderProgram) {
+    public void updateMatrices(ShaderProgram shaderProgram, ShaderResource modelViewProj) {
 
-        if(pipelineCache.containsKey(shaderProgram)) {
-            currentPipeline = pipelineCache.get(shaderProgram);
-        }
-        else {
-            VulkanShaderProgram vulkanShaderProgram = (VulkanShaderProgram) shaderProgram;
-
-            vulkanShaderProgram.setDevice(deviceWithIndices.device);
-            vulkanShaderProgram.createDescriptors();
-            VulkanPipeline newPipeline = createPipeline(
-                    deviceWithIndices.device,
-                    swapchain,
-                    vulkanShaderProgram.getShaderStages(),
-                    renderPass,
-                    vulkanShaderProgram.getDescriptorSetLayout());
-
-            pipelineCache.put(shaderProgram, newPipeline);
-            currentPipeline = newPipeline;
-            currentShaderProgram = shaderProgram;
-        }
-
-    }
-    @Override
-    public void updateMatrices() {
-
-        ByteBuffer[] buffers = currentShaderProgram.mapUniformBuffer(modelViewProj);
+        ByteBuffer[] buffers = shaderProgram.mapUniformBuffer(modelViewProj);
 
         for(ByteBuffer buffer : buffers) {
             model.get(buffer);
@@ -572,7 +419,7 @@ public class VulkanRenderer2D extends Renderer2D {
             proj.get(2 * MATRIX_SIZE_BYTES, buffer);
         }
 
-        currentShaderProgram.unmapUniformBuffer(modelViewProj, buffers);
+        shaderProgram.unmapUniformBuffer(modelViewProj, buffers);
     }
 
     @Override
@@ -592,7 +439,10 @@ public class VulkanRenderer2D extends Renderer2D {
 
         //Unique Texture
         else {
-            currentShaderProgram.updateSampler2DArray(sampler2DArray, slot, texture);
+
+            FlightRecorder.todo(VulkanRenderer2D.class, "Which shader do I use for drawTexture()?");
+
+            //currentShaderProgram.updateSampler2DArray(sampler2DArray, slot, texture);
             textureLookup.registerTexture(vulkanTexture2D, slot);
             isUniqueTexture = true;
         }
@@ -689,6 +539,7 @@ public class VulkanRenderer2D extends Renderer2D {
 
         }
         quadCount++;
+        submitQuadCount++;
 
 
 
@@ -696,8 +547,23 @@ public class VulkanRenderer2D extends Renderer2D {
     }
 
 
+    @Override
+    public void createResources(ShaderProgram... shaderPrograms) {
+        for(ShaderProgram shaderProgram : shaderPrograms){
+            VulkanShaderProgram vulkanShaderProgram = (VulkanShaderProgram) shaderProgram;
 
 
+            vulkanShaderProgram.createDescriptors();
+            VulkanPipeline newPipeline = createPipeline(
+                    deviceWithIndices.device,
+                    swapchain,
+                    vulkanShaderProgram.getShaderStages(),
+                    renderPass,
+                    vulkanShaderProgram.getDescriptorSetLayout());
+
+            pipelineCache.put(shaderProgram, newPipeline);
+        }
+    }
 
     @Override
     public void acquireNextImage() {
@@ -716,6 +582,7 @@ public class VulkanRenderer2D extends Renderer2D {
 
     @Override
     public void renderFinished() {
+        super.renderFinished();
 
         try(MemoryStack stack = stackPush()) {
             VulkanSyncData thisFrame = inFlightFrames.get(currentFrame);
@@ -742,18 +609,97 @@ public class VulkanRenderer2D extends Renderer2D {
 
 
 
-        indexBufferData.clear();
 
 
 
-        int[] indices = generateIndices(quadCount);
 
-        for (int i : indices) {
-            indexBufferData.putInt(i);
+        final int commandBuffersCount = swapchainFramebuffers.size();
+
+
+
+        try(MemoryStack stack = stackPush()) {
+
+
+
+            VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
+            beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
+
+            VkRenderPassBeginInfo renderPassInfo = VkRenderPassBeginInfo.calloc(stack);
+            renderPassInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO);
+            renderPassInfo.renderPass(renderPass);
+            VkRect2D renderArea = VkRect2D.calloc(stack);
+            renderArea.offset(VkOffset2D.calloc(stack).set(0, 0));
+            renderArea.extent(swapchain.swapChainExtent);
+            renderPassInfo.renderArea(renderArea);
+            VkClearValue.Buffer clearValues = VkClearValue.calloc(1, stack);
+            clearValues.color().float32(stack.floats(clearColor.r, clearColor.g, clearColor.b, clearColor.a));
+            renderPassInfo.pClearValues(clearValues);
+
+
+            for(int i = 0; i < commandBuffersCount;i++) {
+
+                VkCommandBuffer commandBuffer = commandBuffers.get(i);
+
+                if(vkBeginCommandBuffer(commandBuffer, beginInfo) != VK_SUCCESS) {
+                    throw new RuntimeException("Failed to begin recording command buffer");
+                }
+
+                renderPassInfo.framebuffer(swapchainFramebuffers.get(i));
+
+
+                vkCmdBeginRenderPass(commandBuffer, renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+                {
+
+
+                    for(RendererSubmit rendererSubmit : submits){
+
+                        VulkanPipeline vulkanPipeline = pipelineCache.get(rendererSubmit.shaderProgram);
+
+                        LongBuffer vertexBuffers = stack.longs(((VulkanVertexBuffer) vertexBuffer).getMainBuffer().handle);
+                        LongBuffer offsets = stack.longs(0);
+
+
+                        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vulkanPipeline.pipeline);
+                        vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
+                        vkCmdBindIndexBuffer(commandBuffer, ((VulkanIndexBuffer) indexBuffer).getMainBuffer().handle, 0, VK_INDEX_TYPE_UINT32);
+
+                        vkCmdBindDescriptorSets(
+                                commandBuffer,
+                                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                vulkanPipeline.pipelineLayout,
+                                0,
+                                stack.longs(((VulkanShaderProgram) rendererSubmit.shaderProgram).getDescriptorSets().get(i)),
+                                null
+                        );
+
+                        vkCmdDrawIndexed(
+                                commandBuffer,
+                                rendererSubmit.quads * indexBuffer.indicesPerQuad,
+                                1,
+                                0,
+                                (rendererSubmit.totalCount - rendererSubmit.quads) * 4,
+                                0
+                        );
+
+
+
+
+                    }
+
+                    System.out.println();
+
+                }
+                vkCmdEndRenderPass(commandBuffer);
+
+
+                if(vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+                    throw new RuntimeException("Failed to record command buffer");
+                }
+
+            }
+
         }
 
-
-        recordCmdBuffers(indices.length);
 
         try(MemoryStack stack = stackPush()) {
 

@@ -7,6 +7,8 @@ import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public abstract class Renderer2D implements Disposable {
@@ -22,11 +24,19 @@ public abstract class Renderer2D implements Disposable {
     private static float spaceXAdvance = 0;
     private static final int spacesPerTab = 4;
     protected int quadCount;
-    protected ShaderProgram currentShaderProgram, defaultShaderProgram;
+    protected int submitQuadCount = 0;
+
+    protected VertexBuffer vertexBuffer;
+    protected IndexBuffer indexBuffer;
 
     protected int ColoredQuad = -1;
     protected int ColoredCircle = -2;
     protected Color clearColor;
+    protected List<RendererSubmit> submits = new ArrayList<>(10);
+
+
+
+
 
     public Renderer2D(int width, int height, RenderSettings renderSettings){
         this.width = width;
@@ -34,19 +44,29 @@ public abstract class Renderer2D implements Disposable {
         Disposer.add("renderer", this);
     }
 
-    public abstract void acquireNextImage();
-    public abstract void renderFinished();
+    public abstract void createResources(ShaderProgram... shaderPrograms);
 
-    public abstract void setShaderProgram(ShaderProgram shaderProgram);
-    public abstract void updateMatrices();
+    public void acquireNextImage(){}
 
-    public ShaderProgram getCurrentShaderProgram() {
-        return currentShaderProgram;
+    public void submit(RendererSubmit rendererSubmit){
+        submits.add(rendererSubmit);
+        rendererSubmit.renderCommand.run();
+        rendererSubmit.quads = submitQuadCount;
+        rendererSubmit.totalCount = quadCount;
+
+        rendererSubmit.indices = rendererSubmit.quads * indexBuffer.indicesPerQuad;
+
+
+
+        submitQuadCount = 0;
     }
 
-    public ShaderProgram getDefaultShaderProgram() {
-        return defaultShaderProgram;
+
+    public void renderFinished(){
+        submits.clear();
     }
+
+    public abstract void updateMatrices(ShaderProgram shaderProgram, ShaderResource modelViewProj);
 
     protected int[] generateIndices(int quadIndex){
         int numOfIndices = quadIndex * 6;

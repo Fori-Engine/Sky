@@ -13,7 +13,6 @@ public class KryoTest {
 
 
 
-        System.out.println(AssetPack.openPack(new File("assets.pkg")).<String> getAsset("assets/shaders/opengl/Default.glsl").asset);
 
 
         //AssetPack assetPack = AssetPack.openLocal(new File("assets"));//AssetPack.openPack(new File("assets.pkg"));

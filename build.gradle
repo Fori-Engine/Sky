@@ -81,7 +81,6 @@ dependencies {
 jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
-    exclude("lake/editor")
 
     from {
         configurations.runtimeClasspath.collect {
@@ -90,7 +89,7 @@ jar {
     }
 
     manifest {
-        manifest.attributes["Main-Class"] = "lake.demo.ShowcaseDemo"
+        manifest.attributes["Main-Class"] = "lake.demo.PlatformerDemo"
 
     }
 

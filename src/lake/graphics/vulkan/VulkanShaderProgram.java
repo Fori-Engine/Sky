@@ -41,6 +41,7 @@ public class VulkanShaderProgram extends ShaderProgram {
     public VulkanShaderProgram(String vertexShaderSource, String fragmentShaderSource) {
         super(vertexShaderSource, fragmentShaderSource);
         Disposer.add("managedResources", this);
+        device = VulkanRenderer2D.getDeviceWithIndices().device;
 
         for (int i = 0; i < frameUniformBuffers.length; i++) {
             frameUniformBuffers[i] = new HashMap<>();
@@ -330,9 +331,6 @@ public class VulkanShaderProgram extends ShaderProgram {
         return device;
     }
 
-    public void setDevice(VkDevice device) {
-        this.device = device;
-    }
 
     public VkPipelineShaderStageCreateInfo.Buffer getShaderStages() {
         return shaderStages;
@@ -340,7 +338,6 @@ public class VulkanShaderProgram extends ShaderProgram {
 
     @Override
     public void prepare() {
-        setDevice(VulkanRenderer2D.getDeviceWithIndices().device);
         entryPoint = MemoryUtil.memUTF8("main");
 
 
