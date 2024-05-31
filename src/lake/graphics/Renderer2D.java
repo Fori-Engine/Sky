@@ -8,7 +8,6 @@ import org.joml.Vector2f;
 import org.joml.Vector4f;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 public abstract class Renderer2D implements Disposable {
@@ -23,8 +22,8 @@ public abstract class Renderer2D implements Disposable {
     protected float originX, originY;
     private static float spaceXAdvance = 0;
     private static final int spacesPerTab = 4;
-    protected int quadCount;
-    protected int submitQuadCount = 0;
+    protected int currentQuadCount;
+    protected int batchQuadCount = 0;
 
     protected VertexBuffer vertexBuffer;
     protected IndexBuffer indexBuffer;
@@ -32,9 +31,9 @@ public abstract class Renderer2D implements Disposable {
     protected int ColoredQuad = -1;
     protected int ColoredCircle = -2;
     protected Color clearColor;
-    protected List<RendererSubmit> submits = new ArrayList<>(10);
+    protected RenderBatch currentBatch;
 
-
+    protected ArrayList<RenderBatch> batches = new ArrayList<>();
 
 
 
@@ -46,25 +45,23 @@ public abstract class Renderer2D implements Disposable {
 
     public abstract void createResources(ShaderProgram... shaderPrograms);
 
-    public void acquireNextImage(){}
 
-    public void submit(RendererSubmit rendererSubmit){
-        submits.add(rendererSubmit);
-        rendererSubmit.renderCommand.run();
-        rendererSubmit.quads = submitQuadCount;
-        rendererSubmit.totalCount = quadCount;
+    public void startBatch(ShaderProgram shaderProgram){
+        batchQuadCount = 0;
+        currentBatch = new RenderBatch(shaderProgram, currentQuadCount);
+        batches.add(currentBatch);
+    }
 
-        rendererSubmit.indices = rendererSubmit.quads * indexBuffer.indicesPerQuad;
-
-
-
-        submitQuadCount = 0;
+    public void endBatch(){
+        currentBatch.quads = batchQuadCount;
+        currentBatch.indices = currentBatch.quads * indexBuffer.indicesPerQuad;
     }
 
 
-    public void renderFinished(){
-        submits.clear();
-    }
+
+
+
+
 
     public abstract void updateMatrices(ShaderProgram shaderProgram, ShaderResource modelViewProj);
 

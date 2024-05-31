@@ -11,17 +11,14 @@ import static org.lwjgl.system.MemoryStack.stackGet;
  * */
 public class VulkanSyncData {
 
-    public long imageAcquiredFence;
+    public long imageAcquiredSemaphore;
+    public long renderFinishedSemaphore;
     public long submissionFence;
 
 
-    public VulkanSyncData(long imageAcquiredFence, long submissionFence) {
-        this.imageAcquiredFence = imageAcquiredFence;
+    public VulkanSyncData(long imageAcquiredSemaphore, long renderFinishedSemaphore, long submissionFence) {
+        this.imageAcquiredSemaphore = imageAcquiredSemaphore;
+        this.renderFinishedSemaphore = renderFinishedSemaphore;
         this.submissionFence = submissionFence;
     }
-
-
-
-
-
 }

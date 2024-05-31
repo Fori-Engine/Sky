@@ -331,10 +331,27 @@ public class VulkanUtil {
             VkPhysicalDeviceFeatures deviceFeatures = VkPhysicalDeviceFeatures.calloc(stack);
             deviceFeatures.samplerAnisotropy(true);
 
+            VkPhysicalDeviceDescriptorIndexingFeatures deviceDescriptorIndexingFeatures = VkPhysicalDeviceDescriptorIndexingFeatures.calloc(stack);
+            //deviceDescriptorIndexingFeatures.set(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES, null, false, )
+            deviceDescriptorIndexingFeatures.runtimeDescriptorArray(true);
+            deviceDescriptorIndexingFeatures.descriptorBindingPartiallyBound(true);
+            deviceDescriptorIndexingFeatures.shaderStorageBufferArrayNonUniformIndexing(true);
+            deviceDescriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing(true);
+            deviceDescriptorIndexingFeatures.shaderStorageImageArrayNonUniformIndexing(true);
+
+            deviceDescriptorIndexingFeatures.descriptorBindingStorageBufferUpdateAfterBind(true);
+            deviceDescriptorIndexingFeatures.descriptorBindingSampledImageUpdateAfterBind(true);
+            deviceDescriptorIndexingFeatures.descriptorBindingStorageImageUpdateAfterBind(true);
+
+
+
+
             VkDeviceCreateInfo createInfo = VkDeviceCreateInfo.calloc(stack);
 
             createInfo.sType(VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO);
             createInfo.pQueueCreateInfos(queueCreateInfos);
+            createInfo.pNext(deviceDescriptorIndexingFeatures);
+
             // queueCreateInfoCount is automatically set
 
             createInfo.pEnabledFeatures(deviceFeatures);
@@ -677,7 +694,7 @@ public class VulkanUtil {
             }
         }
 
-        return VK_PRESENT_MODE_FIFO_KHR;
+        return VK_PRESENT_MODE_FIFO_RELAXED_KHR;
     }
 
     private static final int UINT32_MAX = 0xFFFFFFFF;
@@ -841,6 +858,8 @@ public class VulkanUtil {
     public static VkPhysicalDeviceProperties getPhysicalDeviceProperties(VkPhysicalDevice physicalDevice) {
         VkPhysicalDeviceProperties physicalDeviceProperties = VkPhysicalDeviceProperties.create();
         vkGetPhysicalDeviceProperties(physicalDevice, physicalDeviceProperties);
+
+
 
 
         return physicalDeviceProperties;

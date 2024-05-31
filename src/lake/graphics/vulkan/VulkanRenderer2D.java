@@ -1,7 +1,7 @@
 package lake.graphics.vulkan;
 
 import lake.FlightRecorder;
-import lake.asset.AssetPacks;
+import lake.Time;
 import lake.graphics.*;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
@@ -36,14 +36,10 @@ public class VulkanRenderer2D extends Renderer2D {
     private List<VkCommandBuffer> commandBuffers;
     private int currentFrame;
     private ByteBuffer vertexBufferData, indexBufferData;
-    private FastTextureLookup textureLookup;
-    private int nextTextureSlot;
     private VkPhysicalDeviceProperties physicalDeviceProperties;
     private Map<ShaderProgram, VulkanPipeline> pipelineCache = new HashMap<>();
     public List<VulkanSyncData> inFlightFrames;
     public Map<Integer, VulkanSyncData> imagesInFlight;
-    public static ShaderResource modelViewProj;
-    public static ShaderResource sampler2DArray;
 
     public static int TOTAL_SIZE_BYTES = 3 * 16 * Float.BYTES;
     public static int MATRIX_SIZE_BYTES = 16 * Float.BYTES;
@@ -83,7 +79,6 @@ public class VulkanRenderer2D extends Renderer2D {
         renderPass = VulkanUtil.createRenderPass(deviceWithIndices.device, swapchain);
         swapchainFramebuffers = VulkanUtil.createFramebuffers(deviceWithIndices.device, swapchain, swapchainImageViews, renderPass);
         commandPool = VulkanUtil.createCommandPool(deviceWithIndices);
-        textureLookup = new FastTextureLookup(32);
         VulkanUtil.setupUtilsCommandPool(deviceWithIndices, graphicsQueue);
 
 
@@ -125,7 +120,7 @@ public class VulkanRenderer2D extends Renderer2D {
 
 
 
-        int[] indices = generateIndices(settings.quadsPerBatch);
+        int[] indices = generateIndices(1000);
 
         for (int i : indices) {
             indexBufferData.putInt(i);
@@ -141,25 +136,33 @@ public class VulkanRenderer2D extends Renderer2D {
 
         try(MemoryStack stack = stackPush()) {
 
-            VkFenceCreateInfo imageAcquiredFence = VkFenceCreateInfo.calloc(stack);
-            imageAcquiredFence.sType(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
+            VkSemaphoreCreateInfo imageAcquiredSemaphore = VkSemaphoreCreateInfo.calloc(stack);
+            imageAcquiredSemaphore.sType(VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO);
+
+            VkSemaphoreCreateInfo renderFinishedSemaphore = VkSemaphoreCreateInfo.calloc(stack);
+            renderFinishedSemaphore.sType(VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO);
 
             VkFenceCreateInfo submissionFence = VkFenceCreateInfo.calloc(stack);
             submissionFence.sType(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
+            submissionFence.flags(VK_FENCE_CREATE_SIGNALED_BIT);
 
-            LongBuffer pImageAcquiredFence = stack.mallocLong(1);
+
+            LongBuffer pImageAcquiredSemaphore = stack.mallocLong(1);
+            LongBuffer pRenderFinishedSemaphore = stack.mallocLong(1);
             LongBuffer pSubmissionFence = stack.mallocLong(1);
+
 
 
             for(int i = 0;i < MAX_FRAMES_IN_FLIGHT;i++) {
 
-                if(vkCreateFence(deviceWithIndices.device, imageAcquiredFence, null, pImageAcquiredFence) != VK_SUCCESS
-                || vkCreateFence(deviceWithIndices.device, submissionFence, null, pSubmissionFence) != VK_SUCCESS) {
+                if(vkCreateSemaphore(deviceWithIndices.device, imageAcquiredSemaphore, null, pImageAcquiredSemaphore) != VK_SUCCESS
+                        || vkCreateSemaphore(deviceWithIndices.device, renderFinishedSemaphore, null, pRenderFinishedSemaphore) != VK_SUCCESS
+                        || vkCreateFence(deviceWithIndices.device, submissionFence, null, pSubmissionFence) != VK_SUCCESS) {
 
                     throw new RuntimeException("Failed to create synchronization objects for the frame " + i);
                 }
 
-                inFlightFrames.add(new VulkanSyncData(pImageAcquiredFence.get(0), pSubmissionFence.get(0)));
+                inFlightFrames.add(new VulkanSyncData(pImageAcquiredSemaphore.get(0), pRenderFinishedSemaphore.get(0), pSubmissionFence.get(0)));
             }
 
 
@@ -427,6 +430,7 @@ public class VulkanRenderer2D extends Renderer2D {
 
         VulkanTexture2D vulkanTexture2D = (VulkanTexture2D) texture;
 
+        /*
         int slot = nextTextureSlot;
         boolean isUniqueTexture = false;
 
@@ -452,6 +456,7 @@ public class VulkanRenderer2D extends Renderer2D {
 
         if(isUniqueTexture) nextTextureSlot++;
 
+         */
 
 
     }
@@ -538,12 +543,8 @@ public class VulkanRenderer2D extends Renderer2D {
             vertexBufferData.putFloat(thickness);
 
         }
-        quadCount++;
-        submitQuadCount++;
-
-
-
-        //if(quadIndex == vertexBuffer.maxQuads()) render("Next Batch Render");
+        currentQuadCount++;
+        batchQuadCount++;
     }
 
 
@@ -565,123 +566,92 @@ public class VulkanRenderer2D extends Renderer2D {
         }
     }
 
-    @Override
-    public void acquireNextImage() {
-        VulkanSyncData thisFrame = inFlightFrames.get(currentFrame);
-        vkAcquireNextImageKHR(
-                deviceWithIndices.device,
-                swapchain.swapChain,
-                UINT64_MAX,
-                VK_NULL_HANDLE,
-                thisFrame.imageAcquiredFence,
-                pImageIndex
-        );
-        vkWaitForFences(deviceWithIndices.device, thisFrame.imageAcquiredFence, true, UINT64_MAX);
 
-    }
-
-    @Override
-    public void renderFinished() {
-        super.renderFinished();
-
-        try(MemoryStack stack = stackPush()) {
-            VulkanSyncData thisFrame = inFlightFrames.get(currentFrame);
-
-            VkPresentInfoKHR presentInfo = VkPresentInfoKHR.calloc(stack);
-            {
-                presentInfo.sType(VK_STRUCTURE_TYPE_PRESENT_INFO_KHR);
-                presentInfo.swapchainCount(1);
-                presentInfo.pSwapchains(stack.longs(swapchain.swapChain));
-                presentInfo.pImageIndices(pImageIndex);
-            }
-
-            vkQueuePresentKHR(presentQueue, presentInfo);
-            vkDeviceWaitIdle(deviceWithIndices.device);
-            vkResetFences(deviceWithIndices.device, thisFrame.imageAcquiredFence);
-
-            currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
-        }
-    }
     @Override
     public void render() {
 
 
+        VulkanSyncData thisFrame = inFlightFrames.get(currentFrame);
+
+
+        vkAcquireNextImageKHR(deviceWithIndices.device, swapchain.swapChain, UINT64_MAX, thisFrame.imageAcquiredSemaphore, VK_NULL_HANDLE, pImageIndex);
 
 
 
-
-
-
-
-        final int commandBuffersCount = swapchainFramebuffers.size();
+        vkWaitForFences(deviceWithIndices.device, thisFrame.submissionFence, true, UINT64_MAX);
+        vkResetFences(deviceWithIndices.device, thisFrame.submissionFence);
 
 
 
         try(MemoryStack stack = stackPush()) {
 
+            int imageIndex = pImageIndex.get(0);
 
 
-            VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
-            beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
+            //Command Buffer Recording
+            {
+                VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
+                beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
 
-            VkRenderPassBeginInfo renderPassInfo = VkRenderPassBeginInfo.calloc(stack);
-            renderPassInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO);
-            renderPassInfo.renderPass(renderPass);
-            VkRect2D renderArea = VkRect2D.calloc(stack);
-            renderArea.offset(VkOffset2D.calloc(stack).set(0, 0));
-            renderArea.extent(swapchain.swapChainExtent);
-            renderPassInfo.renderArea(renderArea);
-            VkClearValue.Buffer clearValues = VkClearValue.calloc(1, stack);
-            clearValues.color().float32(stack.floats(clearColor.r, clearColor.g, clearColor.b, clearColor.a));
-            renderPassInfo.pClearValues(clearValues);
+                VkRenderPassBeginInfo renderPassInfo = VkRenderPassBeginInfo.calloc(stack);
+                {
+                    renderPassInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO);
+                    renderPassInfo.renderPass(renderPass);
+                    VkRect2D renderArea = VkRect2D.calloc(stack);
+                    renderArea.offset(VkOffset2D.calloc(stack).set(0, 0));
+                    renderArea.extent(swapchain.swapChainExtent);
+                    renderPassInfo.renderArea(renderArea);
+                    VkClearValue.Buffer clearValues = VkClearValue.calloc(1, stack);
+                    clearValues.color().float32(stack.floats(clearColor.r, clearColor.g, clearColor.b, clearColor.a));
+                    renderPassInfo.pClearValues(clearValues);
+                }
 
 
-            for(int i = 0; i < commandBuffersCount;i++) {
+                VkCommandBuffer commandBuffer = commandBuffers.get(currentFrame);
 
-                VkCommandBuffer commandBuffer = commandBuffers.get(i);
-
-                if(vkBeginCommandBuffer(commandBuffer, beginInfo) != VK_SUCCESS) {
+                if (vkBeginCommandBuffer(commandBuffer, beginInfo) != VK_SUCCESS) {
                     throw new RuntimeException("Failed to begin recording command buffer");
                 }
 
-                renderPassInfo.framebuffer(swapchainFramebuffers.get(i));
+                renderPassInfo.framebuffer(swapchainFramebuffers.get(currentFrame));
 
 
                 vkCmdBeginRenderPass(commandBuffer, renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
                 {
 
+                    LongBuffer vertexBuffers = stack.longs(((VulkanVertexBuffer) vertexBuffer).getMainBuffer().handle);
+                    LongBuffer offsets = stack.longs(0);
 
-                    for(RendererSubmit rendererSubmit : submits){
+                    vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
+                    vkCmdBindIndexBuffer(commandBuffer, ((VulkanIndexBuffer) indexBuffer).getMainBuffer().handle, 0, VK_INDEX_TYPE_UINT32);
 
-                        VulkanPipeline vulkanPipeline = pipelineCache.get(rendererSubmit.shaderProgram);
 
-                        LongBuffer vertexBuffers = stack.longs(((VulkanVertexBuffer) vertexBuffer).getMainBuffer().handle);
-                        LongBuffer offsets = stack.longs(0);
+                    for (RenderBatch batch : batches) {
+
+
+
+                        VulkanPipeline vulkanPipeline = pipelineCache.get(batch.shaderProgram);
 
 
                         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vulkanPipeline.pipeline);
-                        vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
-                        vkCmdBindIndexBuffer(commandBuffer, ((VulkanIndexBuffer) indexBuffer).getMainBuffer().handle, 0, VK_INDEX_TYPE_UINT32);
 
                         vkCmdBindDescriptorSets(
                                 commandBuffer,
                                 VK_PIPELINE_BIND_POINT_GRAPHICS,
                                 vulkanPipeline.pipelineLayout,
                                 0,
-                                stack.longs(((VulkanShaderProgram) rendererSubmit.shaderProgram).getDescriptorSets().get(i)),
+                                stack.longs(((VulkanShaderProgram) batch.shaderProgram).getDescriptorSets().get(currentFrame)),
                                 null
                         );
 
                         vkCmdDrawIndexed(
                                 commandBuffer,
-                                rendererSubmit.quads * indexBuffer.indicesPerQuad,
+                                batch.indices,
                                 1,
                                 0,
-                                (rendererSubmit.totalCount - rendererSubmit.quads) * 4,
+                                batch.start * 4,
                                 0
                         );
-
-
 
 
                     }
@@ -692,40 +662,49 @@ public class VulkanRenderer2D extends Renderer2D {
                 vkCmdEndRenderPass(commandBuffer);
 
 
-                if(vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+                if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
                     throw new RuntimeException("Failed to record command buffer");
                 }
 
             }
 
-        }
-
-
-        try(MemoryStack stack = stackPush()) {
-
-            VulkanSyncData thisFrame = inFlightFrames.get(currentFrame);
-            int imageIndex = pImageIndex.get(0);
-
-
-
-            imagesInFlight.put(imageIndex, thisFrame);
-
-            VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
+            //Submission
             {
-                submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
-                submitInfo.waitSemaphoreCount(0);
-                submitInfo.pWaitDstStageMask(stack.ints(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT));
-                submitInfo.pCommandBuffers(stack.pointers(commandBuffers.get(imageIndex)));
+                imagesInFlight.put(imageIndex, thisFrame);
+
+                VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
+                {
+                    submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
+                    submitInfo.pWaitSemaphores(stack.longs(thisFrame.imageAcquiredSemaphore));
+                    submitInfo.pSignalSemaphores(stack.longs(thisFrame.renderFinishedSemaphore));
+                    submitInfo.waitSemaphoreCount(1);
+                    submitInfo.pWaitDstStageMask(stack.ints(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT));
+                    submitInfo.pCommandBuffers(stack.pointers(commandBuffers.get(imageIndex)));
+                }
+
+                if(vkQueueSubmit(graphicsQueue, submitInfo, thisFrame.submissionFence) != VK_SUCCESS) {
+                    throw new RuntimeException("Failed to submit draw command buffer");
+                }
+            }
+
+
+            //Present
+            {
+                VkPresentInfoKHR presentInfo = VkPresentInfoKHR.calloc(stack);
+                {
+                    presentInfo.sType(VK_STRUCTURE_TYPE_PRESENT_INFO_KHR);
+                    presentInfo.pWaitSemaphores(stack.longs(thisFrame.renderFinishedSemaphore));
+                    presentInfo.swapchainCount(1);
+                    presentInfo.pSwapchains(stack.longs(swapchain.swapChain));
+                    presentInfo.pImageIndices(pImageIndex);
+                }
+
+                vkQueuePresentKHR(presentQueue, presentInfo);
             }
 
 
 
-            if(vkQueueSubmit(graphicsQueue, submitInfo, thisFrame.submissionFence) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to submit draw command buffer");
-            }
 
-            vkWaitForFences(deviceWithIndices.device, thisFrame.submissionFence, true, UINT64_MAX);
-            vkResetFences(deviceWithIndices.device, thisFrame.submissionFence);
         }
 
 
@@ -733,10 +712,11 @@ public class VulkanRenderer2D extends Renderer2D {
 
 
 
+        currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+
+        batches.clear();
         vertexBufferData.clear();
-        quadCount = 0;
-        nextTextureSlot = 0;
-        textureLookup.clear();
+        currentQuadCount = 0;
     }
     @Override
     public void clear(Color color) {
