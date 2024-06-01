@@ -8,7 +8,7 @@ layout(binding = 0) uniform LVKFrameUniforms {
     mat4 m_projection;
 } lfu;
 
-layout(location = 0) in vec2 v_pos;
+layout(location = 0) in vec3 v_pos;
 layout(location = 1) in vec2 v_uv;
 layout(location = 2) in float v_texindex;
 layout(location = 3) in vec4 v_color;
@@ -29,7 +29,7 @@ void main() {
     f_thickness = v_thickness;
 
 
-    gl_Position = lfu.m_projection * lfu.m_view * lfu.m_model * vec4(v_pos, 0.0, 1.0);
+    gl_Position = lfu.m_projection * lfu.m_view * lfu.m_model * vec4(v_pos, 1.0);
 }
 
 #type fragment

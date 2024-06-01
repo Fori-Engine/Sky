@@ -24,16 +24,16 @@ public abstract class Renderer2D implements Disposable {
     private static final int spacesPerTab = 4;
     protected int currentQuadCount;
     protected int batchQuadCount = 0;
-
     protected VertexBuffer vertexBuffer;
     protected IndexBuffer indexBuffer;
-
     protected int ColoredQuad = -1;
     protected int ColoredCircle = -2;
     protected Color clearColor;
     protected RenderBatch currentBatch;
-
     protected ArrayList<RenderBatch> batches = new ArrayList<>();
+    protected Layer layer;
+    protected Layer defaultLayer = new Layer(0.0f);
+
 
 
 
@@ -42,29 +42,30 @@ public abstract class Renderer2D implements Disposable {
         this.height = height;
         Disposer.add("renderer", this);
     }
-
     public abstract void createResources(ShaderProgram... shaderPrograms);
-
-
     public void startBatch(ShaderProgram shaderProgram){
         batchQuadCount = 0;
         currentBatch = new RenderBatch(shaderProgram, currentQuadCount);
         batches.add(currentBatch);
     }
-
     public void endBatch(){
         currentBatch.quads = batchQuadCount;
         currentBatch.indices = currentBatch.quads * indexBuffer.indicesPerQuad;
     }
 
+    public Layer getLayer() {
+        return layer;
+    }
 
+    public void setLayer(Layer layer) {
+        this.layer = layer;
+    }
 
-
-
-
+    public void resetLayer(){
+        layer = defaultLayer;
+    }
 
     public abstract void updateMatrices(ShaderProgram shaderProgram, ShaderResource modelViewProj);
-
     protected int[] generateIndices(int quadIndex){
         int numOfIndices = quadIndex * 6;
         int[] indices = new int[numOfIndices];
@@ -84,7 +85,6 @@ public abstract class Renderer2D implements Disposable {
 
         return indices;
     }
-
     public Quad applyTransformations(float x,
                                      float y,
                                      float w,
@@ -133,7 +133,6 @@ public abstract class Renderer2D implements Disposable {
 
         return new Quad(new Vector4f[]{topLeft, topRight, bottomLeft, bottomRight}, copy);
     }
-
     protected class Quad {
         public Vector4f[] transformedPoints;
         public Rect2D textureCoords;
@@ -143,7 +142,6 @@ public abstract class Renderer2D implements Disposable {
             this.textureCoords = textureCoords;
         }
     }
-
     public void drawLine(float x1, float y1, float x2, float y2, Color color, int thickness, boolean round){
 
         float ox = originX;
@@ -175,8 +173,6 @@ public abstract class Renderer2D implements Disposable {
 
 
     }
-
-
     public int getWidth() {
         return width;
     }
@@ -198,12 +194,9 @@ public abstract class Renderer2D implements Disposable {
     public Matrix4f getTransform() {
         return transform;
     }
-
     public Color getClearColor() {
         return clearColor;
     }
-
-
     public void setTransform(Matrix4f transform) {
         this.transform = transform;
     }
@@ -216,7 +209,6 @@ public abstract class Renderer2D implements Disposable {
     public void resetTransform(){
         setTransform(new Matrix4f().identity());
     }
-
     public void setOrigin(float x, float y){
         this.originX = x;
         this.originY = y;
@@ -241,16 +233,13 @@ public abstract class Renderer2D implements Disposable {
 
 
     }
-
     public void drawTexture(float x, float y, float w, float h, Texture2D texture){
         drawTexture(x, y, w, h, texture, Color.WHITE);
     }
-
     public void drawTexture(float x, float y, float w, float h, Texture2D texture, Color color){
         drawTexture(x, y, w, h, texture, color, new Rect2D(0, 0, 1, 1), false, false);
     }
     public abstract void drawTexture(float x, float y, float w, float h, Texture2D texture, Color color, Rect2D rect2D, boolean xFlip, boolean yFlip);
-
     public void drawFilledRect(float x, float y, float w, float h, Color color){
         drawQuad(x, y, w, h, ColoredQuad, color, originX, originY, new Rect2D(0, 0, 1, 1), -1, false, false);
     }
@@ -260,7 +249,6 @@ public abstract class Renderer2D implements Disposable {
     public void drawEllipse(float x, float y, float w, float h, Color color, float thickness) {
         drawQuad(x, y, w, h, ColoredCircle, color, originX, originY, new Rect2D(0, 0, 1, 1), thickness, false, false);
     }
-
     public abstract void drawQuad(float x,
                           float y,
                           float w,
@@ -273,12 +261,7 @@ public abstract class Renderer2D implements Disposable {
                           float thickness,
                           boolean xFlip,
                           boolean yFlip);
-
-
-
     public abstract void render();
-
-
     public void clear(Color clearColor){
         this.clearColor = clearColor;
     }
@@ -288,7 +271,6 @@ public abstract class Renderer2D implements Disposable {
     public float getOriginY() {
         return originY;
     }
-
     public void drawText(float x, float y, String text, Color color, Font2D font) {
 
         Texture2D glyphTexture = font.getTexture();
@@ -345,9 +327,7 @@ public abstract class Renderer2D implements Disposable {
         }
 
     }
-
     public abstract String getDeviceName();
-
     public static Renderer2D newRenderer2D(Window window, int width, int height, RenderSettings settings){
         api = settings.backend;
         FlightRecorder.info(Renderer2D.class, "Using renderer backend " + api);
@@ -367,7 +347,6 @@ public abstract class Renderer2D implements Disposable {
 
         return null;
     }
-
     public static RenderAPI getRenderAPI() {
         return api;
     }

@@ -44,7 +44,6 @@ public class VulkanRenderer2D extends Renderer2D {
     public static int MATRIX_SIZE_BYTES = 16 * Float.BYTES;
     private IntBuffer pImageIndex;
 
-
     public VulkanRenderer2D(Window window, int width, int height, RenderSettings settings) {
         super(width, height, settings);
 
@@ -59,12 +58,15 @@ public class VulkanRenderer2D extends Renderer2D {
 
 
 
+
         deviceWithIndices = VulkanUtil.createLogicalDevice(physicalDevice, settings.enableValidation, surface);
         graphicsQueue = VulkanUtil.getGraphicsQueue(deviceWithIndices);
         presentQueue = VulkanUtil.getPresentQueue(deviceWithIndices);
+
+        VulkanUtil.setupUtilsCommandPool(deviceWithIndices, graphicsQueue);
+
         swapchain = VulkanUtil.createSwapChain(physicalDevice, deviceWithIndices.device, surface, width, height);
         swapchainImageViews = VulkanUtil.createImageViews(deviceWithIndices.device, swapchain);
-
 
 
 
@@ -83,7 +85,7 @@ public class VulkanRenderer2D extends Renderer2D {
         renderPass = VulkanUtil.createRenderPass(deviceWithIndices.device, swapchain);
         swapchainFramebuffers = VulkanUtil.createFramebuffers(deviceWithIndices.device, swapchain, swapchainImageViews, renderPass);
         commandPool = VulkanUtil.createCommandPool(deviceWithIndices);
-        VulkanUtil.setupUtilsCommandPool(deviceWithIndices, graphicsQueue);
+
 
 
 
@@ -101,7 +103,7 @@ public class VulkanRenderer2D extends Renderer2D {
 
         vertexBuffer = new VulkanVertexBuffer(
                 settings.quadsPerBatch,
-                10,
+                11,
                 deviceWithIndices.device,
                 commandPool,
                 graphicsQueue,
@@ -209,6 +211,12 @@ public class VulkanRenderer2D extends Renderer2D {
         long graphicsPipeline = 0;
 
         try(MemoryStack stack = stackPush()) {
+
+
+
+
+
+
             // ===> VERTEX STAGE <===
 
             VkPipelineVertexInputStateCreateInfo vertexInputInfo = VkPipelineVertexInputStateCreateInfo.calloc(stack);
@@ -239,7 +247,7 @@ public class VulkanRenderer2D extends Renderer2D {
             {
                 posDescription.binding(0);
                 posDescription.location(0);
-                posDescription.format(VK_FORMAT_R32G32_SFLOAT);
+                posDescription.format(VK_FORMAT_R32G32B32_SFLOAT);
                 posDescription.offset(0);
             }
 
@@ -249,7 +257,7 @@ public class VulkanRenderer2D extends Renderer2D {
                 texCoordDescription.binding(0);
                 texCoordDescription.location(1);
                 texCoordDescription.format(VK_FORMAT_R32G32_SFLOAT);
-                texCoordDescription.offset(2 * Float.BYTES);
+                texCoordDescription.offset(3 * Float.BYTES);
             }
 
             //Texture Index
@@ -258,7 +266,7 @@ public class VulkanRenderer2D extends Renderer2D {
                 texIndexDescription.binding(0);
                 texIndexDescription.location(2);
                 texIndexDescription.format(VK_FORMAT_R32_SFLOAT);
-                texIndexDescription.offset(4 * Float.BYTES);
+                texIndexDescription.offset(5 * Float.BYTES);
 
 
             }
@@ -269,7 +277,7 @@ public class VulkanRenderer2D extends Renderer2D {
                 colorDescription.binding(0);
                 colorDescription.location(3);
                 colorDescription.format(VK_FORMAT_R32G32B32A32_SFLOAT);
-                colorDescription.offset(5 * Float.BYTES);
+                colorDescription.offset(6 * Float.BYTES);
             }
 
             // Thickness
@@ -278,7 +286,7 @@ public class VulkanRenderer2D extends Renderer2D {
                 thicknessDescription.binding(0);
                 thicknessDescription.location(4);
                 thicknessDescription.format(VK_FORMAT_R32_SFLOAT);
-                thicknessDescription.offset(9 * Float.BYTES);
+                thicknessDescription.offset(10 * Float.BYTES);
             }
 
 
@@ -452,6 +460,7 @@ public class VulkanRenderer2D extends Renderer2D {
         }
 
         //Maybe dispatch a batch when we run out of samplers in the shader?
+        //Was it really the best idea to keep descriptor sets in the shader?
         drawQuad(x, y, w, h, textureIndex, color, originX, originY, rect2D, -1, xFlip, yFlip);
 
         if(uniqueTexture) currentBatch.nextTextureIndex++;
@@ -493,6 +502,7 @@ public class VulkanRenderer2D extends Renderer2D {
 
             vertexBufferData.putFloat(topLeft.x);
             vertexBufferData.putFloat(topLeft.y);
+            vertexBufferData.putFloat(layer.depth());
             vertexBufferData.putFloat(copy.x);
             vertexBufferData.putFloat(copy.y);
             vertexBufferData.putFloat(quadTypeOrTextureIndex);
@@ -505,6 +515,7 @@ public class VulkanRenderer2D extends Renderer2D {
 
             vertexBufferData.putFloat(bottomLeft.x);
             vertexBufferData.putFloat(bottomLeft.y);
+            vertexBufferData.putFloat(layer.depth());
             vertexBufferData.putFloat(copy.x);
             vertexBufferData.putFloat(copy.h);
             vertexBufferData.putFloat(quadTypeOrTextureIndex);
@@ -517,6 +528,7 @@ public class VulkanRenderer2D extends Renderer2D {
 
             vertexBufferData.putFloat(bottomRight.x);
             vertexBufferData.putFloat(bottomRight.y);
+            vertexBufferData.putFloat(layer.depth());
             vertexBufferData.putFloat(copy.w);
             vertexBufferData.putFloat(copy.h);
             vertexBufferData.putFloat(quadTypeOrTextureIndex);
@@ -529,6 +541,7 @@ public class VulkanRenderer2D extends Renderer2D {
 
             vertexBufferData.putFloat(topRight.x);
             vertexBufferData.putFloat(topRight.y);
+            vertexBufferData.putFloat(layer.depth());
             vertexBufferData.putFloat(copy.w);
             vertexBufferData.putFloat(copy.y);
             vertexBufferData.putFloat(quadTypeOrTextureIndex);
@@ -597,8 +610,11 @@ public class VulkanRenderer2D extends Renderer2D {
                     renderArea.offset(VkOffset2D.calloc(stack).set(0, 0));
                     renderArea.extent(swapchain.swapChainExtent);
                     renderPassInfo.renderArea(renderArea);
-                    VkClearValue.Buffer clearValues = VkClearValue.calloc(1, stack);
+                    VkClearValue.Buffer clearValues = VkClearValue.calloc(2, stack);
                     clearValues.color().float32(stack.floats(clearColor.r, clearColor.g, clearColor.b, clearColor.a));
+                    clearValues.depthStencil().set(1.0f, 0);
+
+
                     renderPassInfo.pClearValues(clearValues);
                 }
 
