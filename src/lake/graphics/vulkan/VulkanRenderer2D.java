@@ -1,7 +1,6 @@
 package lake.graphics.vulkan;
 
 import lake.FlightRecorder;
-import lake.Time;
 import lake.graphics.*;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
@@ -57,6 +56,9 @@ public class VulkanRenderer2D extends Renderer2D {
         VulkanUtil.setupDebugMessenger(instance, settings.enableValidation);
         surface = VulkanUtil.createSurface(instance, window);
         physicalDevice = VulkanUtil.pickPhysicalDevice(instance, surface);
+
+
+
         deviceWithIndices = VulkanUtil.createLogicalDevice(physicalDevice, settings.enableValidation, surface);
         graphicsQueue = VulkanUtil.getGraphicsQueue(deviceWithIndices);
         presentQueue = VulkanUtil.getPresentQueue(deviceWithIndices);
@@ -74,13 +76,14 @@ public class VulkanRenderer2D extends Renderer2D {
                         physicalDeviceProperties.driverVersion()
                 );
 
+        FlightRecorder.info(VulkanRenderer2D.class, "Max Samplers allowed in Descriptor Set: " + physicalDeviceProperties.limits().maxDescriptorSetSamplers());
+
 
 
         renderPass = VulkanUtil.createRenderPass(deviceWithIndices.device, swapchain);
         swapchainFramebuffers = VulkanUtil.createFramebuffers(deviceWithIndices.device, swapchain, swapchainImageViews, renderPass);
         commandPool = VulkanUtil.createCommandPool(deviceWithIndices);
         VulkanUtil.setupUtilsCommandPool(deviceWithIndices, graphicsQueue);
-
 
 
 
@@ -430,35 +433,28 @@ public class VulkanRenderer2D extends Renderer2D {
 
         VulkanTexture2D vulkanTexture2D = (VulkanTexture2D) texture;
 
-        /*
-        int slot = nextTextureSlot;
-        boolean isUniqueTexture = false;
+        int textureIndex = currentBatch.nextTextureIndex;
+        boolean uniqueTexture = false;
 
-
-
-        //Existing texture
-        if (textureLookup.hasTexture(vulkanTexture2D)) {
-            slot = textureLookup.getTexture(vulkanTexture2D);
+        if(currentBatch.textureLookup.hasTexture(vulkanTexture2D)) {
+            textureIndex = currentBatch.textureLookup.getTexture(texture);
         }
-
-        //Unique Texture
         else {
 
-            FlightRecorder.todo(VulkanRenderer2D.class, "Which shader do I use for drawTexture()?");
+            currentBatch.textureLookup.registerTexture(vulkanTexture2D, currentBatch.nextTextureIndex);
+            currentBatch.shaderProgram.updateSampler2DArray(
+                    currentBatch.shaderProgram.getResourceByBinding(1),
+                    currentBatch.nextTextureIndex,
+                    texture
+            );
 
-            //currentShaderProgram.updateSampler2DArray(sampler2DArray, slot, texture);
-            textureLookup.registerTexture(vulkanTexture2D, slot);
-            isUniqueTexture = true;
+            uniqueTexture = true;
         }
 
+        //Maybe dispatch a batch when we run out of samplers in the shader?
+        drawQuad(x, y, w, h, textureIndex, color, originX, originY, rect2D, -1, xFlip, yFlip);
 
-        drawQuad(x, y, w, h, slot, color, originX, originY, rect2D, -1, xFlip, yFlip);
-
-        if(isUniqueTexture) nextTextureSlot++;
-
-         */
-
-
+        if(uniqueTexture) currentBatch.nextTextureIndex++;
     }
 
     @Override
@@ -656,7 +652,7 @@ public class VulkanRenderer2D extends Renderer2D {
 
                     }
 
-                    System.out.println();
+
 
                 }
                 vkCmdEndRenderPass(commandBuffer);

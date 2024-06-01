@@ -62,4 +62,13 @@ public abstract class ShaderProgram implements Disposable {
         return null;
     }
 
+    public ShaderResource getResourceByBinding(int binding){
+        for (ShaderResource shaderResource : resources){
+            if(shaderResource.binding == binding) return shaderResource;
+        }
+
+        return null;
+    }
+
+
 }

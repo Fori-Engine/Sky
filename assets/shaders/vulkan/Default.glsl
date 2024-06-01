@@ -33,7 +33,7 @@ void main() {
 }
 
 #type fragment
-
+#extension GL_EXT_nonuniform_qualifier : require
 
 
 layout(location = 0) in vec4 f_color;
@@ -42,7 +42,7 @@ layout(location = 2) flat in float f_texindex;
 layout(location = 3) flat in float f_thickness;
 
 layout(location = 0) out vec4 FragColor;
-layout(binding = 1) uniform sampler2D u_textures[32];
+layout(binding = 1) uniform sampler2D u_textures[];
 
 
 

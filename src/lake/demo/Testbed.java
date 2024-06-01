@@ -14,7 +14,7 @@ import static lake.graphics.vulkan.VulkanRenderer2D.TOTAL_SIZE_BYTES;
 public class Testbed {
 
     public static void main(String[] args) throws InterruptedException {
-        AssetPacks.open("core", AssetPack.openLocal(new File("assets")));
+        AssetPacks.open("core", AssetPack.openPack(new File("assets.pkg")));
 
         FlightRecorder.setEnabled(true);
         FlightRecorder.meltdown(Testbed.class, "This is very very bad");
@@ -68,6 +68,7 @@ public class Testbed {
         }
 
 
+        /*
         ShaderReader.ShaderSources shaderSources2 = ShaderReader.readCombinedVertexFragmentSources(
                 AssetPacks.<String> getAsset("core:assets/shaders/vulkan/DoItAgain.glsl").asset
         );
@@ -107,6 +108,8 @@ public class Testbed {
         }
 
 
+         */
+
         ArrayList<Color> colors = new ArrayList<>();
         for (int y = 0; y < 5; y++) {
             for (int x = 0; x < 5; x++) {
@@ -128,6 +131,8 @@ public class Testbed {
 
 
 
+        Texture2D texture2D = Texture2D.newTexture2D(AssetPacks.getAsset("core:assets/logo.png"), Texture2D.Filter.Linear);
+
 
 
 
@@ -143,15 +148,22 @@ public class Testbed {
             {
                 int width = 100, height = 100;
 
+
+
                 for (int y = 0; y < 5; y++) {
                     for (int x = 0; x < 5; x++) {
-                        renderer2D.drawFilledRect(x * width, y * height, width, height, colors.get((y * 5) + x));
+                        //renderer2D.drawFilledRect(x * width, y * height, width, height, colors.get((y * 5) + x));
+
+                        renderer2D.drawTexture(x * width, y * height, width, height, texture2D);
                     }
 
                 }
+
+                renderer2D.drawText(0, 0, "This is some text", Color.RED, Font2D.getDefault());
             }
             renderer2D.endBatch();
 
+            /*
             renderer2D.startBatch(shaderProgram2);
             {
 
@@ -175,6 +187,7 @@ public class Testbed {
             }
             renderer2D.endBatch();
 
+             */
 
 
             renderer2D.render();
