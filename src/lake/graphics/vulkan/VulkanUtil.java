@@ -73,7 +73,7 @@ public class VulkanUtil {
             appInfo.applicationVersion(VK_MAKE_VERSION(1, 0, 0));
             appInfo.pEngineName(stack.UTF8Safe(appInfoEngineName));
             appInfo.engineVersion(VK_MAKE_VERSION(1, 0, 0));
-            appInfo.apiVersion(VK_API_VERSION_1_0);
+            appInfo.apiVersion(VK_API_VERSION_1_3);
 
             VkInstanceCreateInfo createInfo = VkInstanceCreateInfo.calloc(stack);
 
@@ -332,12 +332,13 @@ public class VulkanUtil {
             deviceFeatures.samplerAnisotropy(true);
 
             VkPhysicalDeviceDescriptorIndexingFeatures deviceDescriptorIndexingFeatures = VkPhysicalDeviceDescriptorIndexingFeatures.calloc(stack);
-            //deviceDescriptorIndexingFeatures.set(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES, null, false, )
+            deviceDescriptorIndexingFeatures.sType(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES);
             deviceDescriptorIndexingFeatures.runtimeDescriptorArray(true);
             deviceDescriptorIndexingFeatures.descriptorBindingPartiallyBound(true);
             deviceDescriptorIndexingFeatures.shaderStorageBufferArrayNonUniformIndexing(true);
             deviceDescriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing(true);
             deviceDescriptorIndexingFeatures.shaderStorageImageArrayNonUniformIndexing(true);
+            deviceDescriptorIndexingFeatures.descriptorBindingUniformBufferUpdateAfterBind(true);
 
             deviceDescriptorIndexingFeatures.descriptorBindingStorageBufferUpdateAfterBind(true);
             deviceDescriptorIndexingFeatures.descriptorBindingSampledImageUpdateAfterBind(true);

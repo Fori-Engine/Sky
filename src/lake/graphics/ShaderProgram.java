@@ -11,6 +11,7 @@ public abstract class ShaderProgram implements Disposable {
     protected String vertexShaderSource = null;
     protected String fragmentShaderSource = null;
     protected ArrayList<ShaderResource> resources = new ArrayList<>();
+    protected int maxBindlessSamplers;
 
 
     public ShaderProgram(String vertexShaderSource, String fragmentShaderSource){
@@ -41,18 +42,9 @@ public abstract class ShaderProgram implements Disposable {
         return fragmentShaderSource;
     }
 
-
-
-    //public abstract PointerBuffer getUniformBuffer(ShaderResource shaderResource);
-
-
-
-    public abstract void bind();
-    public abstract void setFloat(String name, float value);
-    public abstract void setInt(String name, int value);
-    public abstract void setMatrix4f(String name, Matrix4f proj);
-    public abstract void setIntArray(String name, int[] array);
-    public abstract void setVector2fArray(String name, float[] array);
+    public int getMaxBindlessSamplers() {
+        return maxBindlessSamplers;
+    }
 
     public abstract void dispose();
 

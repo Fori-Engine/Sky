@@ -45,7 +45,7 @@ public abstract class Renderer2D implements Disposable {
     public abstract void createResources(ShaderProgram... shaderPrograms);
     public void startBatch(ShaderProgram shaderProgram){
         batchQuadCount = 0;
-        currentBatch = new RenderBatch(shaderProgram, currentQuadCount);
+        currentBatch = new RenderBatch(shaderProgram, currentQuadCount, shaderProgram.getMaxBindlessSamplers());
         batches.add(currentBatch);
     }
     public void endBatch(){

@@ -1,10 +1,6 @@
 package lake.graphics.vulkan;
 
-import lake.graphics.ShaderProgram;
-import lake.graphics.Disposer;
-import lake.graphics.ShaderResource;
-import lake.graphics.Texture2D;
-import org.joml.Matrix4f;
+import lake.graphics.*;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
@@ -14,6 +10,7 @@ import static lake.graphics.vulkan.VulkanRenderer2D.MAX_FRAMES_IN_FLIGHT;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.util.shaderc.Shaderc.*;
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,13 +18,14 @@ import java.util.List;
 
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK10.vkDestroyShaderModule;
+import static org.lwjgl.vulkan.VK12.*;
 
 public class VulkanShaderProgram extends ShaderProgram {
 
     private VkPipelineShaderStageCreateInfo.Buffer shaderStages;
     private VkDevice device;
-    private LVKSpir5Binary vertShaderSPIRV;
-    private LVKSpir5Binary fragShaderSPIRV;
+    private ShaderBinary vertShaderSPIRV;
+    private ShaderBinary fragShaderSPIRV;
     private ByteBuffer entryPoint;
     private long vertShaderModule;
     private long fragShaderModule;
@@ -38,6 +36,7 @@ public class VulkanShaderProgram extends ShaderProgram {
     private HashMap<ShaderResource, VulkanBuffer>[] frameUniformBuffers = new HashMap[MAX_FRAMES_IN_FLIGHT];
 
 
+
     public VulkanShaderProgram(String vertexShaderSource, String fragmentShaderSource) {
         super(vertexShaderSource, fragmentShaderSource);
         Disposer.add("managedResources", this);
@@ -46,6 +45,8 @@ public class VulkanShaderProgram extends ShaderProgram {
         for (int i = 0; i < frameUniformBuffers.length; i++) {
             frameUniformBuffers[i] = new HashMap<>();
         }
+
+        maxBindlessSamplers = VulkanRenderer2D.getPhysicalDeviceProperties().limits().maxDescriptorSetSamplers();
     }
 
     @Override
@@ -197,9 +198,6 @@ public class VulkanShaderProgram extends ShaderProgram {
 
     public void createDescriptors(){
 
-
-
-
         try(MemoryStack stack = stackPush()){
             VkDescriptorSetLayoutBinding.Buffer bindings = VkDescriptorSetLayoutBinding.calloc(resources.size(), stack);
             for (int i = 0; i < resources.size(); i++) {
@@ -217,6 +215,46 @@ public class VulkanShaderProgram extends ShaderProgram {
             VkDescriptorSetLayoutCreateInfo layoutInfo = VkDescriptorSetLayoutCreateInfo.calloc(stack);
             layoutInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO);
             layoutInfo.pBindings(bindings);
+
+            VkDescriptorSetLayoutBindingFlagsCreateInfo descriptorSetLayoutBindingFlagsCreateInfo = VkDescriptorSetLayoutBindingFlagsCreateInfo.calloc(stack);
+            descriptorSetLayoutBindingFlagsCreateInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO);
+
+
+            ArrayList<Integer> flagsList = new ArrayList<>();
+            for(ShaderResource shaderResource : resources){
+                flagsList.add(VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT);
+            }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            IntBuffer flags = stack.ints(flagsList.stream().mapToInt(i -> i).toArray());
+
+
+            descriptorSetLayoutBindingFlagsCreateInfo.pBindingFlags(flags);
+            layoutInfo.flags(VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT);
+            layoutInfo.pNext(descriptorSetLayoutBindingFlagsCreateInfo);
+
+
 
             LongBuffer pDescriptorSetLayout = MemoryUtil.memAllocLong(1);
 
@@ -240,6 +278,7 @@ public class VulkanShaderProgram extends ShaderProgram {
             poolInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO);
             poolInfo.pPoolSizes(poolSizes);
             poolInfo.maxSets(MAX_FRAMES_IN_FLIGHT);
+            poolInfo.flags(VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT);
 
             LongBuffer pDescriptorPool = stack.mallocLong(1);
 
@@ -249,17 +288,6 @@ public class VulkanShaderProgram extends ShaderProgram {
 
             descriptorPool = pDescriptorPool.get(0);
         }
-
-
-
-
-
-
-
-
-
-
-
 
         //Descriptor Set stuff
         {
@@ -326,23 +354,16 @@ public class VulkanShaderProgram extends ShaderProgram {
             }
         }
     }
-
-    public VkDevice getDevice() {
-        return device;
-    }
-
-
     public VkPipelineShaderStageCreateInfo.Buffer getShaderStages() {
         return shaderStages;
     }
-
     @Override
     public void prepare() {
         entryPoint = MemoryUtil.memUTF8("main");
 
 
-        vertShaderSPIRV = compileShaderToSPIRV(getVertexShaderSource(), shaderc_glsl_vertex_shader);
-        fragShaderSPIRV = compileShaderToSPIRV(getFragmentShaderSource(), shaderc_glsl_fragment_shader);
+        vertShaderSPIRV = ShaderCompiler.compile(getVertexShaderSource(), shaderc_glsl_vertex_shader);
+        fragShaderSPIRV = ShaderCompiler.compile(getFragmentShaderSource(), shaderc_glsl_fragment_shader);
 
         vertShaderModule = VulkanUtil.createShaderModule(device, vertShaderSPIRV.bytecode);
         fragShaderModule = VulkanUtil.createShaderModule(device, fragShaderSPIRV.bytecode);
@@ -365,112 +386,15 @@ public class VulkanShaderProgram extends ShaderProgram {
         fragShaderStageInfo.module(fragShaderModule);
         fragShaderStageInfo.pName(entryPoint);
     }
-
     public LongBuffer getDescriptorSetLayout() {
         return descriptorSetLayout;
     }
-
     public long getDescriptorPool() {
         return descriptorPool;
     }
-
     public List<Long> getDescriptorSets() {
         return descriptorSets;
     }
-
-    public static LVKSpir5Binary compileShaderToSPIRV(String source, int kind){
-        long compiler = shaderc_compiler_initialize();
-        if(compiler == MemoryUtil.NULL){
-            throw new RuntimeException("Failed to init shaderc compiler");
-        }
-
-        long result = shaderc_compile_into_spv(compiler, source, kind, "", "main", MemoryUtil.NULL);
-        if(result == MemoryUtil.NULL){
-            throw new RuntimeException("Shader compilation failed for " + kind);
-        }
-        if(shaderc_result_get_compilation_status(result) != shaderc_compilation_status_success){
-
-            String shaderType = getShaderType(kind);
-
-
-
-            throw new RuntimeException(shaderType + ": " + shaderc_result_get_error_message(result));
-        }
-
-        shaderc_compiler_release(compiler);
-
-
-        return new LVKSpir5Binary(result, shaderc_result_get_bytes(result));
-    }
-
-    private static String getShaderType(int kind) {
-        if(kind == shaderc_glsl_vertex_shader) return "Vertex Shader";
-        if(kind == shaderc_glsl_fragment_shader) return "Fragment Shader";
-
-
-        return null;
-    }
-
-    public static class LVKSpir5Binary {
-        public long handle;
-        public ByteBuffer bytecode;
-
-        public LVKSpir5Binary(long handle, ByteBuffer bytecode) {
-            this.handle = handle;
-            this.bytecode = bytecode;
-        }
-
-        public void cleanup() {
-            shaderc_result_release(handle);
-        }
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    @Override
-    public void bind() {
-
-    }
-
-    @Override
-    public void setFloat(String name, float value) {
-
-    }
-
-    @Override
-    public void setInt(String name, int value) {
-
-    }
-
-    @Override
-    public void setMatrix4f(String name, Matrix4f proj) {
-
-    }
-
-    @Override
-    public void setIntArray(String name, int[] array) {
-
-    }
-
-    @Override
-    public void setVector2fArray(String name, float[] array) {
-
-    }
-
     public void disposeShaderModules(){
 
         vkDestroyShaderModule(device, vertShaderModule, null);
@@ -479,7 +403,6 @@ public class VulkanShaderProgram extends ShaderProgram {
         vertShaderSPIRV.cleanup();
         fragShaderSPIRV.cleanup();
     }
-
     @Override
     public void dispose() {
         disposeShaderModules();

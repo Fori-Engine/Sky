@@ -5,11 +5,12 @@ public class RenderBatch {
     public int start;
     public int quads;
     public int indices;
-    public FastTextureLookup textureLookup = new FastTextureLookup(32);
+    public FastTextureLookup textureLookup;
     public int nextTextureIndex = 0;
 
-    public RenderBatch(ShaderProgram shaderProgram, int start) {
+    public RenderBatch(ShaderProgram shaderProgram, int start, int maxBindlessSamplers) {
         this.shaderProgram = shaderProgram;
         this.start = start;
+        this.textureLookup = new FastTextureLookup(maxBindlessSamplers);
     }
 }

@@ -82,6 +82,8 @@ public class VulkanIndexBuffer extends IndexBuffer  {
     public void dispose() {
         MemoryUtil.memFree(data);
 
+        vkDeviceWaitIdle(device);
+
         vkDestroyBuffer(device, buffer.handle, null);
         vkDestroyBuffer(device, stagingBuffer.handle, null);
 

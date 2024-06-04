@@ -84,6 +84,8 @@ public class VulkanVertexBuffer extends VertexBuffer {
     public void dispose() {
         MemoryUtil.memFree(data);
 
+        vkDeviceWaitIdle(device);
+
         vkDestroyBuffer(device, buffer.handle, null);
         vkDestroyBuffer(device, stagingBuffer.handle, null);
 

@@ -25,11 +25,11 @@ public class Testbed {
 
 
 
-        Window window = new Window(1920, 1080, "Deep", false);
+        Window window = new Window(1920, 1080, "Showcase Demo", false);
 
 
 
-        Renderer2D renderer2D = Renderer2D.newRenderer2D(window, window.getWidth(), window.getHeight(), new RenderSettings(RenderAPI.Vulkan).msaa(true).enableValidation(true));
+        Renderer2D renderer2D = Renderer2D.newRenderer2D(window, window.getWidth(), window.getHeight(), new RenderSettings(RenderAPI.Vulkan).msaa(true).enableValidation(false));
         ShaderReader.ShaderSources shaderSources1 = ShaderReader.readCombinedVertexFragmentSources(
                 AssetPacks.<String> getAsset("core:assets/shaders/vulkan/Default.glsl").asset
         );
@@ -54,7 +54,7 @@ public class Testbed {
             ShaderResource sampler2DArray = new ShaderResource(1)
                     .type(ShaderResource.Type.CombinedSampler)
                     .shaderStage(ShaderResource.ShaderStage.FragmentStage)
-                    .count(32);
+                    .count(shaderProgram1.getMaxBindlessSamplers());
 
             shaderProgram1.addResource(modelViewProj);
             shaderProgram1.addResource(sampler2DArray);
@@ -133,10 +133,9 @@ public class Testbed {
 
 
         Texture2D texture2D = Texture2D.newTexture2D(AssetPacks.getAsset("core:assets/logo.png"), Texture2D.Filter.Linear);
-        Layer layer = new Layer(-0.9f);
 
 
-        float t = 0;
+
 
         while(!window.shouldClose()){
 
@@ -145,23 +144,25 @@ public class Testbed {
 
 
 
+
+
+
             renderer2D.startBatch(shaderProgram1);
             {
                 int width = 100, height = 100;
-                renderer2D.setLayer(layer);
+
+
 
                 for (int y = 0; y < 5; y++) {
                     for (int x = 0; x < 5; x++) {
-                        renderer2D.drawFilledRect(x * width, y * height, width, height, colors.get((y * 5) + x));
+                        //renderer2D.drawFilledRect(x * width, y * height, width, height, colors.get((y * 5) + x));
 
-                        //renderer2D.drawTexture(x * width, y * height, width, height, texture2D);
+                        renderer2D.drawTexture(x * width, y * height, width, height, texture2D);
                     }
 
                 }
 
-                //renderer2D.drawText(0, 0, "This is some text", Color.RED, Font2D.getDefault());
-
-                renderer2D.resetLayer();
+                renderer2D.drawText(0, 0, "This is some text " + Time.framesPerSecond(), Color.RED, Font2D.getDefault());
             }
             renderer2D.endBatch();
 
@@ -190,6 +191,8 @@ public class Testbed {
             renderer2D.endBatch();
 
              */
+
+
 
 
             renderer2D.render();
