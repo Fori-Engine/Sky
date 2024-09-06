@@ -1,7 +1,6 @@
 package lake.graphics.vulkan;
 
 import lake.FlightRecorder;
-import lake.demo.Testbed;
 import lake.graphics.*;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
@@ -48,16 +47,17 @@ public class VulkanRenderer2D extends Renderer2D {
 
 
 
-    public VulkanRenderer2D(Window window, int width, int height, RenderSettings settings) {
+    public VulkanRenderer2D(VkInstance instance, long surface, int width, int height, RenderSettings settings) {
         super(width, height, settings);
 
 
-        String appEngineInfoName = "LakeEngine";
 
-        FlightRecorder.info(VulkanRenderer2D.class, "Using appInfoEngineName of " + appEngineInfoName);
-        instance = VulkanUtil.createInstance(getClass().getName(), appEngineInfoName, settings.enableValidation);
+
         VulkanUtil.setupDebugMessenger(instance, settings.enableValidation);
-        surface = VulkanUtil.createSurface(instance, window);
+
+
+
+
         physicalDevice = VulkanUtil.pickPhysicalDevice(instance, surface);
 
 
@@ -128,7 +128,7 @@ public class VulkanRenderer2D extends Renderer2D {
 
 
 
-        int[] indices = generateIndices(1000);
+        int[] indices = generateIndices(200);
 
         for (int i : indices) {
             indexBufferData.putInt(i);
@@ -628,9 +628,6 @@ public class VulkanRenderer2D extends Renderer2D {
 
 
                     for (RenderBatch batch : batches) {
-
-
-
                         VulkanPipeline vulkanPipeline = pipelineCache.get(batch.shaderProgram);
 
 
@@ -653,14 +650,7 @@ public class VulkanRenderer2D extends Renderer2D {
                                 batch.start * 4,
                                 0
                         );
-
-
-
-
                     }
-
-
-
                 }
                 vkCmdEndRenderPass(commandBuffer);
 

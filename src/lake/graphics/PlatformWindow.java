@@ -6,14 +6,10 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWImage;
 import lake.Time;
-import org.lwjgl.stb.STBImage;
-import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 import java.nio.DoubleBuffer;
-import java.nio.IntBuffer;
-import java.util.Collections;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
@@ -24,8 +20,7 @@ import static org.lwjgl.system.MemoryUtil.NULL;
  * OpenGL resources once the application is closed.
  */
 
-public class Window {
-
+public class PlatformWindow {
     private long window;
     private Context context;
     private double mouseX, mouseY;
@@ -33,7 +28,7 @@ public class Window {
     private int width, height;
     private String title;
 
-    public Window(int w, int h, String title, boolean resizable){
+    public PlatformWindow(int w, int h, String title, boolean resizable){
 
 
         this.width = w;
@@ -60,7 +55,7 @@ public class Window {
         return context;
     }
 
-    public void setContext(Context context) {
+    public void configureAndCreateWindow(Context context) {
         this.context = context;
 
 
@@ -176,7 +171,7 @@ public class Window {
         icon.pixels(textureBytes);
 
 
-
+        System.out.println(window);
         glfwSetWindowIcon(window, icon);
 
         icon.free();

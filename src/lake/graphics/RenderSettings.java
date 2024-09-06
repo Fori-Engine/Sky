@@ -2,7 +2,7 @@ package lake.graphics;
 
 public class RenderSettings {
     public boolean enableValidation = true;
-    public int quadsPerBatch = 20000;
+    public int quadsPerBatch = 200;
     public boolean msaa = false;
     public RenderAPI backend;
 

@@ -6,7 +6,9 @@ import lake.graphics.vulkan.VulkanRenderer2D;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
+import org.lwjgl.vulkan.VkInstance;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -328,13 +330,45 @@ public abstract class Renderer2D implements Disposable {
 
     }
     public abstract String getDeviceName();
-    public static Renderer2D newRenderer2D(Window window, int width, int height, RenderSettings settings){
+
+    public static void setApi(RenderAPI api) {
+        Renderer2D.api = api;
+    }
+
+    public static Renderer2D newRenderer2D(Canvas canvas, int width, int height, RenderSettings settings){
         api = settings.backend;
-        FlightRecorder.info(Renderer2D.class, "Using renderer backend " + api);
+
 
         if(settings.backend == RenderAPI.Vulkan){
-            window.setContext(new VulkanContext());
-            return new VulkanRenderer2D(window, width, height, settings);
+            VulkanContext vulkanContext = new VulkanContext();
+            vulkanContext.readyCanvas(canvas);
+
+            return new VulkanRenderer2D(vulkanContext.getCanvasInstance(), vulkanContext.getCanvasSurface(), width, height, settings);
+        }
+        else if(settings.backend == null){
+            FlightRecorder.meltdown(Renderer2D.class, "The target graphics API was not specified in RenderSettings!");
+        }
+        else {
+            FlightRecorder.meltdown(Renderer2D.class, "User requested renderer backend " + settings.backend + " but no backend could be initialized!");
+        }
+
+        return null;
+    }
+
+    public static Renderer2D newRenderer2D(PlatformWindow window, int width, int height, RenderSettings settings){
+        api = settings.backend;
+
+
+        if(settings.backend == RenderAPI.Vulkan){
+
+            VulkanContext vulkanContext = new VulkanContext();
+            window.configureAndCreateWindow(vulkanContext);
+            vulkanContext.readyDisplay(window);
+
+            long surface = vulkanContext.getPlatformWindowSurface();
+            VkInstance instance = vulkanContext.getPlatformWindowInstance();
+
+            return new VulkanRenderer2D(instance, surface, width, height, settings);
         }
         else if(settings.backend == null){
             FlightRecorder.meltdown(Renderer2D.class, "The target graphics API was not specified in RenderSettings!");

@@ -5,7 +5,8 @@
 package lake.graphics.vulkan;
 
 import lake.FlightRecorder;
-import lake.graphics.Window;
+import lake.graphics.Context;
+import lake.graphics.PlatformWindow;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
@@ -57,7 +58,7 @@ public class VulkanUtil {
         }
     }
 
-    public static VkInstance createInstance(String appName, String appInfoEngineName, boolean validation) {
+    public static VkInstance createInstance(String appName, String appInfoEngineName, boolean validation, Context.SurfaceType surfaceType) {
 
         if(validation && !checkValidationLayerSupport()) {
             throw new RuntimeException("Validation requested but not supported");
@@ -80,7 +81,7 @@ public class VulkanUtil {
             createInfo.sType(VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO);
             createInfo.pApplicationInfo(appInfo);
             // enabledExtensionCount is implicitly set when you call ppEnabledExtensionNames
-            createInfo.ppEnabledExtensionNames(getRequiredExtensions(stack, validation));
+            createInfo.ppEnabledExtensionNames(getRequiredExtensions(stack, validation, surfaceType));
 
             // same with enabledLayerCount
 
@@ -422,7 +423,7 @@ public class VulkanUtil {
         return presentQueue;
     }
 
-    public static long createSurface(VkInstance instance, Window window) {
+    public static long createSurface(VkInstance instance, PlatformWindow window) {
 
         long surface;
 
@@ -829,22 +830,27 @@ public class VulkanUtil {
         return VK_ERROR_EXTENSION_NOT_PRESENT;
     }
 
-    private static PointerBuffer getRequiredExtensions(MemoryStack stack, boolean validation) {
+    private static PointerBuffer getRequiredExtensions(MemoryStack stack, boolean validation, Context.SurfaceType surfaceType) {
 
-        PointerBuffer glfwExtensions = glfwGetRequiredInstanceExtensions();
+        PointerBuffer extensions = null;
 
-        if(validation) {
 
-            PointerBuffer extensions = stack.mallocPointer(glfwExtensions.capacity() + 1);
-
+        if(surfaceType == Context.SurfaceType.PlatformWindow){
+            PointerBuffer glfwExtensions = glfwGetRequiredInstanceExtensions();
+            extensions = stack.mallocPointer(glfwExtensions.capacity() + 1);
             extensions.put(glfwExtensions);
-            extensions.put(stack.UTF8(VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
 
-            // Rewind the buffer before returning it to reset its position back to 0
-            return extensions.rewind();
+        }
+        else if(surfaceType == Context.SurfaceType.Canvas){
+            extensions = stack.mallocPointer(3);
+            extensions.put(stack.UTF8(VK_KHR_SURFACE_EXTENSION_NAME));
+            extensions.put(stack.UTF8(KHRWin32Surface.VK_KHR_WIN32_SURFACE_EXTENSION_NAME));
         }
 
-        return glfwExtensions;
+        if(validation) extensions.put(stack.UTF8(VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
+
+
+        return extensions.rewind();
     }
 
 
