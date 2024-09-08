@@ -22,7 +22,7 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 
 public class PlatformWindow {
     private long window;
-    private Context context;
+    private RenderContext renderContext;
     private double mouseX, mouseY;
     private double start;
     private int width, height;
@@ -51,22 +51,32 @@ public class PlatformWindow {
     }
 
 
-    public Context getContext() {
-        return context;
+    public RenderContext getContext() {
+        return renderContext;
     }
 
-    public void configureAndCreateWindow(Context context) {
-        this.context = context;
+    public void configureAndCreateWindow(RenderContext renderContext) {
+        this.renderContext = renderContext;
 
 
-        context.enableHints();
+        renderContext.enableHints();
         window = glfwCreateWindow(width, height, title, NULL, NULL);
         if (window == NULL)
             throw new RuntimeException("Failed to create the GLFW window");
 
-        context.setup(this);
+        renderContext.setup(this);
 
         glfwShowWindow(window);
+    }
+
+    public void onRenderContextReady(RenderContext renderContext, Renderer2D renderer2D){
+
+        glfwSetWindowSizeCallback(window, (window, width, height) -> {
+
+            renderer2D.onResize(width, height);
+
+
+        });
     }
 
     private int glfwBool(boolean b){
@@ -111,7 +121,7 @@ public class PlatformWindow {
 
 
 
-        context.swapBuffers(this);
+        renderContext.swapBuffers(this);
 
         glfwPollEvents();
 

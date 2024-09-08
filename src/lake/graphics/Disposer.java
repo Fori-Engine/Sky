@@ -3,6 +3,8 @@ package lake.graphics;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Supplier;
 
 /***
  * A Disposer is responsible for registering OpenGL objects like VBOs/VAOs/Shaders that have to be disposed
@@ -49,12 +51,11 @@ public class Disposer {
 
 
     public static void disposeAllInCategory(String category){
-        for(Disposable disposable : inCategory(category)){
-            disposable.dispose();
-        }
+
+
     }
     public static List<Disposable> inCategory(String category){
-        return disposables.get(category);
+        return null;
     }
 
 }

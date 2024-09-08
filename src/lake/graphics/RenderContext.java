@@ -1,9 +1,6 @@
 package lake.graphics;
 
-import javax.swing.*;
-import java.awt.*;
-
-public abstract class Context {
+public abstract class RenderContext {
 
     public enum SurfaceType {
         PlatformWindow,
@@ -14,8 +11,6 @@ public abstract class Context {
     public abstract void setup(PlatformWindow window);
     public abstract void swapBuffers(PlatformWindow window);
     public abstract void readyDisplay(PlatformWindow window);
-    public abstract void readyCanvas(Canvas canvas);
-
 
 
 }

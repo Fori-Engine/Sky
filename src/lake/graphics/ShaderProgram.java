@@ -1,8 +1,5 @@
 package lake.graphics;
 
-import lake.graphics.vulkan.VulkanShaderProgram;
-import org.joml.Matrix4f;
-
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
@@ -49,7 +46,6 @@ public abstract class ShaderProgram implements Disposable {
     public abstract void dispose();
 
     public static ShaderProgram newShaderProgram(String vertexShaderSource, String fragmentShaderSource){
-        if(Renderer2D.getRenderAPI() == RenderAPI.Vulkan) return new VulkanShaderProgram(vertexShaderSource, fragmentShaderSource);
 
         return null;
     }
