@@ -19,11 +19,6 @@ public class ShaderReader {
         while (scanner.hasNextLine()) {
             String line = scanner.nextLine();
 
-            if(line.startsWith("#version")){
-                vertexShader.append(line + "\n");
-                fragmentShader.append(line + "\n");
-            }
-
 
 
             if(line.equals("#type vertex")){
