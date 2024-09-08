@@ -117,39 +117,7 @@ public class VulkanUtil {
 
 
 
-    public static ArrayList<Long> createFramebuffers(VkDevice device, VkSwapchain swapchain, List<Long> swapChainImageViews, long renderPass) {
 
-        ArrayList<Long> swapChainFramebuffers = new ArrayList<>(swapChainImageViews.size());
-
-        try(MemoryStack stack = stackPush()) {
-
-            LongBuffer attachments = stack.mallocLong(1);
-            LongBuffer pFramebuffer = stack.mallocLong(1);
-
-            // Lets allocate the create info struct once and just update the pAttachments field each iteration
-            VkFramebufferCreateInfo framebufferInfo = VkFramebufferCreateInfo.calloc(stack);
-            framebufferInfo.sType(VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO);
-            framebufferInfo.renderPass(renderPass);
-            framebufferInfo.width(swapchain.swapChainExtent.width());
-            framebufferInfo.height(swapchain.swapChainExtent.height());
-            framebufferInfo.layers(1);
-
-            for(long imageView : swapChainImageViews) {
-
-                attachments.put(0, imageView);
-
-                framebufferInfo.pAttachments(attachments);
-
-                if(vkCreateFramebuffer(device, framebufferInfo, null, pFramebuffer) != VK_SUCCESS) {
-                    throw new RuntimeException("Failed to create framebuffer");
-                }
-
-                swapChainFramebuffers.add(pFramebuffer.get(0));
-            }
-        }
-
-        return swapChainFramebuffers;
-    }
 
 
 

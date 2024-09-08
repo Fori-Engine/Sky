@@ -36,7 +36,9 @@ import static org.lwjgl.vulkan.VK13.*;
 
 public class VulkanRenderer2D extends Renderer2D {
 
-    private static final int UINT32_MAX = 0xFFFFFFFF;
+    private static int FRAMES_IN_FLIGHT = 2;
+
+    private static final int UINT64_MAX = 0xFFFFFFFF;
     private long debugMessenger;
     private VkPhysicalDevice physicalDevice;
     private VkPhysicalDeviceProperties physicalDeviceProperties;
@@ -52,8 +54,12 @@ public class VulkanRenderer2D extends Renderer2D {
     private VkSwapchain swapchain;
     private VkSwapchainSupportDetails swapchainSupportDetails;
     private List<Long> swapchainImageViews = new ArrayList<>();
+    private List<Long> swapchainFramebuffers = new ArrayList<>();
     private long surface;
     private VkInstance instance;
+    private long renderPass;
+    private VkFrame[] frames = new VkFrame[FRAMES_IN_FLIGHT];
+    private int frameIndex;
 
 
     private long createDebugMessenger(VkInstance instance){
@@ -321,7 +327,7 @@ public class VulkanRenderer2D extends Renderer2D {
 
 
 
-        if(capabilities.currentExtent().width() != UINT32_MAX) {
+        if(capabilities.currentExtent().width() != UINT64_MAX) {
             VkExtent2D extent = VkExtent2D.malloc(stack).set(width, height);
             return extent;
         }
@@ -454,7 +460,80 @@ public class VulkanRenderer2D extends Renderer2D {
 
         return swapChainImageViews;
     }
+    private ArrayList<Long> createSwapchainFramebuffers(VkDevice device, VkSwapchain swapchain, List<Long> swapChainImageViews, long renderPass) {
 
+        ArrayList<Long> swapChainFramebuffers = new ArrayList<>(swapChainImageViews.size());
+
+        try(MemoryStack stack = stackPush()) {
+
+            LongBuffer attachments = stack.mallocLong(1);
+            LongBuffer pFramebuffer = stack.mallocLong(1);
+
+            // Lets allocate the create info struct once and just update the pAttachments field each iteration
+            VkFramebufferCreateInfo framebufferInfo = VkFramebufferCreateInfo.calloc(stack);
+            framebufferInfo.sType(VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO);
+            framebufferInfo.renderPass(renderPass);
+            framebufferInfo.width(swapchain.swapChainExtent.width());
+            framebufferInfo.height(swapchain.swapChainExtent.height());
+            framebufferInfo.layers(1);
+
+            for(long imageView : swapChainImageViews) {
+
+                attachments.put(0, imageView);
+
+                framebufferInfo.pAttachments(attachments);
+
+                if(vkCreateFramebuffer(device, framebufferInfo, null, pFramebuffer) != VK_SUCCESS) {
+                    throw new RuntimeException("Failed to create framebuffer");
+                }
+
+                swapChainFramebuffers.add(pFramebuffer.get(0));
+            }
+        }
+
+        return swapChainFramebuffers;
+    }
+    private static long createRenderPass(VkDevice device, VkSwapchain swapchain) {
+
+        long renderPass;
+
+        try(MemoryStack stack = stackPush()) {
+
+            VkAttachmentDescription.Buffer colorAttachment = VkAttachmentDescription.calloc(1, stack);
+            colorAttachment.format(swapchain.swapChainImageFormat);
+            colorAttachment.samples(VK_SAMPLE_COUNT_1_BIT);
+            colorAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR);
+            colorAttachment.storeOp(VK_ATTACHMENT_STORE_OP_STORE);
+            colorAttachment.stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
+            colorAttachment.stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
+            colorAttachment.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
+            colorAttachment.finalLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
+            VkAttachmentReference.Buffer colorAttachmentRef = VkAttachmentReference.calloc(1, stack);
+            colorAttachmentRef.attachment(0);
+            colorAttachmentRef.layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+            VkSubpassDescription.Buffer subpass = VkSubpassDescription.calloc(1, stack);
+            subpass.pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS);
+            subpass.colorAttachmentCount(1);
+            subpass.pColorAttachments(colorAttachmentRef);
+
+            VkRenderPassCreateInfo renderPassInfo = VkRenderPassCreateInfo.calloc(stack);
+            renderPassInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO);
+            renderPassInfo.pAttachments(colorAttachment);
+            renderPassInfo.pSubpasses(subpass);
+
+            LongBuffer pRenderPass = stack.mallocLong(1);
+
+            if(vkCreateRenderPass(device, renderPassInfo, null, pRenderPass) != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create render pass");
+            }
+
+            renderPass = pRenderPass.get(0);
+        }
+
+        return renderPass;
+    }
 
     public VulkanRenderer2D(VkInstance instance, long surface, int width, int height, RenderSettings renderSettings) {
         this(width, height, renderSettings);
@@ -473,11 +552,51 @@ public class VulkanRenderer2D extends Renderer2D {
         graphicsQueue = getGraphicsQueue(device);
         presentQueue = getPresentQueue(device);
         swapchain = createSwapChain(device, surface, width, height);
-        //swapchainImageViews = createSwapchainImageViews(device, swapchain);
+        swapchainImageViews = createSwapchainImageViews(device, swapchain);
 
         FlightRecorder.info(VulkanRenderer2D.class, "Max: " + physicalDeviceProperties.limits().maxDescriptorSetSamplers());
-        
-        
+
+
+        renderPass = createRenderPass(device, swapchain);
+        swapchainFramebuffers = createSwapchainFramebuffers(device, swapchain, swapchainImageViews, renderPass);
+        for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
+
+
+            try(MemoryStack stack = stackPush()) {
+
+                LongBuffer pImageAcquiredSemaphore = stack.mallocLong(1);
+                LongBuffer pRenderFinishedSemaphore = stack.mallocLong(1);
+                LongBuffer pInFlightFence = stack.mallocLong(1);
+
+
+
+                VkSemaphoreCreateInfo imageAcquiredSemaphoreInfo = VkSemaphoreCreateInfo.calloc(stack);
+                imageAcquiredSemaphoreInfo.sType(VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO);
+
+                VkSemaphoreCreateInfo renderFinishedSemaphoreInfo = VkSemaphoreCreateInfo.calloc(stack);
+                renderFinishedSemaphoreInfo.sType(VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO);
+
+                VkFenceCreateInfo inFlightFenceCreateInfo = VkFenceCreateInfo.calloc(stack);
+                inFlightFenceCreateInfo.sType(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
+                inFlightFenceCreateInfo.flags(VK_FENCE_CREATE_SIGNALED_BIT);
+
+                vkCreateSemaphore(device, imageAcquiredSemaphoreInfo, null, pImageAcquiredSemaphore);
+                vkCreateSemaphore(device, renderFinishedSemaphoreInfo, null, pRenderFinishedSemaphore);
+                vkCreateFence(device, inFlightFenceCreateInfo, null, pInFlightFence);
+
+                frames[i] = new VkFrame(pImageAcquiredSemaphore.get(0), pRenderFinishedSemaphore.get(0), pInFlightFence.get(0));
+            }
+        }
+
+
+
+
+
+
+
+
+
+
         //Allocate and submit renderSettings.batchSize-number indices in a staging index buffer
         //Transfer from index buffer to GPU dedicated index buffer
 
@@ -496,6 +615,7 @@ public class VulkanRenderer2D extends Renderer2D {
 
         //End Frame
 
+        /*
 
         VmaVulkanFunctions vulkanFunctions = VmaVulkanFunctions.create();
         vulkanFunctions.set(instance, device);
@@ -534,6 +654,9 @@ public class VulkanRenderer2D extends Renderer2D {
 
         vmaCreateBuffer(pAllocator.get(0), bufferCreateInfo, allocationCreateInfo, pBuffer, pAllocation, allocationInfo);
 
+
+         */
+
     }
 
 
@@ -550,26 +673,32 @@ public class VulkanRenderer2D extends Renderer2D {
 
     @Override
     public void onResize(int width, int height) {
+
         vkDeviceWaitIdle(device);
 
         System.out.println("Resizing!");
 
+        vkDestroyRenderPass(device, renderPass, null);
 
-        /*
-
+        for(long swapchainFramebuffer : swapchainFramebuffers){
+            vkDestroyFramebuffer(device, swapchainFramebuffer, null);
+        }
 
         for(long swapchainImageView : swapchainImageViews) {
             vkDestroyImageView(device, swapchainImageView, null);
         }
-
-         */
-
-
-
         vkDestroySwapchainKHR(device, swapchain.swapChain, null);
 
         swapchain = createSwapChain(device, surface, width, height);
-        //swapchainImageViews = createSwapchainImageViews(device, swapchain);
+        swapchainImageViews = createSwapchainImageViews(device, swapchain);
+        renderPass = createRenderPass(device, swapchain);
+        swapchainFramebuffers = createSwapchainFramebuffers(device, swapchain, swapchainImageViews, renderPass);
+
+
+        System.out.println("Resize Finished");
+
+
+
     }
 
     @Override
@@ -600,6 +729,11 @@ public class VulkanRenderer2D extends Renderer2D {
     @Override
     public String getDeviceName() {
         return "";
+    }
+
+    @Override
+    public void update() {
+
     }
 
     @Override

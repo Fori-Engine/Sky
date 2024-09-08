@@ -24,6 +24,7 @@ public class ForiTestPlatform {
 
         while(!window.shouldClose()){
 
+            renderer2D.update();
             window.update();
         }
 

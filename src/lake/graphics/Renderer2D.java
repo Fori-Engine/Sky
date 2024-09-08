@@ -335,7 +335,7 @@ public abstract class Renderer2D implements Disposable {
 
     }
     public abstract String getDeviceName();
-
+    public abstract void update();
 
     public static Renderer2D newRenderer2D(PlatformWindow window, int width, int height, RenderSettings settings){
         api = settings.backend;
