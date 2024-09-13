@@ -5,7 +5,6 @@ import lake.asset.AssetPacks;
 import lake.graphics.*;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
 
 import java.nio.IntBuffer;
@@ -30,7 +29,12 @@ import static org.lwjgl.vulkan.VK10.vkGetInstanceProcAddr;
 import static org.lwjgl.vulkan.VK13.*;
 
 
-public class VulkanRenderer2D extends Renderer2D {
+public class VkSceneRenderer extends SceneRenderer {
+
+    private static final List<String> validationLayers = new ArrayList<>();
+    static {
+        validationLayers.add("VK_LAYER_KHRONOS_validation");
+    }
 
     private static int FRAMES_IN_FLIGHT = 2;
 
@@ -41,10 +45,7 @@ public class VulkanRenderer2D extends Renderer2D {
     private VkPhysicalDeviceQueueFamilies physicalDeviceQueueFamilies;
     private static final Set<String> DEVICE_EXTENSIONS = Stream.of(VK_KHR_SWAPCHAIN_EXTENSION_NAME)
             .collect(toSet());
-    private static List<String> validationLayers = new ArrayList<>();
-    static {
-        validationLayers.add("VK_LAYER_KHRONOS_validation");
-    }
+
     private VkDevice device;
     private VkQueue graphicsQueue, presentQueue;
     private VkSwapchain swapchain;
@@ -58,44 +59,212 @@ public class VulkanRenderer2D extends Renderer2D {
     private int frameIndex;
     private VkPipeline pipeline;
     private long sharedCommandPool;
-    private PointerBuffer commandBuffer;
 
 
-    private long createDebugMessenger(VkInstance instance){
 
-        long debugMessenger;
-
-        try (MemoryStack stack = stackPush()) {
-
-            VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = VkDebugUtilsMessengerCreateInfoEXT.calloc(stack);
-            debugCreateInfo.sType(VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT);
-            debugCreateInfo.messageSeverity(VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT);
-            debugCreateInfo.messageType(VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT);
-            debugCreateInfo.pfnUserCallback((messageSeverity, messageTypes, pCallbackData, pUserData) -> {
-
-                VkDebugUtilsMessengerCallbackDataEXT callbackData = VkDebugUtilsMessengerCallbackDataEXT.create(pCallbackData);
-                FlightRecorder.info(VulkanRenderer2D.class, callbackData.pMessageString());
+    public VkSceneRenderer(VkInstance instance, long surface, int width, int height, RenderSettings renderSettings, long debugMessenger) {
+        this(width, height, renderSettings);
+        this.instance = instance;
+        this.surface = surface;
+        this.debugMessenger = debugMessenger;
 
 
-                return VK_FALSE;
-            });
+        physicalDevice = selectPhysicalDevice(instance, surface);
+        physicalDeviceProperties = getPhysicalDeviceProperties(physicalDevice);
+        FlightRecorder.info(VkSceneRenderer.class, "Selected Physical Device " + physicalDeviceProperties.deviceNameString());
+
+        device = createDevice(physicalDevice, renderSettings.enableValidation);
+        graphicsQueue = getGraphicsQueue(device);
+        presentQueue = getPresentQueue(device);
+        swapchain = createSwapChain(device, surface, width, height);
+        swapchainImageViews = createSwapchainImageViews(device, swapchain);
+
+        FlightRecorder.info(VkSceneRenderer.class, "Max: " + physicalDeviceProperties.limits().maxDescriptorSetSamplers());
 
 
-            LongBuffer pDebugMessenger = stack.longs(VK_NULL_HANDLE);
+        renderPass = createRenderPass(device, swapchain);
+        swapchainFramebuffers = createSwapchainFramebuffers(device, swapchain, swapchainImageViews, renderPass);
 
-            int result = 0;
+        //Sync Objects
+        for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
 
-            if(vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT") != NULL) {
-                result = vkCreateDebugUtilsMessengerEXT(instance, debugCreateInfo, null, pDebugMessenger) == VK_SUCCESS ? VK_SUCCESS :  VK_ERROR_EXTENSION_NOT_PRESENT;
+
+            try(MemoryStack stack = stackPush()) {
+
+                LongBuffer pImageAcquiredSemaphore = stack.mallocLong(1);
+                LongBuffer pRenderFinishedSemaphore = stack.mallocLong(1);
+                LongBuffer pInFlightFence = stack.mallocLong(1);
+
+
+
+                VkSemaphoreCreateInfo imageAcquiredSemaphoreInfo = VkSemaphoreCreateInfo.calloc(stack);
+                imageAcquiredSemaphoreInfo.sType(VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO);
+
+                VkSemaphoreCreateInfo renderFinishedSemaphoreInfo = VkSemaphoreCreateInfo.calloc(stack);
+                renderFinishedSemaphoreInfo.sType(VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO);
+
+                VkFenceCreateInfo inFlightFenceCreateInfo = VkFenceCreateInfo.calloc(stack);
+                inFlightFenceCreateInfo.sType(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
+                inFlightFenceCreateInfo.flags(VK_FENCE_CREATE_SIGNALED_BIT);
+
+                vkCreateSemaphore(device, imageAcquiredSemaphoreInfo, null, pImageAcquiredSemaphore);
+                vkCreateSemaphore(device, renderFinishedSemaphoreInfo, null, pRenderFinishedSemaphore);
+                vkCreateFence(device, inFlightFenceCreateInfo, null, pInFlightFence);
+
+                frames[i] = new VkFrame(pImageAcquiredSemaphore.get(0), pRenderFinishedSemaphore.get(0), pInFlightFence.get(0));
             }
-
-            if(result != VK_SUCCESS) throw new RuntimeException("Failed to create the debug messenger as the extension is not present");
-
-            debugMessenger = pDebugMessenger.get(0);
         }
 
-        return debugMessenger;
+        ShaderReader.ShaderSources shaderSources = ShaderReader.readCombinedVertexFragmentSources(
+                AssetPacks.<String> getAsset("core:assets/shaders/vulkan/Default.glsl").asset
+        );
+        ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(this, shaderSources.vertexShader, shaderSources.fragmentShader);
+        shaderProgram.prepare();
+
+
+        pipeline = createPipeline(device, swapchain, ((VkShaderProgram) shaderProgram).getShaderStages(), renderPass, null);
+        sharedCommandPool = createCommandPool(device, physicalDeviceQueueFamilies.graphicsFamily);
+
+
+        for(int i = 0; i < FRAMES_IN_FLIGHT; i++) {
+            VkFrame frame = frames[i];
+
+
+            try(MemoryStack stack = stackPush()) {
+
+                VkCommandBufferAllocateInfo allocInfo = VkCommandBufferAllocateInfo.calloc(stack);
+                allocInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
+                allocInfo.commandPool(sharedCommandPool);
+                allocInfo.level(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+                allocInfo.commandBufferCount(FRAMES_IN_FLIGHT);
+
+                PointerBuffer pCommandBuffers = stack.mallocPointer(FRAMES_IN_FLIGHT);
+
+                if(vkAllocateCommandBuffers(device, allocInfo, pCommandBuffers) != VK_SUCCESS) {
+                    throw new RuntimeException("Failed to allocate command buffers");
+                }
+
+                frame.renderCommandBuffer = new VkCommandBuffer(pCommandBuffers.get(i), device);
+
+                VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
+                beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
+
+                VkRenderPassBeginInfo renderPassInfo = VkRenderPassBeginInfo.calloc(stack);
+                renderPassInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO);
+
+                renderPassInfo.renderPass(renderPass);
+
+                VkRect2D renderArea = VkRect2D.calloc(stack);
+                renderArea.offset(VkOffset2D.calloc(stack).set(0, 0));
+                renderArea.extent(swapchain.swapChainExtent);
+                renderPassInfo.renderArea(renderArea);
+
+                VkClearValue.Buffer clearValues = VkClearValue.calloc(1, stack);
+                clearValues.color().float32(stack.floats(0.0f, 0.0f, 0.0f, 1.0f));
+                renderPassInfo.pClearValues(clearValues);
+
+                VkCommandBuffer commandBuffer = frame.renderCommandBuffer;
+
+                if(vkBeginCommandBuffer(commandBuffer, beginInfo) != VK_SUCCESS) {
+                    throw new RuntimeException("Failed to begin recording command buffer");
+                }
+
+                renderPassInfo.framebuffer(swapchainFramebuffers.get(i));
+
+
+                vkCmdBeginRenderPass(commandBuffer, renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+                {
+                    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
+
+                    vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+                }
+                vkCmdEndRenderPass(commandBuffer);
+
+
+                if(vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+                    throw new RuntimeException("Failed to record command buffer");
+                }
+
+            }
+
+
+
+        }
+
+
+
+
+        //Allocate and submit renderSettings.batchSize-number indices in a staging index buffer
+        //Transfer from index buffer to GPU dedicated index buffer
+
+        //Begin Frame
+        //Acquire a swapchain image
+
+        //Uniform Updates
+        //All uniform buffers are bound to host visible buffers as descriptors
+
+        //Draw Calls
+        //Look up the pipeline for the current shader
+        //transfer all drawQuad() outputs to the staging vertex buffer
+        //on invoking render() transfer from the staging vertex buffer to the GPU dedicated vertex buffer
+        //Submit to the graphics queue and wait to finish
+        //Wait on the submission fence
+
+        //End Frame
+        /*
+
+        VmaVulkanFunctions vulkanFunctions = VmaVulkanFunctions.create();
+        vulkanFunctions.set(instance, device);
+
+
+
+
+
+        VmaAllocatorCreateInfo allocatorCreateInfo = VmaAllocatorCreateInfo.create();
+        allocatorCreateInfo.vulkanApiVersion(VK_API_VERSION_1_3);
+        allocatorCreateInfo.instance(instance);
+        allocatorCreateInfo.physicalDevice(physicalDevice);
+        allocatorCreateInfo.device(device);
+        allocatorCreateInfo.flags(VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT);
+        allocatorCreateInfo.pVulkanFunctions(vulkanFunctions);
+
+
+        PointerBuffer pAllocator = MemoryUtil.memAllocPointer(1);
+        vmaCreateAllocator(allocatorCreateInfo, pAllocator);
+
+
+
+        VkBufferCreateInfo bufferCreateInfo = VkBufferCreateInfo.create();
+        bufferCreateInfo.sType(VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO);
+        bufferCreateInfo.size(65536);
+        bufferCreateInfo.usage(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+
+        VmaAllocationCreateInfo allocationCreateInfo = VmaAllocationCreateInfo.create();
+        allocationCreateInfo.usage(VMA_MEMORY_USAGE_AUTO);
+
+        LongBuffer pBuffer = MemoryUtil.memAllocLong(1);
+        PointerBuffer pAllocation = MemoryUtil.memAllocPointer(1);
+
+        VmaAllocationInfo allocationInfo = VmaAllocationInfo.create();
+
+
+        vmaCreateBuffer(pAllocator.get(0), bufferCreateInfo, allocationCreateInfo, pBuffer, pAllocation, allocationInfo);
+
+
+         */
     }
+    public VkSceneRenderer(int width, int height, RenderSettings renderSettings) {
+        super(width, height, renderSettings);
+
+
+
+
+
+
+
+    }
+
+
     private VkPhysicalDevice selectPhysicalDevice(VkInstance instance, long surface){
         try(MemoryStack stack = stackPush()) {
 
@@ -305,7 +474,7 @@ public class VulkanRenderer2D extends Renderer2D {
         }
 
 
-        FlightRecorder.info(VulkanRenderer2D.class, "Unable to find sRGB VkSurfaceFormatKHR, using default. Colors may look incorrect.");
+        FlightRecorder.info(VkSceneRenderer.class, "Unable to find sRGB VkSurfaceFormatKHR, using default. Colors may look incorrect.");
 
         return availableFormats.get(0);
 
@@ -466,7 +635,6 @@ public class VulkanRenderer2D extends Renderer2D {
             LongBuffer attachments = stack.mallocLong(1);
             LongBuffer pFramebuffer = stack.mallocLong(1);
 
-            // Lets allocate the create info struct once and just update the pAttachments field each iteration
             VkFramebufferCreateInfo framebufferInfo = VkFramebufferCreateInfo.calloc(stack);
             framebufferInfo.sType(VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO);
             framebufferInfo.renderPass(renderPass);
@@ -536,7 +704,7 @@ public class VulkanRenderer2D extends Renderer2D {
             return pRenderPass.get(0);
         }
     }
-    private VkPipeline createPipeline(VkDevice device, VkSwapchain swapchain, VkPipelineShaderStageCreateInfo.Buffer shaderStages, long renderPass, LongBuffer descriptorSetLayout){
+    private VkPipeline createPipeline(VkDevice device, VkSwapchain swapchain, VkPipelineShaderStageCreateInfo.Buffer shaderStages, long renderPass, LongBuffer descriptorSetLayout) {
 
         long pipelineLayout;
         long graphicsPipeline = 0;
@@ -585,7 +753,7 @@ public class VulkanRenderer2D extends Renderer2D {
                 rasterizer.polygonMode(VK_POLYGON_MODE_FILL);
                 rasterizer.lineWidth(1.0f);
                 rasterizer.cullMode(VK_CULL_MODE_BACK_BIT);
-                rasterizer.frontFace(VK_FRONT_FACE_COUNTER_CLOCKWISE);
+                rasterizer.frontFace(VK_FRONT_FACE_CLOCKWISE);
                 rasterizer.depthBiasEnable(false);
             }
 
@@ -593,19 +761,13 @@ public class VulkanRenderer2D extends Renderer2D {
             {
                 multisampling.sType(VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO);
                 multisampling.sampleShadingEnable(false);
-                multisampling.rasterizationSamples(1);
+                multisampling.rasterizationSamples(VK_SAMPLE_COUNT_1_BIT);
             }
 
             VkPipelineColorBlendAttachmentState.Buffer colorBlendAttachment = VkPipelineColorBlendAttachmentState.calloc(1, stack);
             {
                 colorBlendAttachment.colorWriteMask(VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT);
-                colorBlendAttachment.blendEnable(true);
-                colorBlendAttachment.srcColorBlendFactor(VK_BLEND_FACTOR_SRC_ALPHA);
-                colorBlendAttachment.dstColorBlendFactor(VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA);
-                colorBlendAttachment.colorBlendOp(VK_BLEND_OP_ADD);
-                colorBlendAttachment.srcAlphaBlendFactor(VK_BLEND_FACTOR_ONE);
-                colorBlendAttachment.dstAlphaBlendFactor(VK_BLEND_FACTOR_ZERO);
-                colorBlendAttachment.alphaBlendOp(VK_BLEND_OP_ADD);
+                colorBlendAttachment.blendEnable(false);
             }
 
 
@@ -686,237 +848,6 @@ public class VulkanRenderer2D extends Renderer2D {
 
         return commandPool;
     }
-    private VkCommandBuffer createCommandBuffer(VkDevice device, long commandPool) {
-        PointerBuffer pCommandBuffer = MemoryUtil.memAllocPointer(1);
-
-        try(MemoryStack stack = stackPush()) {
-            VkCommandBufferAllocateInfo commandBufferAllocateInfo = VkCommandBufferAllocateInfo.calloc(stack);
-            commandBufferAllocateInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
-            commandBufferAllocateInfo.commandPool(commandPool);
-            commandBufferAllocateInfo.level(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
-            commandBufferAllocateInfo.commandBufferCount(1);
-
-
-            if(vkAllocateCommandBuffers(device, commandBufferAllocateInfo, pCommandBuffer) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to allocate command buffer");
-            }
-        }
-
-        return new VkCommandBuffer(pCommandBuffer.get(0), device);
-    }
-
-
-
-    public VulkanRenderer2D(VkInstance instance, long surface, int width, int height, RenderSettings renderSettings) {
-        this(width, height, renderSettings);
-        this.instance = instance;
-        this.surface = surface;
-
-        if(renderSettings.enableValidation) {
-            debugMessenger = createDebugMessenger(instance);
-        }
-
-        physicalDevice = selectPhysicalDevice(instance, surface);
-        physicalDeviceProperties = getPhysicalDeviceProperties(physicalDevice);
-        FlightRecorder.info(VulkanRenderer2D.class, "Selected Physical Device " + physicalDeviceProperties.deviceNameString());
-
-        device = createDevice(physicalDevice, renderSettings.enableValidation);
-        graphicsQueue = getGraphicsQueue(device);
-        presentQueue = getPresentQueue(device);
-        swapchain = createSwapChain(device, surface, width, height);
-        swapchainImageViews = createSwapchainImageViews(device, swapchain);
-
-        FlightRecorder.info(VulkanRenderer2D.class, "Max: " + physicalDeviceProperties.limits().maxDescriptorSetSamplers());
-
-
-        renderPass = createRenderPass(device, swapchain);
-        swapchainFramebuffers = createSwapchainFramebuffers(device, swapchain, swapchainImageViews, renderPass);
-
-        //Sync Objects
-        for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
-
-
-            try(MemoryStack stack = stackPush()) {
-
-                LongBuffer pImageAcquiredSemaphore = stack.mallocLong(1);
-                LongBuffer pRenderFinishedSemaphore = stack.mallocLong(1);
-                LongBuffer pInFlightFence = stack.mallocLong(1);
-
-
-
-                VkSemaphoreCreateInfo imageAcquiredSemaphoreInfo = VkSemaphoreCreateInfo.calloc(stack);
-                imageAcquiredSemaphoreInfo.sType(VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO);
-
-                VkSemaphoreCreateInfo renderFinishedSemaphoreInfo = VkSemaphoreCreateInfo.calloc(stack);
-                renderFinishedSemaphoreInfo.sType(VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO);
-
-                VkFenceCreateInfo inFlightFenceCreateInfo = VkFenceCreateInfo.calloc(stack);
-                inFlightFenceCreateInfo.sType(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
-                inFlightFenceCreateInfo.flags(VK_FENCE_CREATE_SIGNALED_BIT);
-
-                vkCreateSemaphore(device, imageAcquiredSemaphoreInfo, null, pImageAcquiredSemaphore);
-                vkCreateSemaphore(device, renderFinishedSemaphoreInfo, null, pRenderFinishedSemaphore);
-                vkCreateFence(device, inFlightFenceCreateInfo, null, pInFlightFence);
-
-                frames[i] = new VkFrame(pImageAcquiredSemaphore.get(0), pRenderFinishedSemaphore.get(0), pInFlightFence.get(0));
-            }
-        }
-
-        ShaderReader.ShaderSources shaderSources = ShaderReader.readCombinedVertexFragmentSources(
-                AssetPacks.<String> getAsset("core:assets/shaders/vulkan/Default.glsl").asset
-        );
-        ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(this, shaderSources.vertexShader, shaderSources.fragmentShader);
-        shaderProgram.prepare();
-
-
-        pipeline = createPipeline(device, swapchain, ((VkShaderProgram) shaderProgram).getShaderStages(), renderPass, null);
-        sharedCommandPool = createCommandPool(device, physicalDeviceQueueFamilies.graphicsFamily);
-
-
-        for(int i = 0; i < FRAMES_IN_FLIGHT; i++) {
-            VkFrame frame = frames[i];
-
-
-            try (MemoryStack stack = stackPush()) {
-
-                frame.renderCommandBuffer = createCommandBuffer(device, sharedCommandPool);
-
-
-
-                VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
-                beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
-
-                VkRenderPassBeginInfo renderPassInfo = VkRenderPassBeginInfo.calloc(stack);
-                renderPassInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO);
-                renderPassInfo.renderPass(renderPass);
-                VkRect2D renderArea = VkRect2D.calloc(stack);
-                renderArea.offset(VkOffset2D.calloc(stack).set(0, 0));
-                renderArea.extent(swapchain.swapChainExtent);
-                renderPassInfo.renderArea(renderArea);
-                VkClearValue.Buffer clearValues = VkClearValue.calloc(1, stack);
-                clearValues.color().float32(stack.floats(0.14f, 0.26f, 0.42f, 1.0f));
-                renderPassInfo.pClearValues(clearValues);
-
-                if (vkBeginCommandBuffer(frame.renderCommandBuffer, beginInfo) != VK_SUCCESS) {
-                    throw new RuntimeException("Failed to begin recording command buffer");
-                }
-
-                renderPassInfo.framebuffer(swapchainFramebuffers.get(i));
-                vkCmdBeginRenderPass(frame.renderCommandBuffer, renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-                {
-
-                    vkCmdBindPipeline(frame.renderCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
-                    vkCmdDraw(frame.renderCommandBuffer, 3, 1, 0, 0);
-
-                }
-                vkCmdEndRenderPass(frame.renderCommandBuffer);
-
-                if (vkEndCommandBuffer(frame.renderCommandBuffer) != VK_SUCCESS) {
-                    throw new RuntimeException("Failed to record command buffer");
-                }
-
-
-
-            }
-
-
-
-        }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        //Allocate and submit renderSettings.batchSize-number indices in a staging index buffer
-        //Transfer from index buffer to GPU dedicated index buffer
-
-        //Begin Frame
-        //Acquire a swapchain image
-
-        //Uniform Updates
-        //All uniform buffers are bound to host visible buffers as descriptors
-
-        //Draw Calls
-        //Look up the pipeline for the current shader
-        //transfer all drawQuad() outputs to the staging vertex buffer
-        //on invoking render() transfer from the staging vertex buffer to the GPU dedicated vertex buffer
-        //Submit to the graphics queue and wait to finish
-        //Wait on the submission fence
-
-        //End Frame
-
-        /*
-
-        VmaVulkanFunctions vulkanFunctions = VmaVulkanFunctions.create();
-        vulkanFunctions.set(instance, device);
-
-
-
-
-
-        VmaAllocatorCreateInfo allocatorCreateInfo = VmaAllocatorCreateInfo.create();
-        allocatorCreateInfo.vulkanApiVersion(VK_API_VERSION_1_3);
-        allocatorCreateInfo.instance(instance);
-        allocatorCreateInfo.physicalDevice(physicalDevice);
-        allocatorCreateInfo.device(device);
-        allocatorCreateInfo.flags(VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT);
-        allocatorCreateInfo.pVulkanFunctions(vulkanFunctions);
-
-
-        PointerBuffer pAllocator = MemoryUtil.memAllocPointer(1);
-        vmaCreateAllocator(allocatorCreateInfo, pAllocator);
-
-
-
-        VkBufferCreateInfo bufferCreateInfo = VkBufferCreateInfo.create();
-        bufferCreateInfo.sType(VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO);
-        bufferCreateInfo.size(65536);
-        bufferCreateInfo.usage(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
-
-        VmaAllocationCreateInfo allocationCreateInfo = VmaAllocationCreateInfo.create();
-        allocationCreateInfo.usage(VMA_MEMORY_USAGE_AUTO);
-
-        LongBuffer pBuffer = MemoryUtil.memAllocLong(1);
-        PointerBuffer pAllocation = MemoryUtil.memAllocPointer(1);
-
-        VmaAllocationInfo allocationInfo = VmaAllocationInfo.create();
-
-
-        vmaCreateBuffer(pAllocator.get(0), bufferCreateInfo, allocationCreateInfo, pBuffer, pAllocation, allocationInfo);
-
-
-         */
-
-    }
-
-
-
-    public VulkanRenderer2D(int width, int height, RenderSettings renderSettings) {
-        super(width, height, renderSettings);
-
-
-
-
-
-
-
-    }
 
     public VkDevice getDevice() {
         return device;
@@ -924,8 +855,8 @@ public class VulkanRenderer2D extends Renderer2D {
 
     @Override
     public void onResize(int width, int height) {
-
-
+        this.width = width;
+        this.height = height;
 
 
     }
@@ -940,7 +871,11 @@ public class VulkanRenderer2D extends Renderer2D {
             vkWaitForFences(device, frame.inFlightFence, true, UINT64_MAX);
 
 
-            vkAcquireNextImageKHR(device, swapchain.swapChain, UINT64_MAX, frame.imageAcquiredSemaphore, VK_NULL_HANDLE, pImageIndex);
+            int result = vkAcquireNextImageKHR(device, swapchain.swapChain, UINT64_MAX, frame.imageAcquiredSemaphore, VK_NULL_HANDLE, pImageIndex);
+            
+
+            
+            
             int imageIndex = pImageIndex.get(0);
 
             VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
@@ -968,13 +903,24 @@ public class VulkanRenderer2D extends Renderer2D {
             vkQueuePresentKHR(presentQueue, presentInfo);
 
             frameIndex = (frameIndex + 1) % FRAMES_IN_FLIGHT;
-
         }
 
     }
 
+    private void disposeSwapchain(){
+        for(long swapchainFramebuffer : swapchainFramebuffers){
+            vkDestroyFramebuffer(device, swapchainFramebuffer, null);
+        }
+        for(long swapchainImageView : swapchainImageViews){
+            vkDestroyImageView(device, swapchainImageView, null);
+        }
+        vkDestroySwapchainKHR(device, swapchain.swapChain, null);
+    }
+
     @Override
     public void dispose() {
-
+        disposeSwapchain();
+        vkDestroyDevice(device, null);
     }
+
 }

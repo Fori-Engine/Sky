@@ -24,9 +24,9 @@ public class VkShaderProgram extends ShaderProgram {
 
 
 
-    public VkShaderProgram(Renderer2D renderer2D, String vertexShaderSource, String fragmentShaderSource) {
+    public VkShaderProgram(SceneRenderer sceneRenderer, String vertexShaderSource, String fragmentShaderSource) {
         super(vertexShaderSource, fragmentShaderSource);
-        this.device = ((VulkanRenderer2D) renderer2D).getDevice();
+        this.device = ((VkSceneRenderer) sceneRenderer).getDevice();
     }
 
     public static long createShaderModule(VkDevice device, ByteBuffer spirvCode) {

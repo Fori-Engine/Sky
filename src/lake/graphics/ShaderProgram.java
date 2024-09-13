@@ -47,9 +47,9 @@ public abstract class ShaderProgram implements Disposable {
 
     public abstract void dispose();
 
-    public static ShaderProgram newShaderProgram(Renderer2D renderer2D, String vertexShaderSource, String fragmentShaderSource){
-        if(Renderer2D.getRenderAPI() == RenderAPI.Vulkan){
-            return new VkShaderProgram(renderer2D, vertexShaderSource, fragmentShaderSource);
+    public static ShaderProgram newShaderProgram(SceneRenderer sceneRenderer, String vertexShaderSource, String fragmentShaderSource){
+        if(SceneRenderer.getRenderAPI() == RenderAPI.Vulkan){
+            return new VkShaderProgram(sceneRenderer, vertexShaderSource, fragmentShaderSource);
         }
 
         return null;

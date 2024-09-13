@@ -69,11 +69,11 @@ public class PlatformWindow {
         glfwShowWindow(window);
     }
 
-    public void onRenderContextReady(RenderContext renderContext, Renderer2D renderer2D){
+    public void onRenderContextReady(RenderContext renderContext, SceneRenderer sceneRenderer){
 
         glfwSetWindowSizeCallback(window, (window, width, height) -> {
 
-            renderer2D.onResize(width, height);
+            sceneRenderer.onResize(width, height);
 
 
         });
