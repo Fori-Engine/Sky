@@ -427,9 +427,6 @@ public class VkSceneRenderer extends SceneRenderer {
             createInfo.pEnabledFeatures(deviceFeatures);
             createInfo.ppEnabledExtensionNames(asPointerBuffer(stack, DEVICE_EXTENSIONS));
 
-            if(validation) {
-                createInfo.ppEnabledLayerNames(asPointerBuffer(stack, validationLayers));
-            }
 
             PointerBuffer pDevice = stack.pointers(VK_NULL_HANDLE);
 
@@ -919,8 +916,29 @@ public class VkSceneRenderer extends SceneRenderer {
 
     @Override
     public void dispose() {
+
+        vkDeviceWaitIdle(device);
+
+        for(VkFrame frame : frames){
+            vkDestroySemaphore(device, frame.imageAcquiredSemaphore, null);
+            vkDestroySemaphore(device, frame.renderFinishedSemaphore, null);
+            vkDestroyFence(device, frame.inFlightFence, null);
+        }
+
+        vkDestroyCommandPool(device, sharedCommandPool, null);
+
+
+
+
+
+
+        vkDestroyRenderPass(device, renderPass, null);
         disposeSwapchain();
+
+
+
         vkDestroyDevice(device, null);
+        vkDestroyInstance(instance, null);
     }
 
 }

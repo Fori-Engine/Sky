@@ -195,7 +195,7 @@ public class PlatformWindow {
 
     public void close() {
 
-        Disposer.disposeAllInCategory("managedResources");
+        //Disposer.disposeAllInCategory("managedResources");
         Disposer.disposeAllInCategory("renderer");
 
 
