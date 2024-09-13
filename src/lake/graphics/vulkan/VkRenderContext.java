@@ -26,8 +26,8 @@ import static org.lwjgl.vulkan.VK13.VK_API_VERSION_1_3;
 
 public class VkRenderContext extends RenderContext {
 
-    private long platformWindowSurface, canvasSurface;
-    private VkInstance platformWindowInstance, canvasInstance;
+    private long platformWindowSurface;
+    private VkInstance platformWindowInstance;
     private RenderSettings renderSettings;
     private static final List<String> validationLayers = new ArrayList<>();
     static {
