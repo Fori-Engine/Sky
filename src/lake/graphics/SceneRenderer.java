@@ -18,7 +18,7 @@ public abstract class SceneRenderer implements Disposable {
         this.height = height;
         Disposer.add("renderer", this);
     }
-    public abstract void onResize(int width, int height);
+    public abstract void onSurfaceResized(int width, int height);
 
     public abstract void update();
 

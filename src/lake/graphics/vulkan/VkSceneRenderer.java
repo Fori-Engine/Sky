@@ -19,8 +19,6 @@ import java.util.stream.Stream;
 import static java.lang.Math.clamp;
 import static java.util.stream.Collectors.toSet;
 import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.system.MemoryUtil.NULL;
-import static org.lwjgl.vulkan.EXTDebugUtils.*;
 import static org.lwjgl.vulkan.KHRSurface.*;
 import static org.lwjgl.vulkan.KHRSurface.vkGetPhysicalDeviceSurfacePresentModesKHR;
 import static org.lwjgl.vulkan.KHRSwapchain.*;
@@ -59,6 +57,8 @@ public class VkSceneRenderer extends SceneRenderer {
     private int frameIndex;
     private VkPipeline pipeline;
     private long sharedCommandPool;
+    private boolean resized = false;
+    private ShaderProgram shaderProgram;
 
 
 
@@ -118,7 +118,7 @@ public class VkSceneRenderer extends SceneRenderer {
         ShaderReader.ShaderSources shaderSources = ShaderReader.readCombinedVertexFragmentSources(
                 AssetPacks.<String> getAsset("core:assets/shaders/vulkan/Default.glsl").asset
         );
-        ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(this, shaderSources.vertexShader, shaderSources.fragmentShader);
+        shaderProgram = ShaderProgram.newShaderProgram(this, shaderSources.vertexShader, shaderSources.fragmentShader);
         shaderProgram.prepare();
 
 
@@ -145,45 +145,6 @@ public class VkSceneRenderer extends SceneRenderer {
                 }
 
                 frame.renderCommandBuffer = new VkCommandBuffer(pCommandBuffers.get(i), device);
-
-                VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
-                beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
-
-                VkRenderPassBeginInfo renderPassInfo = VkRenderPassBeginInfo.calloc(stack);
-                renderPassInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO);
-
-                renderPassInfo.renderPass(renderPass);
-
-                VkRect2D renderArea = VkRect2D.calloc(stack);
-                renderArea.offset(VkOffset2D.calloc(stack).set(0, 0));
-                renderArea.extent(swapchain.swapChainExtent);
-                renderPassInfo.renderArea(renderArea);
-
-                VkClearValue.Buffer clearValues = VkClearValue.calloc(1, stack);
-                clearValues.color().float32(stack.floats(0.0f, 0.0f, 0.0f, 1.0f));
-                renderPassInfo.pClearValues(clearValues);
-
-                VkCommandBuffer commandBuffer = frame.renderCommandBuffer;
-
-                if(vkBeginCommandBuffer(commandBuffer, beginInfo) != VK_SUCCESS) {
-                    throw new RuntimeException("Failed to begin recording command buffer");
-                }
-
-                renderPassInfo.framebuffer(swapchainFramebuffers.get(i));
-
-
-                vkCmdBeginRenderPass(commandBuffer, renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-                {
-                    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
-
-                    vkCmdDraw(commandBuffer, 3, 1, 0, 0);
-                }
-                vkCmdEndRenderPass(commandBuffer);
-
-
-                if(vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-                    throw new RuntimeException("Failed to record command buffer");
-                }
 
             }
 
@@ -846,16 +807,51 @@ public class VkSceneRenderer extends SceneRenderer {
         return commandPool;
     }
 
+    private void recreateDisplay(){
+
+        disposeDisplay();
+        swapchain = createSwapChain(device, surface, width, height);
+        swapchainImageViews = createSwapchainImageViews(device, swapchain);
+
+        renderPass = createRenderPass(device, swapchain);
+        swapchainFramebuffers = createSwapchainFramebuffers(device, swapchain, swapchainImageViews, renderPass);
+
+        pipeline = createPipeline(device, swapchain, ((VkShaderProgram) shaderProgram).getShaderStages(), renderPass, null);
+        frameIndex = 0;
+    }
+
+    private void disposeDisplay(){
+
+
+        vkDeviceWaitIdle(device);
+        vkDestroyPipeline(device, pipeline.pipeline, null);
+
+
+        for(long swapchainFramebuffer : swapchainFramebuffers){
+            vkDestroyFramebuffer(device, swapchainFramebuffer, null);
+        }
+
+        vkDestroyRenderPass(device, renderPass, null);
+
+
+        for(long swapchainImageView : swapchainImageViews){
+            vkDestroyImageView(device, swapchainImageView, null);
+        }
+        vkDestroySwapchainKHR(device, swapchain.swapChain, null);
+    }
+
+
+
     public VkDevice getDevice() {
         return device;
     }
 
     @Override
-    public void onResize(int width, int height) {
+    public void onSurfaceResized(int width, int height) {
         this.width = width;
         this.height = height;
 
-
+        resized = true;
     }
 
     @Override
@@ -868,7 +864,12 @@ public class VkSceneRenderer extends SceneRenderer {
             vkWaitForFences(device, frame.inFlightFence, true, UINT64_MAX);
 
 
-            int result = vkAcquireNextImageKHR(device, swapchain.swapChain, UINT64_MAX, frame.imageAcquiredSemaphore, VK_NULL_HANDLE, pImageIndex);
+            int acquireNextImageResult = vkAcquireNextImageKHR(device, swapchain.swapChain, UINT64_MAX, frame.imageAcquiredSemaphore, VK_NULL_HANDLE, pImageIndex);
+            
+            if(acquireNextImageResult == VK_ERROR_OUT_OF_DATE_KHR){
+                recreateDisplay();
+                return;
+            }
             
 
             
@@ -884,6 +885,57 @@ public class VkSceneRenderer extends SceneRenderer {
             submitInfo.pSignalSemaphores(stack.longs(frame.renderFinishedSemaphore));
 
             vkResetFences(device, frame.inFlightFence);
+            vkResetCommandBuffer(frame.renderCommandBuffer, 0);
+            {
+
+                VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
+                beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
+
+                VkRenderPassBeginInfo renderPassInfo = VkRenderPassBeginInfo.calloc(stack);
+                renderPassInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO);
+
+                renderPassInfo.renderPass(renderPass);
+
+                VkRect2D renderArea = VkRect2D.calloc(stack);
+                renderArea.offset(VkOffset2D.calloc(stack).set(0, 0));
+                renderArea.extent(swapchain.swapChainExtent);
+                renderPassInfo.renderArea(renderArea);
+
+                VkClearValue.Buffer clearValues = VkClearValue.calloc(1, stack);
+                clearValues.color().float32(stack.floats(1.0f, 0.0f, 0.0f, 1.0f));
+                renderPassInfo.pClearValues(clearValues);
+
+                VkCommandBuffer commandBuffer = frame.renderCommandBuffer;
+
+                if(vkBeginCommandBuffer(commandBuffer, beginInfo) != VK_SUCCESS) {
+                    throw new RuntimeException("Failed to begin recording command buffer");
+                }
+
+                renderPassInfo.framebuffer(swapchainFramebuffers.get(frameIndex));
+
+
+                vkCmdBeginRenderPass(commandBuffer, renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+                {
+                    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
+
+                    vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+                }
+                vkCmdEndRenderPass(commandBuffer);
+
+
+                if(vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+                    throw new RuntimeException("Failed to record command buffer");
+                }
+
+
+
+
+
+
+
+
+
+            }
 
             if(vkQueueSubmit(graphicsQueue, submitInfo, frame.inFlightFence) != VK_SUCCESS) {
                 throw new RuntimeException("Failed to submit draw command buffer");
@@ -897,22 +949,22 @@ public class VkSceneRenderer extends SceneRenderer {
 
             presentInfo.pImageIndices(pImageIndex);
 
-            vkQueuePresentKHR(presentQueue, presentInfo);
+            int presentResult = vkQueuePresentKHR(presentQueue, presentInfo);
+
+            if(presentResult == VK_ERROR_OUT_OF_DATE_KHR || presentResult == VK_SUBOPTIMAL_KHR || resized){
+                resized = false;
+                recreateDisplay();
+                return;
+            }
 
             frameIndex = (frameIndex + 1) % FRAMES_IN_FLIGHT;
+
         }
+
 
     }
 
-    private void disposeSwapchain(){
-        for(long swapchainFramebuffer : swapchainFramebuffers){
-            vkDestroyFramebuffer(device, swapchainFramebuffer, null);
-        }
-        for(long swapchainImageView : swapchainImageViews){
-            vkDestroyImageView(device, swapchainImageView, null);
-        }
-        vkDestroySwapchainKHR(device, swapchain.swapChain, null);
-    }
+
 
     @Override
     public void dispose() {
@@ -933,7 +985,7 @@ public class VkSceneRenderer extends SceneRenderer {
 
 
         vkDestroyRenderPass(device, renderPass, null);
-        disposeSwapchain();
+        disposeDisplay();
 
 
 

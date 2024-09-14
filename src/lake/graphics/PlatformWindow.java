@@ -71,12 +71,24 @@ public class PlatformWindow {
 
     public void onRenderContextReady(RenderContext renderContext, SceneRenderer sceneRenderer){
 
-        glfwSetWindowSizeCallback(window, (window, width, height) -> {
+        glfwSetFramebufferSizeCallback(window, (window, width, height) -> {
 
-            sceneRenderer.onResize(width, height);
+            int[] w = new int[1], h = new int[1];
+
+            glfwGetFramebufferSize(window, w, h);
+
+            while(w[0] == 0 || h[0] == 0){
+                glfwGetFramebufferSize(window, w, h);
+                glfwWaitEvents();
+            }
+
+
+
+            sceneRenderer.onSurfaceResized(w[0], h[0]);
 
 
         });
+
     }
 
     private int glfwBool(boolean b){
