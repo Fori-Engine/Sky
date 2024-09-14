@@ -5,8 +5,12 @@ import lake.asset.AssetPacks;
 import lake.graphics.*;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
+import org.lwjgl.util.vma.VmaAllocatorCreateInfo;
+import org.lwjgl.util.vma.VmaVulkanFunctions;
 import org.lwjgl.vulkan.*;
 
+import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.ArrayList;
@@ -20,6 +24,7 @@ import java.util.stream.Stream;
 import static java.lang.Math.clamp;
 import static java.util.stream.Collectors.toSet;
 import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.util.vma.Vma.*;
 import static org.lwjgl.vulkan.KHRSurface.*;
 import static org.lwjgl.vulkan.KHRSurface.vkGetPhysicalDeviceSurfacePresentModesKHR;
 import static org.lwjgl.vulkan.KHRSwapchain.*;
@@ -60,6 +65,8 @@ public class VkSceneRenderer extends SceneRenderer {
     private long sharedCommandPool;
     private boolean resized = false;
     private ShaderProgram shaderProgram;
+
+    private VkBuffer buffer;
 
 
 
@@ -173,7 +180,7 @@ public class VkSceneRenderer extends SceneRenderer {
         //Wait on the submission fence
 
         //End Frame
-        /*
+
 
         VmaVulkanFunctions vulkanFunctions = VmaVulkanFunctions.create();
         vulkanFunctions.set(instance, device);
@@ -196,24 +203,33 @@ public class VkSceneRenderer extends SceneRenderer {
 
 
 
-        VkBufferCreateInfo bufferCreateInfo = VkBufferCreateInfo.create();
-        bufferCreateInfo.sType(VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO);
-        bufferCreateInfo.size(65536);
-        bufferCreateInfo.usage(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+         buffer = new VkBuffer(
+                device,
+                pAllocator.get(0),
+                2 * Float.BYTES * 3,
+                VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                VMA_MEMORY_USAGE_CPU_TO_GPU
+        );
 
-        VmaAllocationCreateInfo allocationCreateInfo = VmaAllocationCreateInfo.create();
-        allocationCreateInfo.usage(VMA_MEMORY_USAGE_AUTO);
+        PointerBuffer bufferData = MemoryUtil.memAllocPointer(1);
 
-        LongBuffer pBuffer = MemoryUtil.memAllocLong(1);
-        PointerBuffer pAllocation = MemoryUtil.memAllocPointer(1);
-
-        VmaAllocationInfo allocationInfo = VmaAllocationInfo.create();
-
-
-        vmaCreateBuffer(pAllocator.get(0), bufferCreateInfo, allocationCreateInfo, pBuffer, pAllocation, allocationInfo);
+        vkMapMemory(device, buffer.getMemory(), 0, 2 * Float.BYTES * 3, 0, bufferData);
+        ByteBuffer bufferDataByteBuffer = bufferData.getByteBuffer(2 * Float.BYTES * 3);;
 
 
-         */
+        bufferDataByteBuffer.putFloat(0.0f);
+        bufferDataByteBuffer.putFloat(-0.5f);
+
+        bufferDataByteBuffer.putFloat(0.5f);
+        bufferDataByteBuffer.putFloat(0.5f);
+
+        bufferDataByteBuffer.putFloat(-0.5f);
+        bufferDataByteBuffer.putFloat(0.5f);
+
+
+        vkUnmapMemory(device, buffer.getMemory());
+
+
     }
     public VkSceneRenderer(int width, int height, RendererSettings rendererSettings) {
         super(width, height, rendererSettings);
@@ -684,6 +700,34 @@ public class VkSceneRenderer extends SceneRenderer {
             VkPipelineVertexInputStateCreateInfo vertexInputInfo = VkPipelineVertexInputStateCreateInfo.calloc(stack);
             {
                 vertexInputInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO);
+
+
+                VkVertexInputBindingDescription.Buffer bindingDescription =
+                        VkVertexInputBindingDescription.calloc(1, stack);
+
+                bindingDescription.binding(0);
+                bindingDescription.stride(2 * Float.BYTES * 2);
+                bindingDescription.inputRate(VK_VERTEX_INPUT_RATE_VERTEX);
+                vertexInputInfo.pVertexBindingDescriptions(bindingDescription);
+
+
+
+                VkVertexInputAttributeDescription.Buffer attributeDescriptions =
+                        VkVertexInputAttributeDescription.calloc(1);
+
+                // Position
+                VkVertexInputAttributeDescription posDescription = attributeDescriptions.get(0);
+                {
+                    posDescription.binding(0);
+                    posDescription.location(0);
+                    posDescription.format(VK_FORMAT_R32G32_SFLOAT);
+                    posDescription.offset(0);
+                }
+
+                vertexInputInfo.pVertexAttributeDescriptions(attributeDescriptions.rewind());
+
+
+
             }
 
             VkPipelineInputAssemblyStateCreateInfo inputAssembly = VkPipelineInputAssemblyStateCreateInfo.calloc(stack);
@@ -929,6 +973,10 @@ public class VkSceneRenderer extends SceneRenderer {
                 vkCmdBeginRenderPass(commandBuffer, renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
                 {
                     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
+                    LongBuffer vertexBuffers = stack.longs(buffer.getHandle());
+                    LongBuffer offsets = stack.longs(0);
+
+                    vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
 
                     vkCmdDraw(commandBuffer, 3, 1, 0, 0);
                 }
