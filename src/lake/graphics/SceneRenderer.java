@@ -10,19 +10,22 @@ public abstract class SceneRenderer implements Disposable {
     protected int width;
     protected int height;
     private static RenderAPI api;
+    protected RendererSettings settings;
 
 
 
-    public SceneRenderer(int width, int height, RenderSettings renderSettings){
+    public SceneRenderer(int width, int height, RendererSettings settings){
         this.width = width;
         this.height = height;
+        this.settings = settings;
+
         Disposer.add("renderer", this);
     }
     public abstract void onSurfaceResized(int width, int height);
 
     public abstract void update();
 
-    public static SceneRenderer newSceneRenderer(PlatformWindow window, int width, int height, RenderSettings settings){
+    public static SceneRenderer newSceneRenderer(PlatformWindow window, int width, int height, RendererSettings settings){
         api = settings.backend;
 
 

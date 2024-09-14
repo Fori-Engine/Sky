@@ -1,6 +1,7 @@
 package lake.demo;
 
 import lake.FlightRecorder;
+import lake.Time;
 import lake.asset.AssetPack;
 import lake.asset.AssetPacks;
 import lake.graphics.*;
@@ -16,13 +17,14 @@ public class ForiTestPlatform {
         FlightRecorder.setEnabled(true);
 
         PlatformWindow window = new PlatformWindow(640, 480, "ForiEngine", true);
-        SceneRenderer sceneRenderer = SceneRenderer.newSceneRenderer(window, window.getWidth(), window.getHeight(), new RenderSettings(RenderAPI.Vulkan).msaa(true).enableValidation(true));
+        SceneRenderer sceneRenderer = SceneRenderer.newSceneRenderer(window, window.getWidth(), window.getHeight(), new RendererSettings(RenderAPI.Vulkan).validation(true).vsync(false));
 
 
         window.setIcon(AssetPacks.getAsset("core:assets/ForiEngine.png"));
 
         while(!window.shouldClose()){
 
+            System.out.println(Time.deltaTime);
 
             sceneRenderer.update();
             window.update();

@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -62,8 +63,8 @@ public class VkSceneRenderer extends SceneRenderer {
 
 
 
-    public VkSceneRenderer(VkInstance instance, long surface, int width, int height, RenderSettings renderSettings, long debugMessenger) {
-        this(width, height, renderSettings);
+    public VkSceneRenderer(VkInstance instance, long surface, int width, int height, RendererSettings rendererSettings, long debugMessenger) {
+        this(width, height, rendererSettings);
         this.instance = instance;
         this.surface = surface;
         this.debugMessenger = debugMessenger;
@@ -73,10 +74,10 @@ public class VkSceneRenderer extends SceneRenderer {
         physicalDeviceProperties = getPhysicalDeviceProperties(physicalDevice);
         FlightRecorder.info(VkSceneRenderer.class, "Selected Physical Device " + physicalDeviceProperties.deviceNameString());
 
-        device = createDevice(physicalDevice, renderSettings.enableValidation);
+        device = createDevice(physicalDevice, rendererSettings.validation);
         graphicsQueue = getGraphicsQueue(device);
         presentQueue = getPresentQueue(device);
-        swapchain = createSwapChain(device, surface, width, height);
+        swapchain = createSwapChain(device, surface, width, height, rendererSettings.vsync);
         swapchainImageViews = createSwapchainImageViews(device, swapchain);
 
         FlightRecorder.info(VkSceneRenderer.class, "Max: " + physicalDeviceProperties.limits().maxDescriptorSetSamplers());
@@ -214,8 +215,8 @@ public class VkSceneRenderer extends SceneRenderer {
 
          */
     }
-    public VkSceneRenderer(int width, int height, RenderSettings renderSettings) {
-        super(width, height, renderSettings);
+    public VkSceneRenderer(int width, int height, RendererSettings rendererSettings) {
+        super(width, height, rendererSettings);
 
 
 
@@ -437,15 +438,26 @@ public class VkSceneRenderer extends SceneRenderer {
         return availableFormats.get(0);
 
     }
-    private int chooseSwapPresentMode(IntBuffer availablePresentModes) {
+    private int chooseSwapPresentMode(IntBuffer availablePresentModes, boolean vsync) {
 
-        for(int i = 0;i < availablePresentModes.capacity();i++) {
-            if(availablePresentModes.get(i) == VK_PRESENT_MODE_MAILBOX_KHR) {
-                return availablePresentModes.get(i);
+        Function<Integer, Boolean> isPresentModeAvailable = presentMode -> {
+
+            for(int i = 0; i < availablePresentModes.capacity(); i++){
+                if(availablePresentModes.get(i) == presentMode) return true;
             }
+
+            return false;
+        };
+
+        if(vsync) {
+            if(isPresentModeAvailable.apply(VK_PRESENT_MODE_FIFO_KHR)) return VK_PRESENT_MODE_FIFO_KHR;
+            else throw new RuntimeException("Vsync was requested but VK_PRESENT_MODE_FIFO_KHR is not available as a present mode");
+        }
+        else {
+            if(isPresentModeAvailable.apply(VK_PRESENT_MODE_IMMEDIATE_KHR)) return VK_PRESENT_MODE_IMMEDIATE_KHR;
+            else throw new RuntimeException("Vsync was requested to be disabled but VK_PRESENT_MODE_IMMEDIATE_KHR is not available as a present mode");
         }
 
-        return VK_PRESENT_MODE_FIFO_RELAXED_KHR;
     }
     private VkExtent2D chooseSwapExtent(MemoryStack stack, VkSurfaceCapabilitiesKHR capabilities, int width, int height) {
 
@@ -468,7 +480,7 @@ public class VkSceneRenderer extends SceneRenderer {
 
         return actualExtent;
     }
-    private VkSwapchain createSwapChain(VkDevice device, long surface, int width, int height) {
+    private VkSwapchain createSwapChain(VkDevice device, long surface, int width, int height, boolean vsync) {
 
         VkSwapchain swapchain = new VkSwapchain();
 
@@ -480,7 +492,7 @@ public class VkSceneRenderer extends SceneRenderer {
 
 
             VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapchainSupportDetails.formats);
-            int presentMode = chooseSwapPresentMode(swapchainSupportDetails.presentModes);
+            int presentMode = chooseSwapPresentMode(swapchainSupportDetails.presentModes, vsync);
             VkExtent2D extent = chooseSwapExtent(stack, swapchainSupportDetails.capabilities, width, height);
 
 
@@ -810,7 +822,7 @@ public class VkSceneRenderer extends SceneRenderer {
     private void recreateDisplay(){
 
         disposeDisplay();
-        swapchain = createSwapChain(device, surface, width, height);
+        swapchain = createSwapChain(device, surface, width, height, settings.vsync);
         swapchainImageViews = createSwapchainImageViews(device, swapchain);
 
         renderPass = createRenderPass(device, swapchain);

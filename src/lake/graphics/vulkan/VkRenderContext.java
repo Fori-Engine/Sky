@@ -3,7 +3,7 @@ package lake.graphics.vulkan;
 import lake.FlightRecorder;
 import lake.graphics.RenderContext;
 import lake.graphics.PlatformWindow;
-import lake.graphics.RenderSettings;
+import lake.graphics.RendererSettings;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
@@ -28,7 +28,7 @@ public class VkRenderContext extends RenderContext {
 
     private long platformWindowSurface;
     private VkInstance platformWindowInstance;
-    private RenderSettings renderSettings;
+    private RendererSettings rendererSettings;
     private static final List<String> validationLayers = new ArrayList<>();
     static {
         validationLayers.add("VK_LAYER_KHRONOS_validation");
@@ -37,8 +37,8 @@ public class VkRenderContext extends RenderContext {
 
 
 
-    public VkRenderContext(RenderSettings renderSettings) {
-        this.renderSettings = renderSettings;
+    public VkRenderContext(RendererSettings rendererSettings) {
+        this.rendererSettings = rendererSettings;
     }
 
     @Override
@@ -48,6 +48,7 @@ public class VkRenderContext extends RenderContext {
 
     @Override
     public void setup(PlatformWindow window) {
+
 
     }
 
