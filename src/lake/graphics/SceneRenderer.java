@@ -57,4 +57,6 @@ public abstract class SceneRenderer implements Disposable {
     public static RenderAPI getRenderAPI() {
         return api;
     }
+
+    public abstract void openScene(Scene scene);
 }

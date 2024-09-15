@@ -67,6 +67,7 @@ public class VkSceneRenderer extends SceneRenderer {
     private ShaderProgram shaderProgram;
 
     private VkBuffer buffer;
+    private ByteBuffer bufferDataByteBuffer;
 
 
 
@@ -203,43 +204,36 @@ public class VkSceneRenderer extends SceneRenderer {
 
 
 
-         buffer = new VkBuffer(
+        buffer = new VkBuffer(
                 device,
                 pAllocator.get(0),
-                2 * Float.BYTES * 3,
+                2 * Float.BYTES * 6,
                 VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                 VMA_MEMORY_USAGE_CPU_TO_GPU
         );
 
         PointerBuffer bufferData = MemoryUtil.memAllocPointer(1);
 
-        vkMapMemory(device, buffer.getMemory(), 0, 2 * Float.BYTES * 3, 0, bufferData);
-        ByteBuffer bufferDataByteBuffer = bufferData.getByteBuffer(2 * Float.BYTES * 3);;
+        vkMapMemory(device, buffer.getMemory(), 0, 2 * Float.BYTES * 6, 0, bufferData);
+        bufferDataByteBuffer = bufferData.getByteBuffer(2 * Float.BYTES * 6);
 
 
-        bufferDataByteBuffer.putFloat(0.0f);
-        bufferDataByteBuffer.putFloat(-0.5f);
+        //bufferDataByteBuffer.putFloat(0.0f);
+        //bufferDataByteBuffer.putFloat(-0.5f);
 
-        bufferDataByteBuffer.putFloat(0.5f);
-        bufferDataByteBuffer.putFloat(0.5f);
+        //bufferDataByteBuffer.putFloat(0.5f);
+        //bufferDataByteBuffer.putFloat(0.5f);
 
-        bufferDataByteBuffer.putFloat(-0.5f);
-        bufferDataByteBuffer.putFloat(0.5f);
+        //bufferDataByteBuffer.putFloat(-0.5f);
+        //bufferDataByteBuffer.putFloat(0.5f);
 
 
-        vkUnmapMemory(device, buffer.getMemory());
+        //vkUnmapMemory(device, buffer.getMemory());
 
 
     }
     public VkSceneRenderer(int width, int height, RendererSettings rendererSettings) {
         super(width, height, rendererSettings);
-
-
-
-
-
-
-
     }
 
 
@@ -706,7 +700,7 @@ public class VkSceneRenderer extends SceneRenderer {
                         VkVertexInputBindingDescription.calloc(1, stack);
 
                 bindingDescription.binding(0);
-                bindingDescription.stride(2 * Float.BYTES * 2);
+                bindingDescription.stride(2 * Float.BYTES);
                 bindingDescription.inputRate(VK_VERTEX_INPUT_RATE_VERTEX);
                 vertexInputInfo.pVertexBindingDescriptions(bindingDescription);
 
@@ -897,6 +891,22 @@ public class VkSceneRenderer extends SceneRenderer {
     }
 
 
+    @Override
+    public void openScene(Scene scene) {
+        openNode(scene.getNode());
+    }
+
+    private void openNode(Node node) {
+        for(Node child : node.getChildren()){
+
+            for(float vertex : child.getMesh().getVertices()){
+                bufferDataByteBuffer.putFloat(vertex);
+            }
+
+            openNode(child);
+        }
+    }
+
 
     public VkDevice getDevice() {
         return device;
@@ -978,7 +988,7 @@ public class VkSceneRenderer extends SceneRenderer {
 
                     vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
 
-                    vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+                    vkCmdDraw(commandBuffer, 6, 1, 0, 0);
                 }
                 vkCmdEndRenderPass(commandBuffer);
 
@@ -1023,7 +1033,6 @@ public class VkSceneRenderer extends SceneRenderer {
 
 
     }
-
 
 
     @Override
