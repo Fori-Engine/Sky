@@ -66,8 +66,8 @@ public class VkSceneRenderer extends SceneRenderer {
     private boolean resized = false;
     private ShaderProgram shaderProgram;
 
-    private VkBuffer buffer;
-    private ByteBuffer bufferDataByteBuffer;
+    private VkBuffer vertexBuffer, indexBuffer;
+
 
 
 
@@ -204,7 +204,7 @@ public class VkSceneRenderer extends SceneRenderer {
 
 
 
-        buffer = new VkBuffer(
+        vertexBuffer = new VkBuffer(
                 device,
                 pAllocator.get(0),
                 2 * Float.BYTES * 6,
@@ -212,23 +212,18 @@ public class VkSceneRenderer extends SceneRenderer {
                 VMA_MEMORY_USAGE_CPU_TO_GPU
         );
 
-        PointerBuffer bufferData = MemoryUtil.memAllocPointer(1);
-
-        vkMapMemory(device, buffer.getMemory(), 0, 2 * Float.BYTES * 6, 0, bufferData);
-        bufferDataByteBuffer = bufferData.getByteBuffer(2 * Float.BYTES * 6);
+        ByteBuffer bufferData = vertexBuffer.map();
 
 
-        bufferDataByteBuffer.putFloat(0.0f);
-        bufferDataByteBuffer.putFloat(-0.5f);
+        bufferData.putFloat(0.0f);
+        bufferData.putFloat(-0.5f);
 
-        bufferDataByteBuffer.putFloat(0.5f);
-        bufferDataByteBuffer.putFloat(0.5f);
+        bufferData.putFloat(0.5f);
+        bufferData.putFloat(0.5f);
 
-        bufferDataByteBuffer.putFloat(-0.5f);
-        bufferDataByteBuffer.putFloat(0.5f);
+        bufferData.putFloat(-0.5f);
+        bufferData.putFloat(0.5f);
 
-
-        //vkUnmapMemory(device, buffer.getMemory());
 
 
     }
@@ -968,7 +963,7 @@ public class VkSceneRenderer extends SceneRenderer {
                 vkCmdBeginRenderPass(commandBuffer, renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
                 {
                     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
-                    LongBuffer vertexBuffers = stack.longs(buffer.getHandle());
+                    LongBuffer vertexBuffers = stack.longs(vertexBuffer.getHandle());
                     LongBuffer offsets = stack.longs(0);
 
                     vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
