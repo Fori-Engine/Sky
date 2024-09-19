@@ -218,14 +218,14 @@ public class VkSceneRenderer extends SceneRenderer {
         bufferDataByteBuffer = bufferData.getByteBuffer(2 * Float.BYTES * 6);
 
 
-        //bufferDataByteBuffer.putFloat(0.0f);
-        //bufferDataByteBuffer.putFloat(-0.5f);
+        bufferDataByteBuffer.putFloat(0.0f);
+        bufferDataByteBuffer.putFloat(-0.5f);
 
-        //bufferDataByteBuffer.putFloat(0.5f);
-        //bufferDataByteBuffer.putFloat(0.5f);
+        bufferDataByteBuffer.putFloat(0.5f);
+        bufferDataByteBuffer.putFloat(0.5f);
 
-        //bufferDataByteBuffer.putFloat(-0.5f);
-        //bufferDataByteBuffer.putFloat(0.5f);
+        bufferDataByteBuffer.putFloat(-0.5f);
+        bufferDataByteBuffer.putFloat(0.5f);
 
 
         //vkUnmapMemory(device, buffer.getMemory());
@@ -891,21 +891,6 @@ public class VkSceneRenderer extends SceneRenderer {
     }
 
 
-    @Override
-    public void openScene(Scene scene) {
-        openNode(scene.getNode());
-    }
-
-    private void openNode(Node node) {
-        for(Node child : node.getChildren()){
-
-            for(float vertex : child.getMesh().getVertices()){
-                bufferDataByteBuffer.putFloat(vertex);
-            }
-
-            openNode(child);
-        }
-    }
 
 
     public VkDevice getDevice() {
@@ -968,7 +953,7 @@ public class VkSceneRenderer extends SceneRenderer {
                 renderPassInfo.renderArea(renderArea);
 
                 VkClearValue.Buffer clearValues = VkClearValue.calloc(1, stack);
-                clearValues.color().float32(stack.floats(1.0f, 0.0f, 0.0f, 1.0f));
+                clearValues.color().float32(stack.floats(0.0f, 0.0f, 0.0f, 1.0f));
                 renderPassInfo.pClearValues(clearValues);
 
                 VkCommandBuffer commandBuffer = frame.renderCommandBuffer;
@@ -988,7 +973,7 @@ public class VkSceneRenderer extends SceneRenderer {
 
                     vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
 
-                    vkCmdDraw(commandBuffer, 6, 1, 0, 0);
+                    vkCmdDraw(commandBuffer, 3, 1, 0, 0);
                 }
                 vkCmdEndRenderPass(commandBuffer);
 

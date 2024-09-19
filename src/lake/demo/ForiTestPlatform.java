@@ -20,55 +20,6 @@ public class ForiTestPlatform {
         SceneRenderer sceneRenderer = SceneRenderer.newSceneRenderer(window, window.getWidth(), window.getHeight(), new RendererSettings(RenderAPI.Vulkan).validation(true).vsync(false));
         window.setIcon(AssetPacks.getAsset("core:assets/ForiEngine.png"));
 
-        Node root = new Node();
-
-
-        Node node1 = new Node(new Mesh(
-            new float[]{
-                    0.0f,
-                    -0.5f,
-
-                    0.5f,
-                    0.5f,
-
-                    -0.5f,
-                    0.5f
-            },
-            new int[]{
-
-            }
-        ));
-
-        Node node2 = new Node(new Mesh(
-                new float[]{
-                        0.5f,
-                        -0.5f,
-
-                        1.0f,
-                        0.5f,
-
-                        0.0f,
-                        0.5f
-                },
-                new int[]{
-
-                }
-        ));
-
-
-        root.addNode(node1);
-        node1.addNode(node2);
-
-
-
-        Scene scene = new Scene(root, new Camera());
-
-
-        sceneRenderer.openScene(scene);
-
-
-
-
 
 
 
