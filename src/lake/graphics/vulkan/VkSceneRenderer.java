@@ -207,7 +207,7 @@ public class VkSceneRenderer extends SceneRenderer {
         vertexBuffer = new VkBuffer(
                 device,
                 pAllocator.get(0),
-                2 * Float.BYTES * 6,
+                3 * Float.BYTES * 3,
                 VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                 VMA_MEMORY_USAGE_CPU_TO_GPU
         );
@@ -217,14 +217,15 @@ public class VkSceneRenderer extends SceneRenderer {
 
         bufferData.putFloat(0.0f);
         bufferData.putFloat(-0.5f);
+        bufferData.putFloat(0f);
 
         bufferData.putFloat(0.5f);
         bufferData.putFloat(0.5f);
+        bufferData.putFloat(0f);
 
         bufferData.putFloat(-0.5f);
         bufferData.putFloat(0.5f);
-
-
+        bufferData.putFloat(0f);
 
     }
     public VkSceneRenderer(int width, int height, RendererSettings rendererSettings) {
@@ -695,7 +696,7 @@ public class VkSceneRenderer extends SceneRenderer {
                         VkVertexInputBindingDescription.calloc(1, stack);
 
                 bindingDescription.binding(0);
-                bindingDescription.stride(2 * Float.BYTES);
+                bindingDescription.stride(3 * Float.BYTES);
                 bindingDescription.inputRate(VK_VERTEX_INPUT_RATE_VERTEX);
                 vertexInputInfo.pVertexBindingDescriptions(bindingDescription);
 
@@ -709,7 +710,7 @@ public class VkSceneRenderer extends SceneRenderer {
                 {
                     posDescription.binding(0);
                     posDescription.location(0);
-                    posDescription.format(VK_FORMAT_R32G32_SFLOAT);
+                    posDescription.format(VK_FORMAT_R32G32B32_SFLOAT);
                     posDescription.offset(0);
                 }
 
