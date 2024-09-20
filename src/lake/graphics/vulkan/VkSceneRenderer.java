@@ -3,6 +3,7 @@ package lake.graphics.vulkan;
 import lake.FlightRecorder;
 import lake.asset.AssetPacks;
 import lake.graphics.*;
+import org.joml.Matrix4f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
@@ -65,9 +66,10 @@ public class VkSceneRenderer extends SceneRenderer {
     private long sharedCommandPool;
     private boolean resized = false;
     private ShaderProgram shaderProgram;
+    private VkBuffer vertexBuffer, indexBuffer, uniformBuffer;
 
-    private VkBuffer vertexBuffer, indexBuffer;
-
+    private long descriptorSet;
+    private long descriptorSetLayout;
 
 
 
@@ -88,7 +90,7 @@ public class VkSceneRenderer extends SceneRenderer {
         swapchain = createSwapChain(device, surface, width, height, rendererSettings.vsync);
         swapchainImageViews = createSwapchainImageViews(device, swapchain);
 
-        FlightRecorder.info(VkSceneRenderer.class, "Max: " + physicalDeviceProperties.limits().maxDescriptorSetSamplers());
+        FlightRecorder.info(VkSceneRenderer.class, "Max Allowed Allocations: " + physicalDeviceProperties.limits().maxMemoryAllocationCount());
 
 
         renderPass = createRenderPass(device, swapchain);
@@ -129,39 +131,6 @@ public class VkSceneRenderer extends SceneRenderer {
         );
         shaderProgram = ShaderProgram.newShaderProgram(this, shaderSources.vertexShader, shaderSources.fragmentShader);
         shaderProgram.prepare();
-
-
-        pipeline = createPipeline(device, swapchain, ((VkShaderProgram) shaderProgram).getShaderStages(), renderPass, null);
-        sharedCommandPool = createCommandPool(device, physicalDeviceQueueFamilies.graphicsFamily);
-
-
-        for(int i = 0; i < FRAMES_IN_FLIGHT; i++) {
-            VkFrame frame = frames[i];
-
-
-            try(MemoryStack stack = stackPush()) {
-
-                VkCommandBufferAllocateInfo allocInfo = VkCommandBufferAllocateInfo.calloc(stack);
-                allocInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
-                allocInfo.commandPool(sharedCommandPool);
-                allocInfo.level(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
-                allocInfo.commandBufferCount(FRAMES_IN_FLIGHT);
-
-                PointerBuffer pCommandBuffers = stack.mallocPointer(FRAMES_IN_FLIGHT);
-
-                if(vkAllocateCommandBuffers(device, allocInfo, pCommandBuffers) != VK_SUCCESS) {
-                    throw new RuntimeException("Failed to allocate command buffers");
-                }
-
-                frame.renderCommandBuffer = new VkCommandBuffer(pCommandBuffers.get(i), device);
-
-            }
-
-
-
-        }
-
-
 
 
         //Allocate and submit renderSettings.batchSize-number indices in a staging index buffer
@@ -205,27 +174,174 @@ public class VkSceneRenderer extends SceneRenderer {
 
 
         vertexBuffer = new VkBuffer(
-                device,
                 pAllocator.get(0),
-                3 * Float.BYTES * 3,
+                3 * Float.BYTES * 4,
                 VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                 VMA_MEMORY_USAGE_CPU_TO_GPU
         );
 
-        ByteBuffer bufferData = vertexBuffer.map();
+        ByteBuffer vertexBufferData = vertexBuffer.map();
 
 
-        bufferData.putFloat(0.0f);
-        bufferData.putFloat(-0.5f);
-        bufferData.putFloat(0f);
+        vertexBufferData.putFloat(-0.5f);
+        vertexBufferData.putFloat(-0.5f);
+        vertexBufferData.putFloat(0f);
 
-        bufferData.putFloat(0.5f);
-        bufferData.putFloat(0.5f);
-        bufferData.putFloat(0f);
+        vertexBufferData.putFloat(0.5f);
+        vertexBufferData.putFloat(-0.5f);
+        vertexBufferData.putFloat(0f);
 
-        bufferData.putFloat(-0.5f);
-        bufferData.putFloat(0.5f);
-        bufferData.putFloat(0f);
+        vertexBufferData.putFloat(0.5f);
+        vertexBufferData.putFloat(0.5f);
+        vertexBufferData.putFloat(0f);
+
+        vertexBufferData.putFloat(-0.5f);
+        vertexBufferData.putFloat(0.5f);
+        vertexBufferData.putFloat(0f);
+
+
+
+        indexBuffer = new VkBuffer(
+                pAllocator.get(0),
+                Integer.BYTES * 6,
+                VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+                VMA_MEMORY_USAGE_CPU_TO_GPU
+        );
+
+        ByteBuffer indexBufferData = indexBuffer.map();
+
+
+        indexBufferData.putInt(0);
+        indexBufferData.putInt(1);
+        indexBufferData.putInt(2);
+        indexBufferData.putInt(2);
+        indexBufferData.putInt(3);
+        indexBufferData.putInt(0);
+
+        VkDescriptorPoolSize.Buffer descriptorPoolSize = VkDescriptorPoolSize.create(1);
+        descriptorPoolSize.type(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+        descriptorPoolSize.descriptorCount(1);
+
+        VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = VkDescriptorPoolCreateInfo.create();
+        descriptorPoolCreateInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO);
+        descriptorPoolCreateInfo.pPoolSizes(descriptorPoolSize);
+        descriptorPoolCreateInfo.maxSets(1);
+
+
+        LongBuffer pDescriptorPool = MemoryUtil.memAllocLong(1);
+
+        if(vkCreateDescriptorPool(device, descriptorPoolCreateInfo, null, pDescriptorPool) != VK_SUCCESS){
+            throw new RuntimeException("Failed to create descriptor pool");
+        }
+
+        VkDescriptorSetLayoutBinding.Buffer descriptorSetLayoutBinding = VkDescriptorSetLayoutBinding.create(1);
+        descriptorSetLayoutBinding.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+        descriptorSetLayoutBinding.stageFlags(VK_SHADER_STAGE_VERTEX_BIT);
+        descriptorSetLayoutBinding.binding(0);
+        descriptorSetLayoutBinding.descriptorCount(1);
+
+        LongBuffer pDescriptorSetLayout = MemoryUtil.memAllocLong(1);
+
+        VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = VkDescriptorSetLayoutCreateInfo.create();
+        descriptorSetLayoutCreateInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO);
+        descriptorSetLayoutCreateInfo.pBindings(descriptorSetLayoutBinding);
+
+
+        if(vkCreateDescriptorSetLayout(device, descriptorSetLayoutCreateInfo, null, pDescriptorSetLayout) != VK_SUCCESS){
+            throw new RuntimeException("Failed to create descriptor set layout");
+        }
+
+        descriptorSetLayout = pDescriptorSetLayout.get(0);
+
+
+        VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = VkDescriptorSetAllocateInfo.create();
+        descriptorSetAllocateInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO);
+        descriptorSetAllocateInfo.descriptorPool(pDescriptorPool.get(0));
+        descriptorSetAllocateInfo.pSetLayouts(pDescriptorSetLayout);
+
+        LongBuffer pDescriptorSet = MemoryUtil.memAllocLong(1);
+        if(vkAllocateDescriptorSets(device, descriptorSetAllocateInfo, pDescriptorSet) != VK_SUCCESS){
+            throw new RuntimeException("Failed to allocate descriptor set");
+        }
+        descriptorSet = pDescriptorSet.get(0);
+
+        uniformBuffer = new VkBuffer(
+                pAllocator.get(0),
+                (4 * 4 * Float.BYTES) * 1,
+                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                VMA_MEMORY_USAGE_CPU_TO_GPU
+        );
+
+        Matrix4f identity = new Matrix4f();
+        identity.get(uniformBuffer.map());
+
+        VkDescriptorBufferInfo.Buffer uniformBufferInfo = VkDescriptorBufferInfo.create(1);
+        uniformBufferInfo.buffer(uniformBuffer.getHandle());
+        uniformBufferInfo.offset(0);
+        uniformBufferInfo.range(uniformBuffer.getSizeBytes());
+
+        VkWriteDescriptorSet.Buffer writeDescriptorSet = VkWriteDescriptorSet.create(1);
+        writeDescriptorSet.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
+        writeDescriptorSet.dstSet(pDescriptorSet.get(0));
+        writeDescriptorSet.dstBinding(0);
+        writeDescriptorSet.dstArrayElement(0);
+        writeDescriptorSet.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+        writeDescriptorSet.pBufferInfo(uniformBufferInfo);
+        writeDescriptorSet.descriptorCount(1);
+
+        vkUpdateDescriptorSets(device, writeDescriptorSet, null);
+
+
+
+        pipeline = createPipeline(device, swapchain, ((VkShaderProgram) shaderProgram).getShaderStages(), renderPass);
+        sharedCommandPool = createCommandPool(device, physicalDeviceQueueFamilies.graphicsFamily);
+
+
+        for(int i = 0; i < FRAMES_IN_FLIGHT; i++) {
+            VkFrame frame = frames[i];
+
+
+            try(MemoryStack stack = stackPush()) {
+
+                VkCommandBufferAllocateInfo allocInfo = VkCommandBufferAllocateInfo.calloc(stack);
+                allocInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
+                allocInfo.commandPool(sharedCommandPool);
+                allocInfo.level(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+                allocInfo.commandBufferCount(FRAMES_IN_FLIGHT);
+
+                PointerBuffer pCommandBuffers = stack.mallocPointer(FRAMES_IN_FLIGHT);
+
+                if(vkAllocateCommandBuffers(device, allocInfo, pCommandBuffers) != VK_SUCCESS) {
+                    throw new RuntimeException("Failed to allocate command buffers");
+                }
+
+                frame.renderCommandBuffer = new VkCommandBuffer(pCommandBuffers.get(i), device);
+
+            }
+
+
+
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     }
     public VkSceneRenderer(int width, int height, RendererSettings rendererSettings) {
@@ -680,7 +796,7 @@ public class VkSceneRenderer extends SceneRenderer {
             return pRenderPass.get(0);
         }
     }
-    private VkPipeline createPipeline(VkDevice device, VkSwapchain swapchain, VkPipelineShaderStageCreateInfo.Buffer shaderStages, long renderPass, LongBuffer descriptorSetLayout) {
+    private VkPipeline createPipeline(VkDevice device, VkSwapchain swapchain, VkPipelineShaderStageCreateInfo.Buffer shaderStages, long renderPass) {
 
         long pipelineLayout;
         long graphicsPipeline = 0;
@@ -789,7 +905,8 @@ public class VkSceneRenderer extends SceneRenderer {
             VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.calloc(stack);
             {
                 pipelineLayoutInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
-                pipelineLayoutInfo.setLayoutCount(0);
+                pipelineLayoutInfo.setLayoutCount(1);
+                pipelineLayoutInfo.pSetLayouts(stack.longs(descriptorSetLayout));
 
             }
             LongBuffer pPipelineLayout = stack.longs(VK_NULL_HANDLE);
@@ -862,7 +979,7 @@ public class VkSceneRenderer extends SceneRenderer {
         renderPass = createRenderPass(device, swapchain);
         swapchainFramebuffers = createSwapchainFramebuffers(device, swapchain, swapchainImageViews, renderPass);
 
-        pipeline = createPipeline(device, swapchain, ((VkShaderProgram) shaderProgram).getShaderStages(), renderPass, null);
+        pipeline = createPipeline(device, swapchain, ((VkShaderProgram) shaderProgram).getShaderStages(), renderPass);
         frameIndex = 0;
     }
 
@@ -968,8 +1085,14 @@ public class VkSceneRenderer extends SceneRenderer {
                     LongBuffer offsets = stack.longs(0);
 
                     vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
+                    vkCmdBindIndexBuffer(commandBuffer, indexBuffer.getHandle(), 0, VK_INDEX_TYPE_UINT32);
+                    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                            pipeline.pipelineLayout, 0, stack.longs(descriptorSet), null);
 
-                    vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+
+
+
+                    vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
                 }
                 vkCmdEndRenderPass(commandBuffer);
 

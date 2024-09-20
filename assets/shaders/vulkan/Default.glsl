@@ -4,10 +4,12 @@
 layout(location = 0) in vec3 pos;
 layout(location = 0) out vec3 fragColor;
 
-
+layout(binding = 0) uniform UniformBuffer {
+    mat4 model;
+} uniformBuffer;
 
 void main() {
-    gl_Position = vec4(pos.xyz, 1.0);
+    gl_Position = uniformBuffer.model * vec4(pos.xyz, 1.0);
     fragColor = vec3(0.0, 0.7, 0.5);
 }
 

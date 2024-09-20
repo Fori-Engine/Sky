@@ -65,6 +65,10 @@ public class VkBuffer implements Disposable {
         return mappedMemory.getByteBuffer(sizeBytes);
     }
 
+    public int getSizeBytes() {
+        return sizeBytes;
+    }
+
     public void unmap(){
         mapped = false;
 
