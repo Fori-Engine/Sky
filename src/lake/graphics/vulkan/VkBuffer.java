@@ -11,8 +11,7 @@ import org.lwjgl.vulkan.*;
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 
-import static org.lwjgl.util.vma.Vma.VMA_MEMORY_USAGE_AUTO;
-import static org.lwjgl.util.vma.Vma.vmaCreateBuffer;
+import static org.lwjgl.util.vma.Vma.*;
 import static org.lwjgl.vulkan.VK10.*;
 
 public class VkBuffer implements Disposable {
@@ -24,13 +23,15 @@ public class VkBuffer implements Disposable {
     private VmaAllocationInfo allocationInfo;
     private VmaAllocationCreateInfo allocationCreateInfo;
     private long memory;
-    private VkDevice device;
+    private long vmaAllocator;
+    private PointerBuffer mappedMemory;
+    private boolean mapped;
 
-    public VkBuffer(VkDevice device, long vmaAllocator, int sizeBytes, int bufferUsage, int memoryUsage) {
+    public VkBuffer(long vmaAllocator, int sizeBytes, int bufferUsage, int memoryUsage) {
         Disposer.add("managedResources", this);
         this.sizeBytes = sizeBytes;
-        this.device = device;
 
+        this.vmaAllocator = vmaAllocator;
 
 
         VkBufferCreateInfo bufferCreateInfo = VkBufferCreateInfo.create();
@@ -41,25 +42,34 @@ public class VkBuffer implements Disposable {
 
         allocationCreateInfo = VmaAllocationCreateInfo.create();
         allocationCreateInfo.usage(memoryUsage);
+        allocationCreateInfo.requiredFlags(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
         pBuffer = MemoryUtil.memAllocLong(1);
         pAllocation = MemoryUtil.memAllocPointer(1);
 
         allocationInfo = VmaAllocationInfo.create();
 
-
         vmaCreateBuffer(vmaAllocator, bufferCreateInfo, allocationCreateInfo, pBuffer, pAllocation, allocationInfo);
         memory = allocationInfo.deviceMemory();
-
-
 
         handle = pBuffer.get();
     }
 
     public ByteBuffer map(){
-        PointerBuffer bufferData = MemoryUtil.memAllocPointer(1);
-        vkMapMemory(device, memory, 0, sizeBytes, 0, bufferData);
-        return bufferData.getByteBuffer(sizeBytes);
+        if(mapped) throw new RuntimeException("VkBuffer " + handle + " can not be mapped again");
+
+        mapped = true;
+
+        mappedMemory = MemoryUtil.memAllocPointer(1);
+        vmaMapMemory(vmaAllocator, pAllocation.get(0), mappedMemory);
+        return mappedMemory.getByteBuffer(sizeBytes);
+    }
+
+    public void unmap(){
+        mapped = false;
+
+        vmaUnmapMemory(vmaAllocator, pAllocation.get(0));
+        MemoryUtil.memFree(mappedMemory);
     }
 
     public long getMemory() {
