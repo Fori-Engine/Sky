@@ -6,11 +6,22 @@ layout(location = 0) out vec3 fragColor;
 
 layout(binding = 0) uniform UniformBuffer {
     mat4 model;
+    mat4 view;
+    mat4 proj;
+
+
 } uniformBuffer;
 
+vec3 colors[4] = vec3[](
+    vec3(0.6, 0.0, 0.0),
+    vec3(0.0, 1.0, 0.0),
+    vec3(1.0, 0.6, 1.0),
+    vec3(1.0, 0.0, 1.0)
+);
+
 void main() {
-    gl_Position = uniformBuffer.model * vec4(pos.xyz, 1.0);
-    fragColor = vec3(0.0, 0.7, 0.5);
+    gl_Position = uniformBuffer.proj * uniformBuffer.view * uniformBuffer.model * vec4(pos.xyz, 1.0);
+    fragColor = colors[gl_VertexIndex];
 }
 
 

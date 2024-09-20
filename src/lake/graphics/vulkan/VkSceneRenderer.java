@@ -4,6 +4,8 @@ import lake.FlightRecorder;
 import lake.asset.AssetPacks;
 import lake.graphics.*;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
@@ -185,19 +187,19 @@ public class VkSceneRenderer extends SceneRenderer {
 
         vertexBufferData.putFloat(-0.5f);
         vertexBufferData.putFloat(-0.5f);
-        vertexBufferData.putFloat(0f);
+        vertexBufferData.putFloat(0.5f);
 
         vertexBufferData.putFloat(0.5f);
         vertexBufferData.putFloat(-0.5f);
-        vertexBufferData.putFloat(0f);
+        vertexBufferData.putFloat(0.5f);
 
         vertexBufferData.putFloat(0.5f);
         vertexBufferData.putFloat(0.5f);
-        vertexBufferData.putFloat(0f);
+        vertexBufferData.putFloat(0.5f);
 
         vertexBufferData.putFloat(-0.5f);
         vertexBufferData.putFloat(0.5f);
-        vertexBufferData.putFloat(0f);
+        vertexBufferData.putFloat(0.5f);
 
 
 
@@ -265,15 +267,32 @@ public class VkSceneRenderer extends SceneRenderer {
         }
         descriptorSet = pDescriptorSet.get(0);
 
+        int matrixSizeBytes = 4 * 4 * Float.BYTES;
+
         uniformBuffer = new VkBuffer(
                 pAllocator.get(0),
-                (4 * 4 * Float.BYTES) * 1,
+                matrixSizeBytes * 3,
                 VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                 VMA_MEMORY_USAGE_CPU_TO_GPU
         );
 
-        Matrix4f identity = new Matrix4f();
-        identity.get(uniformBuffer.map());
+        ByteBuffer uniformBufferData = uniformBuffer.map();
+
+        Matrix4f model = new Matrix4f().rotate((float) Math.toRadians(0.0f), 0.0f, 0.0f, 1.0f);
+        model.get(0, uniformBufferData);
+
+        Matrix4f view = new Matrix4f().lookAt(new Vector3f(1.0f, 2.0f, 3.0f), new Vector3f(0, 0, 0), new Vector3f(0.0f, 0.0f, 1.0f));
+        view.get(matrixSizeBytes, uniformBufferData);
+
+        Matrix4f proj = new Matrix4f().perspective((float) Math.toRadians(45.0f), (float) width / height, 0.01f, 100.0f, true);
+        proj.m11(proj.m11() * -1);
+        proj.get(matrixSizeBytes * 2, uniformBufferData);
+
+
+        Matrix4f combined = proj.mul(view.mul(model));
+        System.out.println(new Vector4f(-0.5f, -0.5f, 1, 1.0f).mul(combined));
+
+
 
         VkDescriptorBufferInfo.Buffer uniformBufferInfo = VkDescriptorBufferInfo.create(1);
         uniformBufferInfo.buffer(uniformBuffer.getHandle());
@@ -870,10 +889,11 @@ public class VkSceneRenderer extends SceneRenderer {
                 rasterizer.sType(VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO);
                 rasterizer.depthClampEnable(false);
                 rasterizer.rasterizerDiscardEnable(false);
+
                 rasterizer.polygonMode(VK_POLYGON_MODE_FILL);
-                rasterizer.lineWidth(1.0f);
+                rasterizer.lineWidth(3.0f);
                 rasterizer.cullMode(VK_CULL_MODE_BACK_BIT);
-                rasterizer.frontFace(VK_FRONT_FACE_CLOCKWISE);
+                rasterizer.frontFace(VK_FRONT_FACE_COUNTER_CLOCKWISE);
                 rasterizer.depthBiasEnable(false);
             }
 
