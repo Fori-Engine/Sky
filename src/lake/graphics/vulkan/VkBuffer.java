@@ -47,6 +47,7 @@ public class VkBuffer implements Disposable {
         pBuffer = MemoryUtil.memAllocLong(1);
         pAllocation = MemoryUtil.memAllocPointer(1);
 
+
         allocationInfo = VmaAllocationInfo.create();
 
         vmaCreateBuffer(vmaAllocator, bufferCreateInfo, allocationCreateInfo, pBuffer, pAllocation, allocationInfo);
