@@ -177,7 +177,7 @@ public class VkSceneRenderer extends SceneRenderer {
 
         vertexBuffer = new VkBuffer(
                 pAllocator.get(0),
-                3 * Float.BYTES * 4,
+                3 * Float.BYTES * 4 * 2,
                 VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                 VMA_MEMORY_USAGE_CPU_TO_GPU
         );
@@ -185,27 +185,45 @@ public class VkSceneRenderer extends SceneRenderer {
         ByteBuffer vertexBufferData = vertexBuffer.map();
 
 
-        vertexBufferData.putFloat(-0.5f);
-        vertexBufferData.putFloat(-0.5f);
-        vertexBufferData.putFloat(0.5f);
+        {
+            vertexBufferData.putFloat(-0.5f);
+            vertexBufferData.putFloat(-0.5f);
+            vertexBufferData.putFloat(0.5f);
 
-        vertexBufferData.putFloat(0.5f);
-        vertexBufferData.putFloat(-0.5f);
-        vertexBufferData.putFloat(0.5f);
+            vertexBufferData.putFloat(0.5f);
+            vertexBufferData.putFloat(-0.5f);
+            vertexBufferData.putFloat(0.5f);
 
-        vertexBufferData.putFloat(0.5f);
-        vertexBufferData.putFloat(0.5f);
-        vertexBufferData.putFloat(0.5f);
+            vertexBufferData.putFloat(0.5f);
+            vertexBufferData.putFloat(0.5f);
+            vertexBufferData.putFloat(0.5f);
 
-        vertexBufferData.putFloat(-0.5f);
-        vertexBufferData.putFloat(0.5f);
-        vertexBufferData.putFloat(0.5f);
+            vertexBufferData.putFloat(-0.5f);
+            vertexBufferData.putFloat(0.5f);
+            vertexBufferData.putFloat(0.5f);
+        }
 
+        {
+            vertexBufferData.putFloat(-0.5f);
+            vertexBufferData.putFloat(-0.5f);
+            vertexBufferData.putFloat(-0.5f);
 
+            vertexBufferData.putFloat(0.5f);
+            vertexBufferData.putFloat(-0.5f);
+            vertexBufferData.putFloat(-0.5f);
+
+            vertexBufferData.putFloat(0.5f);
+            vertexBufferData.putFloat(0.5f);
+            vertexBufferData.putFloat(-0.5f);
+
+            vertexBufferData.putFloat(-0.5f);
+            vertexBufferData.putFloat(0.5f);
+            vertexBufferData.putFloat(-0.5f);
+        }
 
         indexBuffer = new VkBuffer(
                 pAllocator.get(0),
-                Integer.BYTES * 6,
+                Integer.BYTES * 6 * 2,
                 VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
                 VMA_MEMORY_USAGE_CPU_TO_GPU
         );
@@ -213,12 +231,24 @@ public class VkSceneRenderer extends SceneRenderer {
         ByteBuffer indexBufferData = indexBuffer.map();
 
 
-        indexBufferData.putInt(0);
-        indexBufferData.putInt(1);
-        indexBufferData.putInt(2);
-        indexBufferData.putInt(2);
-        indexBufferData.putInt(3);
-        indexBufferData.putInt(0);
+        {
+            indexBufferData.putInt(0);
+            indexBufferData.putInt(1);
+            indexBufferData.putInt(2);
+            indexBufferData.putInt(2);
+            indexBufferData.putInt(3);
+            indexBufferData.putInt(0);
+        }
+
+        {
+            indexBufferData.putInt(4);
+            indexBufferData.putInt(5);
+            indexBufferData.putInt(6);
+            indexBufferData.putInt(6);
+            indexBufferData.putInt(7);
+            indexBufferData.putInt(4);
+        }
+
 
         VkDescriptorPoolSize.Buffer descriptorPoolSize = VkDescriptorPoolSize.create(1);
         descriptorPoolSize.type(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
@@ -344,7 +374,15 @@ public class VkSceneRenderer extends SceneRenderer {
 
 
 
-
+        VkImage image = new VkImage(
+                pAllocator.get(0),
+                device,
+                640,
+                480,
+                VK_FORMAT_D32_SFLOAT,
+                VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                VK_IMAGE_TILING_OPTIMAL
+        );
 
 
 
@@ -990,6 +1028,11 @@ public class VkSceneRenderer extends SceneRenderer {
         return commandPool;
     }
 
+
+
+
+
+
     private void recreateDisplay(){
 
         disposeDisplay();
@@ -1112,7 +1155,7 @@ public class VkSceneRenderer extends SceneRenderer {
 
 
 
-                    vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
+                    vkCmdDrawIndexed(commandBuffer, 12, 1, 0, 0, 0);
                 }
                 vkCmdEndRenderPass(commandBuffer);
 

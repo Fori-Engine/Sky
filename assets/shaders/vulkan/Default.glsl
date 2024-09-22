@@ -21,7 +21,7 @@ vec3 colors[4] = vec3[](
 
 void main() {
     gl_Position = uniformBuffer.proj * uniformBuffer.view * uniformBuffer.model * vec4(pos.xyz, 1.0);
-    fragColor = colors[gl_VertexIndex];
+    fragColor = colors[gl_VertexIndex % 4];
 }
 
 

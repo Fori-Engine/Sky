@@ -28,7 +28,7 @@ public class ForiTestPlatform {
 
         while(!window.shouldClose()){
 
-            System.out.println(Time.framesPerSecond());
+            //System.out.println(Time.framesPerSecond());
 
             sceneRenderer.update();
             window.update();
