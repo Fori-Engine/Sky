@@ -177,7 +177,7 @@ public class VkSceneRenderer extends SceneRenderer {
 
         vertexBuffer = new VkBuffer(
                 pAllocator.get(0),
-                3 * Float.BYTES * 4 * 2,
+                2 * 4 * 4 * Float.BYTES,
                 VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                 VMA_MEMORY_USAGE_CPU_TO_GPU
         );
@@ -189,36 +189,46 @@ public class VkSceneRenderer extends SceneRenderer {
             vertexBufferData.putFloat(-0.5f);
             vertexBufferData.putFloat(-0.5f);
             vertexBufferData.putFloat(0.5f);
+            vertexBufferData.putFloat(0);
 
             vertexBufferData.putFloat(0.5f);
             vertexBufferData.putFloat(-0.5f);
             vertexBufferData.putFloat(0.5f);
+            vertexBufferData.putFloat(0);
+
 
             vertexBufferData.putFloat(0.5f);
             vertexBufferData.putFloat(0.5f);
             vertexBufferData.putFloat(0.5f);
+            vertexBufferData.putFloat(0);
+
 
             vertexBufferData.putFloat(-0.5f);
             vertexBufferData.putFloat(0.5f);
             vertexBufferData.putFloat(0.5f);
+            vertexBufferData.putFloat(0);
         }
 
         {
             vertexBufferData.putFloat(-0.5f);
             vertexBufferData.putFloat(-0.5f);
             vertexBufferData.putFloat(-0.5f);
+            vertexBufferData.putFloat(1);
 
             vertexBufferData.putFloat(0.5f);
             vertexBufferData.putFloat(-0.5f);
             vertexBufferData.putFloat(-0.5f);
+            vertexBufferData.putFloat(1);
 
             vertexBufferData.putFloat(0.5f);
             vertexBufferData.putFloat(0.5f);
             vertexBufferData.putFloat(-0.5f);
+            vertexBufferData.putFloat(1);
 
             vertexBufferData.putFloat(-0.5f);
             vertexBufferData.putFloat(0.5f);
             vertexBufferData.putFloat(-0.5f);
+            vertexBufferData.putFloat(1);
         }
 
         indexBuffer = new VkBuffer(
@@ -359,7 +369,7 @@ public class VkSceneRenderer extends SceneRenderer {
 
         shaderStorageBuffer = new VkBuffer(
                 pAllocator.get(0),
-                matrixSizeBytes,
+                matrixSizeBytes * 10,
                 VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
                 VMA_MEMORY_USAGE_CPU_TO_GPU
         );
@@ -368,8 +378,11 @@ public class VkSceneRenderer extends SceneRenderer {
         ByteBuffer shaderStorageBufferData = shaderStorageBuffer.map();
         VkDescriptorBufferInfo.Buffer shaderStorageBufferInfo = VkDescriptorBufferInfo.create(1);
         {
-            Matrix4f model = new Matrix4f().rotate((float) Math.toRadians(30.0f), 0.0f, 1.0f, 0.0f);
-            model.get(0, shaderStorageBufferData);
+            Matrix4f transform0 = new Matrix4f().rotate((float) Math.toRadians(30.0f), 0.0f, 1.0f, 0.0f);
+            transform0.get(0, shaderStorageBufferData);
+
+            Matrix4f transform1 = new Matrix4f().rotate((float) Math.toRadians(50.0f), 1.0f, 1.0f, 0.0f);
+            transform1.get(matrixSizeBytes, shaderStorageBufferData);
 
 
             shaderStorageBufferInfo.buffer(shaderStorageBuffer.getHandle());
@@ -398,7 +411,7 @@ public class VkSceneRenderer extends SceneRenderer {
         }
 
 
-        //Uniform Buffer
+        //Shader Storage Buffer
         {
 
             VkWriteDescriptorSet writeDescriptorSet1 = writeDescriptorSet.get(1);
@@ -935,14 +948,14 @@ public class VkSceneRenderer extends SceneRenderer {
                         VkVertexInputBindingDescription.calloc(1, stack);
 
                 bindingDescription.binding(0);
-                bindingDescription.stride(3 * Float.BYTES);
+                bindingDescription.stride(4 * Float.BYTES);
                 bindingDescription.inputRate(VK_VERTEX_INPUT_RATE_VERTEX);
                 vertexInputInfo.pVertexBindingDescriptions(bindingDescription);
 
 
 
                 VkVertexInputAttributeDescription.Buffer attributeDescriptions =
-                        VkVertexInputAttributeDescription.calloc(1);
+                        VkVertexInputAttributeDescription.calloc(2);
 
                 // Position
                 VkVertexInputAttributeDescription posDescription = attributeDescriptions.get(0);
@@ -951,6 +964,15 @@ public class VkSceneRenderer extends SceneRenderer {
                     posDescription.location(0);
                     posDescription.format(VK_FORMAT_R32G32B32_SFLOAT);
                     posDescription.offset(0);
+                }
+
+                // Transform Index
+                VkVertexInputAttributeDescription transformIndexDescription = attributeDescriptions.get(1);
+                {
+                    transformIndexDescription.binding(0);
+                    transformIndexDescription.location(1);
+                    transformIndexDescription.format(VK_FORMAT_R32_SFLOAT);
+                    transformIndexDescription.offset(3 * Float.BYTES);
                 }
 
                 vertexInputInfo.pVertexAttributeDescriptions(attributeDescriptions.rewind());
