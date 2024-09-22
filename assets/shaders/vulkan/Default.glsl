@@ -4,13 +4,24 @@
 layout(location = 0) in vec3 pos;
 layout(location = 0) out vec3 fragColor;
 
-layout(binding = 0) uniform UniformBuffer {
-    mat4 model;
+layout(set = 0, binding = 0) uniform Camera {
     mat4 view;
     mat4 proj;
+} camera;
+
+layout(std140,set = 0, binding = 1) readonly buffer Transforms {
+
+    mat4 model;
+} transforms;
 
 
-} uniformBuffer;
+
+
+
+
+
+
+
 
 vec3 colors[4] = vec3[](
     vec3(0.6, 0.0, 0.0),
@@ -20,7 +31,7 @@ vec3 colors[4] = vec3[](
 );
 
 void main() {
-    gl_Position = uniformBuffer.proj * uniformBuffer.view * uniformBuffer.model * vec4(pos.xyz, 1.0);
+    gl_Position = camera.proj * camera.view * transforms.model * vec4(pos.xyz, 1.0);
     fragColor = colors[gl_VertexIndex % 4];
 }
 
