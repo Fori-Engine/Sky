@@ -1,7 +1,6 @@
 package lake.graphics;
 
-import lake.FileReader;
-import lake.FlightRecorder;
+import lake.Logger;
 import lake.asset.Asset;
 import lake.asset.AssetPacks;
 import lake.asset.TextureData;
@@ -46,7 +45,7 @@ public class Font2D {
                 defaultLineHeight = Float.parseFloat(parameters.get("lineHeight"));
             }
             else if(line.startsWith("chars")){
-                FlightRecorder.todo(Font2D.class, "Attribute 'chars' not implemented in Font2D");
+                Logger.todo(Font2D.class, "Attribute 'chars' not implemented in Font2D");
             }
             else if(line.startsWith("char")){
                 int id = Integer.parseInt(parameters.get("id"));

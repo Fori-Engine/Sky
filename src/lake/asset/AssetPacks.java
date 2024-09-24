@@ -1,6 +1,6 @@
 package lake.asset;
 
-import lake.FlightRecorder;
+import lake.Logger;
 
 import java.util.HashMap;
 
@@ -20,14 +20,14 @@ public class AssetPacks {
 
         if(assetPack == null){
             error = "Failed to locate AssetPack for key [" + assetPackKey + "]";
-            FlightRecorder.meltdown(AssetPacks.class, error);
+            Logger.meltdown(AssetPacks.class, error);
             throw new RuntimeException(error);
         }
 
         Asset<T> asset = assetPack.getAsset(assetPath);
         if(asset == null){
             error = "Failed to locate Asset [" + assetPath + "] in AssetPack [" + assetPackKey + "]";
-            FlightRecorder.meltdown(AssetPacks.class, error);
+            Logger.meltdown(AssetPacks.class, error);
             throw new RuntimeException(error);
         }
 

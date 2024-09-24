@@ -1,5 +1,7 @@
 package lake.graphics;
 
+import lake.Logger;
+import lake.graphics.vulkan.VkShaderProgram;
 import org.lwjgl.system.MemoryUtil;
 
 import static org.lwjgl.util.shaderc.Shaderc.*;
@@ -18,10 +20,17 @@ public class ShaderCompiler {
         if(shaderc_result_get_compilation_status(result) != shaderc_compilation_status_success){
 
             String shaderType = getShaderType(kind);
+            String errorMessage = shaderc_result_get_error_message(result);
 
 
 
-            throw new RuntimeException(shaderType + ": " + shaderc_result_get_error_message(result));
+
+
+            throw new RuntimeException(
+                    Logger.error(
+                            ShaderCompiler.class,
+                            "Shaderc failed to compile " + shaderType + " because " + errorMessage
+                    ));
         }
 
         shaderc_compiler_release(compiler);

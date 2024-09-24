@@ -1,5 +1,7 @@
 package lake.graphics.vulkan;
 
+import jdk.jfr.FlightRecorder;
+import lake.Logger;
 import lake.graphics.*;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
@@ -41,7 +43,13 @@ public class VkShaderProgram extends ShaderProgram {
             LongBuffer pShaderModule = stack.mallocLong(1);
 
             if(vkCreateShaderModule(device, createInfo, null, pShaderModule) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create shader module");
+
+                throw new RuntimeException(
+                        Logger.error(
+                                VkShaderProgram.class,
+                                "Failed to create shader module"
+                        ));
+
             }
 
             return pShaderModule.get(0);

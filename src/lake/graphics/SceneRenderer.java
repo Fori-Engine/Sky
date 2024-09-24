@@ -1,6 +1,6 @@
 package lake.graphics;
 
-import lake.FlightRecorder;
+import lake.Logger;
 import lake.graphics.vulkan.VkRenderContext;
 import lake.graphics.vulkan.VkSceneRenderer;
 import org.lwjgl.vulkan.VkInstance;
@@ -44,10 +44,10 @@ public abstract class SceneRenderer implements Disposable {
             return vulkanRenderer2D;
         }
         else if(settings.backend == null){
-            FlightRecorder.meltdown(SceneRenderer.class, "The target graphics API was not specified in RenderSettings!");
+            Logger.meltdown(SceneRenderer.class, "The target graphics API was not specified in RenderSettings!");
         }
         else {
-            FlightRecorder.meltdown(SceneRenderer.class, "User requested renderer backend " + settings.backend + " but no backend could be initialized!");
+            Logger.meltdown(SceneRenderer.class, "User requested renderer backend " + settings.backend + " but no backend could be initialized!");
         }
 
 

@@ -1,6 +1,6 @@
 package lake.graphics.vulkan;
 
-import lake.FlightRecorder;
+import lake.Logger;
 import lake.graphics.RenderContext;
 import lake.graphics.PlatformWindow;
 import lake.graphics.RendererSettings;
@@ -147,7 +147,7 @@ public class VkRenderContext extends RenderContext {
                 debugCreateInfo.pfnUserCallback((messageSeverity, messageTypes, pCallbackData, pUserData) -> {
 
                     VkDebugUtilsMessengerCallbackDataEXT callbackData = VkDebugUtilsMessengerCallbackDataEXT.create(pCallbackData);
-                    FlightRecorder.info(VkSceneRenderer.class, callbackData.pMessageString());
+                    Logger.info(VkSceneRenderer.class, callbackData.pMessageString());
 
 
                     return VK_FALSE;

@@ -1,6 +1,6 @@
 package lake.audio;
 
-import lake.FlightRecorder;
+import lake.Logger;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.openal.*;
 import lake.graphics.Disposable;
@@ -64,7 +64,7 @@ public class AudioEngine implements Disposable {
 
             AL.createCapabilities(deviceCapabilities);
 
-            FlightRecorder.info(AudioEngine.class, alcGetString(NULL, ALC_DEFAULT_ALL_DEVICES_SPECIFIER));
+            Logger.info(AudioEngine.class, alcGetString(NULL, ALC_DEFAULT_ALL_DEVICES_SPECIFIER));
 
 
             {

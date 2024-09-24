@@ -1,11 +1,10 @@
 package lake.graphics.vulkan;
 
-import lake.FlightRecorder;
+import lake.Logger;
 import lake.asset.AssetPacks;
 import lake.graphics.*;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import org.joml.Vector4f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
@@ -84,7 +83,7 @@ public class VkSceneRenderer extends SceneRenderer {
 
         physicalDevice = selectPhysicalDevice(instance, surface);
         physicalDeviceProperties = getPhysicalDeviceProperties(physicalDevice);
-        FlightRecorder.info(VkSceneRenderer.class, "Selected Physical Device " + physicalDeviceProperties.deviceNameString());
+        Logger.info(VkSceneRenderer.class, "Selected Physical Device " + physicalDeviceProperties.deviceNameString());
 
         device = createDevice(physicalDevice, rendererSettings.validation);
         graphicsQueue = getGraphicsQueue(device);
@@ -92,7 +91,7 @@ public class VkSceneRenderer extends SceneRenderer {
         swapchain = createSwapChain(device, surface, width, height, rendererSettings.vsync);
         swapchainImageViews = createSwapchainImageViews(device, swapchain);
 
-        FlightRecorder.info(VkSceneRenderer.class, "Max Allowed Allocations: " + physicalDeviceProperties.limits().maxMemoryAllocationCount());
+        Logger.info(VkSceneRenderer.class, "Max Allowed Allocations: " + physicalDeviceProperties.limits().maxMemoryAllocationCount());
 
 
         renderPass = createRenderPass(device, swapchain);
@@ -381,7 +380,7 @@ public class VkSceneRenderer extends SceneRenderer {
             Matrix4f transform0 = new Matrix4f().rotate((float) Math.toRadians(30.0f), 0.0f, 1.0f, 0.0f);
             transform0.get(0, shaderStorageBufferData);
 
-            Matrix4f transform1 = new Matrix4f().rotate((float) Math.toRadians(50.0f), 1.0f, 1.0f, 0.0f);
+            Matrix4f transform1 = new Matrix4f().rotate((float) Math.toRadians(90.0f), 0.0f, 0.0f, 1.0f);
             transform1.get(matrixSizeBytes, shaderStorageBufferData);
 
 
@@ -691,7 +690,7 @@ public class VkSceneRenderer extends SceneRenderer {
         }
 
 
-        FlightRecorder.info(VkSceneRenderer.class, "Unable to find sRGB VkSurfaceFormatKHR, using default. Colors may look incorrect.");
+        Logger.info(VkSceneRenderer.class, "Unable to find sRGB VkSurfaceFormatKHR, using default. Colors may look incorrect.");
 
         return availableFormats.get(0);
 
