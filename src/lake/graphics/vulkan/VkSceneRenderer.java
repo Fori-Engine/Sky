@@ -74,6 +74,16 @@ public class VkSceneRenderer extends SceneRenderer {
 
 
 
+
+
+    private VkImage depthBuffer;
+    private VkImageView depthBufferImageView;
+    private long vmaAllocator;
+
+
+
+
+
     public VkSceneRenderer(VkInstance instance, long surface, int width, int height, RendererSettings rendererSettings, long debugMessenger) {
         this(width, height, rendererSettings);
         this.instance = instance;
@@ -93,9 +103,6 @@ public class VkSceneRenderer extends SceneRenderer {
 
         Logger.info(VkSceneRenderer.class, "Max Allowed Allocations: " + physicalDeviceProperties.limits().maxMemoryAllocationCount());
 
-
-        renderPass = createRenderPass(device, swapchain);
-        swapchainFramebuffers = createSwapchainFramebuffers(device, swapchain, swapchainImageViews, renderPass);
 
         //Sync Objects
         for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
@@ -172,10 +179,12 @@ public class VkSceneRenderer extends SceneRenderer {
         PointerBuffer pAllocator = MemoryUtil.memAllocPointer(1);
         vmaCreateAllocator(allocatorCreateInfo, pAllocator);
 
+        vmaAllocator = pAllocator.get(0);
+
 
 
         vertexBuffer = new VkBuffer(
-                pAllocator.get(0),
+                vmaAllocator,
                 2 * 4 * 4 * Float.BYTES,
                 VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                 VMA_MEMORY_USAGE_CPU_TO_GPU
@@ -231,7 +240,7 @@ public class VkSceneRenderer extends SceneRenderer {
         }
 
         indexBuffer = new VkBuffer(
-                pAllocator.get(0),
+                vmaAllocator,
                 Integer.BYTES * 6 * 2,
                 VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
                 VMA_MEMORY_USAGE_CPU_TO_GPU
@@ -341,7 +350,7 @@ public class VkSceneRenderer extends SceneRenderer {
         int matrixSizeBytes = 4 * 4 * Float.BYTES;
 
         uniformBuffer = new VkBuffer(
-                pAllocator.get(0),
+                vmaAllocator,
                 matrixSizeBytes * 2,
                 VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                 VMA_MEMORY_USAGE_CPU_TO_GPU
@@ -367,7 +376,7 @@ public class VkSceneRenderer extends SceneRenderer {
         }
 
         shaderStorageBuffer = new VkBuffer(
-                pAllocator.get(0),
+                vmaAllocator,
                 matrixSizeBytes * 10,
                 VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
                 VMA_MEMORY_USAGE_CPU_TO_GPU
@@ -428,12 +437,7 @@ public class VkSceneRenderer extends SceneRenderer {
 
         vkUpdateDescriptorSets(device, writeDescriptorSet, null);
 
-
-
-        pipeline = createPipeline(device, swapchain, ((VkShaderProgram) shaderProgram).getShaderStages(), renderPass);
         sharedCommandPool = createCommandPool(device, physicalDeviceQueueFamilies.graphicsFamily);
-
-
         for(int i = 0; i < FRAMES_IN_FLIGHT; i++) {
             VkFrame frame = frames[i];
 
@@ -459,6 +463,34 @@ public class VkSceneRenderer extends SceneRenderer {
 
 
         }
+
+
+        depthBuffer = new VkImage(
+                vmaAllocator,
+                device,
+                swapchain.swapChainExtent.width(),
+                swapchain.swapChainExtent.height(),
+                VK_FORMAT_D32_SFLOAT ,
+                VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                VK_IMAGE_TILING_OPTIMAL
+        );
+
+        depthBufferImageView = new VkImageView(device, depthBuffer, VK_IMAGE_ASPECT_DEPTH_BIT);
+
+
+
+
+
+
+
+        renderPass = createRenderPass(device, swapchain, depthBuffer);
+        swapchainFramebuffers = createSwapchainFramebuffers(device, swapchain, swapchainImageViews, renderPass, depthBufferImageView);
+
+        pipeline = createPipeline(device, swapchain, ((VkShaderProgram) shaderProgram).getShaderStages(), renderPass);
+
+
+
+
 
 
 
@@ -853,13 +885,13 @@ public class VkSceneRenderer extends SceneRenderer {
 
         return swapChainImageViews;
     }
-    private ArrayList<Long> createSwapchainFramebuffers(VkDevice device, VkSwapchain swapchain, List<Long> swapChainImageViews, long renderPass) {
+    private ArrayList<Long> createSwapchainFramebuffers(VkDevice device, VkSwapchain swapchain, List<Long> swapChainImageViews, long renderPass, VkImageView depthBufferImageView) {
 
         ArrayList<Long> swapChainFramebuffers = new ArrayList<>(swapChainImageViews.size());
 
         try(MemoryStack stack = stackPush()) {
 
-            LongBuffer attachments = stack.mallocLong(1);
+            LongBuffer attachments = stack.mallocLong(2);
             LongBuffer pFramebuffer = stack.mallocLong(1);
 
             VkFramebufferCreateInfo framebufferInfo = VkFramebufferCreateInfo.calloc(stack);
@@ -872,6 +904,7 @@ public class VkSceneRenderer extends SceneRenderer {
             for(long imageView : swapChainImageViews) {
 
                 attachments.put(0, imageView);
+                attachments.put(1, depthBufferImageView.getHandle());
 
                 framebufferInfo.pAttachments(attachments);
 
@@ -885,11 +918,16 @@ public class VkSceneRenderer extends SceneRenderer {
 
         return swapChainFramebuffers;
     }
-    private long createRenderPass(VkDevice device, VkSwapchain swapchain) {
+    private long createRenderPass(VkDevice device, VkSwapchain swapchain, VkImage depthBuffer) {
 
         try(MemoryStack stack = stackPush()) {
 
-            VkAttachmentDescription.Buffer colorAttachment = VkAttachmentDescription.calloc(1, stack);
+
+            VkAttachmentDescription.Buffer attachments = VkAttachmentDescription.calloc(2, stack);
+
+
+
+            VkAttachmentDescription colorAttachment = attachments.get(0);
             colorAttachment.format(swapchain.swapChainImageFormat);
             colorAttachment.samples(VK_SAMPLE_COUNT_1_BIT);
             colorAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR);
@@ -899,26 +937,46 @@ public class VkSceneRenderer extends SceneRenderer {
             colorAttachment.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
             colorAttachment.finalLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
+            VkAttachmentDescription depthAttachment = attachments.get(1);
+            depthAttachment.format(depthBuffer.getFormat());
+            depthAttachment.samples(VK_SAMPLE_COUNT_1_BIT);
+            depthAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR);
+            depthAttachment.storeOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
+            depthAttachment.stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
+            depthAttachment.stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
+            depthAttachment.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
+            depthAttachment.finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+
+
+
             VkAttachmentReference.Buffer colorAttachmentRef = VkAttachmentReference.calloc(1, stack);
             colorAttachmentRef.attachment(0);
             colorAttachmentRef.layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+            VkAttachmentReference depthAttachmentRef = VkAttachmentReference.calloc(stack);
+            depthAttachmentRef.attachment(1);
+            depthAttachmentRef.layout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+
+
+
 
             VkSubpassDescription.Buffer subpass = VkSubpassDescription.calloc(1, stack);
             subpass.pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS);
             subpass.colorAttachmentCount(1);
             subpass.pColorAttachments(colorAttachmentRef);
+            subpass.pDepthStencilAttachment(depthAttachmentRef);
 
             VkSubpassDependency.Buffer dependency = VkSubpassDependency.calloc(1, stack);
             dependency.srcSubpass(VK_SUBPASS_EXTERNAL);
             dependency.dstSubpass(0);
-            dependency.srcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+            dependency.srcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT);
             dependency.srcAccessMask(0);
-            dependency.dstStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-            dependency.dstAccessMask(VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+            dependency.dstStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT);
+            dependency.dstAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
 
             VkRenderPassCreateInfo renderPassInfo = VkRenderPassCreateInfo.calloc(stack);
             renderPassInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO);
-            renderPassInfo.pAttachments(colorAttachment);
+            renderPassInfo.pAttachments(attachments);
             renderPassInfo.pSubpasses(subpass);
             renderPassInfo.pDependencies(dependency);
 
@@ -1015,8 +1073,8 @@ public class VkSceneRenderer extends SceneRenderer {
                 rasterizer.depthClampEnable(false);
                 rasterizer.rasterizerDiscardEnable(false);
 
+                rasterizer.lineWidth(1);
                 rasterizer.polygonMode(VK_POLYGON_MODE_FILL);
-                rasterizer.lineWidth(3.0f);
                 rasterizer.cullMode(VK_CULL_MODE_BACK_BIT);
                 rasterizer.frontFace(VK_FRONT_FACE_COUNTER_CLOCKWISE);
                 rasterizer.depthBiasEnable(false);
@@ -1043,6 +1101,19 @@ public class VkSceneRenderer extends SceneRenderer {
                 colorBlending.logicOp(VK_LOGIC_OP_COPY);
                 colorBlending.pAttachments(colorBlendAttachment);
                 colorBlending.blendConstants(stack.floats(0.0f, 0.0f, 0.0f, 0.0f));
+            }
+
+            VkPipelineDepthStencilStateCreateInfo depthStencil = VkPipelineDepthStencilStateCreateInfo.calloc(stack);
+            {
+                depthStencil.sType(VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO);
+                depthStencil.depthTestEnable(true);
+                depthStencil.depthWriteEnable(true);
+                depthStencil.depthCompareOp(VK_COMPARE_OP_LESS);
+
+
+                depthStencil.stencilTestEnable(false);
+
+
             }
 
 
@@ -1073,6 +1144,7 @@ public class VkSceneRenderer extends SceneRenderer {
                 pipelineInfo.pRasterizationState(rasterizer);
                 pipelineInfo.pMultisampleState(multisampling);
                 pipelineInfo.pColorBlendState(colorBlending);
+                pipelineInfo.pDepthStencilState(depthStencil);
                 pipelineInfo.layout(pipelineLayout);
                 pipelineInfo.renderPass(renderPass);
                 pipelineInfo.subpass(0);
@@ -1120,15 +1192,26 @@ public class VkSceneRenderer extends SceneRenderer {
 
 
 
-
     private void recreateDisplay(){
 
         disposeDisplay();
         swapchain = createSwapChain(device, surface, width, height, settings.vsync);
         swapchainImageViews = createSwapchainImageViews(device, swapchain);
 
-        renderPass = createRenderPass(device, swapchain);
-        swapchainFramebuffers = createSwapchainFramebuffers(device, swapchain, swapchainImageViews, renderPass);
+        depthBuffer = new VkImage(
+                vmaAllocator,
+                device,
+                swapchain.swapChainExtent.width(),
+                swapchain.swapChainExtent.height(),
+                VK_FORMAT_D32_SFLOAT ,
+                VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                VK_IMAGE_TILING_OPTIMAL
+        );
+
+        depthBufferImageView = new VkImageView(device, depthBuffer, VK_IMAGE_ASPECT_DEPTH_BIT);
+
+        renderPass = createRenderPass(device, swapchain, depthBuffer);
+        swapchainFramebuffers = createSwapchainFramebuffers(device, swapchain, swapchainImageViews, renderPass, depthBufferImageView);
 
         pipeline = createPipeline(device, swapchain, ((VkShaderProgram) shaderProgram).getShaderStages(), renderPass);
         frameIndex = 0;
@@ -1140,6 +1223,8 @@ public class VkSceneRenderer extends SceneRenderer {
         vkDeviceWaitIdle(device);
         vkDestroyPipeline(device, pipeline.pipeline, null);
 
+        vkDestroyImage(device, depthBuffer.getHandle(), null);
+        vkDestroyImageView(device, depthBufferImageView.getHandle(), null);
 
         for(long swapchainFramebuffer : swapchainFramebuffers){
             vkDestroyFramebuffer(device, swapchainFramebuffer, null);
@@ -1216,8 +1301,10 @@ public class VkSceneRenderer extends SceneRenderer {
                 renderArea.extent(swapchain.swapChainExtent);
                 renderPassInfo.renderArea(renderArea);
 
-                VkClearValue.Buffer clearValues = VkClearValue.calloc(1, stack);
-                clearValues.color().float32(stack.floats(0.0f, 0.0f, 0.0f, 1.0f));
+                VkClearValue.Buffer clearValues = VkClearValue.calloc(2, stack);
+                clearValues.get(0).color().float32(stack.floats(0.0f, 0.0f, 0.0f, 1.0f));
+                clearValues.get(1).depthStencil().set(1.0f, 0);
+
                 renderPassInfo.pClearValues(clearValues);
 
                 VkCommandBuffer commandBuffer = frame.renderCommandBuffer;

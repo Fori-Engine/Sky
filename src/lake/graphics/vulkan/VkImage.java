@@ -54,14 +54,17 @@ public class VkImage implements Disposable {
 
         allocationCreateInfo = VmaAllocationCreateInfo.create();
         allocationCreateInfo.usage(usage);
-        allocationCreateInfo.requiredFlags(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
 
         pImage = MemoryUtil.memAllocLong(1);
         pAllocation = MemoryUtil.memAllocPointer(1);
 
+        /*
         if(vkCreateImage(device, imageCreateInfo, null, pImage) != VK_SUCCESS){
             throw new RuntimeException("Failed to create image");
         }
+
+         */
 
         allocationInfo = VmaAllocationInfo.create();
         vmaCreateImage(allocator, imageCreateInfo, allocationCreateInfo, pImage, pAllocation, allocationInfo);
