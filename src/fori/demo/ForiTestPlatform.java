@@ -11,7 +11,7 @@ import java.io.File;
 public class ForiTestPlatform {
 
     public static void main(String[] args) {
-        AssetPacks.open("core", AssetPack.openPack(new File("assets.pkg")));
+        AssetPacks.open("core", AssetPack.openLocal(new File("assets")));
 
         Logger.setConsoleTarget(System.out);
 

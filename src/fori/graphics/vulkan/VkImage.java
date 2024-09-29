@@ -29,11 +29,14 @@ public class VkImage implements Disposable {
     private VmaAllocationCreateInfo allocationCreateInfo;
     private VkDevice device;
     private int format;
+    private VkGlobalAllocator allocator;
 
-    public VkImage(long allocator, VkDevice device, int width, int height, int format, int usage, int tiling){
+    public VkImage(VkGlobalAllocator allocator, VkDevice device, int width, int height, int format, int usage, int tiling){
         Disposer.add("managedResources", this);
         this.device = device;
         this.format = format;
+        this.allocator = allocator;
+
 
         extent = VkExtent3D.create().set(width, height, 1);
 
@@ -67,7 +70,7 @@ public class VkImage implements Disposable {
          */
 
         allocationInfo = VmaAllocationInfo.create();
-        vmaCreateImage(allocator, imageCreateInfo, allocationCreateInfo, pImage, pAllocation, allocationInfo);
+        vmaCreateImage(allocator.getId(), imageCreateInfo, allocationCreateInfo, pImage, pAllocation, allocationInfo);
 
         memory = allocationInfo.deviceMemory();
 

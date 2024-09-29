@@ -56,28 +56,10 @@ public class VkShaderProgram extends ShaderProgram {
     }
 
 
-    @Override
-    public ByteBuffer[] mapUniformBuffer(ShaderResource resource) {
-        return new ByteBuffer[0];
-    }
+
 
     @Override
-    public void unmapUniformBuffer(ShaderResource resource, ByteBuffer[] byteBuffers) {
-
-    }
-
-    @Override
-    public void updateEntireSampler2DArrayWithOnly(ShaderResource resource, Texture2D texture) {
-
-    }
-
-    @Override
-    public void updateSampler2DArray(ShaderResource resource, int index, Texture2D texture2D) {
-
-    }
-
-    @Override
-    public void prepare() {
+    public void bind(ShaderResSet... resourceSets) {
         try(MemoryStack stack = MemoryStack.stackPush()){
             ByteBuffer entryPoint = MemoryUtil.memUTF8("main");
             vertexShaderBinary = ShaderCompiler.compile(vertexShaderSource, shaderc_glsl_vertex_shader);

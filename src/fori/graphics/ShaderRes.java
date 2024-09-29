@@ -1,10 +1,16 @@
 package fori.graphics;
 
-public class ShaderResource {
-    public int binding;
+public class ShaderRes {
 
+    public String friendlyName;
+    public int binding;
     public int sizeBytes;
+
+
+
+
     public enum Type {
+        ShaderStorageBuffer,
         UniformBuffer,
         CombinedSampler
     }
@@ -18,27 +24,28 @@ public class ShaderResource {
     public ShaderStage shaderStage;
     public int count;
 
-
-    public ShaderResource(int binding) {
+    public ShaderRes(String friendlyName, int binding, Type type) {
+        this.friendlyName = friendlyName;
         this.binding = binding;
+        this.type = type;
     }
 
-    public ShaderResource type(Type type){
+    public ShaderRes type(Type type){
         this.type = type;
         return this;
     }
 
-    public ShaderResource shaderStage(ShaderStage shaderStage){
+    public ShaderRes shaderStage(ShaderStage shaderStage){
         this.shaderStage = shaderStage;
         return this;
     }
 
-    public ShaderResource count(int count){
+    public ShaderRes count(int count){
         this.count = count;
         return this;
     }
 
-    public ShaderResource sizeBytes(int sizeBytes){
+    public ShaderRes sizeBytes(int sizeBytes){
         this.sizeBytes = sizeBytes;
         return this;
     }

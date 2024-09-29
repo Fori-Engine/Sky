@@ -23,15 +23,14 @@ public class VkBuffer implements Disposable {
     private VmaAllocationInfo allocationInfo;
     private VmaAllocationCreateInfo allocationCreateInfo;
     private long memory;
-    private long vmaAllocator;
     private PointerBuffer mappedMemory;
     private boolean mapped;
+    private VkGlobalAllocator allocator;
 
-    public VkBuffer(long vmaAllocator, int sizeBytes, int bufferUsage, int memoryUsage) {
+    public VkBuffer(VkGlobalAllocator allocator, int sizeBytes, int bufferUsage, int memoryUsage) {
         Disposer.add("managedResources", this);
         this.sizeBytes = sizeBytes;
-
-        this.vmaAllocator = vmaAllocator;
+        this.allocator = allocator;
 
 
         VkBufferCreateInfo bufferCreateInfo = VkBufferCreateInfo.create();
@@ -50,7 +49,7 @@ public class VkBuffer implements Disposable {
 
         allocationInfo = VmaAllocationInfo.create();
 
-        vmaCreateBuffer(vmaAllocator, bufferCreateInfo, allocationCreateInfo, pBuffer, pAllocation, allocationInfo);
+        vmaCreateBuffer(allocator.getId(), bufferCreateInfo, allocationCreateInfo, pBuffer, pAllocation, allocationInfo);
         memory = allocationInfo.deviceMemory();
 
         handle = pBuffer.get();
@@ -62,7 +61,7 @@ public class VkBuffer implements Disposable {
         mapped = true;
 
         mappedMemory = MemoryUtil.memAllocPointer(1);
-        vmaMapMemory(vmaAllocator, pAllocation.get(0), mappedMemory);
+        vmaMapMemory(allocator.getId(), pAllocation.get(0), mappedMemory);
         return mappedMemory.getByteBuffer(sizeBytes);
     }
 
@@ -73,7 +72,7 @@ public class VkBuffer implements Disposable {
     public void unmap(){
         mapped = false;
 
-        vmaUnmapMemory(vmaAllocator, pAllocation.get(0));
+        vmaUnmapMemory(allocator.getId(), pAllocation.get(0));
         MemoryUtil.memFree(mappedMemory);
     }
 

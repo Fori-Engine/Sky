@@ -8,8 +8,6 @@ import org.joml.Vector3f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
-import org.lwjgl.util.vma.VmaAllocatorCreateInfo;
-import org.lwjgl.util.vma.VmaVulkanFunctions;
 import org.lwjgl.vulkan.*;
 
 import java.nio.ByteBuffer;
@@ -31,9 +29,8 @@ import static org.lwjgl.vulkan.KHRSurface.*;
 import static org.lwjgl.vulkan.KHRSurface.vkGetPhysicalDeviceSurfacePresentModesKHR;
 import static org.lwjgl.vulkan.KHRSwapchain.*;
 import static org.lwjgl.vulkan.KHRSwapchain.vkGetSwapchainImagesKHR;
-import static org.lwjgl.vulkan.VK10.vkGetInstanceProcAddr;
 import static org.lwjgl.vulkan.VK13.*;
-
+import static fori.graphics.ShaderRes.Type.*;
 
 public class VkSceneRenderer extends SceneRenderer {
 
@@ -42,7 +39,7 @@ public class VkSceneRenderer extends SceneRenderer {
         validationLayers.add("VK_LAYER_KHRONOS_validation");
     }
 
-    private static int FRAMES_IN_FLIGHT = 2;
+    public static final int FRAMES_IN_FLIGHT = 2;
 
     private static final int UINT64_MAX = 0xFFFFFFFF;
     private long debugMessenger;
@@ -78,7 +75,7 @@ public class VkSceneRenderer extends SceneRenderer {
 
     private VkImage depthBuffer;
     private VkImageView depthBufferImageView;
-    private long vmaAllocator;
+    private VkGlobalAllocator allocator;
 
 
 
@@ -137,8 +134,17 @@ public class VkSceneRenderer extends SceneRenderer {
         ShaderReader.ShaderSources shaderSources = ShaderReader.readCombinedVertexFragmentSources(
                 AssetPacks.<String> getAsset("core:assets/shaders/vulkan/Default.glsl").asset
         );
+
+        int matrixSizeBytes = 4 * 4 * Float.BYTES;
+
         shaderProgram = ShaderProgram.newShaderProgram(this, shaderSources.vertexShader, shaderSources.fragmentShader);
-        shaderProgram.prepare();
+        shaderProgram.bind(
+                new ShaderResSet(
+                        0,
+                        new ShaderRes("Camera", 0, UniformBuffer).sizeBytes(2 * matrixSizeBytes),
+                        new ShaderRes("Transforms", 1, ShaderStorageBuffer).sizeBytes(10 * matrixSizeBytes)
+                )
+        );
 
 
         //Allocate and submit renderSettings.batchSize-number indices in a staging index buffer
@@ -160,31 +166,13 @@ public class VkSceneRenderer extends SceneRenderer {
         //End Frame
 
 
-        VmaVulkanFunctions vulkanFunctions = VmaVulkanFunctions.create();
-        vulkanFunctions.set(instance, device);
-
-
-
-
-
-        VmaAllocatorCreateInfo allocatorCreateInfo = VmaAllocatorCreateInfo.create();
-        allocatorCreateInfo.vulkanApiVersion(VK_API_VERSION_1_3);
-        allocatorCreateInfo.instance(instance);
-        allocatorCreateInfo.physicalDevice(physicalDevice);
-        allocatorCreateInfo.device(device);
-        allocatorCreateInfo.flags(VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT);
-        allocatorCreateInfo.pVulkanFunctions(vulkanFunctions);
-
-
-        PointerBuffer pAllocator = MemoryUtil.memAllocPointer(1);
-        vmaCreateAllocator(allocatorCreateInfo, pAllocator);
-
-        vmaAllocator = pAllocator.get(0);
+        VkGlobalAllocator.init(instance, device, physicalDevice);
+        allocator = VkGlobalAllocator.getAllocator();
 
 
 
         vertexBuffer = new VkBuffer(
-                vmaAllocator,
+                allocator,
                 2 * 4 * 4 * Float.BYTES,
                 VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                 VMA_MEMORY_USAGE_CPU_TO_GPU
@@ -240,7 +228,7 @@ public class VkSceneRenderer extends SceneRenderer {
         }
 
         indexBuffer = new VkBuffer(
-                vmaAllocator,
+                allocator,
                 Integer.BYTES * 6 * 2,
                 VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
                 VMA_MEMORY_USAGE_CPU_TO_GPU
@@ -347,10 +335,10 @@ public class VkSceneRenderer extends SceneRenderer {
         }
         descriptorSet = pDescriptorSet.get(0);
 
-        int matrixSizeBytes = 4 * 4 * Float.BYTES;
+
 
         uniformBuffer = new VkBuffer(
-                vmaAllocator,
+                allocator,
                 matrixSizeBytes * 2,
                 VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                 VMA_MEMORY_USAGE_CPU_TO_GPU
@@ -376,7 +364,7 @@ public class VkSceneRenderer extends SceneRenderer {
         }
 
         shaderStorageBuffer = new VkBuffer(
-                vmaAllocator,
+                allocator,
                 matrixSizeBytes * 10,
                 VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
                 VMA_MEMORY_USAGE_CPU_TO_GPU
@@ -466,7 +454,7 @@ public class VkSceneRenderer extends SceneRenderer {
 
 
         depthBuffer = new VkImage(
-                vmaAllocator,
+                allocator,
                 device,
                 swapchain.swapChainExtent.width(),
                 swapchain.swapChainExtent.height(),
@@ -1199,7 +1187,7 @@ public class VkSceneRenderer extends SceneRenderer {
         swapchainImageViews = createSwapchainImageViews(device, swapchain);
 
         depthBuffer = new VkImage(
-                vmaAllocator,
+                allocator,
                 device,
                 swapchain.swapChainExtent.width(),
                 swapchain.swapChainExtent.height(),
