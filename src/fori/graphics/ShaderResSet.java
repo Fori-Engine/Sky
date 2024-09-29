@@ -12,4 +12,7 @@ public class ShaderResSet {
         this.shaderResources.addAll(Arrays.asList(shaderResources));
     }
 
+    public ArrayList<ShaderRes> getShaderResources() {
+        return shaderResources;
+    }
 }

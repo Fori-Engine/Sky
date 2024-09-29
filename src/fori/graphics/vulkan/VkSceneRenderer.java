@@ -7,7 +7,6 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
 
 import java.nio.ByteBuffer;
@@ -31,6 +30,8 @@ import static org.lwjgl.vulkan.KHRSwapchain.*;
 import static org.lwjgl.vulkan.KHRSwapchain.vkGetSwapchainImagesKHR;
 import static org.lwjgl.vulkan.VK13.*;
 import static fori.graphics.ShaderRes.Type.*;
+import static fori.graphics.ShaderRes.ShaderStage.*;
+
 
 public class VkSceneRenderer extends SceneRenderer {
 
@@ -64,13 +65,7 @@ public class VkSceneRenderer extends SceneRenderer {
     private long sharedCommandPool;
     private boolean resized = false;
     private ShaderProgram shaderProgram;
-    private VkBuffer vertexBuffer, indexBuffer, uniformBuffer, shaderStorageBuffer;
-
-    private long descriptorSet;
-    private long descriptorSetLayout;
-
-
-
+    private VkBuffer vertexBuffer, indexBuffer, cameraBuffer, transformsBuffer;
 
 
     private VkImage depthBuffer;
@@ -141,8 +136,28 @@ public class VkSceneRenderer extends SceneRenderer {
         shaderProgram.bind(
                 new ShaderResSet(
                         0,
-                        new ShaderRes("Camera", 0, UniformBuffer).sizeBytes(2 * matrixSizeBytes),
-                        new ShaderRes("Transforms", 1, ShaderStorageBuffer).sizeBytes(10 * matrixSizeBytes)
+                        new ShaderRes(
+                                "Camera",
+                                0,
+                                UniformBuffer,
+                                VertexStage
+                        ).sizeBytes(2 * matrixSizeBytes),
+                        new ShaderRes(
+                                "Transforms",
+                                1,
+                                ShaderStorageBuffer,
+                                VertexStage
+                        ).sizeBytes(10 * matrixSizeBytes)
+                ),
+
+                new ShaderResSet(
+                        1,
+                        new ShaderRes(
+                                "Color",
+                                2,
+                                UniformBuffer,
+                                FragmentStage
+                        ).sizeBytes(4 * Float.BYTES)
                 )
         );
 
@@ -257,113 +272,34 @@ public class VkSceneRenderer extends SceneRenderer {
 
 
 
-        VkDescriptorPoolSize.Buffer descriptorPoolSizes = VkDescriptorPoolSize.create(2);
 
-        //Uniform Buffer
-        {
-            VkDescriptorPoolSize descriptorPoolSize0 = descriptorPoolSizes.get(0);
-            descriptorPoolSize0.type(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-            descriptorPoolSize0.descriptorCount(1);
-        }
-
-        //Shader Storage Buffer
-        {
-            VkDescriptorPoolSize descriptorPoolSize1 = descriptorPoolSizes.get(1);
-            descriptorPoolSize1.type(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
-            descriptorPoolSize1.descriptorCount(1);
-        }
-
-
-
-
-        VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = VkDescriptorPoolCreateInfo.create();
-        descriptorPoolCreateInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO);
-        descriptorPoolCreateInfo.pPoolSizes(descriptorPoolSizes);
-        descriptorPoolCreateInfo.maxSets(1);
-
-
-        LongBuffer pDescriptorPool = MemoryUtil.memAllocLong(1);
-
-        if(vkCreateDescriptorPool(device, descriptorPoolCreateInfo, null, pDescriptorPool) != VK_SUCCESS){
-            throw new RuntimeException("Failed to create descriptor pool");
-        }
-
-        VkDescriptorSetLayoutBinding.Buffer descriptorSetLayoutBindings = VkDescriptorSetLayoutBinding.create(2);
-
-        //Uniform Buffer
-        {
-            VkDescriptorSetLayoutBinding descriptorSetLayoutBinding0 = descriptorSetLayoutBindings.get(0);
-
-            descriptorSetLayoutBinding0.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-            descriptorSetLayoutBinding0.stageFlags(VK_SHADER_STAGE_VERTEX_BIT);
-            descriptorSetLayoutBinding0.binding(0);
-            descriptorSetLayoutBinding0.descriptorCount(1);
-        }
-
-        //Shader Storage Buffer
-        {
-            VkDescriptorSetLayoutBinding descriptorSetLayoutBinding1 = descriptorSetLayoutBindings.get(1);
-
-            descriptorSetLayoutBinding1.descriptorType(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
-            descriptorSetLayoutBinding1.stageFlags(VK_SHADER_STAGE_VERTEX_BIT);
-            descriptorSetLayoutBinding1.binding(1);
-            descriptorSetLayoutBinding1.descriptorCount(1);
-        }
-
-        LongBuffer pDescriptorSetLayout = MemoryUtil.memAllocLong(1);
-
-        VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = VkDescriptorSetLayoutCreateInfo.create();
-        descriptorSetLayoutCreateInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO);
-        descriptorSetLayoutCreateInfo.pBindings(descriptorSetLayoutBindings);
-
-
-        if(vkCreateDescriptorSetLayout(device, descriptorSetLayoutCreateInfo, null, pDescriptorSetLayout) != VK_SUCCESS){
-            throw new RuntimeException("Failed to create descriptor set layout");
-        }
-
-        descriptorSetLayout = pDescriptorSetLayout.get(0);
-
-
-        VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = VkDescriptorSetAllocateInfo.create();
-        descriptorSetAllocateInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO);
-        descriptorSetAllocateInfo.descriptorPool(pDescriptorPool.get(0));
-        descriptorSetAllocateInfo.pSetLayouts(pDescriptorSetLayout);
-
-        LongBuffer pDescriptorSet = MemoryUtil.memAllocLong(1);
-        if(vkAllocateDescriptorSets(device, descriptorSetAllocateInfo, pDescriptorSet) != VK_SUCCESS){
-            throw new RuntimeException("Failed to allocate descriptor set");
-        }
-        descriptorSet = pDescriptorSet.get(0);
-
-
-
-        uniformBuffer = new VkBuffer(
+        cameraBuffer = new VkBuffer(
                 allocator,
                 matrixSizeBytes * 2,
                 VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                 VMA_MEMORY_USAGE_CPU_TO_GPU
         );
 
-        ByteBuffer uniformBufferData = uniformBuffer.map();
+        ByteBuffer cameraBufferData = cameraBuffer.map();
         VkDescriptorBufferInfo.Buffer uniformBufferInfo = VkDescriptorBufferInfo.create(1);
         {
 
 
             Matrix4f view = new Matrix4f().lookAt(new Vector3f(1.0f, 2.0f, 3.0f), new Vector3f(0, 0, 0), new Vector3f(0.0f, 0.0f, 1.0f));
-            view.get(0, uniformBufferData);
+            view.get(0, cameraBufferData);
 
             Matrix4f proj = new Matrix4f().perspective((float) Math.toRadians(45.0f), (float) width / height, 0.01f, 100.0f, true);
             proj.m11(proj.m11() * -1);
-            proj.get(matrixSizeBytes, uniformBufferData);
+            proj.get(matrixSizeBytes, cameraBufferData);
 
 
 
-            uniformBufferInfo.buffer(uniformBuffer.getHandle());
+            uniformBufferInfo.buffer(cameraBuffer.getHandle());
             uniformBufferInfo.offset(0);
-            uniformBufferInfo.range(uniformBuffer.getSizeBytes());
+            uniformBufferInfo.range(cameraBuffer.getSizeBytes());
         }
 
-        shaderStorageBuffer = new VkBuffer(
+        transformsBuffer = new VkBuffer(
                 allocator,
                 matrixSizeBytes * 10,
                 VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
@@ -371,59 +307,97 @@ public class VkSceneRenderer extends SceneRenderer {
         );
 
 
-        ByteBuffer shaderStorageBufferData = shaderStorageBuffer.map();
+        ByteBuffer transformsBufferData = transformsBuffer.map();
         VkDescriptorBufferInfo.Buffer shaderStorageBufferInfo = VkDescriptorBufferInfo.create(1);
         {
             Matrix4f transform0 = new Matrix4f().rotate((float) Math.toRadians(30.0f), 0.0f, 1.0f, 0.0f);
-            transform0.get(0, shaderStorageBufferData);
+            transform0.get(0, transformsBufferData);
 
             Matrix4f transform1 = new Matrix4f().rotate((float) Math.toRadians(90.0f), 0.0f, 0.0f, 1.0f);
-            transform1.get(matrixSizeBytes, shaderStorageBufferData);
+            transform1.get(matrixSizeBytes, transformsBufferData);
 
 
-            shaderStorageBufferInfo.buffer(shaderStorageBuffer.getHandle());
+            shaderStorageBufferInfo.buffer(transformsBuffer.getHandle());
             shaderStorageBufferInfo.offset(0);
-            shaderStorageBufferInfo.range(shaderStorageBuffer.getSizeBytes());
+            shaderStorageBufferInfo.range(transformsBuffer.getSizeBytes());
         }
 
+        VkBuffer colorBuffer = new VkBuffer(
+                allocator,
+                4 * Float.BYTES,
+                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                VMA_MEMORY_USAGE_CPU_TO_GPU
+        );
 
 
-
-
-        VkWriteDescriptorSet.Buffer writeDescriptorSet = VkWriteDescriptorSet.create(2);
-
-        //Uniform Buffer
+        ByteBuffer colorBufferData = colorBuffer.map();
+        VkDescriptorBufferInfo.Buffer colorBufferInfo = VkDescriptorBufferInfo.create(1);
         {
+            colorBufferData.putFloat(0.1f);
+            colorBufferData.putFloat(1.0f);
+            colorBufferData.putFloat(0.5f);
+            colorBufferData.putFloat(0.0f);
 
-            VkWriteDescriptorSet writeDescriptorSet0 = writeDescriptorSet.get(0);
-
-            writeDescriptorSet0.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
-            writeDescriptorSet0.dstSet(pDescriptorSet.get(0));
-            writeDescriptorSet0.dstBinding(0);
-            writeDescriptorSet0.dstArrayElement(0);
-            writeDescriptorSet0.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-            writeDescriptorSet0.pBufferInfo(uniformBufferInfo);
-            writeDescriptorSet0.descriptorCount(1);
+            colorBufferInfo.buffer(colorBuffer.getHandle());
+            colorBufferInfo.offset(0);
+            colorBufferInfo.range(colorBuffer.getSizeBytes());
         }
 
 
-        //Shader Storage Buffer
-        {
+        for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
+            long[] descriptorSets = ((VkShaderProgram) shaderProgram).getDescriptorSets(i);
 
-            VkWriteDescriptorSet writeDescriptorSet1 = writeDescriptorSet.get(1);
 
-            writeDescriptorSet1.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
-            writeDescriptorSet1.dstSet(pDescriptorSet.get(0));
-            writeDescriptorSet1.dstBinding(1);
-            writeDescriptorSet1.dstArrayElement(0);
-            writeDescriptorSet1.descriptorType(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
-            writeDescriptorSet1.pBufferInfo(shaderStorageBufferInfo);
-            writeDescriptorSet1.descriptorCount(1);
+            VkWriteDescriptorSet.Buffer writeDescriptorSet = VkWriteDescriptorSet.create(3);
+
+            //Uniform Buffer
+            {
+
+                VkWriteDescriptorSet writeDescriptorSet0 = writeDescriptorSet.get(0);
+
+                writeDescriptorSet0.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
+                writeDescriptorSet0.dstSet(descriptorSets[0]);
+                writeDescriptorSet0.dstBinding(0);
+                writeDescriptorSet0.dstArrayElement(0);
+                writeDescriptorSet0.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+                writeDescriptorSet0.pBufferInfo(uniformBufferInfo);
+                writeDescriptorSet0.descriptorCount(1);
+            }
+
+
+            //Shader Storage Buffer
+            {
+
+                VkWriteDescriptorSet writeDescriptorSet1 = writeDescriptorSet.get(1);
+
+                writeDescriptorSet1.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
+                writeDescriptorSet1.dstSet(descriptorSets[0]);
+                writeDescriptorSet1.dstBinding(1);
+                writeDescriptorSet1.dstArrayElement(0);
+                writeDescriptorSet1.descriptorType(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+                writeDescriptorSet1.pBufferInfo(shaderStorageBufferInfo);
+                writeDescriptorSet1.descriptorCount(1);
+            }
+
+            //Color Tint Buffer
+            {
+
+                VkWriteDescriptorSet writeDescriptorSet2 = writeDescriptorSet.get(2);
+
+                writeDescriptorSet2.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
+                writeDescriptorSet2.dstSet(descriptorSets[1]);
+                writeDescriptorSet2.dstBinding(2);
+                writeDescriptorSet2.dstArrayElement(0);
+                writeDescriptorSet2.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+                writeDescriptorSet2.pBufferInfo(colorBufferInfo);
+                writeDescriptorSet2.descriptorCount(1);
+            }
+
+
+            vkUpdateDescriptorSets(device, writeDescriptorSet, null);
+
         }
 
-
-
-        vkUpdateDescriptorSets(device, writeDescriptorSet, null);
 
         sharedCommandPool = createCommandPool(device, physicalDeviceQueueFamilies.graphicsFamily);
         for(int i = 0; i < FRAMES_IN_FLIGHT; i++) {
@@ -1110,7 +1084,7 @@ public class VkSceneRenderer extends SceneRenderer {
             {
                 pipelineLayoutInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
                 pipelineLayoutInfo.setLayoutCount(1);
-                pipelineLayoutInfo.pSetLayouts(stack.longs(descriptorSetLayout));
+                pipelineLayoutInfo.pSetLayouts(stack.longs(((VkShaderProgram) shaderProgram).getAllDescriptorSetLayouts()));
 
 
             }
@@ -1313,7 +1287,7 @@ public class VkSceneRenderer extends SceneRenderer {
                     vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
                     vkCmdBindIndexBuffer(commandBuffer, indexBuffer.getHandle(), 0, VK_INDEX_TYPE_UINT32);
                     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            pipeline.pipelineLayout, 0, stack.longs(descriptorSet), null);
+                            pipeline.pipelineLayout, 0, stack.longs(((VkShaderProgram) shaderProgram).getDescriptorSets(frameIndex)), null);
 
 
 

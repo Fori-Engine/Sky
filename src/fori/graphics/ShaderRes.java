@@ -22,12 +22,13 @@ public class ShaderRes {
 
     public Type type;
     public ShaderStage shaderStage;
-    public int count;
+    public int count = 1;
 
-    public ShaderRes(String friendlyName, int binding, Type type) {
-        this.friendlyName = friendlyName;
+    public ShaderRes(String name, int binding, Type type, ShaderStage stage) {
+        this.friendlyName = name;
         this.binding = binding;
         this.type = type;
+        this.shaderStage = stage;
     }
 
     public ShaderRes type(Type type){

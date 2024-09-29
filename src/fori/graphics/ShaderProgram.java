@@ -7,6 +7,7 @@ public abstract class ShaderProgram implements Disposable {
 
     protected String vertexShaderSource = null;
     protected String fragmentShaderSource = null;
+    protected ShaderResSet[] resourcesSets;
 
 
     public ShaderProgram(String vertexShaderSource, String fragmentShaderSource){
@@ -14,8 +15,14 @@ public abstract class ShaderProgram implements Disposable {
         this.fragmentShaderSource = fragmentShaderSource;
     }
 
+    public ShaderProgram(ShaderResSet[] resourceSets) {
+    }
 
-    public abstract void bind(ShaderResSet... resourceSets);
+
+
+    public void bind(ShaderResSet... resourceSets){
+        this.resourcesSets = resourceSets;
+    }
     public abstract void dispose();
 
     public static ShaderProgram newShaderProgram(SceneRenderer sceneRenderer, String vertexShaderSource, String fragmentShaderSource){
