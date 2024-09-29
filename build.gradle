@@ -3,8 +3,11 @@ import org.gradle.internal.os.OperatingSystem
 
 
 plugins {
-    id 'java'
+    id 'application'
 }
+
+mainClassName = 'fori.demo.ForiTestPlatform'
+
 
 project.ext.lwjglVersion = "3.3.3"
 project.ext.jomlVersion = "1.10.5"
@@ -87,7 +90,7 @@ jar {
     }
 
     manifest {
-        manifest.attributes["Main-Class"] = "lake.demo.ForiTestPlatform"
+        manifest.attributes["Main-Class"] = "fori.demo.ForiTestPlatform"
 
     }
 
