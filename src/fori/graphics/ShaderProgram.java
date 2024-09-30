@@ -29,6 +29,7 @@ public abstract class ShaderProgram implements Disposable {
             if(set.set != i) {
                 throw new RuntimeException(Logger.error(ShaderProgram.class, "The ShaderResSet (" + set.set + ") is not consecutive with the other sets"));
             }
+            i++;
         }
 
         this.resourcesSets = resourceSets;
