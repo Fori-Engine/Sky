@@ -1,5 +1,6 @@
 package fori.graphics;
 
+import fori.Logger;
 import fori.graphics.vulkan.VkShaderProgram;
 
 
@@ -21,6 +22,15 @@ public abstract class ShaderProgram implements Disposable {
     public abstract void update(int frameIndex, ShaderUpdate<Buffer>... bufferUpdates);
 
     public void bind(ShaderResSet... resourceSets){
+
+        int i = 0;
+
+        for(ShaderResSet set : resourceSets){
+            if(set.set != i) {
+                throw new RuntimeException(Logger.error(ShaderProgram.class, "The ShaderResSet (" + set.set + ") is not consecutive with the other sets"));
+            }
+        }
+
         this.resourcesSets = resourceSets;
     }
     public abstract void dispose();
