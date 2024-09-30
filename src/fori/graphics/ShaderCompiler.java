@@ -9,12 +9,20 @@ public class ShaderCompiler {
     public static ShaderBinary compile(String source, int kind){
         long compiler = shaderc_compiler_initialize();
         if(compiler == MemoryUtil.NULL){
-            throw new RuntimeException("Failed to init shaderc compiler");
+            throw new RuntimeException(
+                    Logger.error(
+                            ShaderCompiler.class,
+                            "Failed to init shaderc compiler"
+                    ));
         }
 
         long result = shaderc_compile_into_spv(compiler, source, kind, "", "main", MemoryUtil.NULL);
         if(result == MemoryUtil.NULL){
-            throw new RuntimeException("Shader compilation failed for " + kind);
+            throw new RuntimeException(
+                    Logger.error(
+                            ShaderCompiler.class,
+                            "Shader compilation failed for " + kind
+                    ));
         }
         if(shaderc_result_get_compilation_status(result) != shaderc_compilation_status_success){
 

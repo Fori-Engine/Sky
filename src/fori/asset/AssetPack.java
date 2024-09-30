@@ -5,6 +5,8 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import fori.FileReader;
 
+import fori.Logger;
+import fori.ExceptionUtil;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.stb.STBImage;
 
@@ -56,7 +58,7 @@ public class AssetPack {
         try {
             input = new Input(new InflaterInputStream(new FileInputStream(path)));
         } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(Logger.error(AssetPack.class, ExceptionUtil.exceptionToString(e)));
         }
         AssetMap assetMap = kryo.readObject(input, AssetMap.class);
         input.close();
@@ -79,7 +81,7 @@ public class AssetPack {
         try {
             output = new Output(new DeflaterOutputStream(new FileOutputStream(outputPath)));
         } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(Logger.error(AssetPack.class, ExceptionUtil.exceptionToString(e)));
         }
 
 

@@ -1,5 +1,6 @@
 package fori.asset;
 
+import fori.ExceptionUtil;
 import fori.Logger;
 
 import java.util.HashMap;
@@ -20,15 +21,14 @@ public class AssetPacks {
 
         if(assetPack == null){
             error = "Failed to locate AssetPack for key [" + assetPackKey + "]";
-            Logger.meltdown(AssetPacks.class, error);
-            throw new RuntimeException(error);
+            throw new RuntimeException(Logger.error(AssetPack.class, error));
         }
 
         Asset<T> asset = assetPack.getAsset(assetPath);
         if(asset == null){
             error = "Failed to locate Asset [" + assetPath + "] in AssetPack [" + assetPackKey + "]";
-            Logger.meltdown(AssetPacks.class, error);
-            throw new RuntimeException(error);
+            throw new RuntimeException(Logger.error(AssetPack.class, error));
+
         }
 
         return asset;

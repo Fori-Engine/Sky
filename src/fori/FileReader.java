@@ -1,5 +1,7 @@
 package fori;
 
+import fori.asset.AssetPack;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,7 +24,7 @@ public class FileReader {
 
             return total;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(Logger.error(AssetPack.class, ExceptionUtil.exceptionToString(e)));
         }
     }
 
@@ -39,7 +41,7 @@ public class FileReader {
 
             return total;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(Logger.error(AssetPack.class, ExceptionUtil.exceptionToString(e)));
         }
     }
 }
