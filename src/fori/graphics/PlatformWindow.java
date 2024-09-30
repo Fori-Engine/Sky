@@ -15,10 +15,7 @@ import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
-/***
- * Represents a drawing surface for a Renderer2D. This class also handles mouse and key input along with Disposing
- * OpenGL resources once the application is closed.
- */
+
 
 public class PlatformWindow {
     private long window;
@@ -200,10 +197,6 @@ public class PlatformWindow {
         MemoryUtil.memFree(textureBytes);
     }
 
-
-    /***
-     * Closes the Window, and destroys the GLFW and OpenGL context
-     */
 
     public void close() {
 

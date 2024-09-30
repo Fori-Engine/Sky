@@ -1,8 +1,5 @@
 package fori.graphics;
 
-/***
- * Represents an OpenGL color. The RGBA values range from 0-1
- */
 public class Color {
     public float r, g, b, a;
 

@@ -7,9 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-/***
- * A utility class for reading simple text files. Rebel uses this to load OpenGL shaders
- */
+
 public class FileReader {
     public static String readFile(String path){
         String total = "";

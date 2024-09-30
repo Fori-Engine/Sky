@@ -5,8 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 
 /***
- * A Disposer is responsible for registering OpenGL objects like VBOs/VAOs/Shaders that have to be disposed
- * when the application is closed
+ * A Disposer manages the lifetime of objects that need special handling when no longer in use (think Audio Devices or GPU Memory)
  */
 public class Disposer {
 
