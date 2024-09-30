@@ -93,7 +93,7 @@ public class VkBuffer extends Buffer {
     public ByteBuffer map(){
         mappedMemory = MemoryUtil.memAllocPointer(1);
         vmaMapMemory(VkGlobalAllocator.getAllocator().getId(), pAllocation.get(0), mappedMemory);
-        return mappedMemory.getByteBuffer(sizeBytes);
+        return mappedMemory.getByteBuffer(getSizeBytes());
     }
 
 
