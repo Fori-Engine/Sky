@@ -18,15 +18,27 @@ public abstract class Buffer implements Disposable {
         ShaderStorageBuffer
     }
 
+    private Usage usage;
+    private Type type;
+
+    private int sizeBytes;
+    private boolean mapped;
+
     public Buffer(int sizeBytes, Usage usage, Type type){
         Disposer.add("managedResources", this);
         this.sizeBytes = sizeBytes;
-
-
+        this.usage = usage;
+        this.type = type;
     }
 
-    protected int sizeBytes;
-    private boolean mapped;
+    public Usage getUsage() {
+        return usage;
+    }
+
+    public Type getType() {
+        return type;
+    }
+
     public ByteBuffer map(){
 
         if(mapped) {
