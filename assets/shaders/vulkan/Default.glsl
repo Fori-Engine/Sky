@@ -44,10 +44,7 @@ void main() {
 layout(location = 0) in vec3 fragColor;
 layout(location = 0) out vec4 outColor;
 
-layout(set = 1, binding = 2) uniform Color {
-    vec4 rgba;
-} color;
 
 void main() {
-    outColor = vec4(fragColor.xyz, 1.0) * color.rgba;
+    outColor = vec4(fragColor.xyz, 1.0);
 }

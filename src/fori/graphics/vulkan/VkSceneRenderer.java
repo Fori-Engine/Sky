@@ -65,7 +65,7 @@ public class VkSceneRenderer extends SceneRenderer {
     private long sharedCommandPool;
     private boolean resized = false;
     private ShaderProgram shaderProgram;
-    private VkBuffer vertexBuffer, indexBuffer, cameraBuffer, transformsBuffer;
+    private Buffer vertexBuffer, indexBuffer, cameraBuffer, transformsBuffer;
 
 
     private VkImage depthBuffer;
@@ -148,16 +148,6 @@ public class VkSceneRenderer extends SceneRenderer {
                                 ShaderStorageBuffer,
                                 VertexStage
                         ).sizeBytes(10 * matrixSizeBytes)
-                ),
-
-                new ShaderResSet(
-                        1,
-                        new ShaderRes(
-                                "Color",
-                                2,
-                                UniformBuffer,
-                                FragmentStage
-                        ).sizeBytes(4 * Float.BYTES)
                 )
         );
 
@@ -186,16 +176,13 @@ public class VkSceneRenderer extends SceneRenderer {
 
 
 
-        vertexBuffer = new VkBuffer(
-                allocator,
+        vertexBuffer = Buffer.newBuffer(
                 2 * 4 * 4 * Float.BYTES,
-                VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                VMA_MEMORY_USAGE_CPU_TO_GPU
+                Buffer.Usage.VertexBuffer,
+                Buffer.Type.CPUGPUShared
         );
 
         ByteBuffer vertexBufferData = vertexBuffer.map();
-
-
         {
             vertexBufferData.putFloat(-0.5f);
             vertexBufferData.putFloat(-0.5f);
@@ -219,7 +206,6 @@ public class VkSceneRenderer extends SceneRenderer {
             vertexBufferData.putFloat(0.5f);
             vertexBufferData.putFloat(0);
         }
-
         {
             vertexBufferData.putFloat(-0.5f);
             vertexBufferData.putFloat(-0.5f);
@@ -242,16 +228,13 @@ public class VkSceneRenderer extends SceneRenderer {
             vertexBufferData.putFloat(1);
         }
 
-        indexBuffer = new VkBuffer(
-                allocator,
+        indexBuffer = Buffer.newBuffer(
                 Integer.BYTES * 6 * 2,
-                VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-                VMA_MEMORY_USAGE_CPU_TO_GPU
+                Buffer.Usage.IndexBuffer,
+                Buffer.Type.CPUGPUShared
         );
 
         ByteBuffer indexBufferData = indexBuffer.map();
-
-
         {
             indexBufferData.putInt(0);
             indexBufferData.putInt(1);
@@ -260,7 +243,6 @@ public class VkSceneRenderer extends SceneRenderer {
             indexBufferData.putInt(3);
             indexBufferData.putInt(0);
         }
-
         {
             indexBufferData.putInt(4);
             indexBufferData.putInt(5);
@@ -271,133 +253,51 @@ public class VkSceneRenderer extends SceneRenderer {
         }
 
 
-
-
-        cameraBuffer = new VkBuffer(
-                allocator,
+        cameraBuffer = Buffer.newBuffer(
                 matrixSizeBytes * 2,
-                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                VMA_MEMORY_USAGE_CPU_TO_GPU
+                Buffer.Usage.UniformBuffer,
+                Buffer.Type.CPUGPUShared
         );
 
         ByteBuffer cameraBufferData = cameraBuffer.map();
-        VkDescriptorBufferInfo.Buffer uniformBufferInfo = VkDescriptorBufferInfo.create(1);
         {
-
-
             Matrix4f view = new Matrix4f().lookAt(new Vector3f(1.0f, 2.0f, 3.0f), new Vector3f(0, 0, 0), new Vector3f(0.0f, 0.0f, 1.0f));
             view.get(0, cameraBufferData);
 
             Matrix4f proj = new Matrix4f().perspective((float) Math.toRadians(45.0f), (float) width / height, 0.01f, 100.0f, true);
             proj.m11(proj.m11() * -1);
             proj.get(matrixSizeBytes, cameraBufferData);
-
-
-
-            uniformBufferInfo.buffer(cameraBuffer.getHandle());
-            uniformBufferInfo.offset(0);
-            uniformBufferInfo.range(cameraBuffer.getSizeBytes());
         }
 
-        transformsBuffer = new VkBuffer(
-                allocator,
+
+        transformsBuffer = Buffer.newBuffer(
                 matrixSizeBytes * 10,
-                VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-                VMA_MEMORY_USAGE_CPU_TO_GPU
+                Buffer.Usage.ShaderStorageBuffer,
+                Buffer.Type.CPUGPUShared
         );
 
 
         ByteBuffer transformsBufferData = transformsBuffer.map();
-        VkDescriptorBufferInfo.Buffer shaderStorageBufferInfo = VkDescriptorBufferInfo.create(1);
         {
             Matrix4f transform0 = new Matrix4f().rotate((float) Math.toRadians(30.0f), 0.0f, 1.0f, 0.0f);
             transform0.get(0, transformsBufferData);
 
             Matrix4f transform1 = new Matrix4f().rotate((float) Math.toRadians(90.0f), 0.0f, 0.0f, 1.0f);
             transform1.get(matrixSizeBytes, transformsBufferData);
-
-
-            shaderStorageBufferInfo.buffer(transformsBuffer.getHandle());
-            shaderStorageBufferInfo.offset(0);
-            shaderStorageBufferInfo.range(transformsBuffer.getSizeBytes());
         }
 
-        VkBuffer colorBuffer = new VkBuffer(
-                allocator,
-                4 * Float.BYTES,
-                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                VMA_MEMORY_USAGE_CPU_TO_GPU
-        );
 
-
-        ByteBuffer colorBufferData = colorBuffer.map();
-        VkDescriptorBufferInfo.Buffer colorBufferInfo = VkDescriptorBufferInfo.create(1);
-        {
-            colorBufferData.putFloat(0.1f);
-            colorBufferData.putFloat(1.0f);
-            colorBufferData.putFloat(0.5f);
-            colorBufferData.putFloat(0.0f);
-
-            colorBufferInfo.buffer(colorBuffer.getHandle());
-            colorBufferInfo.offset(0);
-            colorBufferInfo.range(colorBuffer.getSizeBytes());
-        }
 
 
         for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
-            long[] descriptorSets = ((VkShaderProgram) shaderProgram).getDescriptorSets(i);
 
-
-            VkWriteDescriptorSet.Buffer writeDescriptorSet = VkWriteDescriptorSet.create(3);
-
-            //Uniform Buffer
-            {
-
-                VkWriteDescriptorSet writeDescriptorSet0 = writeDescriptorSet.get(0);
-
-                writeDescriptorSet0.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
-                writeDescriptorSet0.dstSet(descriptorSets[0]);
-                writeDescriptorSet0.dstBinding(0);
-                writeDescriptorSet0.dstArrayElement(0);
-                writeDescriptorSet0.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-                writeDescriptorSet0.pBufferInfo(uniformBufferInfo);
-                writeDescriptorSet0.descriptorCount(1);
-            }
-
-
-            //Shader Storage Buffer
-            {
-
-                VkWriteDescriptorSet writeDescriptorSet1 = writeDescriptorSet.get(1);
-
-                writeDescriptorSet1.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
-                writeDescriptorSet1.dstSet(descriptorSets[0]);
-                writeDescriptorSet1.dstBinding(1);
-                writeDescriptorSet1.dstArrayElement(0);
-                writeDescriptorSet1.descriptorType(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
-                writeDescriptorSet1.pBufferInfo(shaderStorageBufferInfo);
-                writeDescriptorSet1.descriptorCount(1);
-            }
-
-            //Color Tint Buffer
-            {
-
-                VkWriteDescriptorSet writeDescriptorSet2 = writeDescriptorSet.get(2);
-
-                writeDescriptorSet2.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
-                writeDescriptorSet2.dstSet(descriptorSets[1]);
-                writeDescriptorSet2.dstBinding(2);
-                writeDescriptorSet2.dstArrayElement(0);
-                writeDescriptorSet2.descriptorType(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-                writeDescriptorSet2.pBufferInfo(colorBufferInfo);
-                writeDescriptorSet2.descriptorCount(1);
-            }
-
-
-            vkUpdateDescriptorSets(device, writeDescriptorSet, null);
+            shaderProgram.update(
+                    i,
+                    new ShaderUpdate<>("Camera", 0, 0, cameraBuffer),
+                    new ShaderUpdate<>("Transforms", 0, 1, transformsBuffer)
+            );
 
         }
-
 
         sharedCommandPool = createCommandPool(device, physicalDeviceQueueFamilies.graphicsFamily);
         for(int i = 0; i < FRAMES_IN_FLIGHT; i++) {
@@ -1083,7 +983,7 @@ public class VkSceneRenderer extends SceneRenderer {
             VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.calloc(stack);
             {
                 pipelineLayoutInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
-                pipelineLayoutInfo.setLayoutCount(1);
+                pipelineLayoutInfo.setLayoutCount(4);
                 pipelineLayoutInfo.pSetLayouts(stack.longs(((VkShaderProgram) shaderProgram).getAllDescriptorSetLayouts()));
 
 
@@ -1280,6 +1180,9 @@ public class VkSceneRenderer extends SceneRenderer {
 
                 vkCmdBeginRenderPass(commandBuffer, renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
                 {
+                    VkBuffer vertexBuffer = ((VkBuffer) this.vertexBuffer);
+                    VkBuffer indexBuffer = ((VkBuffer) this.indexBuffer);
+
                     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
                     LongBuffer vertexBuffers = stack.longs(vertexBuffer.getHandle());
                     LongBuffer offsets = stack.longs(0);

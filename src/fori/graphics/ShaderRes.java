@@ -5,6 +5,7 @@ public class ShaderRes {
     public String friendlyName;
     public int binding;
     public int sizeBytes;
+    public ShaderResSet set;
 
 
 

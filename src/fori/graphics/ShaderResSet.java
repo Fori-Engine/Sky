@@ -1,16 +1,25 @@
 package fori.graphics;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class ShaderResSet {
-    private int set;
+    public final int set;
+
     private ArrayList<ShaderRes> shaderResources = new ArrayList<>();
 
     public ShaderResSet(int set, ShaderRes... shaderResources) {
         this.set = set;
-        this.shaderResources.addAll(Arrays.asList(shaderResources));
+
+        for(ShaderRes shaderRes : shaderResources){
+            shaderRes.set = ShaderResSet.this;
+            ShaderResSet.this.shaderResources.add(shaderRes);
+
+        }
     }
+
+
+
+
 
     public ArrayList<ShaderRes> getShaderResources() {
         return shaderResources;

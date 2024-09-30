@@ -9,13 +9,10 @@ import org.lwjgl.vulkan.*;
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.util.shaderc.Shaderc.shaderc_glsl_fragment_shader;
 import static org.lwjgl.util.shaderc.Shaderc.shaderc_glsl_vertex_shader;
-import static org.lwjgl.util.vma.Vma.VMA_MEMORY_USAGE_CPU_TO_GPU;
 import static org.lwjgl.vulkan.VK10.*;
 
 public class VkShaderProgram extends ShaderProgram {
@@ -242,6 +239,65 @@ public class VkShaderProgram extends ShaderProgram {
 
 
 
+    }
+
+    public void update(int frameIndex, ShaderUpdate<Buffer>... bufferUpdates){
+        try(MemoryStack stack = stackPush()) {
+
+            VkWriteDescriptorSet.Buffer descriptorSetsWrites = VkWriteDescriptorSet.calloc(bufferUpdates.length, stack);
+
+
+            for (int i = 0; i < bufferUpdates.length; i++) {
+                ShaderUpdate<Buffer> bufferUpdate = bufferUpdates[i];
+                VkBuffer buffer = (VkBuffer) bufferUpdate.update;
+                VkDescriptorBufferInfo.Buffer bufferInfo = VkDescriptorBufferInfo.calloc(1, stack);
+                bufferInfo.buffer(buffer.getHandle());
+                bufferInfo.offset(0);
+                bufferInfo.range(buffer.getSizeBytes());
+
+                ShaderRes targetRes = null;
+
+                for(ShaderResSet set : resourcesSets){
+                    for(ShaderRes res : set.getShaderResources()){
+                        if(set.set == bufferUpdate.set && res.binding == bufferUpdate.binding)
+                            targetRes = res;
+                    }
+                }
+
+
+
+
+                VkWriteDescriptorSet descriptorSetsWrite = descriptorSetsWrites.get(i);
+
+                descriptorSetsWrite.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
+                //This doesn't work because dstSet() expects a valid handle to a descriptor set and not an index
+
+                int descriptorSetIndex = findShaderResSetWithIndexFromSetID(bufferUpdate.set);
+                long descriptorSet = descriptorSets.get(frameIndex).get(descriptorSetIndex);
+
+
+
+
+
+                descriptorSetsWrite.dstSet(descriptorSet);
+                descriptorSetsWrite.dstBinding(bufferUpdate.binding);
+                descriptorSetsWrite.dstArrayElement(0);
+                descriptorSetsWrite.descriptorType(toVkDescriptorType(targetRes.type));
+                descriptorSetsWrite.pBufferInfo(bufferInfo);
+                descriptorSetsWrite.descriptorCount(targetRes.count);
+            }
+
+            vkUpdateDescriptorSets(device, descriptorSetsWrites, null);
+        }
+    }
+
+    private int findShaderResSetWithIndexFromSetID(int id) {
+        for (int i = 0; i < resourcesSets.length; i++) {
+            ShaderResSet resourceSet = resourcesSets[i];
+            if (resourceSet.set == id) return i;
+        }
+
+        return 0;
     }
 
     private int toVkDescriptorType(ShaderRes.Type type) {

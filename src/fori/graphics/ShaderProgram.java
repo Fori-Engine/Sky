@@ -18,13 +18,12 @@ public abstract class ShaderProgram implements Disposable {
     public ShaderProgram(ShaderResSet[] resourceSets) {
     }
 
-
+    public abstract void update(int frameIndex, ShaderUpdate<Buffer>... bufferUpdates);
 
     public void bind(ShaderResSet... resourceSets){
         this.resourcesSets = resourceSets;
     }
     public abstract void dispose();
-
     public static ShaderProgram newShaderProgram(SceneRenderer sceneRenderer, String vertexShaderSource, String fragmentShaderSource){
         if(SceneRenderer.getRenderAPI() == RenderAPI.Vulkan){
             return new VkShaderProgram(sceneRenderer, vertexShaderSource, fragmentShaderSource);
