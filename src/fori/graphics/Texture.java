@@ -3,21 +3,31 @@ package fori.graphics;
 import fori.asset.Asset;
 import fori.asset.TextureData;
 
-public abstract class Texture2D implements Disposable {
+public abstract class Texture implements Disposable {
     public int width, height;
     public Filter filter;
+
+    public Texture() {
+
+    }
+
     public enum Filter {
         Linear,
         Nearest
     }
 
-    public Texture2D(int width, int height){
+    public enum Tiling {
+        Linear,
+        Optimal
+    }
+
+    public Texture(int width, int height){
         Disposer.add("managedResources", this);
         this.width = width;
         this.height = height;
     }
 
-    public Texture2D(Asset<TextureData> textureData, Filter filter){
+    public Texture(Asset<TextureData> textureData, Filter filter){
         Disposer.add("managedResources", this);
         this.width = textureData.asset.width;
         this.height = textureData.asset.height;
@@ -29,7 +39,6 @@ public abstract class Texture2D implements Disposable {
 
 
 
-    public abstract void setData(byte[] data);
 
     public int getWidth() {
         return width;
@@ -49,12 +58,12 @@ public abstract class Texture2D implements Disposable {
 
 
 
-    public static Texture2D newTexture2D(Asset<TextureData> textureData, Filter filter){
+    public static Texture newTexture2D(Asset<TextureData> textureData, Filter filter){
 
         return null;
     }
 
-    public static Texture2D newTexture2D(int width, int height){
+    public static Texture newTexture2D(int width, int height){
 
         return null;
     }

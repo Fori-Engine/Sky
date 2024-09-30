@@ -1,7 +1,7 @@
 package fori;
 
 import fori.graphics.Rect2D;
-import fori.graphics.Texture2D;
+import fori.graphics.Texture;
 
 import java.util.ArrayList;
 
@@ -10,7 +10,7 @@ import java.util.ArrayList;
  * An Animation is made from a spritesheet texture. You can specify the delay, number of frames and set the Playmode.
  */
 public class Animation {
-    private Texture2D texture;
+    private Texture texture;
     private ArrayList<Rect2D> frames = new ArrayList<>();
     private float delay;
     private float start = 0;
@@ -40,7 +40,7 @@ public class Animation {
      * Create An Animation object from the following Texture
      * @param texture
      */
-    public Animation(Texture2D texture) {
+    public Animation(Texture texture) {
         this.texture = texture;
     }
 
@@ -102,7 +102,7 @@ public class Animation {
         return frames;
     }
 
-    public Texture2D getTexture() {
+    public Texture getTexture() {
         return texture;
     }
 

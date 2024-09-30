@@ -1,9 +1,12 @@
 package fori.graphics.vulkan;
 
+import fori.asset.Asset;
+import fori.asset.TextureData;
 import fori.graphics.Disposable;
 import fori.graphics.Disposer;
 import static org.lwjgl.vulkan.VK13.*;
 
+import fori.graphics.Texture;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.util.vma.VmaAllocationCreateInfo;
@@ -16,7 +19,7 @@ import java.nio.LongBuffer;
 import static org.lwjgl.util.vma.Vma.*;
 
 
-public class VkImage implements Disposable {
+public class VkImage extends Texture implements Disposable {
 
     private long handle;
     private LongBuffer pImage;
@@ -31,7 +34,17 @@ public class VkImage implements Disposable {
     private int format;
     private VkGlobalAllocator allocator;
 
+    public VkImage(int width, int height){
+        super(width, height);
+    }
+
+    public VkImage(Asset<TextureData> textureData, Filter filter){
+        super(textureData, filter);
+    }
+
+
     public VkImage(VkGlobalAllocator allocator, VkDevice device, int width, int height, int format, int usage, int tiling){
+        super();
         Disposer.add("managedResources", this);
         this.device = device;
         this.format = format;
@@ -62,12 +75,6 @@ public class VkImage implements Disposable {
         pImage = MemoryUtil.memAllocLong(1);
         pAllocation = MemoryUtil.memAllocPointer(1);
 
-        /*
-        if(vkCreateImage(device, imageCreateInfo, null, pImage) != VK_SUCCESS){
-            throw new RuntimeException("Failed to create image");
-        }
-
-         */
 
         allocationInfo = VmaAllocationInfo.create();
         vmaCreateImage(allocator.getId(), imageCreateInfo, allocationCreateInfo, pImage, pAllocation, allocationInfo);
@@ -100,4 +107,6 @@ public class VkImage implements Disposable {
 
 
     }
+
+
 }

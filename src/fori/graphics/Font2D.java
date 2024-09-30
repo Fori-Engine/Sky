@@ -14,7 +14,7 @@ import java.util.Map;
 public class Font2D {
     private Asset<TextureData> textureAsset;
     private Asset<String> fnt;
-    private Texture2D texture;
+    private Texture texture;
     private HashMap<Integer, Glyph> glyphs = new HashMap<>();
     private float defaultLineHeight;
 
@@ -24,7 +24,7 @@ public class Font2D {
         this.textureAsset = textureAsset;
         this.fnt = fnt;
 
-        texture = Texture2D.newTexture2D(textureAsset, Texture2D.Filter.Linear);
+        texture = Texture.newTexture2D(textureAsset, Texture.Filter.Linear);
         createGlyphs();
 
     }
@@ -71,7 +71,7 @@ public class Font2D {
 
     }
 
-    public Texture2D getTexture() {
+    public Texture getTexture() {
         return texture;
     }
 
