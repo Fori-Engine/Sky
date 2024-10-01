@@ -265,19 +265,11 @@ public class VkShaderProgram extends ShaderProgram {
                 }
 
 
-
-
                 VkWriteDescriptorSet descriptorSetsWrite = descriptorSetsWrites.get(i);
 
                 descriptorSetsWrite.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
-                //This doesn't work because dstSet() expects a valid handle to a descriptor set and not an index
-
-                int descriptorSetIndex = findShaderResSetWithIndexFromSetID(bufferUpdate.set);
+                int descriptorSetIndex = findShaderResSetFromIndex(bufferUpdate.set);
                 long descriptorSet = descriptorSets.get(frameIndex).get(descriptorSetIndex);
-
-
-
-
 
                 descriptorSetsWrite.dstSet(descriptorSet);
                 descriptorSetsWrite.dstBinding(bufferUpdate.binding);
@@ -291,7 +283,7 @@ public class VkShaderProgram extends ShaderProgram {
         }
     }
 
-    private int findShaderResSetWithIndexFromSetID(int id) {
+    private int findShaderResSetFromIndex(int id) {
         for (int i = 0; i < resourcesSets.length; i++) {
             ShaderResSet resourceSet = resourcesSets[i];
             if (resourceSet.set == id) return i;
