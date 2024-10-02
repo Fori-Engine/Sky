@@ -163,7 +163,7 @@ public class VkSceneRenderer extends SceneRenderer {
                                 2,
                                 CombinedSampler,
                                 FragmentStage
-                        )
+                        ).count(2)
                 )
         );
 
@@ -193,7 +193,7 @@ public class VkSceneRenderer extends SceneRenderer {
 
 
         vertexBuffer = Buffer.newBuffer(
-                2 * 4 * 6 * Float.BYTES,
+                2 * 4 * 7 * Float.BYTES,
                 Buffer.Usage.VertexBuffer,
                 Buffer.Type.CPUGPUShared
         );
@@ -209,6 +209,8 @@ public class VkSceneRenderer extends SceneRenderer {
             //UV
             vertexBufferData.putFloat(1);
             vertexBufferData.putFloat(0);
+            //Material Base Index
+            vertexBufferData.putFloat(0);
 
             //Coords
             vertexBufferData.putFloat(0.5f);
@@ -219,6 +221,8 @@ public class VkSceneRenderer extends SceneRenderer {
             //UV
             vertexBufferData.putFloat(0);
             vertexBufferData.putFloat(0);
+            //Material Base Index
+            vertexBufferData.putFloat(0);
 
             //Coords
             vertexBufferData.putFloat(0.5f);
@@ -229,7 +233,8 @@ public class VkSceneRenderer extends SceneRenderer {
             //UV
             vertexBufferData.putFloat(0);
             vertexBufferData.putFloat(1);
-
+            //Material Base Index
+            vertexBufferData.putFloat(0);
 
             //Coords
             vertexBufferData.putFloat(-0.5f);
@@ -240,6 +245,8 @@ public class VkSceneRenderer extends SceneRenderer {
             //UV
             vertexBufferData.putFloat(1);
             vertexBufferData.putFloat(1);
+            //Material Base Index
+            vertexBufferData.putFloat(0);
         }
         {
 
@@ -252,6 +259,8 @@ public class VkSceneRenderer extends SceneRenderer {
             //UV
             vertexBufferData.putFloat(1);
             vertexBufferData.putFloat(0);
+            //Material Base Index
+            vertexBufferData.putFloat(1);
 
             //Coords
             vertexBufferData.putFloat(0.5f);
@@ -262,6 +271,8 @@ public class VkSceneRenderer extends SceneRenderer {
             //UV
             vertexBufferData.putFloat(0);
             vertexBufferData.putFloat(0);
+            //Material Base Index
+            vertexBufferData.putFloat(1);
 
             //Coords
             vertexBufferData.putFloat(0.5f);
@@ -272,7 +283,8 @@ public class VkSceneRenderer extends SceneRenderer {
             //UV
             vertexBufferData.putFloat(0);
             vertexBufferData.putFloat(1);
-
+            //Material Base Index
+            vertexBufferData.putFloat(1);
 
             //Coords
             vertexBufferData.putFloat(-0.5f);
@@ -282,6 +294,8 @@ public class VkSceneRenderer extends SceneRenderer {
             vertexBufferData.putFloat(1);
             //UV
             vertexBufferData.putFloat(1);
+            vertexBufferData.putFloat(1);
+            //Material Base Index
             vertexBufferData.putFloat(1);
         }
 
@@ -345,7 +359,8 @@ public class VkSceneRenderer extends SceneRenderer {
 
 
 
-        Texture texture = Texture.newTexture(AssetPacks.getAsset("core:assets/ForiEngine.png"), Texture.Filter.Nearest, Texture.Filter.Nearest);
+        Texture texture1 = Texture.newTexture(AssetPacks.getAsset("core:assets/vulkan.jpg"), Texture.Filter.Nearest, Texture.Filter.Nearest);
+        Texture texture2 = Texture.newTexture(AssetPacks.getAsset("core:assets/ForiEngine.png"), Texture.Filter.Nearest, Texture.Filter.Nearest);
 
 
         for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
@@ -358,7 +373,8 @@ public class VkSceneRenderer extends SceneRenderer {
 
             shaderProgram.updateTextures(
                     i,
-                    new ShaderUpdate<>("materials", 0, 2, texture).arrayIndex(0)
+                    new ShaderUpdate<>("materials", 0, 2, texture1).arrayIndex(0),
+                    new ShaderUpdate<>("materials", 0, 2, texture2).arrayIndex(1)
             );
 
         }
@@ -931,14 +947,14 @@ public class VkSceneRenderer extends SceneRenderer {
                         VkVertexInputBindingDescription.calloc(1, stack);
 
                 bindingDescription.binding(0);
-                bindingDescription.stride(6 * Float.BYTES);
+                bindingDescription.stride(7 * Float.BYTES);
                 bindingDescription.inputRate(VK_VERTEX_INPUT_RATE_VERTEX);
                 vertexInputInfo.pVertexBindingDescriptions(bindingDescription);
 
 
 
                 VkVertexInputAttributeDescription.Buffer attributeDescriptions =
-                        VkVertexInputAttributeDescription.calloc(3);
+                        VkVertexInputAttributeDescription.calloc(4);
 
                 // Position
                 VkVertexInputAttributeDescription posDescription = attributeDescriptions.get(0);
@@ -957,7 +973,7 @@ public class VkSceneRenderer extends SceneRenderer {
                     transformIndexDescription.format(VK_FORMAT_R32_SFLOAT);
                     transformIndexDescription.offset(3 * Float.BYTES);
                 }
-                // Transform Index
+                // UV
                 VkVertexInputAttributeDescription uvDescription = attributeDescriptions.get(2);
                 {
                     uvDescription.binding(0);
@@ -965,6 +981,17 @@ public class VkSceneRenderer extends SceneRenderer {
                     uvDescription.format(VK_FORMAT_R32G32_SFLOAT);
                     uvDescription.offset(4 * Float.BYTES);
                 }
+
+                // Material Base Index
+                VkVertexInputAttributeDescription materialBaseIndexDescription = attributeDescriptions.get(3);
+                {
+                    materialBaseIndexDescription.binding(0);
+                    materialBaseIndexDescription.location(3);
+                    materialBaseIndexDescription.format(VK_FORMAT_R32_SFLOAT);
+                    materialBaseIndexDescription.offset(6 * Float.BYTES);
+                }
+
+
 
                 vertexInputInfo.pVertexAttributeDescriptions(attributeDescriptions.rewind());
 
