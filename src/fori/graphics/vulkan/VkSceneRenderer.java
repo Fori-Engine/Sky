@@ -193,54 +193,95 @@ public class VkSceneRenderer extends SceneRenderer {
 
 
         vertexBuffer = Buffer.newBuffer(
-                2 * 4 * 4 * Float.BYTES,
+                2 * 4 * 6 * Float.BYTES,
                 Buffer.Usage.VertexBuffer,
                 Buffer.Type.CPUGPUShared
         );
 
         ByteBuffer vertexBufferData = vertexBuffer.map();
         {
+            //Coords
             vertexBufferData.putFloat(-0.5f);
             vertexBufferData.putFloat(-0.5f);
             vertexBufferData.putFloat(0.5f);
+            //Transform Index
+            vertexBufferData.putFloat(0);
+            //UV
+            vertexBufferData.putFloat(1);
             vertexBufferData.putFloat(0);
 
+            //Coords
             vertexBufferData.putFloat(0.5f);
             vertexBufferData.putFloat(-0.5f);
             vertexBufferData.putFloat(0.5f);
+            //Transform Index
+            vertexBufferData.putFloat(0);
+            //UV
+            vertexBufferData.putFloat(0);
             vertexBufferData.putFloat(0);
 
-
+            //Coords
             vertexBufferData.putFloat(0.5f);
             vertexBufferData.putFloat(0.5f);
             vertexBufferData.putFloat(0.5f);
+            //Transform Index
             vertexBufferData.putFloat(0);
+            //UV
+            vertexBufferData.putFloat(0);
+            vertexBufferData.putFloat(1);
 
 
+            //Coords
             vertexBufferData.putFloat(-0.5f);
             vertexBufferData.putFloat(0.5f);
             vertexBufferData.putFloat(0.5f);
+            //Transform Index
             vertexBufferData.putFloat(0);
+            //UV
+            vertexBufferData.putFloat(1);
+            vertexBufferData.putFloat(1);
         }
         {
+
+            //Coords
             vertexBufferData.putFloat(-0.5f);
             vertexBufferData.putFloat(-0.5f);
             vertexBufferData.putFloat(-0.5f);
+            //Transform Index
+            vertexBufferData.putFloat(1);
+            //UV
+            vertexBufferData.putFloat(1);
+            vertexBufferData.putFloat(0);
+
+            //Coords
+            vertexBufferData.putFloat(0.5f);
+            vertexBufferData.putFloat(-0.5f);
+            vertexBufferData.putFloat(-0.5f);
+            //Transform Index
+            vertexBufferData.putFloat(1);
+            //UV
+            vertexBufferData.putFloat(0);
+            vertexBufferData.putFloat(0);
+
+            //Coords
+            vertexBufferData.putFloat(0.5f);
+            vertexBufferData.putFloat(0.5f);
+            vertexBufferData.putFloat(-0.5f);
+            //Transform Index
+            vertexBufferData.putFloat(1);
+            //UV
+            vertexBufferData.putFloat(0);
             vertexBufferData.putFloat(1);
 
-            vertexBufferData.putFloat(0.5f);
-            vertexBufferData.putFloat(-0.5f);
-            vertexBufferData.putFloat(-0.5f);
-            vertexBufferData.putFloat(1);
 
-            vertexBufferData.putFloat(0.5f);
+            //Coords
+            vertexBufferData.putFloat(-0.5f);
             vertexBufferData.putFloat(0.5f);
             vertexBufferData.putFloat(-0.5f);
+            //Transform Index
             vertexBufferData.putFloat(1);
-
-            vertexBufferData.putFloat(-0.5f);
-            vertexBufferData.putFloat(0.5f);
-            vertexBufferData.putFloat(-0.5f);
+            //UV
+            vertexBufferData.putFloat(1);
             vertexBufferData.putFloat(1);
         }
 
@@ -890,14 +931,14 @@ public class VkSceneRenderer extends SceneRenderer {
                         VkVertexInputBindingDescription.calloc(1, stack);
 
                 bindingDescription.binding(0);
-                bindingDescription.stride(4 * Float.BYTES);
+                bindingDescription.stride(6 * Float.BYTES);
                 bindingDescription.inputRate(VK_VERTEX_INPUT_RATE_VERTEX);
                 vertexInputInfo.pVertexBindingDescriptions(bindingDescription);
 
 
 
                 VkVertexInputAttributeDescription.Buffer attributeDescriptions =
-                        VkVertexInputAttributeDescription.calloc(2);
+                        VkVertexInputAttributeDescription.calloc(3);
 
                 // Position
                 VkVertexInputAttributeDescription posDescription = attributeDescriptions.get(0);
@@ -915,6 +956,14 @@ public class VkSceneRenderer extends SceneRenderer {
                     transformIndexDescription.location(1);
                     transformIndexDescription.format(VK_FORMAT_R32_SFLOAT);
                     transformIndexDescription.offset(3 * Float.BYTES);
+                }
+                // Transform Index
+                VkVertexInputAttributeDescription uvDescription = attributeDescriptions.get(2);
+                {
+                    uvDescription.binding(0);
+                    uvDescription.location(2);
+                    uvDescription.format(VK_FORMAT_R32G32_SFLOAT);
+                    uvDescription.offset(4 * Float.BYTES);
                 }
 
                 vertexInputInfo.pVertexAttributeDescriptions(attributeDescriptions.rewind());
