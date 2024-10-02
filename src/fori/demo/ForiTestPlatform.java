@@ -17,7 +17,7 @@ public class ForiTestPlatform {
 
         Logger.meltdown(ForiTestPlatform.class, "I'm lazy");
 
-        PlatformWindow window = new PlatformWindow(1920, 1080, "ForiEngine", true);
+        PlatformWindow window = new PlatformWindow(1200, 700, "ForiEngine", true);
         SceneRenderer sceneRenderer = SceneRenderer.newSceneRenderer(window, window.getWidth(), window.getHeight(), new RendererSettings(RenderAPI.Vulkan).validation(true).vsync(false));
         window.setIcon(AssetPacks.getAsset("core:assets/ForiEngine.png"));
 
