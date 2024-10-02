@@ -23,7 +23,6 @@ import java.util.stream.Stream;
 import static java.lang.Math.clamp;
 import static java.util.stream.Collectors.toSet;
 import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.util.vma.Vma.*;
 import static org.lwjgl.vulkan.KHRSurface.*;
 import static org.lwjgl.vulkan.KHRSurface.vkGetPhysicalDeviceSurfacePresentModesKHR;
 import static org.lwjgl.vulkan.KHRSwapchain.*;
@@ -85,11 +84,22 @@ public class VkSceneRenderer extends SceneRenderer {
 
         physicalDevice = selectPhysicalDevice(instance, surface);
         physicalDeviceProperties = getPhysicalDeviceProperties(physicalDevice);
+        VkContextManager.setPhysicalDeviceProperties(physicalDeviceProperties);
         Logger.info(VkSceneRenderer.class, "Selected Physical Device " + physicalDeviceProperties.deviceNameString());
-
         device = createDevice(physicalDevice, rendererSettings.validation);
+
+        VkContextManager.setCurrentDevice(device);
+        VkContextManager.setCurrentPhysicalDevice(physicalDevice);
+
+
+
+
+
+
         graphicsQueue = getGraphicsQueue(device);
+        VkContextManager.setGraphicsQueue(graphicsQueue);
         presentQueue = getPresentQueue(device);
+        VkContextManager.setGraphicsFamilyIndex(physicalDeviceQueueFamilies.graphicsFamily);
         swapchain = createSwapChain(device, surface, width, height, rendererSettings.vsync);
         swapchainImageViews = createSwapchainImageViews(device, swapchain);
 
@@ -132,22 +142,28 @@ public class VkSceneRenderer extends SceneRenderer {
 
         int matrixSizeBytes = 4 * 4 * Float.BYTES;
 
-        shaderProgram = ShaderProgram.newShaderProgram(this, shaderSources.vertexShader, shaderSources.fragmentShader);
+        shaderProgram = ShaderProgram.newShaderProgram(shaderSources.vertexShader, shaderSources.fragmentShader);
         shaderProgram.bind(
                 new ShaderResSet(
                         0,
                         new ShaderRes(
-                                "Camera",
+                                "camera",
                                 0,
                                 UniformBuffer,
                                 VertexStage
                         ).sizeBytes(2 * matrixSizeBytes),
                         new ShaderRes(
-                                "Transforms",
+                                "transforms",
                                 1,
                                 ShaderStorageBuffer,
                                 VertexStage
-                        ).sizeBytes(10 * matrixSizeBytes)
+                        ).sizeBytes(10 * matrixSizeBytes),
+                        new ShaderRes(
+                                "materials",
+                                2,
+                                CombinedSampler,
+                                FragmentStage
+                        )
                 )
         );
 
@@ -264,7 +280,7 @@ public class VkSceneRenderer extends SceneRenderer {
             Matrix4f view = new Matrix4f().lookAt(new Vector3f(1.0f, 2.0f, 3.0f), new Vector3f(0, 0, 0), new Vector3f(0.0f, 0.0f, 1.0f));
             view.get(0, cameraBufferData);
 
-            Matrix4f proj = new Matrix4f().perspective((float) Math.toRadians(45.0f), (float) width / height, 0.01f, 100.0f, true);
+            Matrix4f proj = new Matrix4f().perspective((float) Math.toRadians(35.0f), (float) width / height, 0.01f, 100.0f, true);
             proj.m11(proj.m11() * -1);
             proj.get(matrixSizeBytes, cameraBufferData);
         }
@@ -288,13 +304,20 @@ public class VkSceneRenderer extends SceneRenderer {
 
 
 
+        Texture texture = Texture.newTexture(AssetPacks.getAsset("core:assets/ForiEngine.png"), Texture.Filter.Nearest, Texture.Filter.Nearest);
+
 
         for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
 
-            shaderProgram.update(
+            shaderProgram.updateBuffers(
                     i,
-                    new ShaderUpdate<>("Camera", 0, 0, cameraBuffer),
-                    new ShaderUpdate<>("Transforms", 0, 1, transformsBuffer)
+                    new ShaderUpdate<>("camera", 0, 0, cameraBuffer),
+                    new ShaderUpdate<>("transforms", 0, 1, transformsBuffer)
+            );
+
+            shaderProgram.updateTextures(
+                    i,
+                    new ShaderUpdate<>("materials", 0, 2, texture).arrayIndex(0)
             );
 
         }
@@ -349,7 +372,6 @@ public class VkSceneRenderer extends SceneRenderer {
         swapchainFramebuffers = createSwapchainFramebuffers(device, swapchain, swapchainImageViews, renderPass, depthBufferImageView);
 
         pipeline = createPipeline(device, swapchain, ((VkShaderProgram) shaderProgram).getShaderStages(), renderPass);
-
 
 
 
@@ -526,6 +548,7 @@ public class VkSceneRenderer extends SceneRenderer {
             deviceDescriptorIndexingFeatures.descriptorBindingStorageBufferUpdateAfterBind(true);
             deviceDescriptorIndexingFeatures.descriptorBindingSampledImageUpdateAfterBind(true);
             deviceDescriptorIndexingFeatures.descriptorBindingStorageImageUpdateAfterBind(true);
+
 
 
 
@@ -1164,7 +1187,7 @@ public class VkSceneRenderer extends SceneRenderer {
                 renderPassInfo.renderArea(renderArea);
 
                 VkClearValue.Buffer clearValues = VkClearValue.calloc(2, stack);
-                clearValues.get(0).color().float32(stack.floats(0.0f, 0.0f, 0.0f, 1.0f));
+                clearValues.get(0).color().float32(stack.floats(0.3f, 0.3f, 0.3f, 1.0f));
                 clearValues.get(1).depthStencil().set(1.0f, 0);
 
                 renderPassInfo.pClearValues(clearValues);

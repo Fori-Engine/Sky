@@ -1,21 +1,17 @@
 package fori.graphics.vulkan;
 
 import fori.graphics.Buffer;
-import fori.graphics.Disposable;
-import fori.graphics.Disposer;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.util.vma.VmaAllocationCreateInfo;
 import org.lwjgl.util.vma.VmaAllocationInfo;
-import org.lwjgl.vulkan.*;
+import org.lwjgl.vulkan.VkBufferCreateInfo;
 
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 
 import static org.lwjgl.util.vma.Vma.*;
 import static org.lwjgl.vulkan.VK10.*;
-import static fori.graphics.Buffer.Type.*;
-import static fori.graphics.Buffer.Usage.*;
 
 
 
@@ -70,6 +66,9 @@ public class VkBuffer extends Buffer {
             }
             case UniformBuffer -> {
                 return VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+            }
+            case ImageBackingBuffer -> {
+                return VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
             }
         }
 

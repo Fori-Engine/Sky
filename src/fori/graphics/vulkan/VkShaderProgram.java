@@ -17,7 +17,6 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public class VkShaderProgram extends ShaderProgram {
 
-    private VkDevice device;
     private ShaderBinary vertexShaderBinary, fragmentShaderBinary;
     private long vertexShaderModule, fragmentShaderModule;
     private VkPipelineShaderStageCreateInfo.Buffer shaderStages;
@@ -27,46 +26,8 @@ public class VkShaderProgram extends ShaderProgram {
     private ArrayList<Long> descriptorPools = new ArrayList<>(VkSceneRenderer.FRAMES_IN_FLIGHT);
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    public VkShaderProgram(SceneRenderer sceneRenderer, String vertexShaderSource, String fragmentShaderSource) {
+    public VkShaderProgram(String vertexShaderSource, String fragmentShaderSource) {
         super(vertexShaderSource, fragmentShaderSource);
-        this.device = ((VkSceneRenderer) sceneRenderer).getDevice();
     }
 
     public static long createShaderModule(VkDevice device, ByteBuffer spirvCode) {
@@ -106,8 +67,8 @@ public class VkShaderProgram extends ShaderProgram {
             vertexShaderBinary = ShaderCompiler.compile(vertexShaderSource, shaderc_glsl_vertex_shader);
             fragmentShaderBinary = ShaderCompiler.compile(fragmentShaderSource, shaderc_glsl_fragment_shader);
 
-            vertexShaderModule = createShaderModule(device, vertexShaderBinary.bytecode);
-            fragmentShaderModule = createShaderModule(device, fragmentShaderBinary.bytecode);
+            vertexShaderModule = createShaderModule(VkContextManager.getCurrentDevice(), vertexShaderBinary.bytecode);
+            fragmentShaderModule = createShaderModule(VkContextManager.getCurrentDevice(), fragmentShaderBinary.bytecode);
 
             shaderStages = VkPipelineShaderStageCreateInfo.create(2);
 
@@ -164,7 +125,7 @@ public class VkShaderProgram extends ShaderProgram {
 
             for (int i = 0; i < VkSceneRenderer.FRAMES_IN_FLIGHT; i++) {
                 LongBuffer pDescriptorPool = MemoryUtil.memAllocLong(1);
-                if (vkCreateDescriptorPool(device, descriptorPoolCreateInfo, null, pDescriptorPool) != VK_SUCCESS) {
+                if (vkCreateDescriptorPool(VkContextManager.getCurrentDevice(), descriptorPoolCreateInfo, null, pDescriptorPool) != VK_SUCCESS) {
                     throw new RuntimeException("Failed to create descriptor pool");
                 }
                 descriptorPools.add(i, pDescriptorPool.get(0));
@@ -204,7 +165,7 @@ public class VkShaderProgram extends ShaderProgram {
                     descriptorSetLayoutCreateInfo.pBindings(descriptorSetLayoutBindings);
 
 
-                    if(vkCreateDescriptorSetLayout(device, descriptorSetLayoutCreateInfo, null, pDescriptorSetLayout) != VK_SUCCESS){
+                    if(vkCreateDescriptorSetLayout(VkContextManager.getCurrentDevice(), descriptorSetLayoutCreateInfo, null, pDescriptorSetLayout) != VK_SUCCESS){
                         throw new RuntimeException("Failed to create descriptor set layout");
                     }
 
@@ -220,7 +181,7 @@ public class VkShaderProgram extends ShaderProgram {
                     descriptorSetAllocateInfo.pSetLayouts(pDescriptorSetLayout);
 
                     LongBuffer pDescriptorSet = MemoryUtil.memAllocLong(1);
-                    if(vkAllocateDescriptorSets(device, descriptorSetAllocateInfo, pDescriptorSet) != VK_SUCCESS){
+                    if(vkAllocateDescriptorSets(VkContextManager.getCurrentDevice(), descriptorSetAllocateInfo, pDescriptorSet) != VK_SUCCESS){
                         throw new RuntimeException("Failed to allocate descriptor set");
                     }
                     long descriptorSet = pDescriptorSet.get(0);
@@ -241,7 +202,7 @@ public class VkShaderProgram extends ShaderProgram {
 
     }
 
-    public void update(int frameIndex, ShaderUpdate<Buffer>... bufferUpdates){
+    public void updateBuffers(int frameIndex, ShaderUpdate<Buffer>... bufferUpdates){
         try(MemoryStack stack = stackPush()) {
 
             VkWriteDescriptorSet.Buffer descriptorSetsWrites = VkWriteDescriptorSet.calloc(bufferUpdates.length, stack);
@@ -276,12 +237,58 @@ public class VkShaderProgram extends ShaderProgram {
                 descriptorSetsWrite.dstArrayElement(0);
                 descriptorSetsWrite.descriptorType(toVkDescriptorType(targetRes.type));
                 descriptorSetsWrite.pBufferInfo(bufferInfo);
-                descriptorSetsWrite.descriptorCount(targetRes.count);
+                descriptorSetsWrite.descriptorCount(bufferUpdate.updateCount);
             }
 
-            vkUpdateDescriptorSets(device, descriptorSetsWrites, null);
+            vkUpdateDescriptorSets(VkContextManager.getCurrentDevice(), descriptorSetsWrites, null);
         }
     }
+    public void updateTextures(int frameIndex, ShaderUpdate<Texture>... textureUpdates){
+        try(MemoryStack stack = stackPush()) {
+
+
+            VkWriteDescriptorSet.Buffer descriptorSetsWrites = VkWriteDescriptorSet.calloc(textureUpdates.length, stack);
+
+
+            for (int i = 0; i < textureUpdates.length; i++) {
+                ShaderUpdate<Texture> textureUpdate = textureUpdates[i];
+
+
+                ShaderRes targetRes = null;
+
+                for(ShaderResSet set : resourcesSets){
+                    for(ShaderRes res : set.getShaderResources()){
+                        if(set.set == textureUpdate.set && res.binding == textureUpdate.binding)
+                            targetRes = res;
+                    }
+                }
+
+                VkDescriptorImageInfo.Buffer descriptorImageInfo = VkDescriptorImageInfo.calloc(1, stack);
+                descriptorImageInfo.imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                descriptorImageInfo.imageView(((VkTexture) textureUpdate.update).getImageView());
+                descriptorImageInfo.sampler(((VkTexture) textureUpdate.update).getSampler());
+
+
+                VkWriteDescriptorSet descriptorSetsWrite = descriptorSetsWrites.get(i);
+
+                descriptorSetsWrite.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
+                int descriptorSetIndex = findShaderResSetFromIndex(textureUpdate.set);
+                long descriptorSet = descriptorSets.get(frameIndex).get(descriptorSetIndex);
+
+                descriptorSetsWrite.dstSet(descriptorSet);
+                descriptorSetsWrite.dstBinding(textureUpdate.binding);
+                descriptorSetsWrite.dstArrayElement(textureUpdate.arrayIndex);
+                descriptorSetsWrite.descriptorType(toVkDescriptorType(targetRes.type));
+                descriptorSetsWrite.pImageInfo(descriptorImageInfo);
+                descriptorSetsWrite.descriptorCount(textureUpdate.updateCount);
+            }
+
+            vkUpdateDescriptorSets(VkContextManager.getCurrentDevice(), descriptorSetsWrites, null);
+
+
+        }
+    }
+
 
     private int findShaderResSetFromIndex(int id) {
         for (int i = 0; i < resourcesSets.length; i++) {
@@ -300,6 +307,9 @@ public class VkShaderProgram extends ShaderProgram {
             }
             case ShaderStorageBuffer -> {
                 return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            }
+            case CombinedSampler -> {
+                return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
             }
         }
 

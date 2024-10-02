@@ -15,7 +15,8 @@ public abstract class Buffer implements Disposable {
         VertexBuffer,
         IndexBuffer,
         UniformBuffer,
-        ShaderStorageBuffer
+        ShaderStorageBuffer,
+        ImageBackingBuffer
     }
 
     private Usage usage;

@@ -1,12 +1,7 @@
 package fori.graphics.vulkan;
 
-import fori.asset.Asset;
-import fori.asset.TextureData;
 import fori.graphics.Disposable;
 import fori.graphics.Disposer;
-import static org.lwjgl.vulkan.VK13.*;
-
-import fori.graphics.Texture;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.util.vma.VmaAllocationCreateInfo;
@@ -16,10 +11,12 @@ import org.lwjgl.vulkan.VkExtent3D;
 import org.lwjgl.vulkan.VkImageCreateInfo;
 
 import java.nio.LongBuffer;
-import static org.lwjgl.util.vma.Vma.*;
+
+import static org.lwjgl.util.vma.Vma.vmaCreateImage;
+import static org.lwjgl.vulkan.VK13.*;
 
 
-public class VkImage extends Texture implements Disposable {
+public class VkImage implements Disposable {
 
     private long handle;
     private LongBuffer pImage;
@@ -33,14 +30,6 @@ public class VkImage extends Texture implements Disposable {
     private VkDevice device;
     private int format;
     private VkGlobalAllocator allocator;
-
-    public VkImage(int width, int height){
-        super(width, height);
-    }
-
-    public VkImage(Asset<TextureData> textureData, Filter filter){
-        super(textureData, filter);
-    }
 
 
     public VkImage(VkGlobalAllocator allocator, VkDevice device, int width, int height, int format, int usage, int tiling){
@@ -69,7 +58,7 @@ public class VkImage extends Texture implements Disposable {
 
 
         allocationCreateInfo = VmaAllocationCreateInfo.create();
-        allocationCreateInfo.usage(usage);
+
 
 
         pImage = MemoryUtil.memAllocLong(1);

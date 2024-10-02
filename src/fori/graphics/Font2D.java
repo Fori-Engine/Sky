@@ -24,7 +24,7 @@ public class Font2D {
         this.textureAsset = textureAsset;
         this.fnt = fnt;
 
-        texture = Texture.newTexture2D(textureAsset, Texture.Filter.Linear);
+        //texture = Texture.newTexture(textureAsset, Texture.Filter.Linear);
         createGlyphs();
 
     }
