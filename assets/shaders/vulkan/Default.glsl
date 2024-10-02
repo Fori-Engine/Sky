@@ -1,8 +1,8 @@
 #type vertex
 #version 450
 
-layout(location = 0) in vec3 pos;
-layout(location = 1) in float transformIndex;
+layout(location = 0) in vec3 inputPos;
+layout(location = 1) in float inputTransformIndex;
 layout(location = 2) in vec2 inputUV;
 layout(location = 3) in float inputMaterialBaseIndex;
 
@@ -24,7 +24,7 @@ layout(std140, set = 0, binding = 1) readonly buffer Transforms {
 
 void main() {
 
-    gl_Position = camera.proj * camera.view * transforms.models[int(transformIndex)] * vec4(pos.xyz, 1.0);
+    gl_Position = camera.proj * camera.view * transforms.models[int(inputTransformIndex)] * vec4(inputPos.xyz, 1.0);
 
     outputUV = inputUV;
     outputMaterialBaseIndex = inputMaterialBaseIndex;
@@ -37,7 +37,7 @@ void main() {
 
 layout(location = 0) in vec2 inputUV;
 layout(location = 1) in float inputMaterialBaseIndex;
-layout(location = 0) out vec4 outColor;
+layout(location = 0) out vec4 outputColor;
 
 layout(set = 0, binding = 2) uniform sampler2D[] materials;
 
@@ -45,5 +45,5 @@ layout(set = 0, binding = 2) uniform sampler2D[] materials;
 
 
 void main() {
-    outColor = texture(materials[int(inputMaterialBaseIndex)], inputUV);
+    outputColor = texture(materials[int(inputMaterialBaseIndex)], inputUV);
 }
