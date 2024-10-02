@@ -100,7 +100,7 @@ public class AssetPack {
                 Asset target = null;
                 int sizeBytes = 0;
 
-                if(asset.getName().endsWith(".png")){
+                if(asset.getName().endsWith(".png") || asset.getName().endsWith(".jpg") || asset.getName().endsWith("jpeg")){
                     IntBuffer w = BufferUtils.createIntBuffer(1);
                     IntBuffer h = BufferUtils.createIntBuffer(1);
                     IntBuffer channelsInFile = BufferUtils.createIntBuffer(1);
