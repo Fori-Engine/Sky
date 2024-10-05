@@ -2,8 +2,11 @@ package fori.graphics.vulkan;
 
 import fori.Logger;
 import fori.graphics.*;
+import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
+import org.lwjgl.system.Pointer;
+import org.lwjgl.util.spvc.Spvc;
 import org.lwjgl.vulkan.*;
 
 import java.nio.ByteBuffer;
@@ -21,13 +24,37 @@ public class VkShaderProgram extends ShaderProgram {
     private long vertexShaderModule, fragmentShaderModule;
     private VkPipelineShaderStageCreateInfo.Buffer shaderStages;
 
-    private ArrayList<ArrayList<Long>> descriptorSetLayouts = new ArrayList<>(VkSceneRenderer.FRAMES_IN_FLIGHT);
-    private ArrayList<ArrayList<Long>> descriptorSets = new ArrayList<>(VkSceneRenderer.FRAMES_IN_FLIGHT);
-    private ArrayList<Long> descriptorPools = new ArrayList<>(VkSceneRenderer.FRAMES_IN_FLIGHT);
+    private ArrayList<ArrayList<Long>> descriptorSetLayouts = new ArrayList<>(VkRenderer.FRAMES_IN_FLIGHT);
+    private ArrayList<ArrayList<Long>> descriptorSets = new ArrayList<>(VkRenderer.FRAMES_IN_FLIGHT);
+    private ArrayList<Long> descriptorPools = new ArrayList<>(VkRenderer.FRAMES_IN_FLIGHT);
 
 
     public VkShaderProgram(String vertexShaderSource, String fragmentShaderSource) {
         super(vertexShaderSource, fragmentShaderSource);
+        try(MemoryStack stack = MemoryStack.stackPush()){
+            ByteBuffer entryPoint = MemoryUtil.memUTF8("main");
+            vertexShaderBinary = ShaderCompiler.compile(vertexShaderSource, shaderc_glsl_vertex_shader);
+            fragmentShaderBinary = ShaderCompiler.compile(fragmentShaderSource, shaderc_glsl_fragment_shader);
+
+            vertexShaderModule = createShaderModule(VkContextManager.getCurrentDevice(), vertexShaderBinary.bytecode);
+            fragmentShaderModule = createShaderModule(VkContextManager.getCurrentDevice(), fragmentShaderBinary.bytecode);
+
+            shaderStages = VkPipelineShaderStageCreateInfo.create(2);
+
+
+            VkPipelineShaderStageCreateInfo vertexShaderStageInfo = shaderStages.get(0);
+            vertexShaderStageInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
+            vertexShaderStageInfo.stage(VK_SHADER_STAGE_VERTEX_BIT);
+            vertexShaderStageInfo.module(vertexShaderModule);
+            vertexShaderStageInfo.pName(entryPoint);
+
+            VkPipelineShaderStageCreateInfo fragmentShaderStageInfo = shaderStages.get(1);
+            fragmentShaderStageInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
+            fragmentShaderStageInfo.stage(VK_SHADER_STAGE_FRAGMENT_BIT);
+            fragmentShaderStageInfo.module(fragmentShaderModule);
+            fragmentShaderStageInfo.pName(entryPoint);
+
+        }
     }
 
     public static long createShaderModule(VkDevice device, ByteBuffer spirvCode) {
@@ -54,39 +81,9 @@ public class VkShaderProgram extends ShaderProgram {
             return pShaderModule.get(0);
         }
     }
-
-
-
-
     @Override
-    public void bind(ShaderResSet... resourceSets) {
-        super.bind(resourceSets);
-
-        try(MemoryStack stack = MemoryStack.stackPush()){
-            ByteBuffer entryPoint = MemoryUtil.memUTF8("main");
-            vertexShaderBinary = ShaderCompiler.compile(vertexShaderSource, shaderc_glsl_vertex_shader);
-            fragmentShaderBinary = ShaderCompiler.compile(fragmentShaderSource, shaderc_glsl_fragment_shader);
-
-            vertexShaderModule = createShaderModule(VkContextManager.getCurrentDevice(), vertexShaderBinary.bytecode);
-            fragmentShaderModule = createShaderModule(VkContextManager.getCurrentDevice(), fragmentShaderBinary.bytecode);
-
-            shaderStages = VkPipelineShaderStageCreateInfo.create(2);
-
-
-            VkPipelineShaderStageCreateInfo vertexShaderStageInfo = shaderStages.get(0);
-            vertexShaderStageInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
-            vertexShaderStageInfo.stage(VK_SHADER_STAGE_VERTEX_BIT);
-            vertexShaderStageInfo.module(vertexShaderModule);
-            vertexShaderStageInfo.pName(entryPoint);
-
-            VkPipelineShaderStageCreateInfo fragmentShaderStageInfo = shaderStages.get(1);
-            fragmentShaderStageInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
-            fragmentShaderStageInfo.stage(VK_SHADER_STAGE_FRAGMENT_BIT);
-            fragmentShaderStageInfo.module(fragmentShaderModule);
-            fragmentShaderStageInfo.pName(entryPoint);
-
-        }
-
+    public void bind(Attributes.Type[] attributes, ShaderResSet... resourceSets) {
+        super.bind(attributes, resourceSets);
 
         int frameDescriptorCount = 0;
 
@@ -123,7 +120,7 @@ public class VkShaderProgram extends ShaderProgram {
             descriptorPoolCreateInfo.maxSets(resourceSets.length);
 
 
-            for (int i = 0; i < VkSceneRenderer.FRAMES_IN_FLIGHT; i++) {
+            for (int i = 0; i < VkRenderer.FRAMES_IN_FLIGHT; i++) {
                 LongBuffer pDescriptorPool = MemoryUtil.memAllocLong(1);
                 if (vkCreateDescriptorPool(VkContextManager.getCurrentDevice(), descriptorPoolCreateInfo, null, pDescriptorPool) != VK_SUCCESS) {
                     throw new RuntimeException("Failed to create descriptor pool");
@@ -151,7 +148,7 @@ public class VkShaderProgram extends ShaderProgram {
                     binding.descriptorCount(res.count);
                 }
 
-                for (int i = 0; i < VkSceneRenderer.FRAMES_IN_FLIGHT; i++) {
+                for (int i = 0; i < VkRenderer.FRAMES_IN_FLIGHT; i++) {
                     descriptorSetLayouts.add(new ArrayList<>());
                     descriptorSets.add(new ArrayList<>());
 

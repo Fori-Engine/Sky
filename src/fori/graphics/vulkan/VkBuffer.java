@@ -25,15 +25,20 @@ public class VkBuffer extends Buffer {
     private long memory;
     private PointerBuffer mappedMemory;
 
-    public VkBuffer(int sizeBytes, Usage usage, Type type){
-        super(sizeBytes, usage, type);
+    public VkBuffer(int sizeBytes, Usage usage, Type type, boolean staging){
+        super(sizeBytes, usage, type, staging);
 
 
 
         VkBufferCreateInfo bufferCreateInfo = VkBufferCreateInfo.create();
         bufferCreateInfo.sType(VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO);
         bufferCreateInfo.size(sizeBytes);
-        bufferCreateInfo.usage(toVkUsageType(usage));
+        int vkUsage = toVkUsageType(usage);
+
+        if(type == Type.CPUGPUShared && staging) vkUsage |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+        if(type == Type.GPULocal) vkUsage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+
+        bufferCreateInfo.usage(vkUsage);
 
 
         allocationCreateInfo = VmaAllocationCreateInfo.create();

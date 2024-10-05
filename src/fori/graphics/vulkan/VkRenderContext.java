@@ -147,7 +147,7 @@ public class VkRenderContext extends RenderContext {
                 debugCreateInfo.pfnUserCallback((messageSeverity, messageTypes, pCallbackData, pUserData) -> {
 
                     VkDebugUtilsMessengerCallbackDataEXT callbackData = VkDebugUtilsMessengerCallbackDataEXT.create(pCallbackData);
-                    Logger.info(VkSceneRenderer.class, callbackData.pMessageString());
+                    Logger.info(VkRenderer.class, callbackData.pMessageString());
 
 
                     return VK_FALSE;

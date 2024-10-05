@@ -24,12 +24,14 @@ public abstract class Buffer implements Disposable {
 
     private int sizeBytes;
     private boolean mapped;
+    protected boolean staging;
 
-    public Buffer(int sizeBytes, Usage usage, Type type){
+    public Buffer(int sizeBytes, Usage usage, Type type, boolean staging){
         Disposer.add("managedResources", this);
         this.sizeBytes = sizeBytes;
         this.usage = usage;
         this.type = type;
+        this.staging = staging;
     }
 
     public Usage getUsage() {
@@ -61,8 +63,8 @@ public abstract class Buffer implements Disposable {
         return sizeBytes;
     }
 
-    public static Buffer newBuffer(int sizeBytes, Usage usage, Type type){
-        if(SceneRenderer.getRenderAPI() == RenderAPI.Vulkan) return new VkBuffer(sizeBytes, usage, type);
+    public static Buffer newBuffer(int sizeBytes, Usage usage, Type type, boolean staging){
+        if(Renderer.getRenderAPI() == RenderAPI.Vulkan) return new VkBuffer(sizeBytes, usage, type, staging);
 
         return null;
     }

@@ -18,12 +18,10 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public class VkTexture extends Texture {
 
-    private VkImage image;
-    private VkImageView imageView;
-    private Buffer imageData;
-    private long commandPool;
-    private VkCommandBuffer commandBuffer;
-    private long sampler;
+    public VkImage image;
+    public VkImageView imageView;
+    public Buffer imageData;
+    public long sampler;
 
 
     public VkTexture(Asset<TextureData> textureData, Filter minFilter, Filter magFilter) {
@@ -40,88 +38,12 @@ public class VkTexture extends Texture {
 
 
 
-        imageData = Buffer.newBuffer(getWidth() * getHeight() * 4, Buffer.Usage.ImageBackingBuffer, Buffer.Type.CPUGPUShared);
+        imageData = Buffer.newBuffer(getWidth() * getHeight() * 4, Buffer.Usage.ImageBackingBuffer, Buffer.Type.CPUGPUShared, false);
         ByteBuffer bytes = imageData.map();
         bytes.put(getTextureData());
         imageData.unmap();
 
 
-
-
-        try(MemoryStack stack = stackPush()) {
-            VkCommandPoolCreateInfo commandPoolCreateInfo = VkCommandPoolCreateInfo.calloc(stack);
-            commandPoolCreateInfo.sType(VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO);
-            commandPoolCreateInfo.flags(VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
-            commandPoolCreateInfo.queueFamilyIndex(VkContextManager.getGraphicsFamilyIndex());
-
-            LongBuffer pCommandPool = stack.mallocLong(1);
-
-            if (vkCreateCommandPool(VkContextManager.getCurrentDevice(), commandPoolCreateInfo, null, pCommandPool) != VK_SUCCESS) {
-                throw new RuntimeException(Logger.error(VkTexture.class, "Failed to create command pool!"));
-            }
-            commandPool = pCommandPool.get(0);
-
-            VkCommandBufferAllocateInfo allocInfo = VkCommandBufferAllocateInfo.calloc(stack);
-            allocInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
-            allocInfo.commandPool(commandPool);
-            allocInfo.level(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
-            allocInfo.commandBufferCount(1);
-
-            PointerBuffer pCommandBuffers = stack.mallocPointer(1);
-
-            if (vkAllocateCommandBuffers(VkContextManager.getCurrentDevice(), allocInfo, pCommandBuffers) != VK_SUCCESS) {
-                throw new RuntimeException(Logger.error(VkTexture.class, "Failed to allocate command buffer!"));
-            }
-
-            commandBuffer = new VkCommandBuffer(pCommandBuffers.get(0), VkContextManager.getCurrentDevice());
-
-
-            vkResetCommandBuffer(commandBuffer, 0);
-            {
-
-                VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
-                beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
-
-
-                if (vkBeginCommandBuffer(commandBuffer, beginInfo) != VK_SUCCESS) {
-                    throw new RuntimeException(Logger.error(VkTexture.class, "Failed to begin recording command buffer!"));
-                }
-
-                transitionImageLayout(image.getHandle(),
-                        VK_FORMAT_R8G8B8A8_SRGB,
-                        VK_IMAGE_LAYOUT_UNDEFINED,
-                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
-                VkBufferImageCopy.Buffer imageCopies = VkBufferImageCopy.calloc(1, stack);
-                imageCopies.imageSubresource().aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
-                imageCopies.imageSubresource().layerCount(1);
-                imageCopies.imageExtent().set(getWidth(), getHeight(), 1);
-
-
-                vkCmdCopyBufferToImage(commandBuffer, ((VkBuffer) imageData).getHandle(), image.getHandle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, imageCopies);
-
-                transitionImageLayout(image.getHandle(),
-                        VK_FORMAT_R8G8B8A8_SRGB,
-                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-
-
-
-
-                if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-                    throw new RuntimeException(Logger.error(VkTexture.class, "Failed to finish recording command buffer"));
-                }
-            }
-
-            VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
-            submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
-            submitInfo.pCommandBuffers(stack.pointers(commandBuffer));
-
-            vkQueueSubmit(VkContextManager.getGraphicsQueue(), submitInfo, VK_NULL_HANDLE);
-            vkDeviceWaitIdle(VkContextManager.getCurrentDevice());
-
-        }
 
 
         imageView = new VkImageView(VkContextManager.getCurrentDevice(), image, VK_IMAGE_ASPECT_COLOR_BIT);
@@ -159,7 +81,7 @@ public class VkTexture extends Texture {
 
     }
 
-    private void transitionImageLayout(long image, int format, int oldLayout, int newLayout) {
+    public void transitionImageLayout(VkCommandBuffer commandBuffer, int oldLayout, int newLayout) {
 
         try(MemoryStack stack = stackPush()) {
 
@@ -169,7 +91,7 @@ public class VkTexture extends Texture {
             barrier.newLayout(newLayout);
             barrier.srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
             barrier.dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
-            barrier.image(image);
+            barrier.image(this.image.getHandle());
             barrier.subresourceRange().aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
             barrier.subresourceRange().baseMipLevel(0);
             barrier.subresourceRange().levelCount(1);
@@ -196,7 +118,7 @@ public class VkTexture extends Texture {
                 destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 
             } else {
-                throw new IllegalArgumentException("Unsupported layout transition");
+                throw new IllegalArgumentException(Logger.error(VkTexture.class, "Unsupported Texture layout transition oldLayout(" + oldLayout + " newLayout(" + newLayout + ")"));
             }
 
             vkCmdPipelineBarrier(commandBuffer,

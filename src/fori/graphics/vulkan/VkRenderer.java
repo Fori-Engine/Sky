@@ -1,21 +1,18 @@
 package fori.graphics.vulkan;
 
 import fori.Logger;
-import fori.asset.AssetPacks;
 import fori.graphics.*;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
+import org.w3c.dom.Attr;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -28,11 +25,9 @@ import static org.lwjgl.vulkan.KHRSurface.vkGetPhysicalDeviceSurfacePresentModes
 import static org.lwjgl.vulkan.KHRSwapchain.*;
 import static org.lwjgl.vulkan.KHRSwapchain.vkGetSwapchainImagesKHR;
 import static org.lwjgl.vulkan.VK13.*;
-import static fori.graphics.ShaderRes.Type.*;
-import static fori.graphics.ShaderRes.ShaderStage.*;
 
 
-public class VkSceneRenderer extends SceneRenderer {
+public class VkRenderer extends Renderer {
 
     private static final List<String> validationLayers = new ArrayList<>();
     static {
@@ -41,7 +36,7 @@ public class VkSceneRenderer extends SceneRenderer {
 
     public static final int FRAMES_IN_FLIGHT = 2;
 
-    private static final int UINT64_MAX = 0xFFFFFFFF;
+    public static final int UINT64_MAX = 0xFFFFFFFF;
     private long debugMessenger;
     private VkPhysicalDevice physicalDevice;
     private VkPhysicalDeviceProperties physicalDeviceProperties;
@@ -60,11 +55,8 @@ public class VkSceneRenderer extends SceneRenderer {
     private long renderPass;
     private VkFrame[] frames = new VkFrame[FRAMES_IN_FLIGHT];
     private int frameIndex;
-    private VkPipeline pipeline;
     private long sharedCommandPool;
     private boolean resized = false;
-    private ShaderProgram shaderProgram;
-    private Buffer vertexBuffer, indexBuffer, cameraBuffer, transformsBuffer;
 
 
     private VkImage depthBuffer;
@@ -75,7 +67,8 @@ public class VkSceneRenderer extends SceneRenderer {
 
 
 
-    public VkSceneRenderer(VkInstance instance, long surface, int width, int height, RendererSettings rendererSettings, long debugMessenger) {
+
+    public VkRenderer(VkInstance instance, long surface, int width, int height, RendererSettings rendererSettings, long debugMessenger) {
         this(width, height, rendererSettings);
         this.instance = instance;
         this.surface = surface;
@@ -85,7 +78,7 @@ public class VkSceneRenderer extends SceneRenderer {
         physicalDevice = selectPhysicalDevice(instance, surface);
         physicalDeviceProperties = getPhysicalDeviceProperties(physicalDevice);
         VkContextManager.setPhysicalDeviceProperties(physicalDeviceProperties);
-        Logger.info(VkSceneRenderer.class, "Selected Physical Device " + physicalDeviceProperties.deviceNameString());
+        Logger.info(VkRenderer.class, "Selected Physical Device " + physicalDeviceProperties.deviceNameString());
         device = createDevice(physicalDevice, rendererSettings.validation);
 
         VkContextManager.setCurrentDevice(device);
@@ -103,7 +96,7 @@ public class VkSceneRenderer extends SceneRenderer {
         swapchain = createSwapChain(device, surface, width, height, rendererSettings.vsync);
         swapchainImageViews = createSwapchainImageViews(device, swapchain);
 
-        Logger.info(VkSceneRenderer.class, "Max Allowed Allocations: " + physicalDeviceProperties.limits().maxMemoryAllocationCount());
+        Logger.info(VkRenderer.class, "Max Allowed Allocations: " + physicalDeviceProperties.limits().maxMemoryAllocationCount());
 
 
         //Sync Objects
@@ -136,6 +129,9 @@ public class VkSceneRenderer extends SceneRenderer {
             }
         }
 
+        VkGlobalAllocator.init(instance, device, physicalDevice);
+        allocator = VkGlobalAllocator.getAllocator();
+        /*
         ShaderReader.ShaderSources shaderSources = ShaderReader.readCombinedVertexFragmentSources(
                 AssetPacks.<String> getAsset("core:assets/shaders/vulkan/Default.glsl").asset
         );
@@ -187,8 +183,7 @@ public class VkSceneRenderer extends SceneRenderer {
         //End Frame
 
 
-        VkGlobalAllocator.init(instance, device, physicalDevice);
-        allocator = VkGlobalAllocator.getAllocator();
+
 
 
 
@@ -340,7 +335,7 @@ public class VkSceneRenderer extends SceneRenderer {
             proj.get(matrixSizeBytes, cameraBufferData);
         }
 
-
+`
         transformsBuffer = Buffer.newBuffer(
                 matrixSizeBytes * 10,
                 Buffer.Usage.ShaderStorageBuffer,
@@ -378,6 +373,8 @@ public class VkSceneRenderer extends SceneRenderer {
             );
 
         }
+
+         */
 
         sharedCommandPool = createCommandPool(device, physicalDeviceQueueFamilies.graphicsFamily);
         for(int i = 0; i < FRAMES_IN_FLIGHT; i++) {
@@ -428,7 +425,7 @@ public class VkSceneRenderer extends SceneRenderer {
         renderPass = createRenderPass(device, swapchain, depthBuffer);
         swapchainFramebuffers = createSwapchainFramebuffers(device, swapchain, swapchainImageViews, renderPass, depthBufferImageView);
 
-        pipeline = createPipeline(device, swapchain, ((VkShaderProgram) shaderProgram).getShaderStages(), renderPass);
+        //pipeline = createPipeline(device, swapchain, ((VkShaderProgram) shaderProgram).getShaderStages(), renderPass);
 
 
 
@@ -452,7 +449,7 @@ public class VkSceneRenderer extends SceneRenderer {
 
 
     }
-    public VkSceneRenderer(int width, int height, RendererSettings rendererSettings) {
+    public VkRenderer(int width, int height, RendererSettings rendererSettings) {
         super(width, height, rendererSettings);
     }
 
@@ -664,7 +661,7 @@ public class VkSceneRenderer extends SceneRenderer {
         }
 
 
-        Logger.info(VkSceneRenderer.class, "Unable to find sRGB VkSurfaceFormatKHR, using default. Colors may look incorrect.");
+        Logger.info(VkRenderer.class, "Unable to find sRGB VkSurfaceFormatKHR, using default. Colors may look incorrect.");
 
         return availableFormats.get(0);
 
@@ -931,65 +928,59 @@ public class VkSceneRenderer extends SceneRenderer {
             return pRenderPass.get(0);
         }
     }
-    private VkPipeline createPipeline(VkDevice device, VkSwapchain swapchain, VkPipelineShaderStageCreateInfo.Buffer shaderStages, long renderPass) {
+    private VkPipeline createPipeline(VkDevice device, VkSwapchain swapchain, VkShaderProgram shaderProgram, long renderPass) {
 
+        Attributes.Type[] attributes = shaderProgram.getAttributes();
         long pipelineLayout;
         long graphicsPipeline = 0;
 
         try(MemoryStack stack = stackPush()) {
 
             VkPipelineVertexInputStateCreateInfo vertexInputInfo = VkPipelineVertexInputStateCreateInfo.calloc(stack);
+            vertexInputInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO);
             {
-                vertexInputInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO);
+
+                Function<Integer, Integer> attributeSizeToVulkanParam = attributeSize -> {
+                    switch(attributeSize){
+                        case 1: return VK_FORMAT_R32_SFLOAT;
+                        case 2: return VK_FORMAT_R32G32_SFLOAT;
+                        case 3: return VK_FORMAT_R32G32B32_SFLOAT;
+                    }
+                    return 0;
+                };
+
+                int vertexSize = 0;
+                for(Attributes.Type attribute : attributes){
+                    vertexSize += attribute.size;
+                }
 
 
                 VkVertexInputBindingDescription.Buffer bindingDescription =
                         VkVertexInputBindingDescription.calloc(1, stack);
 
+
                 bindingDescription.binding(0);
-                bindingDescription.stride(7 * Float.BYTES);
+                bindingDescription.stride(vertexSize * Float.BYTES);
                 bindingDescription.inputRate(VK_VERTEX_INPUT_RATE_VERTEX);
                 vertexInputInfo.pVertexBindingDescriptions(bindingDescription);
 
 
 
                 VkVertexInputAttributeDescription.Buffer attributeDescriptions =
-                        VkVertexInputAttributeDescription.calloc(4);
+                        VkVertexInputAttributeDescription.calloc(attributes.length);
 
-                // Position
-                VkVertexInputAttributeDescription posDescription = attributeDescriptions.get(0);
-                {
-                    posDescription.binding(0);
-                    posDescription.location(0);
-                    posDescription.format(VK_FORMAT_R32G32B32_SFLOAT);
-                    posDescription.offset(0);
-                }
+                int offset = 0;
 
-                // Transform Index
-                VkVertexInputAttributeDescription transformIndexDescription = attributeDescriptions.get(1);
-                {
-                    transformIndexDescription.binding(0);
-                    transformIndexDescription.location(1);
-                    transformIndexDescription.format(VK_FORMAT_R32_SFLOAT);
-                    transformIndexDescription.offset(3 * Float.BYTES);
-                }
-                // UV
-                VkVertexInputAttributeDescription uvDescription = attributeDescriptions.get(2);
-                {
-                    uvDescription.binding(0);
-                    uvDescription.location(2);
-                    uvDescription.format(VK_FORMAT_R32G32_SFLOAT);
-                    uvDescription.offset(4 * Float.BYTES);
+                for (int i = 0; i < attributes.length; i++) {
+                    VkVertexInputAttributeDescription attribute = attributeDescriptions.get(i);
+                    attribute.binding(0);
+                    attribute.location(i);
+                    attribute.format(attributeSizeToVulkanParam.apply(attributes[i].size));
+                    attribute.offset(offset);
+
+                    offset += attributes[i].size * Float.BYTES;
                 }
 
-                // Material Base Index
-                VkVertexInputAttributeDescription materialBaseIndexDescription = attributeDescriptions.get(3);
-                {
-                    materialBaseIndexDescription.binding(0);
-                    materialBaseIndexDescription.location(3);
-                    materialBaseIndexDescription.format(VK_FORMAT_R32_SFLOAT);
-                    materialBaseIndexDescription.offset(6 * Float.BYTES);
-                }
 
 
 
@@ -1083,7 +1074,7 @@ public class VkSceneRenderer extends SceneRenderer {
             {
                 pipelineLayoutInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
                 pipelineLayoutInfo.setLayoutCount(4);
-                pipelineLayoutInfo.pSetLayouts(stack.longs(((VkShaderProgram) shaderProgram).getAllDescriptorSetLayouts()));
+                pipelineLayoutInfo.pSetLayouts(stack.longs(shaderProgram.getAllDescriptorSetLayouts()));
 
 
             }
@@ -1098,7 +1089,7 @@ public class VkSceneRenderer extends SceneRenderer {
             VkGraphicsPipelineCreateInfo.Buffer pipelineInfo = VkGraphicsPipelineCreateInfo.calloc(1, stack);
             {
                 pipelineInfo.sType(VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO);
-                pipelineInfo.pStages(shaderStages);
+                pipelineInfo.pStages(shaderProgram.getShaderStages());
                 pipelineInfo.pVertexInputState(vertexInputInfo);
                 pipelineInfo.pInputAssemblyState(inputAssembly);
                 pipelineInfo.pViewportState(viewportState);
@@ -1174,7 +1165,12 @@ public class VkSceneRenderer extends SceneRenderer {
         renderPass = createRenderPass(device, swapchain, depthBuffer);
         swapchainFramebuffers = createSwapchainFramebuffers(device, swapchain, swapchainImageViews, renderPass, depthBufferImageView);
 
-        pipeline = createPipeline(device, swapchain, ((VkShaderProgram) shaderProgram).getShaderStages(), renderPass);
+        for(RenderCommand renderCommand : queuedCommands){
+            VkRenderCommand vkRenderCommand = (VkRenderCommand) renderCommand;
+
+            vkRenderCommand.pipeline = createPipeline(device, swapchain, (VkShaderProgram) vkRenderCommand.shaderProgram, renderPass);
+
+        }
         frameIndex = 0;
     }
 
@@ -1182,8 +1178,12 @@ public class VkSceneRenderer extends SceneRenderer {
 
 
         vkDeviceWaitIdle(device);
-        vkDestroyPipeline(device, pipeline.pipeline, null);
+        for(RenderCommand renderCommand : queuedCommands){
+            VkRenderCommand vkRenderCommand = (VkRenderCommand) renderCommand;
 
+            vkDestroyPipeline(device, vkRenderCommand.pipeline.pipeline, null);
+
+        }
         vkDestroyImage(device, depthBuffer.getHandle(), null);
         vkDestroyImageView(device, depthBufferImageView.getHandle(), null);
 
@@ -1213,6 +1213,116 @@ public class VkSceneRenderer extends SceneRenderer {
         this.height = height;
 
         resized = true;
+    }
+
+    @Override
+    public RenderCommand queueCommand(ShaderProgram shaderProgram, int vertexCount, int indexCount, int meshCount, Texture... textures) {
+        VkRenderCommand renderCommand = new VkRenderCommand(FRAMES_IN_FLIGHT, sharedCommandPool, graphicsQueue, device, textures);
+        queuedCommands.add(renderCommand);
+
+        int matrixSizeBytes = 4 * 4 * Float.BYTES;
+
+        renderCommand.stagingVertexBuffer = Buffer.newBuffer(
+                Attributes.getSize(shaderProgram.getAttributes()) * Float.BYTES * vertexCount,
+                Buffer.Usage.VertexBuffer,
+                Buffer.Type.CPUGPUShared,
+                true
+        );
+        renderCommand.vertexBuffer = Buffer.newBuffer(
+                Attributes.getSize(shaderProgram.getAttributes()) * Float.BYTES * vertexCount,
+                Buffer.Usage.VertexBuffer,
+                Buffer.Type.GPULocal,
+                false
+        );
+
+        renderCommand.stagingIndexBuffer = Buffer.newBuffer(
+                indexCount * Integer.BYTES,
+                Buffer.Usage.IndexBuffer,
+                Buffer.Type.CPUGPUShared,
+                true
+        );
+        renderCommand.indexBuffer = Buffer.newBuffer(
+                indexCount * Integer.BYTES,
+                Buffer.Usage.IndexBuffer,
+                Buffer.Type.GPULocal,
+                false
+        );
+        renderCommand.indexCount = indexCount;
+
+
+        for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
+
+
+
+
+
+            renderCommand.cameraBuffer[i] = Buffer.newBuffer(
+                    matrixSizeBytes * 2,
+                    Buffer.Usage.UniformBuffer,
+                    Buffer.Type.CPUGPUShared,
+                    false
+            );
+            ByteBuffer cameraBufferData = renderCommand.cameraBuffer[i].map();
+            {
+                Matrix4f view = new Matrix4f().lookAt(new Vector3f(1.0f, 2.0f, 3.0f), new Vector3f(0, 0, 0), new Vector3f(0.0f, 1.0f, 0.0f));
+                view.get(0, cameraBufferData);
+
+                Matrix4f proj = new Matrix4f().perspective((float) Math.toRadians(35.0f), (float) width / height, 0.01f, 100.0f, true);
+                proj.m11(proj.m11() * -1);
+                proj.get(matrixSizeBytes, cameraBufferData);
+            }
+
+
+            renderCommand.transformsBuffer[i] = Buffer.newBuffer(
+                    matrixSizeBytes * meshCount,
+                    Buffer.Usage.ShaderStorageBuffer,
+                    Buffer.Type.CPUGPUShared,
+                    false
+            );
+
+        }
+
+
+
+
+        renderCommand.shaderProgram = shaderProgram;
+        renderCommand.pipeline = createPipeline(device, swapchain, (VkShaderProgram) shaderProgram, renderPass);
+
+        ShaderUpdate<Texture>[] textureUpdates = new ShaderUpdate[textures.length];
+        for (int i = 0; i < textureUpdates.length; i++) {
+            textureUpdates[i] = new ShaderUpdate<>("materials", 0, 2, textures[i]).arrayIndex(i);
+        }
+
+
+
+
+        for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
+
+            shaderProgram.updateBuffers(
+                    i,
+                    new ShaderUpdate<>("camera", 0, 0, renderCommand.cameraBuffer[i]),
+                    new ShaderUpdate<>("transforms", 0, 1, renderCommand.transformsBuffer[i])
+            );
+
+            shaderProgram.updateTextures(
+                    i,
+                    textureUpdates
+            );
+
+        }
+
+
+        return renderCommand;
+    }
+
+    @Override
+    public void removeCommand(RenderCommand renderCommand) {
+        if(queuedCommands.contains(renderCommand)){
+            queuedCommands.remove(renderCommand);
+        }
+        else {
+            throw new RuntimeException(Logger.error(VkRenderer.class, "Cannot remove a RenderCommand which was never placed in the queue"));
+        }
     }
 
     @Override
@@ -1279,22 +1389,29 @@ public class VkSceneRenderer extends SceneRenderer {
 
                 vkCmdBeginRenderPass(commandBuffer, renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
                 {
-                    VkBuffer vertexBuffer = ((VkBuffer) this.vertexBuffer);
-                    VkBuffer indexBuffer = ((VkBuffer) this.indexBuffer);
-
-                    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
-                    LongBuffer vertexBuffers = stack.longs(vertexBuffer.getHandle());
-                    LongBuffer offsets = stack.longs(0);
-
-                    vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
-                    vkCmdBindIndexBuffer(commandBuffer, indexBuffer.getHandle(), 0, VK_INDEX_TYPE_UINT32);
-                    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            pipeline.pipelineLayout, 0, stack.longs(((VkShaderProgram) shaderProgram).getDescriptorSets(frameIndex)), null);
 
 
+                    for(RenderCommand renderCommand : queuedCommands) {
+
+                        VkBuffer vertexBuffer = (VkBuffer) renderCommand.vertexBuffer;
+                        VkBuffer indexBuffer = (VkBuffer) renderCommand.indexBuffer;
+                        VkPipeline pipeline = ((VkRenderCommand) renderCommand).pipeline;
+                        VkShaderProgram shaderProgram = (VkShaderProgram) renderCommand.shaderProgram;
 
 
-                    vkCmdDrawIndexed(commandBuffer, 12, 1, 0, 0, 0);
+                        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
+
+                        LongBuffer vertexBuffers = stack.longs(vertexBuffer.getHandle());
+                        LongBuffer offsets = stack.longs(0);
+
+                        vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
+                        vkCmdBindIndexBuffer(commandBuffer, indexBuffer.getHandle(), 0, VK_INDEX_TYPE_UINT32);
+                        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                pipeline.pipelineLayout, 0, stack.longs(shaderProgram.getDescriptorSets(frameIndex)), null);
+
+
+                        vkCmdDrawIndexed(commandBuffer, renderCommand.indexCount, 1, 0, 0, 0);
+                    }
                 }
                 vkCmdEndRenderPass(commandBuffer);
 
@@ -1338,6 +1455,11 @@ public class VkSceneRenderer extends SceneRenderer {
         }
 
 
+    }
+
+    @Override
+    public int getFrameIndex() {
+        return frameIndex;
     }
 
 

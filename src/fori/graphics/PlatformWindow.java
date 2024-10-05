@@ -66,7 +66,7 @@ public class PlatformWindow {
         glfwShowWindow(window);
     }
 
-    public void onRenderContextReady(RenderContext renderContext, SceneRenderer sceneRenderer){
+    public void onRenderContextReady(RenderContext renderContext, Renderer renderer){
 
         glfwSetFramebufferSizeCallback(window, (window, width, height) -> {
 
@@ -81,7 +81,7 @@ public class PlatformWindow {
 
 
 
-            sceneRenderer.onSurfaceResized(w[0], h[0]);
+            renderer.onSurfaceResized(w[0], h[0]);
 
 
         });

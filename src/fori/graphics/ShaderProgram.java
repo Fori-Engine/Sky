@@ -9,6 +9,7 @@ public abstract class ShaderProgram implements Disposable {
     protected String vertexShaderSource = null;
     protected String fragmentShaderSource = null;
     protected ShaderResSet[] resourcesSets;
+    protected Attributes.Type[] attributes;
 
 
     public ShaderProgram(String vertexShaderSource, String fragmentShaderSource){
@@ -22,7 +23,10 @@ public abstract class ShaderProgram implements Disposable {
     public abstract void updateBuffers(int frameIndex, ShaderUpdate<Buffer>... bufferUpdates);
     public abstract void updateTextures(int frameIndex, ShaderUpdate<Texture>... textureUpdates);
 
-    public void bind(ShaderResSet... resourceSets){
+    public void bind(Attributes.Type[] attributes, ShaderResSet... resourceSets){
+
+        this.attributes = attributes;
+
 
         int i = 0;
 
@@ -35,9 +39,14 @@ public abstract class ShaderProgram implements Disposable {
 
         this.resourcesSets = resourceSets;
     }
+
+    public Attributes.Type[] getAttributes() {
+        return attributes;
+    }
+
     public abstract void dispose();
     public static ShaderProgram newShaderProgram(String vertexShaderSource, String fragmentShaderSource){
-        if(SceneRenderer.getRenderAPI() == RenderAPI.Vulkan){
+        if(Renderer.getRenderAPI() == RenderAPI.Vulkan){
             return new VkShaderProgram(vertexShaderSource, fragmentShaderSource);
         }
 

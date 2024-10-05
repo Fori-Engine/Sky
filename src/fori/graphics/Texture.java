@@ -52,7 +52,7 @@ public abstract class Texture implements Disposable {
     }
 
     public static Texture newTexture(Asset<TextureData> textureData, Filter minFilter, Filter magFilter){
-        if(SceneRenderer.getRenderAPI() == RenderAPI.Vulkan) return new VkTexture(textureData, minFilter, magFilter);
+        if(Renderer.getRenderAPI() == RenderAPI.Vulkan) return new VkTexture(textureData, minFilter, magFilter);
         return null;
     }
 
