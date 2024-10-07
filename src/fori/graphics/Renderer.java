@@ -29,10 +29,16 @@ public abstract class Renderer implements Disposable {
 
     public abstract RenderCommand queueCommand(ShaderProgram shaderProgram, int vertexCount, int indexCount, int meshCount, Texture... textures);
     public abstract void removeCommand(RenderCommand renderCommand);
-
-
     public abstract void update();
     public abstract int getFrameIndex();
+
+    public int getWidth() {
+        return width;
+    }
+
+    public int getHeight() {
+        return height;
+    }
 
     public static Renderer newRenderer(PlatformWindow window, int width, int height, RendererSettings settings){
         api = settings.backend;

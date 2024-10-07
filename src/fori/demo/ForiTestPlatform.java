@@ -139,122 +139,20 @@ public class ForiTestPlatform {
 
         }
 
-        /*
-        
-        float[] vertices;
-        {
-            vertices = new float[]{
-                    //Coords
-                    -0.5f,
-                    -0.5f,
-                    0.5f,
-                    //Transform Index
-                    0,
-                    //UV
-                    1,
-                    0,
-                    //Material Base Index
-                    0,
-
-
-                    //Coords
-                    0.5f,
-                    -0.5f,
-                    0.5f,
-                    //Transform Index
-                    0,
-                    //UV
-                    0,
-                    0,
-                    //Material Base Index
-                    0,
-
-
-                    //Coords
-                    0.5f,
-                    0.5f,
-                    0.5f,
-                    //Transform Index
-                    0,
-                    //UV
-                    0,
-                    1,
-                    //Material Base Index
-                    0,
-
-
-                    //Coords
-                    -0.5f,
-                    0.5f,
-                    0.5f,
-                    //Transform Index
-                    0,
-                    //UV
-                    1,
-                    1,
-                    //Material Base Index
-                    0,
-
-
-                    //Mesh 2
-
-                    //Coords
-                    -0.5f,
-                    -0.5f,
-                    -0.5f,
-                    //Transform Index
-                    1,
-                    //UV
-                    1,
-                    0,
-                    //Material Base Index
-                    1,
-
-                    //Coords
-                    0.5f,
-                    -0.5f,
-                    -0.5f,
-                    //Transform Index
-                    1,
-                    //UV
-                    0,
-                    0,
-                    //Material Base Index
-                    1,
-
-                    //Coords
-                    0.5f,
-                    0.5f,
-                    -0.5f,
-                    //Transform Index
-                    1,
-                    //UV
-                    0,
-                    1,
-                    //Material Base Index
-                    1,
-
-                    //Coords
-                    -0.5f,
-                    0.5f,
-                    -0.5f,
-                    //Transform Index
-                    1,
-                    //UV
-                    1,
-                    1,
-                    //Material Base Index
-                    1,
-            };
-        }
-        int[] indices = {
-            0, 1, 2, 2, 3, 0,
-            4, 5, 6, 6, 7, 4
-        };
-
-         */
 
         Texture texture1 = Texture.newTexture(AssetPacks.getAsset("core:assets/viking_room.png"), Texture.Filter.Nearest, Texture.Filter.Nearest);
+
+
+
+        Camera camera = new Camera(
+                new Matrix4f().lookAt(new Vector3f(0.0f, 2.0f, 3.0f), new Vector3f(0, 0, 0), new Vector3f(0.0f, 1.0f, 0.0f)),
+                new Matrix4f().perspective((float) Math.toRadians(35.0f), (float) renderer.getWidth() / renderer.getHeight(), 0.01f, 100.0f, true),
+                true
+        );
+
+
+
+
 
         RenderCommand renderCommand = renderer.queueCommand(
                shaderProgram,
@@ -264,19 +162,18 @@ public class ForiTestPlatform {
                texture1
         );
 
-         ByteBuffer vertexBuffer = renderCommand.getDefaultVertexBuffer().map();
-         for(float vertexPart : vertices){
-             vertexBuffer.putFloat(vertexPart);
-         }
+        ByteBuffer vertexBuffer = renderCommand.getDefaultVertexBuffer().map();
+        for(float vertexPart : vertices){
+            vertexBuffer.putFloat(vertexPart);
+        }
 
+        ByteBuffer indexBuffer = renderCommand.getDefaultIndexBuffer().map();
+        for(int index : indices){
+            indexBuffer.putInt(index);
+        }
 
+        renderCommand.update();
 
-         ByteBuffer indexBuffer = renderCommand.getDefaultIndexBuffer().map();
-         for(int index : indices){
-             indexBuffer.putInt(index);
-         }
-
-         renderCommand.update();
 
 
 
@@ -284,10 +181,17 @@ public class ForiTestPlatform {
 
 
         ArrayList<ByteBuffer> transformsBufferData = new ArrayList<>();
+        ArrayList<ByteBuffer> camerasBufferData = new ArrayList<>();
+
 
         for(Buffer transformsBuffer : renderCommand.transformsBuffer){
             transformsBufferData.add(transformsBuffer.map());
         }
+        for(Buffer cameraBuffer : renderCommand.cameraBuffer){
+            camerasBufferData.add(cameraBuffer.map());
+        }
+
+
 
         float rotation = 0f;
 
@@ -305,6 +209,20 @@ public class ForiTestPlatform {
             transform0.get(0, transformsBuffer);
 
             rotation += 10 * Time.deltaTime();
+
+            ByteBuffer cameraBufferData = camerasBufferData.get(renderer.getFrameIndex());
+            {
+                camera.getView().get(0, cameraBufferData);
+                camera.getProj().get(4 * 4 * Float.BYTES, cameraBufferData);
+            }
+
+
+
+
+
+
+
+
 
 
             System.out.println("FPS: " + Time.framesPerSecond());

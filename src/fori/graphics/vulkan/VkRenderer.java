@@ -1257,15 +1257,7 @@ public class VkRenderer extends Renderer {
                     Buffer.Type.CPUGPUShared,
                     false
             );
-            ByteBuffer cameraBufferData = renderCommand.cameraBuffer[i].map();
-            {
-                Matrix4f view = new Matrix4f().lookAt(new Vector3f(1.0f, 2.0f, 3.0f), new Vector3f(0, 0, 0), new Vector3f(0.0f, 1.0f, 0.0f));
-                view.get(0, cameraBufferData);
 
-                Matrix4f proj = new Matrix4f().perspective((float) Math.toRadians(35.0f), (float) width / height, 0.01f, 100.0f, true);
-                proj.m11(proj.m11() * -1);
-                proj.get(matrixSizeBytes, cameraBufferData);
-            }
 
 
             renderCommand.transformsBuffer[i] = Buffer.newBuffer(
@@ -1305,7 +1297,6 @@ public class VkRenderer extends Renderer {
             );
 
         }
-
 
         return renderCommand;
     }
