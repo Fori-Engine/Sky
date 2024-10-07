@@ -29,11 +29,6 @@ import static org.lwjgl.vulkan.VK13.*;
 
 public class VkRenderer extends Renderer {
 
-    private static final List<String> validationLayers = new ArrayList<>();
-    static {
-        validationLayers.add("VK_LAYER_KHRONOS_validation");
-    }
-
     public static final int FRAMES_IN_FLIGHT = 2;
 
     public static final int UINT64_MAX = 0xFFFFFFFF;
