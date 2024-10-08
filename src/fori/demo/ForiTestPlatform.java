@@ -40,55 +40,56 @@ public class ForiTestPlatform {
         ArrayList<Float> vertices = new ArrayList<>();
         ArrayList<Integer> indices = new ArrayList<>();
 
+        {
 
-        AIScene aiScene = Assimp.aiImportFile("assets/viking_room.obj", aiProcess_Triangulate | aiProcess_FlipUVs);
-        int numMaterials = aiScene.mNumMaterials();
-        PointerBuffer aiMaterials = aiScene.mMaterials();
+            AIScene aiScene = Assimp.aiImportFile("assets/viking_room.obj", aiProcess_Triangulate | aiProcess_FlipUVs);
+            int numMaterials = aiScene.mNumMaterials();
+            PointerBuffer aiMaterials = aiScene.mMaterials();
 
-        for (int i = 0; i < numMaterials; i++) {
-            AIMaterial aiMaterial = AIMaterial.create(aiMaterials.get(i));
-        }
-
-        int numMeshes = aiScene.mNumMeshes();
-
-        PointerBuffer aiMeshes = aiScene.mMeshes();
-
-        for (int i = 0; i < numMeshes; i++) {
-            AIMesh aiMesh = AIMesh.create(aiMeshes.get(i));
-            AIVector3D.Buffer aiVertices = aiMesh.mVertices();
-
-            int vertexIndex = 0;
-
-            while (aiVertices.remaining() > 0) {
-                AIVector3D aiVertex = aiVertices.get();
-                AIVector3D aiTextureCoords = aiMesh.mTextureCoords(0).get(vertexIndex);
-
-                vertices.add(aiVertex.x());
-                vertices.add(aiVertex.y());
-                vertices.add(aiVertex.z());
-                vertices.add(0f);
-
-                System.out.println(aiTextureCoords.x() + " " + aiTextureCoords.y());
-
-                vertices.add(aiTextureCoords.x());
-                vertices.add(aiTextureCoords.y());
-
-                vertices.add(0f);
-
-                vertexIndex++;
+            for (int i = 0; i < numMaterials; i++) {
+                AIMaterial aiMaterial = AIMaterial.create(aiMaterials.get(i));
             }
 
+            int numMeshes = aiScene.mNumMeshes();
 
+            PointerBuffer aiMeshes = aiScene.mMeshes();
 
-            for (int j = 0; j < aiMesh.mNumFaces(); j++) {
-                AIFace aiFace = aiMesh.mFaces().get(j);
+            for (int i = 0; i < numMeshes; i++) {
+                AIMesh aiMesh = AIMesh.create(aiMeshes.get(i));
+                AIVector3D.Buffer aiVertices = aiMesh.mVertices();
 
-                IntBuffer indicesBuffer = aiFace.mIndices();
-                for (int k = 0; k < indicesBuffer.capacity(); k++) {
-                    indices.add(indicesBuffer.get(k));
+                int vertexIndex = 0;
+
+                while (aiVertices.remaining() > 0) {
+                    AIVector3D aiVertex = aiVertices.get();
+                    AIVector3D aiTextureCoords = aiMesh.mTextureCoords(0).get(vertexIndex);
+
+                    vertices.add(aiVertex.x());
+                    vertices.add(aiVertex.y());
+                    vertices.add(aiVertex.z());
+                    vertices.add(0f);
+
+                    System.out.println(aiTextureCoords.x() + " " + aiTextureCoords.y());
+
+                    vertices.add(aiTextureCoords.x());
+                    vertices.add(aiTextureCoords.y());
+
+                    vertices.add(0f);
+
+                    vertexIndex++;
                 }
-            }
 
+
+                for (int j = 0; j < aiMesh.mNumFaces(); j++) {
+                    AIFace aiFace = aiMesh.mFaces().get(j);
+
+                    IntBuffer indicesBuffer = aiFace.mIndices();
+                    for (int k = 0; k < indicesBuffer.capacity(); k++) {
+                        indices.add(indicesBuffer.get(k));
+                    }
+                }
+
+            }
         }
 
 
@@ -140,6 +141,52 @@ public class ForiTestPlatform {
         }
 
 
+        ShaderProgram uiShaderProgram;
+        {
+            ShaderReader.ShaderSources shaderSources = ShaderReader.readCombinedVertexFragmentSources(
+                    AssetPacks.<String> getAsset("core:assets/shaders/vulkan/Default.glsl").asset
+            );
+
+            int matrixSizeBytes = 4 * 4 * Float.BYTES;
+
+            uiShaderProgram = ShaderProgram.newShaderProgram(shaderSources.vertexShader, shaderSources.fragmentShader);
+
+            uiShaderProgram.bind(
+                    new Attributes.Type[]{
+                            PositionFloat3,
+                            TransformIndexFloat1,
+                            UVFloat2,
+                            MaterialBaseIndexFloat1
+
+                    },
+                    new ShaderResSet(
+                            0,
+                            new ShaderRes(
+                                    "camera",
+                                    0,
+                                    UniformBuffer,
+                                    VertexStage
+                            ).sizeBytes(2 * matrixSizeBytes),
+                            new ShaderRes(
+                                    "transforms",
+                                    1,
+                                    ShaderStorageBuffer,
+                                    VertexStage
+                            ).sizeBytes(1 * matrixSizeBytes),
+                            new ShaderRes(
+                                    "materials",
+                                    2,
+                                    CombinedSampler,
+                                    FragmentStage
+                            ).count(1)
+                    )
+            );
+
+        }
+
+
+
+
         Texture texture1 = Texture.newTexture(AssetPacks.getAsset("core:assets/viking_room.png"), Texture.Filter.Nearest, Texture.Filter.Nearest);
 
 
@@ -150,29 +197,99 @@ public class ForiTestPlatform {
                 true
         );
 
-
-
-
-
-        RenderCommand renderCommand = renderer.queueCommand(
-               shaderProgram,
-               vertices.size() / 7,
-               indices.size(),
-               1,
-               texture1
+        Camera uiCamera = new Camera(
+                new Matrix4f().identity(),
+                new Matrix4f().ortho(0, renderer.getWidth(), 0, renderer.getHeight(), 0, 1, true),
+                false
         );
 
-        ByteBuffer vertexBuffer = renderCommand.getDefaultVertexBuffer().map();
-        for(float vertexPart : vertices){
-            vertexBuffer.putFloat(vertexPart);
+
+
+
+
+        RenderCommand renderCommand;
+        {
+            renderCommand = renderer.queueCommand(
+                    shaderProgram,
+                    vertices.size() / 7,
+                    indices.size(),
+                    1,
+                    texture1
+            );
+
+            ByteBuffer vertexBuffer = renderCommand.getDefaultVertexBuffer().map();
+            for (float vertexPart : vertices) {
+                vertexBuffer.putFloat(vertexPart);
+            }
+
+            ByteBuffer indexBuffer = renderCommand.getDefaultIndexBuffer().map();
+            for (int index : indices) {
+                indexBuffer.putInt(index);
+            }
+
+            renderCommand.update();
         }
 
-        ByteBuffer indexBuffer = renderCommand.getDefaultIndexBuffer().map();
-        for(int index : indices){
-            indexBuffer.putInt(index);
-        }
+        RenderCommand uiRenderCommand;
+        {
+            uiRenderCommand = renderer.queueCommand(
+                    uiShaderProgram,
+                    4,
+                    6,
+                    1,
+                    texture1
+            );
 
-        renderCommand.update();
+            /*
+            PositionFloat3,
+                            TransformIndexFloat1,
+                            UVFloat2,
+                            MaterialBaseIndexFloat1
+             */
+
+            float[] quadVertices = new float[]{
+                    0.0f, 0.0f, 0.0f,
+                    0.0f,
+                    0.0f, 0.0f,
+                    0.0f,
+
+                    0.0f, 300.0f, 0.0f,
+                    0.0f,
+                    0.0f, 1.0f,
+                    0.0f,
+
+                    300.0f, 300.0f, 0.0f,
+                    0.0f,
+                    1.0f, 1.0f,
+                    0.0f,
+
+                    300.0f, 0.0f, 0.0f,
+                    0.0f,
+                    1.0f, 0.0f,
+                    0.0f,
+
+            };
+
+            int[] quadIndices = new int[]{0, 1, 2, 2, 3, 0};
+
+            ByteBuffer vertexBuffer = uiRenderCommand.getDefaultVertexBuffer().map();
+            for (float vertexPart : quadVertices) {
+                vertexBuffer.putFloat(vertexPart);
+            }
+
+            ByteBuffer indexBuffer = uiRenderCommand.getDefaultIndexBuffer().map();
+            for (int index : quadIndices) {
+                indexBuffer.putInt(index);
+            }
+
+
+
+
+
+
+
+            uiRenderCommand.update();
+        }
 
 
 
@@ -191,6 +308,16 @@ public class ForiTestPlatform {
             camerasBufferData.add(cameraBuffer.map());
         }
 
+        ArrayList<ByteBuffer> uiTransformsBufferData = new ArrayList<>();
+        ArrayList<ByteBuffer> uiCamerasBufferData = new ArrayList<>();
+
+
+        for(Buffer transformsBuffer : uiRenderCommand.transformsBuffer){
+            uiTransformsBufferData.add(transformsBuffer.map());
+        }
+        for(Buffer cameraBuffer : uiRenderCommand.cameraBuffer){
+            uiCamerasBufferData.add(cameraBuffer.map());
+        }
 
 
         float rotation = 0f;
@@ -202,21 +329,39 @@ public class ForiTestPlatform {
         
         while(!window.shouldClose()){
 
-            ByteBuffer transformsBuffer = transformsBufferData.get(renderer.getFrameIndex());
-            transformsBuffer.clear();
-
-            Matrix4f transform0 = new Matrix4f().rotate((float) Math.toRadians(360 * Math.cos(0.02f * rotation)), 0.0f, 1.0f, 0.0f).rotate((float) Math.toRadians(270f), new Vector3f(1f, 0f, 0f));
-            transform0.get(0, transformsBuffer);
-
-            rotation += 10 * Time.deltaTime();
-
-            ByteBuffer cameraBufferData = camerasBufferData.get(renderer.getFrameIndex());
             {
-                camera.getView().get(0, cameraBufferData);
-                camera.getProj().get(4 * 4 * Float.BYTES, cameraBufferData);
+
+                ByteBuffer transformsBuffer = transformsBufferData.get(renderer.getFrameIndex());
+                transformsBuffer.clear();
+
+                Matrix4f transform0 = new Matrix4f().rotate((float) Math.toRadians(360 * Math.cos(0.02f * rotation)), 0.0f, 1.0f, 0.0f).rotate((float) Math.toRadians(270f), new Vector3f(1f, 0f, 0f));
+                transform0.get(0, transformsBuffer);
+
+                rotation += 10 * Time.deltaTime();
+
+                ByteBuffer cameraBufferData = camerasBufferData.get(renderer.getFrameIndex());
+                {
+                    camera.getView().get(0, cameraBufferData);
+                    camera.getProj().get(4 * 4 * Float.BYTES, cameraBufferData);
+                }
+
             }
 
+            {
 
+                ByteBuffer transformsBuffer = uiTransformsBufferData.get(renderer.getFrameIndex());
+                transformsBuffer.clear();
+
+                Matrix4f transform0 = new Matrix4f().identity();
+                transform0.get(0, transformsBuffer);
+
+                ByteBuffer cameraBufferData = uiCamerasBufferData.get(renderer.getFrameIndex());
+                {
+                    uiCamera.getView().get(0, cameraBufferData);
+                    uiCamera.getProj().get(4 * 4 * Float.BYTES, cameraBufferData);
+                }
+
+            }
 
 
 
