@@ -109,16 +109,18 @@ public class VkRenderCommand extends RenderCommand {
             }
 
 
+            if(!useStagingOnly) {
 
-            VkBufferCopy.Buffer vertexBufferCopy = VkBufferCopy.calloc(1, stack);
-            vertexBufferCopy.size(stagingVertexBuffer.getSizeBytes());
-            vkCmdCopyBuffer(commandBuffer, ((VkBuffer) stagingVertexBuffer).getHandle(), ((VkBuffer) vertexBuffer).getHandle(), vertexBufferCopy);
+                VkBufferCopy.Buffer vertexBufferCopy = VkBufferCopy.calloc(1, stack);
+                vertexBufferCopy.size(stagingVertexBuffer.getSizeBytes());
+                vkCmdCopyBuffer(commandBuffer, ((VkBuffer) stagingVertexBuffer).getHandle(), ((VkBuffer) vertexBuffer).getHandle(), vertexBufferCopy);
 
 
-            VkBufferCopy.Buffer indexBufferCopy = VkBufferCopy.calloc(1, stack);
-            indexBufferCopy.size(stagingIndexBuffer.getSizeBytes());
-            vkCmdCopyBuffer(commandBuffer, ((VkBuffer) stagingIndexBuffer).getHandle(), ((VkBuffer) indexBuffer).getHandle(), indexBufferCopy);
+                VkBufferCopy.Buffer indexBufferCopy = VkBufferCopy.calloc(1, stack);
+                indexBufferCopy.size(stagingIndexBuffer.getSizeBytes());
+                vkCmdCopyBuffer(commandBuffer, ((VkBuffer) stagingIndexBuffer).getHandle(), ((VkBuffer) indexBuffer).getHandle(), indexBufferCopy);
 
+            }
 
 
             if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {

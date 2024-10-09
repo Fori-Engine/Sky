@@ -10,6 +10,7 @@ public abstract class RenderCommand {
     public Buffer[] transformsBuffer;
     public Buffer[] cameraBuffer;
     public int indexCount;
+    public boolean useStagingOnly;
 
     public RenderCommand(int framesInFlight){
 

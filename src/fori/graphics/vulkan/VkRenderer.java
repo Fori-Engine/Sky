@@ -2,14 +2,10 @@ package fori.graphics.vulkan;
 
 import fori.Logger;
 import fori.graphics.*;
-import org.joml.Matrix4f;
-import org.joml.Vector3f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
-import org.w3c.dom.Attr;
 
-import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.*;
@@ -1211,8 +1207,9 @@ public class VkRenderer extends Renderer {
     }
 
     @Override
-    public RenderCommand queueCommand(ShaderProgram shaderProgram, int vertexCount, int indexCount, int meshCount, Texture... textures) {
+    public RenderCommand queueCommand(ShaderProgram shaderProgram, int vertexCount, int indexCount, int meshCount, boolean useStagingOnly, Texture... textures) {
         VkRenderCommand renderCommand = new VkRenderCommand(FRAMES_IN_FLIGHT, sharedCommandPool, graphicsQueue, device, textures);
+        renderCommand.useStagingOnly = useStagingOnly;
         queuedCommands.add(renderCommand);
 
         int matrixSizeBytes = 4 * 4 * Float.BYTES;
@@ -1223,25 +1220,28 @@ public class VkRenderer extends Renderer {
                 Buffer.Type.CPUGPUShared,
                 true
         );
-        renderCommand.vertexBuffer = Buffer.newBuffer(
-                Attributes.getSize(shaderProgram.getAttributes()) * Float.BYTES * vertexCount,
-                Buffer.Usage.VertexBuffer,
-                Buffer.Type.GPULocal,
-                false
-        );
-
         renderCommand.stagingIndexBuffer = Buffer.newBuffer(
                 indexCount * Integer.BYTES,
                 Buffer.Usage.IndexBuffer,
                 Buffer.Type.CPUGPUShared,
                 true
         );
-        renderCommand.indexBuffer = Buffer.newBuffer(
-                indexCount * Integer.BYTES,
-                Buffer.Usage.IndexBuffer,
-                Buffer.Type.GPULocal,
-                false
-        );
+
+        if(!useStagingOnly) {
+
+            renderCommand.vertexBuffer = Buffer.newBuffer(
+                    Attributes.getSize(shaderProgram.getAttributes()) * Float.BYTES * vertexCount,
+                    Buffer.Usage.VertexBuffer,
+                    Buffer.Type.GPULocal,
+                    false
+            );
+            renderCommand.indexBuffer = Buffer.newBuffer(
+                    indexCount * Integer.BYTES,
+                    Buffer.Usage.IndexBuffer,
+                    Buffer.Type.GPULocal,
+                    false
+            );
+        }
         renderCommand.indexCount = indexCount;
 
 
@@ -1381,6 +1381,13 @@ public class VkRenderer extends Renderer {
 
                         VkBuffer vertexBuffer = (VkBuffer) renderCommand.vertexBuffer;
                         VkBuffer indexBuffer = (VkBuffer) renderCommand.indexBuffer;
+
+                        if(renderCommand.useStagingOnly){
+                            vertexBuffer = (VkBuffer) renderCommand.stagingVertexBuffer;
+                            indexBuffer = (VkBuffer) renderCommand.stagingIndexBuffer;
+                        }
+
+
                         VkPipeline pipeline = ((VkRenderCommand) renderCommand).pipeline;
                         VkShaderProgram shaderProgram = (VkShaderProgram) renderCommand.shaderProgram;
 

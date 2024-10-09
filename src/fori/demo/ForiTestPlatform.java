@@ -214,6 +214,7 @@ public class ForiTestPlatform {
                     vertices.size() / 7,
                     indices.size(),
                     1,
+                    false,
                     texture1
             );
 
@@ -237,6 +238,7 @@ public class ForiTestPlatform {
                     4,
                     6,
                     1,
+                    true,
                     texture1
             );
 
