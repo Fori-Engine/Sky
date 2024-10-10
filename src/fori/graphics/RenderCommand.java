@@ -1,5 +1,8 @@
 package fori.graphics;
 
+import java.util.LinkedList;
+import java.util.List;
+
 public abstract class RenderCommand {
     public ShaderProgram shaderProgram;
 
@@ -10,7 +13,7 @@ public abstract class RenderCommand {
     public Buffer[] transformsBuffer;
     public Buffer[] cameraBuffer;
     public int indexCount;
-    public boolean useStagingOnly;
+    public List<Texture> textures = new LinkedList<>();
 
     public RenderCommand(int framesInFlight){
 

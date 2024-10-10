@@ -27,7 +27,7 @@ public abstract class Renderer implements Disposable {
     }
     public abstract void onSurfaceResized(int width, int height);
 
-    public abstract RenderCommand queueCommand(ShaderProgram shaderProgram, int vertexCount, int indexCount, int meshCount, boolean useStagingOnly, Texture... textures);
+    public abstract RenderCommand queueCommand(ShaderProgram shaderProgram, int vertexCount, int indexCount, int meshCount, Texture... textures);
     public abstract void removeCommand(RenderCommand renderCommand);
     public abstract void update();
     public abstract int getFrameIndex();
