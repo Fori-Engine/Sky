@@ -5,7 +5,7 @@ import fori.Time;
 import fori.asset.AssetPack;
 import fori.asset.AssetPacks;
 import fori.graphics.*;
-import fori.graphics.RenderCommand;
+import fori.graphics.RenderQueue;
 import org.joml.Matrix4f;
 
 import java.io.File;
@@ -26,6 +26,9 @@ import org.lwjgl.assimp.*;
 public class ForiTestPlatform {
 
     public static void main(String[] args) {
+
+        long start = System.currentTimeMillis();
+
         AssetPacks.open("core", AssetPack.openLocal(new File("assets")));
 
         Logger.setConsoleTarget(System.out);
@@ -68,8 +71,6 @@ public class ForiTestPlatform {
                     vertices.add(aiVertex.y());
                     vertices.add(aiVertex.z());
                     vertices.add(0f);
-
-                    System.out.println(aiTextureCoords.x() + " " + aiTextureCoords.y());
 
                     vertices.add(aiTextureCoords.x());
                     vertices.add(aiTextureCoords.y());
@@ -134,7 +135,7 @@ public class ForiTestPlatform {
                                     2,
                                     CombinedSampler,
                                     FragmentStage
-                            ).count(1)
+                            ).count(2)
                     )
             );
 
@@ -178,7 +179,7 @@ public class ForiTestPlatform {
                                     2,
                                     CombinedSampler,
                                     FragmentStage
-                            ).count(1)
+                            ).count(2)
                     )
             );
 
@@ -188,6 +189,7 @@ public class ForiTestPlatform {
 
 
         Texture texture1 = Texture.newTexture(AssetPacks.getAsset("core:assets/viking_room.png"), Texture.Filter.Nearest, Texture.Filter.Nearest);
+        Texture texture2 = Texture.newTexture(AssetPacks.getAsset("core:assets/ForiEngine.png"), Texture.Filter.Nearest, Texture.Filter.Nearest);
 
 
 
@@ -207,77 +209,70 @@ public class ForiTestPlatform {
 
 
 
-        RenderCommand renderCommand;
+        RenderQueue renderQueue;
         {
-            renderCommand = renderer.queueCommand(
-                    shaderProgram,
-                    vertices.size() / 7,
-                    indices.size(),
-                    1,
-                    texture1
-            );
+            renderQueue = renderer.newRenderQueue(shaderProgram);//, vertices.size() / 7, indices.size());
+            renderQueue.addTexture(0, texture1);
+            renderQueue.addTexture(1, texture2);
 
-            ByteBuffer vertexBuffer = renderCommand.getDefaultVertexBuffer().map();
+
+            ByteBuffer vertexBuffer = renderQueue.getDefaultVertexBuffer().map();
+            vertexBuffer.clear();
+
             for (float vertexPart : vertices) {
                 vertexBuffer.putFloat(vertexPart);
             }
 
-            ByteBuffer indexBuffer = renderCommand.getDefaultIndexBuffer().map();
+            ByteBuffer indexBuffer = renderQueue.getDefaultIndexBuffer().map();
+            indexBuffer.clear();
             for (int index : indices) {
                 indexBuffer.putInt(index);
             }
 
-            renderCommand.update();
+            renderQueue.updateQueue(vertices.size() / 7, indices.size());
         }
 
-        RenderCommand uiRenderCommand;
-        {
-            uiRenderCommand = renderer.queueCommand(
-                    uiShaderProgram,
-                    4,
-                    6,
-                    1,
-                    texture1
-            );
 
-            /*
-            PositionFloat3,
-                            TransformIndexFloat1,
-                            UVFloat2,
-                            MaterialBaseIndexFloat1
-             */
+        RenderQueue uiRenderQueue;
+        {
+            uiRenderQueue = renderer.newRenderQueue(uiShaderProgram);//, 4, 6);
+            uiRenderQueue.addTexture(0, texture1);
+            uiRenderQueue.addTexture(1, texture2);
+
 
             float[] quadVertices = new float[]{
                     0.0f, 0.0f, 0.0f,
                     0.0f,
                     0.0f, 0.0f,
-                    0.0f,
+                    1.0f,
 
                     0.0f, 300.0f, 0.0f,
                     0.0f,
                     0.0f, 1.0f,
-                    0.0f,
+                    1.0f,
 
                     300.0f, 300.0f, 0.0f,
                     0.0f,
                     1.0f, 1.0f,
-                    0.0f,
+                    1.0f,
 
                     300.0f, 0.0f, 0.0f,
                     0.0f,
                     1.0f, 0.0f,
-                    0.0f,
+                    1.0f,
 
             };
 
             int[] quadIndices = new int[]{0, 1, 2, 2, 3, 0};
 
-            ByteBuffer vertexBuffer = uiRenderCommand.getDefaultVertexBuffer().map();
+            ByteBuffer vertexBuffer = uiRenderQueue.getDefaultVertexBuffer().map();
+            vertexBuffer.clear();
             for (float vertexPart : quadVertices) {
                 vertexBuffer.putFloat(vertexPart);
             }
 
-            ByteBuffer indexBuffer = uiRenderCommand.getDefaultIndexBuffer().map();
+            ByteBuffer indexBuffer = uiRenderQueue.getDefaultIndexBuffer().map();
+            indexBuffer.clear();
             for (int index : quadIndices) {
                 indexBuffer.putInt(index);
             }
@@ -288,8 +283,9 @@ public class ForiTestPlatform {
 
 
 
-            uiRenderCommand.update();
+            uiRenderQueue.updateQueue(4, 6);
         }
+
 
 
 
@@ -301,28 +297,32 @@ public class ForiTestPlatform {
         ArrayList<ByteBuffer> camerasBufferData = new ArrayList<>();
 
 
-        for(Buffer transformsBuffer : renderCommand.transformsBuffer){
+        for(Buffer transformsBuffer : renderQueue.transformsBuffer){
             transformsBufferData.add(transformsBuffer.map());
         }
-        for(Buffer cameraBuffer : renderCommand.cameraBuffer){
+        for(Buffer cameraBuffer : renderQueue.cameraBuffer){
             camerasBufferData.add(cameraBuffer.map());
         }
+
 
         ArrayList<ByteBuffer> uiTransformsBufferData = new ArrayList<>();
         ArrayList<ByteBuffer> uiCamerasBufferData = new ArrayList<>();
 
 
-        for(Buffer transformsBuffer : uiRenderCommand.transformsBuffer){
+        for(Buffer transformsBuffer : uiRenderQueue.transformsBuffer){
             uiTransformsBufferData.add(transformsBuffer.map());
         }
-        for(Buffer cameraBuffer : uiRenderCommand.cameraBuffer){
+        for(Buffer cameraBuffer : uiRenderQueue.cameraBuffer){
             uiCamerasBufferData.add(cameraBuffer.map());
         }
+
+
 
 
         float rotation = 0f;
 
 
+        Logger.info(ForiTestPlatform.class, "Entering main loop took " + (System.currentTimeMillis() - start) / 1000.0f + " seconds");
 
 
 
@@ -334,7 +334,7 @@ public class ForiTestPlatform {
                 ByteBuffer transformsBuffer = transformsBufferData.get(renderer.getFrameIndex());
                 transformsBuffer.clear();
 
-                Matrix4f transform0 = new Matrix4f().rotate((float) Math.toRadians(360 * Math.cos(0.02f * rotation)), 0.0f, 1.0f, 0.0f).rotate((float) Math.toRadians(270f), new Vector3f(1f, 0f, 0f));
+                Matrix4f transform0 = new Matrix4f().rotate((float) Math.toRadians(360 * Math.cos(0.02f * rotation)), 0.0f, 1.0f, 0.0f).rotate((float) Math.toRadians(-90), new Vector3f(1f, 0f, 0f));
                 transform0.get(0, transformsBuffer);
 
                 rotation += 10 * Time.deltaTime();
@@ -346,6 +346,7 @@ public class ForiTestPlatform {
                 }
 
             }
+
 
             {
 
@@ -366,17 +367,11 @@ public class ForiTestPlatform {
 
 
 
-
-
-
-
-            System.out.println("FPS: " + Time.framesPerSecond());
-
             renderer.update();
             window.update();
         }
 
-        renderer.removeCommand(renderCommand);
+        renderer.removeQueue(renderQueue);
 
         window.close();
     }

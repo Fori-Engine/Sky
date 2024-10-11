@@ -1156,8 +1156,8 @@ public class VkRenderer extends Renderer {
         renderPass = createRenderPass(device, swapchain, depthBuffer);
         swapchainFramebuffers = createSwapchainFramebuffers(device, swapchain, swapchainImageViews, renderPass, depthBufferImageView);
 
-        for(RenderCommand renderCommand : queuedCommands){
-            VkRenderCommand vkRenderCommand = (VkRenderCommand) renderCommand;
+        for(RenderQueue renderQueue : renderQueues){
+            VkRenderQueue vkRenderCommand = (VkRenderQueue) renderQueue;
 
             vkRenderCommand.pipeline = createPipeline(device, swapchain, (VkShaderProgram) vkRenderCommand.shaderProgram, renderPass);
 
@@ -1169,8 +1169,8 @@ public class VkRenderer extends Renderer {
 
 
         vkDeviceWaitIdle(device);
-        for(RenderCommand renderCommand : queuedCommands){
-            VkRenderCommand vkRenderCommand = (VkRenderCommand) renderCommand;
+        for(RenderQueue renderQueue : renderQueues){
+            VkRenderQueue vkRenderCommand = (VkRenderQueue) renderQueue;
 
             vkDestroyPipeline(device, vkRenderCommand.pipeline.pipeline, null);
 
@@ -1207,39 +1207,37 @@ public class VkRenderer extends Renderer {
     }
 
     @Override
-    public RenderCommand queueCommand(ShaderProgram shaderProgram, int vertexCount, int indexCount, int meshCount, Texture... textures) {
-        VkRenderCommand renderCommand = new VkRenderCommand(FRAMES_IN_FLIGHT, sharedCommandPool, graphicsQueue, device, textures);
-        queuedCommands.add(renderCommand);
+    public RenderQueue newRenderQueue(ShaderProgram shaderProgram, int maxVertices, int maxIndices) {
+        VkRenderQueue renderCommand = new VkRenderQueue(FRAMES_IN_FLIGHT, sharedCommandPool, graphicsQueue, device);
+        renderQueues.add(renderCommand);
 
         int matrixSizeBytes = 4 * 4 * Float.BYTES;
 
         renderCommand.stagingVertexBuffer = Buffer.newBuffer(
-                Attributes.getSize(shaderProgram.getAttributes()) * Float.BYTES * vertexCount,
+                Attributes.getSize(shaderProgram.getAttributes()) * Float.BYTES * maxVertices,
                 Buffer.Usage.VertexBuffer,
                 Buffer.Type.CPUGPUShared,
                 true
         );
         renderCommand.stagingIndexBuffer = Buffer.newBuffer(
-                indexCount * Integer.BYTES,
+                maxIndices * Integer.BYTES,
                 Buffer.Usage.IndexBuffer,
                 Buffer.Type.CPUGPUShared,
                 true
         );
 
         renderCommand.vertexBuffer = Buffer.newBuffer(
-                Attributes.getSize(shaderProgram.getAttributes()) * Float.BYTES * vertexCount,
+                Attributes.getSize(shaderProgram.getAttributes()) * Float.BYTES * maxVertices,
                 Buffer.Usage.VertexBuffer,
                 Buffer.Type.GPULocal,
                 false
         );
         renderCommand.indexBuffer = Buffer.newBuffer(
-                indexCount * Integer.BYTES,
+                maxIndices * Integer.BYTES,
                 Buffer.Usage.IndexBuffer,
                 Buffer.Type.GPULocal,
                 false
         );
-        renderCommand.indexCount = indexCount;
-
 
         for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
 
@@ -1257,7 +1255,7 @@ public class VkRenderer extends Renderer {
 
 
             renderCommand.transformsBuffer[i] = Buffer.newBuffer(
-                    matrixSizeBytes * meshCount,
+                    matrixSizeBytes * RenderQueue.MAX_MESH_COUNT,
                     Buffer.Usage.ShaderStorageBuffer,
                     Buffer.Type.CPUGPUShared,
                     false
@@ -1271,36 +1269,13 @@ public class VkRenderer extends Renderer {
         renderCommand.shaderProgram = shaderProgram;
         renderCommand.pipeline = createPipeline(device, swapchain, (VkShaderProgram) shaderProgram, renderPass);
 
-        ShaderUpdate<Texture>[] textureUpdates = new ShaderUpdate[textures.length];
-        for (int i = 0; i < textureUpdates.length; i++) {
-            textureUpdates[i] = new ShaderUpdate<>("materials", 0, 2, textures[i]).arrayIndex(i);
-        }
-
-
-
-
-        for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
-
-            shaderProgram.updateBuffers(
-                    i,
-                    new ShaderUpdate<>("camera", 0, 0, renderCommand.cameraBuffer[i]),
-                    new ShaderUpdate<>("transforms", 0, 1, renderCommand.transformsBuffer[i])
-            );
-
-            shaderProgram.updateTextures(
-                    i,
-                    textureUpdates
-            );
-
-        }
-
         return renderCommand;
     }
 
     @Override
-    public void removeCommand(RenderCommand renderCommand) {
-        if(queuedCommands.contains(renderCommand)){
-            queuedCommands.remove(renderCommand);
+    public void removeQueue(RenderQueue renderQueue) {
+        if(renderQueues.contains(renderQueue)){
+            renderQueues.remove(renderQueue);
         }
         else {
             throw new RuntimeException(Logger.error(VkRenderer.class, "Cannot remove a RenderCommand which was never placed in the queue"));
@@ -1373,16 +1348,16 @@ public class VkRenderer extends Renderer {
                 {
 
 
-                    for(RenderCommand renderCommand : queuedCommands) {
+                    for(RenderQueue renderQueue : renderQueues) {
 
-                        VkBuffer vertexBuffer = (VkBuffer) renderCommand.vertexBuffer;
-                        VkBuffer indexBuffer = (VkBuffer) renderCommand.indexBuffer;
-
-
+                        VkBuffer vertexBuffer = (VkBuffer) renderQueue.vertexBuffer;
+                        VkBuffer indexBuffer = (VkBuffer) renderQueue.indexBuffer;
 
 
-                        VkPipeline pipeline = ((VkRenderCommand) renderCommand).pipeline;
-                        VkShaderProgram shaderProgram = (VkShaderProgram) renderCommand.shaderProgram;
+
+
+                        VkPipeline pipeline = ((VkRenderQueue) renderQueue).pipeline;
+                        VkShaderProgram shaderProgram = (VkShaderProgram) renderQueue.shaderProgram;
 
 
                         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
@@ -1395,8 +1370,7 @@ public class VkRenderer extends Renderer {
                         vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                                 pipeline.pipelineLayout, 0, stack.longs(shaderProgram.getDescriptorSets(frameIndex)), null);
 
-
-                        vkCmdDrawIndexed(commandBuffer, renderCommand.indexCount, 1, 0, 0, 0);
+                        vkCmdDrawIndexed(commandBuffer, renderQueue.indexCount, 1, 0, 0, 0);
                     }
                 }
                 vkCmdEndRenderPass(commandBuffer);

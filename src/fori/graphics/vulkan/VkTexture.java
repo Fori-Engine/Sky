@@ -22,6 +22,7 @@ public class VkTexture extends Texture {
     public VkImageView imageView;
     public Buffer imageData;
     public long sampler;
+    public boolean isCorrectLayout;
 
 
     public VkTexture(Asset<TextureData> textureData, Filter minFilter, Filter magFilter) {

@@ -14,7 +14,7 @@ public abstract class Renderer implements Disposable {
     protected int height;
     private static RenderAPI api;
     protected RendererSettings settings;
-    protected List<RenderCommand> queuedCommands = new ArrayList<>();
+    protected List<RenderQueue> renderQueues = new ArrayList<>();
 
 
 
@@ -26,9 +26,17 @@ public abstract class Renderer implements Disposable {
         Disposer.add("renderer", this);
     }
     public abstract void onSurfaceResized(int width, int height);
-
-    public abstract RenderCommand queueCommand(ShaderProgram shaderProgram, int vertexCount, int indexCount, int meshCount, Texture... textures);
-    public abstract void removeCommand(RenderCommand renderCommand);
+    public RenderQueue newRenderQueue(ShaderProgram shaderProgram){
+        return newRenderQueue(shaderProgram, RenderQueue.MAX_VERTEX_COUNT, RenderQueue.MAX_INDEX_COUNT);
+    }
+    public abstract RenderQueue newRenderQueue(ShaderProgram shaderProgram, int maxVertices, int maxIndices);
+    public RenderQueue getRenderQueueByShaderProgram(ShaderProgram shaderProgram){
+        for(RenderQueue renderQueue : renderQueues){
+            if(renderQueue.shaderProgram == shaderProgram) return renderQueue;
+        }
+        return null;
+    }
+    public abstract void removeQueue(RenderQueue renderQueue);
     public abstract void update();
     public abstract int getFrameIndex();
 
