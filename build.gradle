@@ -31,7 +31,7 @@ jar {
     }
 
     manifest {
-        manifest.attributes["Main-Class"] = "fori.demo.ForiTestPlatform"
+        manifest.attributes["Main-Class"] = "noir.citizens.Main"
     }
 
 }

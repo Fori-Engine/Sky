@@ -5,12 +5,12 @@ import java.util.ListIterator;
 import java.util.concurrent.atomic.AtomicReference;
 import java.lang.System;
 
-public class MessageBus {
+public class MessageQueue {
     private final ArrayList<Message> messages = new ArrayList<>();
 
     private final ArrayList<Message> queuedMessages = new ArrayList<>();
 
-    public MessageBus() {
+    public MessageQueue() {
     }
 
     public void post(Message message){

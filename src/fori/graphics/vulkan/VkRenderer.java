@@ -1370,6 +1370,7 @@ public class VkRenderer extends Renderer {
                         vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                                 pipeline.pipelineLayout, 0, stack.longs(shaderProgram.getDescriptorSets(frameIndex)), null);
 
+
                         vkCmdDrawIndexed(commandBuffer, renderQueue.indexCount, 1, 0, 0, 0);
                     }
                 }

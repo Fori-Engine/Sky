@@ -1,9 +1,10 @@
 package fori.ecs;
 
-public abstract class EntitySystem {
-    public abstract void process(Entity entity, MessageBus messageBus);
+import java.util.List;
 
-    public void update(){}
+public abstract class EntitySystem {
+
+    public abstract void update(Engine ecs, MessageQueue messageQueue);
 
     public void shutdown() {}
 }

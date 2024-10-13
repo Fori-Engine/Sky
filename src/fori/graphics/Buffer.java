@@ -25,6 +25,7 @@ public abstract class Buffer implements Disposable {
     private int sizeBytes;
     private boolean mapped;
     protected boolean staging;
+    private ByteBuffer data;
 
     public Buffer(int sizeBytes, Usage usage, Type type, boolean staging){
         Disposer.add("managedResources", this);
@@ -42,6 +43,11 @@ public abstract class Buffer implements Disposable {
         return type;
     }
 
+    public ByteBuffer get(){
+        if(!mapped) data = map();
+        return data;
+    }
+
     public ByteBuffer map(){
 
         if(mapped) {
@@ -55,6 +61,11 @@ public abstract class Buffer implements Disposable {
 
         return null;
     }
+
+    public boolean isMapped() {
+        return mapped;
+    }
+
     public void unmap(){
         mapped = false;
     }

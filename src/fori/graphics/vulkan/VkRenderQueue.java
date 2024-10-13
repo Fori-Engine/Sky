@@ -63,9 +63,12 @@ public class VkRenderQueue extends RenderQueue {
         return stagingIndexBuffer;
     }
 
+
     @Override
     public void updateQueue(int vertexCount, int indexCount) {
         super.updateQueue(vertexCount, indexCount);
+
+        vkResetFences(device, fence);
 
         try(MemoryStack stack = stackPush()) {
             VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);

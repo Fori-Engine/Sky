@@ -36,7 +36,7 @@ void main() {
 #extension GL_EXT_nonuniform_qualifier : require
 
 layout(location = 0) in vec2 inputUV;
-layout(location = 1) in float inputMaterialBaseIndex;
+layout(location = 1) in flat float inputMaterialBaseIndex;
 layout(location = 0) out vec4 outputColor;
 
 layout(set = 0, binding = 2) uniform sampler2D[] materials;

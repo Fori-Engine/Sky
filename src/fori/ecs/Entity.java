@@ -1,21 +1,18 @@
 package fori.ecs;
 
-import fori.Logger;
-
-import java.util.HashMap;
-
 public class Entity {
-    private final HashMap<Class, Component> components = new HashMap<>();
+    public String tag;
+    public int id;
+    public static int currentID;
 
-    public String id;
-
-
-    public boolean dead;
-
-    public Entity(String id) {
-        this.id = id;
+    public Entity(String tag) {
+        this.tag = tag;
+        this.id = currentID++;
     }
 
+
+
+    /*
     public <T> T get(Class<T> c) {
 
         for(Component component : components.values()){
@@ -55,4 +52,6 @@ public class Entity {
     public HashMap<Class, Component> getComponents() {
         return components;
     }
+
+     */
 }
