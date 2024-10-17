@@ -20,6 +20,7 @@ import static org.lwjgl.vulkan.KHRSurface.*;
 import static org.lwjgl.vulkan.KHRSurface.vkGetPhysicalDeviceSurfacePresentModesKHR;
 import static org.lwjgl.vulkan.KHRSwapchain.*;
 import static org.lwjgl.vulkan.KHRSwapchain.vkGetSwapchainImagesKHR;
+import static org.lwjgl.vulkan.KHRSynchronization2.VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR;
 import static org.lwjgl.vulkan.VK13.*;
 
 
@@ -32,7 +33,7 @@ public class VkRenderer extends Renderer {
     private VkPhysicalDevice physicalDevice;
     private VkPhysicalDeviceProperties physicalDeviceProperties;
     private VkPhysicalDeviceQueueFamilies physicalDeviceQueueFamilies;
-    private static final Set<String> DEVICE_EXTENSIONS = Stream.of(VK_KHR_SWAPCHAIN_EXTENSION_NAME)
+    private static final Set<String> DEVICE_EXTENSIONS = Stream.of(VK_KHR_SWAPCHAIN_EXTENSION_NAME, KHRDynamicRendering.VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME)
             .collect(toSet());
 
     private VkDevice device;
@@ -40,19 +41,23 @@ public class VkRenderer extends Renderer {
     private VkSwapchain swapchain;
     private VkSwapchainSupportDetails swapchainSupportDetails;
     private List<Long> swapchainImageViews = new ArrayList<>();
-    private List<Long> swapchainFramebuffers = new ArrayList<>();
+
     private long surface;
     private VkInstance instance;
-    private long renderPass;
+
     private VkFrame[] frames = new VkFrame[FRAMES_IN_FLIGHT];
     private int frameIndex;
     private long sharedCommandPool;
     private boolean resized = false;
 
 
-    private VkImage depthBuffer;
-    private VkImageView depthBufferImageView;
+    private VkImage depthImage;
+    private VkImageView depthImageView;
     private VkGlobalAllocator allocator;
+
+    private VkRenderingInfoKHR renderingInfoKHR;
+    private VkRenderingAttachmentInfo.Buffer colorAttachment;
+    private VkRenderingAttachmentInfoKHR depthAttachment;
 
 
 
@@ -122,250 +127,7 @@ public class VkRenderer extends Renderer {
 
         VkGlobalAllocator.init(instance, device, physicalDevice);
         allocator = VkGlobalAllocator.getAllocator();
-        /*
-        ShaderReader.ShaderSources shaderSources = ShaderReader.readCombinedVertexFragmentSources(
-                AssetPacks.<String> getAsset("core:assets/shaders/vulkan/Default.glsl").asset
-        );
 
-        int matrixSizeBytes = 4 * 4 * Float.BYTES;
-
-        shaderProgram = ShaderProgram.newShaderProgram(shaderSources.vertexShader, shaderSources.fragmentShader);
-        shaderProgram.bind(
-                new ShaderResSet(
-                        0,
-                        new ShaderRes(
-                                "camera",
-                                0,
-                                UniformBuffer,
-                                VertexStage
-                        ).sizeBytes(2 * matrixSizeBytes),
-                        new ShaderRes(
-                                "transforms",
-                                1,
-                                ShaderStorageBuffer,
-                                VertexStage
-                        ).sizeBytes(10 * matrixSizeBytes),
-                        new ShaderRes(
-                                "materials",
-                                2,
-                                CombinedSampler,
-                                FragmentStage
-                        ).count(2)
-                )
-        );
-
-
-        //Allocate and submit renderSettings.batchSize-number indices in a staging index buffer
-        //Transfer from index buffer to GPU dedicated index buffer
-
-        //Begin Frame
-        //Acquire a swapchain image
-
-        //Uniform Updates
-        //All uniform buffers are bound to host visible buffers as descriptors
-
-        //Draw Calls
-        //Look up the pipeline for the current shader
-        //transfer all drawQuad() outputs to the staging vertex buffer
-        //on invoking render() transfer from the staging vertex buffer to the GPU dedicated vertex buffer
-        //Submit to the graphics queue and wait to finish
-        //Wait on the submission fence
-
-        //End Frame
-
-
-
-
-
-
-        vertexBuffer = Buffer.newBuffer(
-                2 * 4 * 7 * Float.BYTES,
-                Buffer.Usage.VertexBuffer,
-                Buffer.Type.CPUGPUShared
-        );
-
-        ByteBuffer vertexBufferData = vertexBuffer.map();
-        {
-            //Coords
-            vertexBufferData.putFloat(-0.5f);
-            vertexBufferData.putFloat(-0.5f);
-            vertexBufferData.putFloat(0.5f);
-            //Transform Index
-            vertexBufferData.putFloat(0);
-            //UV
-            vertexBufferData.putFloat(1);
-            vertexBufferData.putFloat(0);
-            //Material Base Index
-            vertexBufferData.putFloat(0);
-
-            //Coords
-            vertexBufferData.putFloat(0.5f);
-            vertexBufferData.putFloat(-0.5f);
-            vertexBufferData.putFloat(0.5f);
-            //Transform Index
-            vertexBufferData.putFloat(0);
-            //UV
-            vertexBufferData.putFloat(0);
-            vertexBufferData.putFloat(0);
-            //Material Base Index
-            vertexBufferData.putFloat(0);
-
-            //Coords
-            vertexBufferData.putFloat(0.5f);
-            vertexBufferData.putFloat(0.5f);
-            vertexBufferData.putFloat(0.5f);
-            //Transform Index
-            vertexBufferData.putFloat(0);
-            //UV
-            vertexBufferData.putFloat(0);
-            vertexBufferData.putFloat(1);
-            //Material Base Index
-            vertexBufferData.putFloat(0);
-
-            //Coords
-            vertexBufferData.putFloat(-0.5f);
-            vertexBufferData.putFloat(0.5f);
-            vertexBufferData.putFloat(0.5f);
-            //Transform Index
-            vertexBufferData.putFloat(0);
-            //UV
-            vertexBufferData.putFloat(1);
-            vertexBufferData.putFloat(1);
-            //Material Base Index
-            vertexBufferData.putFloat(0);
-        }
-        {
-
-            //Coords
-            vertexBufferData.putFloat(-0.5f);
-            vertexBufferData.putFloat(-0.5f);
-            vertexBufferData.putFloat(-0.5f);
-            //Transform Index
-            vertexBufferData.putFloat(1);
-            //UV
-            vertexBufferData.putFloat(1);
-            vertexBufferData.putFloat(0);
-            //Material Base Index
-            vertexBufferData.putFloat(1);
-
-            //Coords
-            vertexBufferData.putFloat(0.5f);
-            vertexBufferData.putFloat(-0.5f);
-            vertexBufferData.putFloat(-0.5f);
-            //Transform Index
-            vertexBufferData.putFloat(1);
-            //UV
-            vertexBufferData.putFloat(0);
-            vertexBufferData.putFloat(0);
-            //Material Base Index
-            vertexBufferData.putFloat(1);
-
-            //Coords
-            vertexBufferData.putFloat(0.5f);
-            vertexBufferData.putFloat(0.5f);
-            vertexBufferData.putFloat(-0.5f);
-            //Transform Index
-            vertexBufferData.putFloat(1);
-            //UV
-            vertexBufferData.putFloat(0);
-            vertexBufferData.putFloat(1);
-            //Material Base Index
-            vertexBufferData.putFloat(1);
-
-            //Coords
-            vertexBufferData.putFloat(-0.5f);
-            vertexBufferData.putFloat(0.5f);
-            vertexBufferData.putFloat(-0.5f);
-            //Transform Index
-            vertexBufferData.putFloat(1);
-            //UV
-            vertexBufferData.putFloat(1);
-            vertexBufferData.putFloat(1);
-            //Material Base Index
-            vertexBufferData.putFloat(1);
-        }
-
-        indexBuffer = Buffer.newBuffer(
-                Integer.BYTES * 6 * 2,
-                Buffer.Usage.IndexBuffer,
-                Buffer.Type.CPUGPUShared
-        );
-
-        ByteBuffer indexBufferData = indexBuffer.map();
-        {
-            indexBufferData.putInt(0);
-            indexBufferData.putInt(1);
-            indexBufferData.putInt(2);
-            indexBufferData.putInt(2);
-            indexBufferData.putInt(3);
-            indexBufferData.putInt(0);
-        }
-        {
-            indexBufferData.putInt(4);
-            indexBufferData.putInt(5);
-            indexBufferData.putInt(6);
-            indexBufferData.putInt(6);
-            indexBufferData.putInt(7);
-            indexBufferData.putInt(4);
-        }
-
-
-        cameraBuffer = Buffer.newBuffer(
-                matrixSizeBytes * 2,
-                Buffer.Usage.UniformBuffer,
-                Buffer.Type.CPUGPUShared
-        );
-
-        ByteBuffer cameraBufferData = cameraBuffer.map();
-        {
-            Matrix4f view = new Matrix4f().lookAt(new Vector3f(1.0f, 2.0f, 3.0f), new Vector3f(0, 0, 0), new Vector3f(0.0f, 0.0f, 1.0f));
-            view.get(0, cameraBufferData);
-
-            Matrix4f proj = new Matrix4f().perspective((float) Math.toRadians(35.0f), (float) width / height, 0.01f, 100.0f, true);
-            proj.m11(proj.m11() * -1);
-            proj.get(matrixSizeBytes, cameraBufferData);
-        }
-
-`
-        transformsBuffer = Buffer.newBuffer(
-                matrixSizeBytes * 10,
-                Buffer.Usage.ShaderStorageBuffer,
-                Buffer.Type.CPUGPUShared
-        );
-
-
-        ByteBuffer transformsBufferData = transformsBuffer.map();
-        {
-            Matrix4f transform0 = new Matrix4f().rotate((float) Math.toRadians(30.0f), 0.0f, 1.0f, 0.0f);
-            transform0.get(0, transformsBufferData);
-
-            Matrix4f transform1 = new Matrix4f().rotate((float) Math.toRadians(90.0f), 0.0f, 0.0f, 1.0f);
-            transform1.get(matrixSizeBytes, transformsBufferData);
-        }
-
-
-
-        Texture texture1 = Texture.newTexture(AssetPacks.getAsset("core:assets/vulkan.jpg"), Texture.Filter.Nearest, Texture.Filter.Nearest);
-        Texture texture2 = Texture.newTexture(AssetPacks.getAsset("core:assets/ForiEngine.png"), Texture.Filter.Nearest, Texture.Filter.Nearest);
-
-
-        for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
-
-            shaderProgram.updateBuffers(
-                    i,
-                    new ShaderUpdate<>("camera", 0, 0, cameraBuffer),
-                    new ShaderUpdate<>("transforms", 0, 1, transformsBuffer)
-            );
-
-            shaderProgram.updateTextures(
-                    i,
-                    new ShaderUpdate<>("materials", 0, 2, texture1).arrayIndex(0),
-                    new ShaderUpdate<>("materials", 0, 2, texture2).arrayIndex(1)
-            );
-
-        }
-
-         */
 
         sharedCommandPool = createCommandPool(device, physicalDeviceQueueFamilies.graphicsFamily);
         for(int i = 0; i < FRAMES_IN_FLIGHT; i++) {
@@ -395,7 +157,7 @@ public class VkRenderer extends Renderer {
         }
 
 
-        depthBuffer = new VkImage(
+        depthImage = new VkImage(
                 allocator,
                 device,
                 swapchain.swapChainExtent.width(),
@@ -405,18 +167,12 @@ public class VkRenderer extends Renderer {
                 VK_IMAGE_TILING_OPTIMAL
         );
 
-        depthBufferImageView = new VkImageView(device, depthBuffer, VK_IMAGE_ASPECT_DEPTH_BIT);
+        depthImageView = new VkImageView(device, depthImage, VK_IMAGE_ASPECT_DEPTH_BIT);
 
 
 
 
 
-
-
-        renderPass = createRenderPass(device, swapchain, depthBuffer);
-        swapchainFramebuffers = createSwapchainFramebuffers(device, swapchain, swapchainImageViews, renderPass, depthBufferImageView);
-
-        //pipeline = createPipeline(device, swapchain, ((VkShaderProgram) shaderProgram).getShaderStages(), renderPass);
 
 
 
@@ -580,29 +336,38 @@ public class VkRenderer extends Renderer {
             VkPhysicalDeviceFeatures deviceFeatures = VkPhysicalDeviceFeatures.calloc(stack);
             deviceFeatures.samplerAnisotropy(true);
 
+
+            //Bindless Setup
             VkPhysicalDeviceDescriptorIndexingFeatures deviceDescriptorIndexingFeatures = VkPhysicalDeviceDescriptorIndexingFeatures.calloc(stack);
-            deviceDescriptorIndexingFeatures.sType(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES);
+            {
+                deviceDescriptorIndexingFeatures.sType(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES);
 
-            deviceDescriptorIndexingFeatures.runtimeDescriptorArray(true);
-            deviceDescriptorIndexingFeatures.descriptorBindingPartiallyBound(true);
-            deviceDescriptorIndexingFeatures.shaderStorageBufferArrayNonUniformIndexing(true);
-            deviceDescriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing(true);
-            deviceDescriptorIndexingFeatures.shaderStorageImageArrayNonUniformIndexing(true);
-            deviceDescriptorIndexingFeatures.descriptorBindingUniformBufferUpdateAfterBind(true);
+                deviceDescriptorIndexingFeatures.runtimeDescriptorArray(true);
+                deviceDescriptorIndexingFeatures.descriptorBindingPartiallyBound(true);
+                deviceDescriptorIndexingFeatures.shaderStorageBufferArrayNonUniformIndexing(true);
+                deviceDescriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing(true);
+                deviceDescriptorIndexingFeatures.shaderStorageImageArrayNonUniformIndexing(true);
+                deviceDescriptorIndexingFeatures.descriptorBindingUniformBufferUpdateAfterBind(true);
 
-            deviceDescriptorIndexingFeatures.descriptorBindingStorageBufferUpdateAfterBind(true);
-            deviceDescriptorIndexingFeatures.descriptorBindingSampledImageUpdateAfterBind(true);
-            deviceDescriptorIndexingFeatures.descriptorBindingStorageImageUpdateAfterBind(true);
+                deviceDescriptorIndexingFeatures.descriptorBindingStorageBufferUpdateAfterBind(true);
+                deviceDescriptorIndexingFeatures.descriptorBindingSampledImageUpdateAfterBind(true);
+                deviceDescriptorIndexingFeatures.descriptorBindingStorageImageUpdateAfterBind(true);
+            }
+
+            //Dynamic Rendering
+            VkPhysicalDeviceDynamicRenderingFeaturesKHR physicalDeviceDynamicRenderingFeaturesKHR = VkPhysicalDeviceDynamicRenderingFeaturesKHR.calloc(stack);
+            {
+                physicalDeviceDynamicRenderingFeaturesKHR.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR);
+                physicalDeviceDynamicRenderingFeaturesKHR.dynamicRendering(true);
 
 
-
-
+            }
 
             VkDeviceCreateInfo createInfo = VkDeviceCreateInfo.calloc(stack);
 
             createInfo.sType(VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO);
             createInfo.pQueueCreateInfos(queueCreateInfos);
-            createInfo.pNext(deviceDescriptorIndexingFeatures);
+            createInfo.pNext(deviceDescriptorIndexingFeatures).pNext(physicalDeviceDynamicRenderingFeaturesKHR);
 
 
             createInfo.pEnabledFeatures(deviceFeatures);
@@ -815,111 +580,7 @@ public class VkRenderer extends Renderer {
 
         return swapChainImageViews;
     }
-    private ArrayList<Long> createSwapchainFramebuffers(VkDevice device, VkSwapchain swapchain, List<Long> swapChainImageViews, long renderPass, VkImageView depthBufferImageView) {
-
-        ArrayList<Long> swapChainFramebuffers = new ArrayList<>(swapChainImageViews.size());
-
-        try(MemoryStack stack = stackPush()) {
-
-            LongBuffer attachments = stack.mallocLong(2);
-            LongBuffer pFramebuffer = stack.mallocLong(1);
-
-            VkFramebufferCreateInfo framebufferInfo = VkFramebufferCreateInfo.calloc(stack);
-            framebufferInfo.sType(VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO);
-            framebufferInfo.renderPass(renderPass);
-            framebufferInfo.width(swapchain.swapChainExtent.width());
-            framebufferInfo.height(swapchain.swapChainExtent.height());
-            framebufferInfo.layers(1);
-
-            for(long imageView : swapChainImageViews) {
-
-                attachments.put(0, imageView);
-                attachments.put(1, depthBufferImageView.getHandle());
-
-                framebufferInfo.pAttachments(attachments);
-
-                if(vkCreateFramebuffer(device, framebufferInfo, null, pFramebuffer) != VK_SUCCESS) {
-                    throw new RuntimeException("Failed to create framebuffer");
-                }
-
-                swapChainFramebuffers.add(pFramebuffer.get(0));
-            }
-        }
-
-        return swapChainFramebuffers;
-    }
-    private long createRenderPass(VkDevice device, VkSwapchain swapchain, VkImage depthBuffer) {
-
-        try(MemoryStack stack = stackPush()) {
-
-
-            VkAttachmentDescription.Buffer attachments = VkAttachmentDescription.calloc(2, stack);
-
-
-
-            VkAttachmentDescription colorAttachment = attachments.get(0);
-            colorAttachment.format(swapchain.swapChainImageFormat);
-            colorAttachment.samples(VK_SAMPLE_COUNT_1_BIT);
-            colorAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR);
-            colorAttachment.storeOp(VK_ATTACHMENT_STORE_OP_STORE);
-            colorAttachment.stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-            colorAttachment.stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
-            colorAttachment.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
-            colorAttachment.finalLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
-
-            VkAttachmentDescription depthAttachment = attachments.get(1);
-            depthAttachment.format(depthBuffer.getFormat());
-            depthAttachment.samples(VK_SAMPLE_COUNT_1_BIT);
-            depthAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR);
-            depthAttachment.storeOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
-            depthAttachment.stencilLoadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
-            depthAttachment.stencilStoreOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
-            depthAttachment.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
-            depthAttachment.finalLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-
-
-
-            VkAttachmentReference.Buffer colorAttachmentRef = VkAttachmentReference.calloc(1, stack);
-            colorAttachmentRef.attachment(0);
-            colorAttachmentRef.layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-
-            VkAttachmentReference depthAttachmentRef = VkAttachmentReference.calloc(stack);
-            depthAttachmentRef.attachment(1);
-            depthAttachmentRef.layout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-
-
-
-
-            VkSubpassDescription.Buffer subpass = VkSubpassDescription.calloc(1, stack);
-            subpass.pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS);
-            subpass.colorAttachmentCount(1);
-            subpass.pColorAttachments(colorAttachmentRef);
-            subpass.pDepthStencilAttachment(depthAttachmentRef);
-
-            VkSubpassDependency.Buffer dependency = VkSubpassDependency.calloc(1, stack);
-            dependency.srcSubpass(VK_SUBPASS_EXTERNAL);
-            dependency.dstSubpass(0);
-            dependency.srcStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT);
-            dependency.srcAccessMask(0);
-            dependency.dstStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT);
-            dependency.dstAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
-
-            VkRenderPassCreateInfo renderPassInfo = VkRenderPassCreateInfo.calloc(stack);
-            renderPassInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO);
-            renderPassInfo.pAttachments(attachments);
-            renderPassInfo.pSubpasses(subpass);
-            renderPassInfo.pDependencies(dependency);
-
-            LongBuffer pRenderPass = stack.mallocLong(1);
-
-            if(vkCreateRenderPass(device, renderPassInfo, null, pRenderPass) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create render pass");
-            }
-
-            return pRenderPass.get(0);
-        }
-    }
-    private VkPipeline createPipeline(VkDevice device, VkSwapchain swapchain, VkShaderProgram shaderProgram, long renderPass) {
+    private VkPipeline createPipeline(VkDevice device, VkSwapchain swapchain, VkShaderProgram shaderProgram) {
 
         Attributes.Type[] attributes = shaderProgram.getAttributes();
         long pipelineLayout;
@@ -1077,6 +738,18 @@ public class VkRenderer extends Renderer {
 
             pipelineLayout = pPipelineLayout.get(0);
 
+            VkPipelineRenderingCreateInfoKHR pipelineRenderingCreateInfoKHR = VkPipelineRenderingCreateInfoKHR.calloc(stack);
+            pipelineRenderingCreateInfoKHR.colorAttachmentCount(1);
+            pipelineRenderingCreateInfoKHR.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR);
+            pipelineRenderingCreateInfoKHR.pColorAttachmentFormats(stack.ints(swapchain.swapChainImageFormat));
+            pipelineRenderingCreateInfoKHR.depthAttachmentFormat(depthImage.getFormat());
+
+
+
+
+
+
+
             VkGraphicsPipelineCreateInfo.Buffer pipelineInfo = VkGraphicsPipelineCreateInfo.calloc(1, stack);
             {
                 pipelineInfo.sType(VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO);
@@ -1089,10 +762,10 @@ public class VkRenderer extends Renderer {
                 pipelineInfo.pColorBlendState(colorBlending);
                 pipelineInfo.pDepthStencilState(depthStencil);
                 pipelineInfo.layout(pipelineLayout);
-                pipelineInfo.renderPass(renderPass);
                 pipelineInfo.subpass(0);
                 pipelineInfo.basePipelineHandle(VK_NULL_HANDLE);
                 pipelineInfo.basePipelineIndex(-1);
+                pipelineInfo.pNext(pipelineRenderingCreateInfoKHR);
             }
 
             LongBuffer pGraphicsPipeline = stack.mallocLong(1);
@@ -1141,7 +814,7 @@ public class VkRenderer extends Renderer {
         swapchain = createSwapChain(device, surface, width, height, settings.vsync);
         swapchainImageViews = createSwapchainImageViews(device, swapchain);
 
-        depthBuffer = new VkImage(
+        depthImage = new VkImage(
                 allocator,
                 device,
                 swapchain.swapChainExtent.width(),
@@ -1151,15 +824,12 @@ public class VkRenderer extends Renderer {
                 VK_IMAGE_TILING_OPTIMAL
         );
 
-        depthBufferImageView = new VkImageView(device, depthBuffer, VK_IMAGE_ASPECT_DEPTH_BIT);
-
-        renderPass = createRenderPass(device, swapchain, depthBuffer);
-        swapchainFramebuffers = createSwapchainFramebuffers(device, swapchain, swapchainImageViews, renderPass, depthBufferImageView);
+        depthImageView = new VkImageView(device, depthImage, VK_IMAGE_ASPECT_DEPTH_BIT);
 
         for(RenderQueue renderQueue : renderQueues){
             VkRenderQueue vkRenderCommand = (VkRenderQueue) renderQueue;
 
-            vkRenderCommand.pipeline = createPipeline(device, swapchain, (VkShaderProgram) vkRenderCommand.shaderProgram, renderPass);
+            vkRenderCommand.pipeline = createPipeline(device, swapchain, (VkShaderProgram) vkRenderCommand.shaderProgram);
 
         }
         frameIndex = 0;
@@ -1175,14 +845,9 @@ public class VkRenderer extends Renderer {
             vkDestroyPipeline(device, vkRenderCommand.pipeline.pipeline, null);
 
         }
-        vkDestroyImage(device, depthBuffer.getHandle(), null);
-        vkDestroyImageView(device, depthBufferImageView.getHandle(), null);
+        vkDestroyImage(device, depthImage.getHandle(), null);
+        vkDestroyImageView(device, depthImageView.getHandle(), null);
 
-        for(long swapchainFramebuffer : swapchainFramebuffers){
-            vkDestroyFramebuffer(device, swapchainFramebuffer, null);
-        }
-
-        vkDestroyRenderPass(device, renderPass, null);
 
 
         for(long swapchainImageView : swapchainImageViews){
@@ -1266,7 +931,7 @@ public class VkRenderer extends Renderer {
 
 
         renderCommand.shaderProgram = shaderProgram;
-        renderCommand.pipeline = createPipeline(device, swapchain, (VkShaderProgram) shaderProgram, renderPass);
+        renderCommand.pipeline = createPipeline(device, swapchain, (VkShaderProgram) shaderProgram);
 
         return renderCommand;
     }
@@ -1303,47 +968,88 @@ public class VkRenderer extends Renderer {
             
             int imageIndex = pImageIndex.get(0);
 
-            VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
-            submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
-            submitInfo.waitSemaphoreCount(1);
-            submitInfo.pWaitSemaphores(stack.longs(frame.imageAcquiredSemaphore));
-            submitInfo.pWaitDstStageMask(stack.ints(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT));
-            submitInfo.pCommandBuffers(stack.pointers(frame.renderCommandBuffer));
-            submitInfo.pSignalSemaphores(stack.longs(frame.renderFinishedSemaphore));
+
 
             vkResetFences(device, frame.inFlightFence);
             vkResetCommandBuffer(frame.renderCommandBuffer, 0);
             {
 
+                VkCommandBuffer commandBuffer = frame.renderCommandBuffer;
+
+                VkClearValue colorClearValue = VkClearValue.calloc(stack);
+                colorClearValue.color().float32(stack.floats(0.3f, 0.3f, 0.3f, 1.0f));
+
+                VkClearValue depthClearValue = VkClearValue.calloc(stack);
+                depthClearValue.depthStencil().set(1.0f, 0);
+
+
                 VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
                 beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
 
-                VkRenderPassBeginInfo renderPassInfo = VkRenderPassBeginInfo.calloc(stack);
-                renderPassInfo.sType(VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO);
 
-                renderPassInfo.renderPass(renderPass);
+                colorAttachment = VkRenderingAttachmentInfoKHR.calloc(1, stack);
+                {
+                    colorAttachment.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR);
+                    colorAttachment.imageView(swapchainImageViews.get(frameIndex));
+                    colorAttachment.imageLayout(VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR);
+                    colorAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR);
+                    colorAttachment.storeOp(VK_ATTACHMENT_STORE_OP_STORE);
+                    colorAttachment.clearValue(colorClearValue);
+                }
+                depthAttachment = VkRenderingAttachmentInfoKHR.calloc(stack);
+                {
+                    depthAttachment.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR);
+                    depthAttachment.imageView(depthImageView.getHandle());
+                    depthAttachment.imageLayout(VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR);
+                    depthAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR);
+                    depthAttachment.storeOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
+                    depthAttachment.clearValue(depthClearValue);
+                }
 
+                renderingInfoKHR = VkRenderingInfoKHR.calloc(stack);
+                renderingInfoKHR.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_RENDERING_INFO_KHR);
                 VkRect2D renderArea = VkRect2D.calloc(stack);
                 renderArea.offset(VkOffset2D.calloc(stack).set(0, 0));
                 renderArea.extent(swapchain.swapChainExtent);
-                renderPassInfo.renderArea(renderArea);
+                renderingInfoKHR.renderArea(renderArea);
+                renderingInfoKHR.layerCount(1);
+                renderingInfoKHR.pColorAttachments(colorAttachment);
+                renderingInfoKHR.pDepthAttachment(depthAttachment);
 
-                VkClearValue.Buffer clearValues = VkClearValue.calloc(2, stack);
-                clearValues.get(0).color().float32(stack.floats(0.3f, 0.3f, 0.3f, 1.0f));
-                clearValues.get(1).depthStencil().set(1.0f, 0);
-
-                renderPassInfo.pClearValues(clearValues);
-
-                VkCommandBuffer commandBuffer = frame.renderCommandBuffer;
 
                 if(vkBeginCommandBuffer(commandBuffer, beginInfo) != VK_SUCCESS) {
                     throw new RuntimeException("Failed to begin recording command buffer");
                 }
 
-                renderPassInfo.framebuffer(swapchainFramebuffers.get(frameIndex));
+                VkImageMemoryBarrier.Buffer startBarrier = VkImageMemoryBarrier.calloc(1, stack);
+                {
+                    startBarrier.sType(VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER);
+                    startBarrier.oldLayout(VK_IMAGE_LAYOUT_UNDEFINED);
+                    startBarrier.newLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+                    startBarrier.srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
+                    startBarrier.dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
+                    startBarrier.dstAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+                    startBarrier.image(swapchain.swapChainImages.get(frameIndex));
+                    startBarrier.subresourceRange().aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
+                    startBarrier.subresourceRange().baseMipLevel(0);
+                    startBarrier.subresourceRange().levelCount(1);
+                    startBarrier.subresourceRange().baseArrayLayer(0);
+                    startBarrier.subresourceRange().layerCount(1);
+                }
+
+                vkCmdPipelineBarrier(
+                        commandBuffer,
+                        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                        0,
+                        null,
+                        null,
+                        startBarrier
+                );
 
 
-                vkCmdBeginRenderPass(commandBuffer, renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+                KHRDynamicRendering.vkCmdBeginRenderingKHR(commandBuffer, renderingInfoKHR);
                 {
 
 
@@ -1373,22 +1079,46 @@ public class VkRenderer extends Renderer {
                         vkCmdDrawIndexed(commandBuffer, renderQueue.indexCount, 1, 0, 0, 0);
                     }
                 }
-                vkCmdEndRenderPass(commandBuffer);
+                KHRDynamicRendering.vkCmdEndRenderingKHR(commandBuffer);
 
+                VkImageMemoryBarrier.Buffer endBarrier = VkImageMemoryBarrier.calloc(1, stack);
+                {
+                    endBarrier.sType(VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER);
+                    endBarrier.oldLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+                    endBarrier.newLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+                    endBarrier.srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
+                    endBarrier.dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
+                    endBarrier.srcAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+                    endBarrier.image(swapchain.swapChainImages.get(frameIndex));
+                    endBarrier.subresourceRange().aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
+                    endBarrier.subresourceRange().baseMipLevel(0);
+                    endBarrier.subresourceRange().levelCount(1);
+                    endBarrier.subresourceRange().baseArrayLayer(0);
+                    endBarrier.subresourceRange().layerCount(1);
+                }
+
+                vkCmdPipelineBarrier(
+                        commandBuffer,
+                        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                        VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                        0,
+                        null,
+                        null,
+                        endBarrier
+                );
 
                 if(vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
                     throw new RuntimeException("Failed to record command buffer");
                 }
-
-
-
-
-
-
-
-
-
             }
+
+            VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
+            submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
+            submitInfo.waitSemaphoreCount(1);
+            submitInfo.pWaitSemaphores(stack.longs(frame.imageAcquiredSemaphore));
+            submitInfo.pWaitDstStageMask(stack.ints(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT));
+            submitInfo.pCommandBuffers(stack.pointers(frame.renderCommandBuffer));
+            submitInfo.pSignalSemaphores(stack.longs(frame.renderFinishedSemaphore));
 
             int catchVal = vkQueueSubmit(graphicsQueue, submitInfo, frame.inFlightFence);
 
@@ -1444,7 +1174,7 @@ public class VkRenderer extends Renderer {
 
 
 
-        vkDestroyRenderPass(device, renderPass, null);
+
         disposeDisplay();
 
 
