@@ -49,7 +49,7 @@ public class Stage {
                     AssetPacks.<String> getAsset("core:assets/shaders/vulkan/Default.glsl").asset
             );
 
-            int matrixSizeBytes = 4 * 4 * Float.BYTES;
+
 
             shaderProgram = ShaderProgram.newShaderProgram(shaderSources.vertexShader, shaderSources.fragmentShader);
 
@@ -68,13 +68,13 @@ public class Stage {
                                     0,
                                     UniformBuffer,
                                     VertexStage
-                            ).sizeBytes(2 * matrixSizeBytes),
+                            ).sizeBytes(2 * SizeUtil.MATRIX_SIZE_BYTES),
                             new ShaderRes(
                                     "transforms",
                                     1,
                                     ShaderStorageBuffer,
                                     VertexStage
-                            ).sizeBytes(1 * matrixSizeBytes),
+                            ).sizeBytes(2 * SizeUtil.MATRIX_SIZE_BYTES),
                             new ShaderRes(
                                     "materials",
                                     2,
@@ -90,137 +90,41 @@ public class Stage {
 
         Entity player = new Entity("Player");
         {
-            Texture texture1 = Texture.newTexture(AssetPacks.getAsset("core:assets/viking_room.png"), Texture.Filter.Nearest, Texture.Filter.Nearest);
 
+            MeshComponent meshComponent = new MeshComponent(
+                    Mesh.newMesh(AssetPacks.getAsset("core:assets/models/bowser.obj")),
+                    shaderProgram,
+                    Texture.newTexture(
+                            AssetPacks.getAsset("core:assets/bowser_grp.png"),
+                            Texture.Filter.Nearest,
+                            Texture.Filter.Nearest
+                    )
+            );
 
-            ArrayList<Float> vertices = new ArrayList<>();
-            ArrayList<Integer> indices = new ArrayList<>();
-
-            {
-
-                AIScene aiScene = Assimp.aiImportFile("assets/viking_room.obj", aiProcess_Triangulate | aiProcess_FlipUVs);
-                int numMaterials = aiScene.mNumMaterials();
-                PointerBuffer aiMaterials = aiScene.mMaterials();
-
-                for (int i = 0; i < numMaterials; i++) {
-                    AIMaterial aiMaterial = AIMaterial.create(aiMaterials.get(i));
-                }
-
-                int numMeshes = aiScene.mNumMeshes();
-
-                PointerBuffer aiMeshes = aiScene.mMeshes();
-
-                for (int i = 0; i < numMeshes; i++) {
-                    AIMesh aiMesh = AIMesh.create(aiMeshes.get(i));
-                    AIVector3D.Buffer aiVertices = aiMesh.mVertices();
-
-                    int vertexIndex = 0;
-
-                    while (aiVertices.remaining() > 0) {
-                        AIVector3D aiVertex = aiVertices.get();
-                        AIVector3D aiTextureCoords = aiMesh.mTextureCoords(0).get(vertexIndex);
-
-                        vertices.add(aiVertex.x());
-                        vertices.add(aiVertex.y());
-                        vertices.add(aiVertex.z());
-                        vertices.add(0f);
-
-                        vertices.add(aiTextureCoords.x());
-                        vertices.add(aiTextureCoords.y());
-
-                        vertices.add(0f);
-
-                        vertexIndex++;
-                    }
-
-
-                    for (int j = 0; j < aiMesh.mNumFaces(); j++) {
-                        AIFace aiFace = aiMesh.mFaces().get(j);
-
-                        IntBuffer indicesBuffer = aiFace.mIndices();
-                        for (int k = 0; k < indicesBuffer.capacity(); k++) {
-                            indices.add(indicesBuffer.get(k));
-                        }
-                    }
-
-                }
-            }
-            System.out.println("Indices: " + indices.size());
-
+            meshComponent.transform.scale(0.1f);
 
             ecs.addComponents(
                     player,
-                    new MeshComponent(vertices, indices, shaderProgram, texture1)
+                    meshComponent
             );
 
         }
 
+
         Entity jimbob = new Entity("JimBob");
         {
-            Texture texture2 = Texture.newTexture(AssetPacks.getAsset("core:assets/ForiEngine.png"), Texture.Filter.Nearest, Texture.Filter.Nearest);
 
-
-            ArrayList<Float> vertices = new ArrayList<>();
-            ArrayList<Integer> indices = new ArrayList<>();
-
-            {
-
-                AIScene aiScene = Assimp.aiImportFile("assets/models/Untitled.glb", aiProcess_Triangulate | aiProcess_FlipUVs);
-                int numMaterials = aiScene.mNumMaterials();
-                PointerBuffer aiMaterials = aiScene.mMaterials();
-
-                for (int i = 0; i < numMaterials; i++) {
-                    AIMaterial aiMaterial = AIMaterial.create(aiMaterials.get(i));
-                }
-
-                int numMeshes = aiScene.mNumMeshes();
-
-                PointerBuffer aiMeshes = aiScene.mMeshes();
-
-                for (int i = 0; i < numMeshes; i++) {
-                    AIMesh aiMesh = AIMesh.create(aiMeshes.get(i));
-                    AIVector3D.Buffer aiVertices = aiMesh.mVertices();
-
-                    int vertexIndex = 0;
-
-                    while (aiVertices.remaining() > 0) {
-                        AIVector3D aiVertex = aiVertices.get();
-                        //AIVector3D aiTextureCoords = aiMesh.mTextureCoords(0).get(vertexIndex);
-
-                        AIVector3D aiTextureCoords = AIVector3D.create().set(1f, 1f, 1f);
-
-
-                        //Both the Material and Transform Index are going to depend on our queueIndex in the Mesh
-
-                        vertices.add(aiVertex.x());
-                        vertices.add(aiVertex.y());
-                        vertices.add(aiVertex.z());
-                        vertices.add(1f);
-
-                        vertices.add(aiVertex.x());
-                        vertices.add(aiVertex.y());
-
-                        vertices.add(1f);
-
-                        vertexIndex++;
-                    }
-
-
-                    for (int j = 0; j < aiMesh.mNumFaces(); j++) {
-                        AIFace aiFace = aiMesh.mFaces().get(j);
-
-                        IntBuffer indicesBuffer = aiFace.mIndices();
-                        for (int k = 0; k < indicesBuffer.capacity(); k++) {
-                            indices.add(indicesBuffer.get(k));
-                        }
-                    }
-
-                }
-            }
-
-            MeshComponent meshComponent = new MeshComponent(vertices, indices, shaderProgram, texture2);
-            meshComponent.transform.rotate((float) Math.toRadians(-90), 1.0f, 0.0f, 0.0f);
-            meshComponent.transform.scale(5f);
+            MeshComponent meshComponent = new MeshComponent(
+                    Mesh.newMesh(AssetPacks.getAsset("core:assets/models/viking_room.obj")),
+                    shaderProgram,
+                    Texture.newTexture(
+                            AssetPacks.getAsset("core:assets/viking_room.png"),
+                            Texture.Filter.Nearest,
+                            Texture.Filter.Nearest
+                    )
+            );
+            meshComponent.transform.translate(2, 0, 0);
+            meshComponent.transform.scale(2f);
 
             ecs.addComponents(
                     jimbob,
@@ -229,7 +133,11 @@ public class Stage {
 
 
 
+
+
         }
+
+
 
         Entity camera = new Entity("Camera");
         {
@@ -238,8 +146,18 @@ public class Stage {
                     camera,
                     new CameraComponent(
                             new Camera(
-                                    new Matrix4f().lookAt(new Vector3f(0.0f, 2.0f, 3.0f), new Vector3f(0, 0, 0), new Vector3f(0.0f, 1.0f, 0.0f)),
-                                    new Matrix4f().perspective((float) Math.toRadians(35.0f), (float) renderer.getWidth() / renderer.getHeight(), 0.01f, 100.0f, true),
+                                    new Matrix4f().lookAt(
+                                            new Vector3f(0.0f, 2.0f, 3.0f),
+                                            new Vector3f(0, 0, 0),
+                                            new Vector3f(0.0f, 1.0f, 0.0f)
+                                    ),
+                                    new Matrix4f().perspective(
+                                            (float) Math.toRadians(35.0f),
+                                            (float) renderer.getWidth() / renderer.getHeight(),
+                                            0.01f,
+                                            100.0f,
+                                            true
+                                    ),
                                     true
                             )
                     )

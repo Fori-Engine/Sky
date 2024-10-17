@@ -46,4 +46,5 @@ layout(set = 0, binding = 2) uniform sampler2D[] materials;
 
 void main() {
     outputColor = texture(materials[int(inputMaterialBaseIndex)], inputUV);
+    //outputColor = vec4(inputUV.xy, 0, 1);
 }

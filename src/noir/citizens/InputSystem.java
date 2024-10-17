@@ -24,8 +24,11 @@ public class InputSystem extends EntitySystem {
             if(window.isKeyPressed(Input.KEY_UP)) meshComponent.transform.translate(0, 0, -2 * Time.deltaTime());
             if(window.isKeyPressed(Input.KEY_DOWN)) meshComponent.transform.translate(0, 0, 2 * Time.deltaTime());
 
-            if(window.isKeyPressed(Input.KEY_PERIOD)) meshComponent.transform.rotate((float) Math.toRadians(30 * Time.deltaTime()), 0, 0, 1);
-            if(window.isKeyPressed(Input.KEY_COMMA)) meshComponent.transform.rotate((float) Math.toRadians(-30 * Time.deltaTime()), 0, 0, 1);
+            if(window.isKeyPressed(Input.KEY_PERIOD)) meshComponent.transform.rotate((float) Math.toRadians(30 * Time.deltaTime()), 0, 1, 0);
+            if(window.isKeyPressed(Input.KEY_COMMA)) meshComponent.transform.rotate((float) Math.toRadians(-30 * Time.deltaTime()), 0, 1, 0);
+
+            if(window.isKeyPressed(Input.KEY_Z)) meshComponent.transform.scale((float) (0.99));
+            if(window.isKeyPressed(Input.KEY_X)) meshComponent.transform.scale((float) (1.01));
 
         });
 

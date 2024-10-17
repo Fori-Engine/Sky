@@ -1,10 +1,7 @@
 package noir.citizens;
 
 import fori.ecs.*;
-import fori.graphics.Attributes;
-import fori.graphics.Camera;
-import fori.graphics.RenderQueue;
-import fori.graphics.Renderer;
+import fori.graphics.*;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -13,7 +10,7 @@ public class RenderSystem extends EntitySystem {
 
     private Renderer renderer;
     private Camera camera;
-    private int matrixSizeBytes = 4 * 4 * Float.BYTES;
+
 
 
     public RenderSystem(Renderer renderer) {
@@ -42,12 +39,44 @@ public class RenderSystem extends EntitySystem {
                 ByteBuffer indexBufferData = renderQueue.getDefaultIndexBuffer().get();
                 indexBufferData.clear();
 
-                for(float vertexPart : meshComponent.vertices) vertexBufferData.putFloat(vertexPart);
-                for(int index : meshComponent.indices) {
+                for (int vertex = 0; vertex < meshComponent.mesh.vertexCount; vertex++) {
 
 
-                    indexBufferData.putInt(renderQueue.getVertexCount() + index);
+                    for(Attributes.Type attribute : meshComponent.shaderProgram.getAttributes()){
+                        if(attribute == Attributes.Type.PositionFloat3){
+                            float x = meshComponent.mesh.vertices.get(attribute.size * vertex);
+                            float y = meshComponent.mesh.vertices.get(attribute.size * vertex + 1);
+                            float z = meshComponent.mesh.vertices.get(attribute.size * vertex + 2);
+
+                            vertexBufferData.putFloat(x);
+                            vertexBufferData.putFloat(y);
+                            vertexBufferData.putFloat(z);
+                        }
+
+                        if(attribute == Attributes.Type.UVFloat2){
+                            float u = meshComponent.mesh.textureUVs.get(attribute.size * vertex);
+                            float v = meshComponent.mesh.textureUVs.get(attribute.size * vertex + 1);
+
+                            vertexBufferData.putFloat(u);
+                            vertexBufferData.putFloat(v);
+                        }
+
+                        if(attribute == Attributes.Type.TransformIndexFloat1) {
+                            vertexBufferData.putFloat(renderQueue.getMeshIndex());
+                        }
+
+                        if(attribute == Attributes.Type.MaterialBaseIndexFloat1) {
+                            vertexBufferData.putFloat(renderQueue.getMeshIndex());
+                        }
+
+
+
+
+                    }
                 }
+
+                for(int index : meshComponent.mesh.indices)
+                    indexBufferData.putInt(renderQueue.getVertexCount() + index);
 
 
                 renderQueue.addTexture(renderQueue.getMeshIndex(), meshComponent.texture);
@@ -56,17 +85,16 @@ public class RenderSystem extends EntitySystem {
                     ByteBuffer transformsBufferData = renderQueue.transformsBuffer[i].get();
                     ByteBuffer cameraBufferData = renderQueue.cameraBuffer[i].map();
 
-
-                    meshComponent.transform.get(renderQueue.getMeshIndex() * matrixSizeBytes, transformsBufferData);
+                    meshComponent.transform.get(renderQueue.getMeshIndex() * SizeUtil.MATRIX_SIZE_BYTES, transformsBufferData);
                     camera.getView().get(0, cameraBufferData);
                     camera.getProj().get(4 * 4 * Float.BYTES, cameraBufferData);
-
-
-
                 }
 
 
-                renderQueue.updateQueue(meshComponent.vertices.size() / Attributes.getSize(meshComponent.shaderProgram.getAttributes()), meshComponent.indices.size());
+                renderQueue.updateQueue(
+                        meshComponent.mesh.vertexCount,
+                        meshComponent.mesh.indices.size()
+                );
 
                 meshComponent.queueIndex = renderQueue.getMeshIndex();
                 meshComponent.queued = true;
@@ -77,7 +105,7 @@ public class RenderSystem extends EntitySystem {
 
             if(meshComponent.queued){
                 ByteBuffer transformsBufferData = renderQueue.transformsBuffer[renderer.getFrameIndex()].get();
-                meshComponent.transform.get(meshComponent.queueIndex * matrixSizeBytes, transformsBufferData);
+                meshComponent.transform.get(meshComponent.queueIndex * SizeUtil.MATRIX_SIZE_BYTES, transformsBufferData);
             }
 
 

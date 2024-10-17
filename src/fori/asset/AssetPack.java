@@ -10,12 +10,10 @@ import fori.ExceptionUtil;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.stb.STBImage;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.nio.file.Files;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
 
@@ -113,15 +111,26 @@ public class AssetPack {
                     texture.get(bytes);
                     texture.limit(texture.capacity()).rewind();
 
-                    target = new Asset<>(new TextureData(bytes, w.get(), h.get()));
+                    target = new Asset<>(asset.getName(), new TextureData(bytes, w.get(), h.get()));
                 }
                 if(asset.getName().endsWith(".glsl")){
-                    target = new Asset<>(FileReader.readFile(asset.getPath()));
+                    target = new Asset<>(asset.getName(), FileReader.readFile(asset.getPath()));
                     sizeBytes += target.asset.toString().getBytes().length;
                 }
                 if(asset.getName().endsWith(".fnt")){
-                    target = new Asset<>(FileReader.readFile(asset.getPath()));
+                    target = new Asset<>(asset.getName(), FileReader.readFile(asset.getPath()));
                     sizeBytes += target.asset.toString().getBytes().length;
+                }
+                if(asset.getName().endsWith(".obj") || asset.getName().endsWith(".fbx")){
+                    byte[] bytes = null;
+                    try {
+                        bytes = Files.readAllBytes(asset.toPath());
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    target = new Asset<>(asset.getName(), bytes);
+                    sizeBytes += bytes.length;
                 }
 
                 System.out.println("\t\t(" + sizeBytes + ") bytes");

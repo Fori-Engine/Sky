@@ -1211,7 +1211,6 @@ public class VkRenderer extends Renderer {
         VkRenderQueue renderCommand = new VkRenderQueue(FRAMES_IN_FLIGHT, sharedCommandPool, graphicsQueue, device);
         renderQueues.add(renderCommand);
 
-        int matrixSizeBytes = 4 * 4 * Float.BYTES;
 
         renderCommand.stagingVertexBuffer = Buffer.newBuffer(
                 Attributes.getSize(shaderProgram.getAttributes()) * Float.BYTES * maxVertices,
@@ -1246,7 +1245,7 @@ public class VkRenderer extends Renderer {
 
 
             renderCommand.cameraBuffer[i] = Buffer.newBuffer(
-                    matrixSizeBytes * 2,
+                    SizeUtil.MATRIX_SIZE_BYTES * 2,
                     Buffer.Usage.UniformBuffer,
                     Buffer.Type.CPUGPUShared,
                     false
@@ -1255,7 +1254,7 @@ public class VkRenderer extends Renderer {
 
 
             renderCommand.transformsBuffer[i] = Buffer.newBuffer(
-                    matrixSizeBytes * RenderQueue.MAX_MESH_COUNT,
+                    SizeUtil.MATRIX_SIZE_BYTES * RenderQueue.MAX_MESH_COUNT,
                     Buffer.Usage.ShaderStorageBuffer,
                     Buffer.Type.CPUGPUShared,
                     false
@@ -1391,7 +1390,10 @@ public class VkRenderer extends Renderer {
 
             }
 
-            if(vkQueueSubmit(graphicsQueue, submitInfo, frame.inFlightFence) != VK_SUCCESS) {
+            int catchVal = vkQueueSubmit(graphicsQueue, submitInfo, frame.inFlightFence);
+
+            if(catchVal != VK_SUCCESS) {
+                System.out.println("Catch: " + catchVal);
                 throw new RuntimeException("Failed to submit draw command buffer");
             }
 

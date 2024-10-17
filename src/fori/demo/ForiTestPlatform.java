@@ -104,7 +104,7 @@ public class ForiTestPlatform {
                     AssetPacks.<String> getAsset("core:assets/shaders/vulkan/Default.glsl").asset
             );
 
-            int matrixSizeBytes = 4 * 4 * Float.BYTES;
+
 
             shaderProgram = ShaderProgram.newShaderProgram(shaderSources.vertexShader, shaderSources.fragmentShader);
 
@@ -123,13 +123,13 @@ public class ForiTestPlatform {
                                     0,
                                     UniformBuffer,
                                     VertexStage
-                            ).sizeBytes(2 * matrixSizeBytes),
+                            ).sizeBytes(2 * SizeUtil.MATRIX_SIZE_BYTES),
                             new ShaderRes(
                                     "transforms",
                                     1,
                                     ShaderStorageBuffer,
                                     VertexStage
-                            ).sizeBytes(1 * matrixSizeBytes),
+                            ).sizeBytes(1 * SizeUtil.MATRIX_SIZE_BYTES),
                             new ShaderRes(
                                     "materials",
                                     2,
@@ -148,7 +148,6 @@ public class ForiTestPlatform {
                     AssetPacks.<String> getAsset("core:assets/shaders/vulkan/Default.glsl").asset
             );
 
-            int matrixSizeBytes = 4 * 4 * Float.BYTES;
 
             uiShaderProgram = ShaderProgram.newShaderProgram(shaderSources.vertexShader, shaderSources.fragmentShader);
 
@@ -167,13 +166,13 @@ public class ForiTestPlatform {
                                     0,
                                     UniformBuffer,
                                     VertexStage
-                            ).sizeBytes(2 * matrixSizeBytes),
+                            ).sizeBytes(2 * SizeUtil.MATRIX_SIZE_BYTES),
                             new ShaderRes(
                                     "transforms",
                                     1,
                                     ShaderStorageBuffer,
                                     VertexStage
-                            ).sizeBytes(1 * matrixSizeBytes),
+                            ).sizeBytes(1 * SizeUtil.MATRIX_SIZE_BYTES),
                             new ShaderRes(
                                     "materials",
                                     2,
