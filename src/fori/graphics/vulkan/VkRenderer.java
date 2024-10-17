@@ -725,7 +725,7 @@ public class VkRenderer extends Renderer {
             VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.calloc(stack);
             {
                 pipelineLayoutInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
-                pipelineLayoutInfo.setLayoutCount(4);
+                pipelineLayoutInfo.setLayoutCount(shaderProgram.getShaderResSets().length);
                 pipelineLayoutInfo.pSetLayouts(stack.longs(shaderProgram.getAllDescriptorSetLayouts()));
 
 

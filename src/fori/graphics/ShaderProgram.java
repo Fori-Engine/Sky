@@ -40,6 +40,10 @@ public abstract class ShaderProgram implements Disposable {
         this.resourcesSets = resourceSets;
     }
 
+    public ShaderResSet[] getShaderResSets(){
+        return resourcesSets;
+    }
+
     public Attributes.Type[] getAttributes() {
         return attributes;
     }
