@@ -1,5 +1,6 @@
 package fori.graphics;
 
+import fori.Logger;
 import fori.asset.Asset;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.*;
@@ -12,8 +13,7 @@ import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.lwjgl.assimp.Assimp.aiProcess_FlipUVs;
-import static org.lwjgl.assimp.Assimp.aiProcess_Triangulate;
+import static org.lwjgl.assimp.Assimp.*;
 
 public class Mesh {
     public List<Float> vertices;
@@ -62,18 +62,26 @@ public class Mesh {
 
 
 
-        AIScene scene = Assimp.aiImportFileFromMemory(assetData, aiProcess_FlipUVs | aiProcess_Triangulate, (ByteBuffer) null);
+        AIScene scene = Assimp.aiImportFileFromMemory(assetData, aiProcess_FlipUVs | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices, (ByteBuffer) null);
         int meshCount = scene.mNumMeshes();
         PointerBuffer meshes = scene.mMeshes();
 
         for (int i = 0; i < meshCount; i++) meshList.add(AIMesh.create(meshes.get(i)));
 
-        System.out.println("Mesh Count: " + meshCount);
+        StringBuilder loadData = new StringBuilder();
+        loadData.append("Loading Mesh: " + asset.name);
+
+
+
+
 
         AINode root = scene.mRootNode();
         openNode(root, meshList, vertices, textureUVs, indices);
-        System.out.println("Vertex Count: " + vertices.size() / 3);
-        System.out.println("Index Count: " + indices.size() );
+        loadData.append("\n\t" + "Vertex Count: " + vertices.size() / Attributes.Type.PositionFloat3.size);
+        loadData.append("\n\t" + "Index Count: " + indices.size());
+
+        Logger.info(Mesh.class, loadData.toString());
+
 
         return new Mesh(vertices, textureUVs, indices, vertices.size() / 3);
     }
