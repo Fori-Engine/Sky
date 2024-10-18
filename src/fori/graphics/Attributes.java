@@ -6,7 +6,8 @@ public class Attributes {
         NormalFloat(3),
         TransformIndexFloat1(1),
         UVFloat2(2),
-        MaterialBaseIndexFloat1(1);
+        MaterialBaseIndexFloat1(1),
+        ColorFloat4(4);
 
         public int size;
         Type(int size) {

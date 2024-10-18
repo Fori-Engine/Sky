@@ -1,30 +1,22 @@
 package noir.citizens;
 
 import fori.Logger;
+import fori.Time;
 import fori.asset.AssetPack;
 import fori.asset.AssetPacks;
-import fori.demo.ForiTestPlatform;
 import fori.ecs.Engine;
 import fori.ecs.Entity;
 import fori.ecs.Pair;
 import fori.graphics.*;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.assimp.*;
 
 import java.io.File;
-import java.nio.IntBuffer;
-import java.util.ArrayList;
-import java.util.List;
 
 import static fori.graphics.Attributes.Type.*;
-import static fori.graphics.Attributes.Type.MaterialBaseIndexFloat1;
 import static fori.graphics.ShaderRes.ShaderStage.FragmentStage;
 import static fori.graphics.ShaderRes.ShaderStage.VertexStage;
 import static fori.graphics.ShaderRes.Type.*;
-import static org.lwjgl.assimp.Assimp.aiProcess_FlipUVs;
-import static org.lwjgl.assimp.Assimp.aiProcess_Triangulate;
 
 public class Stage {
     private PlatformWindow window;
@@ -37,10 +29,11 @@ public class Stage {
         Logger.setConsoleTarget(System.out);
 
         window = new PlatformWindow(1200, 700, "Noir Citizens", true);
-        renderer = Renderer.newRenderer(window, window.getWidth(), window.getHeight(), new RendererSettings(RenderAPI.Vulkan).validation(true).vsync(true));
+        renderer = Renderer.newRenderer(window, window.getWidth(), window.getHeight(), new RendererSettings(RenderAPI.Vulkan).validation(true).vsync(false));
         ecs = new Engine(
                 new InputSystem(window),
-                new RenderSystem(renderer)
+                new RenderSystem(renderer),
+                new UISystem(renderer)
         );
 
         ShaderProgram shaderProgram;
@@ -152,7 +145,7 @@ public class Stage {
                                             new Vector3f(0.0f, 1.0f, 0.0f)
                                     ),
                                     new Matrix4f().perspective(
-                                            (float) Math.toRadians(35.0f),
+                                            (float) Math.toRadians(45.0f),
                                             (float) renderer.getWidth() / renderer.getHeight(),
                                             0.01f,
                                             100.0f,
@@ -175,6 +168,9 @@ public class Stage {
     }
 
     public boolean update(){
+
+
+        System.out.println(Time.framesPerSecond());
 
 
         ecs.update();

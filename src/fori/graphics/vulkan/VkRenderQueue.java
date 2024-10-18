@@ -160,10 +160,6 @@ public class VkRenderQueue extends RenderQueue {
             textureUpdates[i] = new ShaderUpdate<>("materials", 0, 2, texture).arrayIndex(indexOfTextureToUpdate);
         }
 
-        for(ShaderUpdate<Texture> textureUpdate : textureUpdates){
-            System.out.println("Need to update at index " + textureUpdate.arrayIndex + " Shader Program: " + shaderProgram);
-        }
-
 
 
 
