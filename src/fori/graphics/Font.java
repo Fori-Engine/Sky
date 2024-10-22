@@ -11,20 +11,21 @@ import java.util.Map;
 /***
  * Represents a Font that can be rendered to the screen. This class can also interoperate with AWT Fonts, as well as load TrueType (.ttf) fonts from disk.
  */
-public class Font {
+public class Font implements Disposable {
     private Asset<TextureData> textureAsset;
     private Asset<String> fnt;
     private Texture texture;
     private HashMap<Integer, Glyph> glyphs = new HashMap<>();
     private float defaultLineHeight;
+    private Ref ref;
 
 
-
-    public Font(Asset<TextureData> textureAsset, Asset<String> fnt) {
+    public Font(Ref parent, Asset<TextureData> textureAsset, Asset<String> fnt) {
+        ref = parent.add(this);
         this.textureAsset = textureAsset;
         this.fnt = fnt;
 
-        texture = Texture.newTexture(textureAsset, Texture.Filter.Nearest, Texture.Filter.Nearest);
+        texture = Texture.newTexture(ref, textureAsset, Texture.Filter.Nearest, Texture.Filter.Nearest);
         createGlyphs();
 
     }
@@ -101,22 +102,6 @@ public class Font {
         return params;
     }
 
-    private static Font defaultFont;
-
-    public static Font getDefault(){
-        if(defaultFont == null){
-            defaultFont = new Font(
-                    AssetPacks.getAsset("core:assets/fonts/kanit-lightitalic/kanit.png"),
-                    AssetPacks.getAsset("core:assets/fonts/kanit-lightitalic/kanit.fnt")
-            );
-        }
-
-        return defaultFont;
-    }
-
-
-
-
     public float getLineHeight(String line){
 
         float stringHeight = stringHeight(line);
@@ -144,6 +129,7 @@ public class Font {
         float x = 0;
 
         for (char c : line.toCharArray()){
+
             x += glyphs.get((int) c).xadvance;
         }
 
@@ -187,4 +173,13 @@ public class Font {
 
     }
 
+    @Override
+    public void dispose() {
+
+    }
+
+    @Override
+    public Ref getRef() {
+        return null;
+    }
 }

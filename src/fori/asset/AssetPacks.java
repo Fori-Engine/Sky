@@ -10,6 +10,7 @@ public class AssetPacks {
     private AssetPacks(){}
     public static <T> Asset<T> getAsset(String path) {
 
+        Logger.info(AssetPacks.class, "Loading asset " + path);
         String[] tokens = path.split(":");
 
         String assetPackKey = tokens[0];

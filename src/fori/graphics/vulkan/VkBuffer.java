@@ -1,6 +1,7 @@
 package fori.graphics.vulkan;
 
 import fori.graphics.Buffer;
+import fori.graphics.Ref;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.util.vma.VmaAllocationCreateInfo;
@@ -25,8 +26,8 @@ public class VkBuffer extends Buffer {
     private long memory;
     private PointerBuffer mappedMemory;
 
-    public VkBuffer(int sizeBytes, Usage usage, Type type, boolean staging){
-        super(sizeBytes, usage, type, staging);
+    public VkBuffer(Ref parent, int sizeBytes, Usage usage, Type type, boolean staging){
+        super(parent, sizeBytes, usage, type, staging);
 
 
 
@@ -119,11 +120,20 @@ public class VkBuffer extends Buffer {
 
     @Override
     public void dispose() {
+        vkDeviceWaitIdle(VkContextManager.getCurrentDevice());
+        vmaDestroyBuffer(VkGlobalAllocator.getAllocator().getId(), handle, pAllocation.get(0));
+
+
 
         MemoryUtil.memFree(pBuffer);
         MemoryUtil.memFree(pAllocation);
 
         allocationInfo.free();
         allocationCreateInfo.free();
+    }
+
+    @Override
+    public Ref getRef() {
+        return ref;
     }
 }

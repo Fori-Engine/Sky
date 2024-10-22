@@ -1,19 +1,22 @@
 package noir.citizens;
 
+import fori.Stage;
+
 public class Main {
     public static void main(String[] args) {
 
-        Stage stage = new Stage();
+        Stage noirCitizens = new NoirCitizens();
 
-        stage.init();
+        noirCitizens.launch();
+
 
         while(true){
-            boolean success = stage.update();
+            boolean success = noirCitizens.update();
 
             if(!success) break;
         }
 
-        stage.dispose();
+        noirCitizens.close();
 
 
     }

@@ -1,12 +1,11 @@
 package noir.citizens;
 
 import fori.Logger;
-import fori.Time;
+import fori.Stage;
 import fori.asset.AssetPack;
 import fori.asset.AssetPacks;
 import fori.ecs.Engine;
 import fori.ecs.Entity;
-import fori.ecs.Pair;
 import fori.graphics.*;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -18,10 +17,11 @@ import static fori.graphics.ShaderRes.ShaderStage.FragmentStage;
 import static fori.graphics.ShaderRes.ShaderStage.VertexStage;
 import static fori.graphics.ShaderRes.Type.*;
 
-public class Stage {
+public class NoirCitizens extends Stage {
     private PlatformWindow window;
     private Renderer renderer;
     private Engine ecs;
+
 
     public void init(){
         AssetPacks.open("core", AssetPack.openLocal(new File("assets")));
@@ -29,7 +29,11 @@ public class Stage {
         Logger.setConsoleTarget(System.out);
 
         window = new PlatformWindow(1200, 700, "Noir Citizens", true);
-        renderer = Renderer.newRenderer(window, window.getWidth(), window.getHeight(), new RendererSettings(RenderAPI.Vulkan).validation(true).vsync(false));
+
+
+
+
+        renderer = Renderer.newRenderer(getStageRef(), window, window.getWidth(), window.getHeight(), new RendererSettings(RenderAPI.Vulkan).validation(true).vsync(false));
         ecs = new Engine(
                 new InputSystem(window),
                 new RenderSystem(renderer),
@@ -44,7 +48,7 @@ public class Stage {
 
 
 
-            shaderProgram = ShaderProgram.newShaderProgram(shaderSources.vertexShader, shaderSources.fragmentShader);
+            shaderProgram = ShaderProgram.newShaderProgram(renderer.getRef(), shaderSources.vertexShader, shaderSources.fragmentShader);
 
             shaderProgram.bind(
                     new Attributes.Type[]{
@@ -79,8 +83,6 @@ public class Stage {
 
         }
 
-
-
         Entity player = new Entity("Player");
         {
 
@@ -88,6 +90,7 @@ public class Stage {
                     Mesh.newMesh(AssetPacks.getAsset("core:assets/models/bowser.obj")),
                     shaderProgram,
                     Texture.newTexture(
+                            renderer.getRef(),
                             AssetPacks.getAsset("core:assets/bowser_grp.png"),
                             Texture.Filter.Nearest,
                             Texture.Filter.Nearest
@@ -111,6 +114,7 @@ public class Stage {
                     Mesh.newMesh(AssetPacks.getAsset("core:assets/models/viking_room.obj")),
                     shaderProgram,
                     Texture.newTexture(
+                            renderer.getRef(),
                             AssetPacks.getAsset("core:assets/viking_room.png"),
                             Texture.Filter.Nearest,
                             Texture.Filter.Nearest
@@ -156,21 +160,12 @@ public class Stage {
                     )
             );
         }
-
-        for(Pair<Integer, Integer> view : ecs.getViews()){
-
-            System.out.println("[" + view.a + ", " + view.b + "]");
-        }
-
-        //System.exit(1);
-
-
     }
 
     public boolean update(){
 
 
-        System.out.println(Time.framesPerSecond());
+        //System.out.println(Time.framesPerSecond());
 
 
         ecs.update();

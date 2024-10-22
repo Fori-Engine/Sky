@@ -4,6 +4,7 @@ import fori.Logger;
 import fori.graphics.*;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.util.vma.Vma;
 import org.lwjgl.vulkan.*;
 
 import java.nio.IntBuffer;
@@ -16,6 +17,8 @@ import java.util.stream.Stream;
 import static java.lang.Math.clamp;
 import static java.util.stream.Collectors.toSet;
 import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.util.vma.Vma.vmaDestroyAllocator;
+import static org.lwjgl.util.vma.Vma.vmaFreeMemory;
 import static org.lwjgl.vulkan.KHRSurface.*;
 import static org.lwjgl.vulkan.KHRSurface.vkGetPhysicalDeviceSurfacePresentModesKHR;
 import static org.lwjgl.vulkan.KHRSwapchain.*;
@@ -64,8 +67,8 @@ public class VkRenderer extends Renderer {
 
 
 
-    public VkRenderer(VkInstance instance, long surface, int width, int height, RendererSettings rendererSettings, long debugMessenger) {
-        this(width, height, rendererSettings);
+    public VkRenderer(Ref parent, VkInstance instance, long surface, int width, int height, RendererSettings rendererSettings, long debugMessenger) {
+        super(parent, width, height, rendererSettings);
         this.instance = instance;
         this.surface = surface;
         this.debugMessenger = debugMessenger;
@@ -158,6 +161,7 @@ public class VkRenderer extends Renderer {
 
 
         depthImage = new VkImage(
+                ref,
                 allocator,
                 device,
                 swapchain.swapChainExtent.width(),
@@ -167,7 +171,7 @@ public class VkRenderer extends Renderer {
                 VK_IMAGE_TILING_OPTIMAL
         );
 
-        depthImageView = new VkImageView(device, depthImage, VK_IMAGE_ASPECT_DEPTH_BIT);
+        depthImageView = new VkImageView(ref, device, depthImage, VK_IMAGE_ASPECT_DEPTH_BIT);
 
 
 
@@ -196,9 +200,7 @@ public class VkRenderer extends Renderer {
 
 
     }
-    public VkRenderer(int width, int height, RendererSettings rendererSettings) {
-        super(width, height, rendererSettings);
-    }
+
 
 
     private VkPhysicalDevice selectPhysicalDevice(VkInstance instance, long surface){
@@ -825,6 +827,7 @@ public class VkRenderer extends Renderer {
         swapchainImageViews = createSwapchainImageViews(device, swapchain);
 
         depthImage = new VkImage(
+                ref,
                 allocator,
                 device,
                 swapchain.swapChainExtent.width(),
@@ -834,7 +837,7 @@ public class VkRenderer extends Renderer {
                 VK_IMAGE_TILING_OPTIMAL
         );
 
-        depthImageView = new VkImageView(device, depthImage, VK_IMAGE_ASPECT_DEPTH_BIT);
+        depthImageView = new VkImageView(ref, device, depthImage, VK_IMAGE_ASPECT_DEPTH_BIT);
 
         for(RenderQueue renderQueue : renderQueues){
             VkRenderQueue vkRenderCommand = (VkRenderQueue) renderQueue;
@@ -846,18 +849,12 @@ public class VkRenderer extends Renderer {
     }
 
     private void disposeDisplay(){
-
-
-        vkDeviceWaitIdle(device);
         for(RenderQueue renderQueue : renderQueues){
-            VkRenderQueue vkRenderCommand = (VkRenderQueue) renderQueue;
-
-            vkDestroyPipeline(device, vkRenderCommand.pipeline.pipeline, null);
-
+            VkRenderQueue vkRenderQueue = (VkRenderQueue) renderQueue;
+            vkDestroyPipeline(device, vkRenderQueue.pipeline.pipeline, null);
+            vkDestroyFence(device, vkRenderQueue.fence, null);
+            vkDestroyPipelineLayout(device, vkRenderQueue.pipeline.pipelineLayout, null);
         }
-        vkDestroyImage(device, depthImage.getHandle(), null);
-        vkDestroyImageView(device, depthImageView.getHandle(), null);
-
 
 
         for(long swapchainImageView : swapchainImageViews){
@@ -888,12 +885,14 @@ public class VkRenderer extends Renderer {
 
 
         renderCommand.stagingVertexBuffer = Buffer.newBuffer(
+                getRef(),
                 Attributes.getSize(shaderProgram.getAttributes()) * Float.BYTES * maxVertices,
                 Buffer.Usage.VertexBuffer,
                 Buffer.Type.CPUGPUShared,
                 true
         );
         renderCommand.stagingIndexBuffer = Buffer.newBuffer(
+                getRef(),
                 maxIndices * Integer.BYTES,
                 Buffer.Usage.IndexBuffer,
                 Buffer.Type.CPUGPUShared,
@@ -901,12 +900,14 @@ public class VkRenderer extends Renderer {
         );
 
         renderCommand.vertexBuffer = Buffer.newBuffer(
+                getRef(),
                 Attributes.getSize(shaderProgram.getAttributes()) * Float.BYTES * maxVertices,
                 Buffer.Usage.VertexBuffer,
                 Buffer.Type.GPULocal,
                 false
         );
         renderCommand.indexBuffer = Buffer.newBuffer(
+                getRef(),
                 maxIndices * Integer.BYTES,
                 Buffer.Usage.IndexBuffer,
                 Buffer.Type.GPULocal,
@@ -920,6 +921,7 @@ public class VkRenderer extends Renderer {
 
 
             renderCommand.cameraBuffer[i] = Buffer.newBuffer(
+                    getRef(),
                     SizeUtil.MATRIX_SIZE_BYTES * 2,
                     Buffer.Usage.UniformBuffer,
                     Buffer.Type.CPUGPUShared,
@@ -929,6 +931,7 @@ public class VkRenderer extends Renderer {
 
 
             renderCommand.transformsBuffer[i] = Buffer.newBuffer(
+                    getRef(),
                     SizeUtil.MATRIX_SIZE_BYTES * RenderQueue.MAX_MESH_COUNT,
                     Buffer.Usage.ShaderStorageBuffer,
                     Buffer.Type.CPUGPUShared,
@@ -1168,8 +1171,9 @@ public class VkRenderer extends Renderer {
 
     @Override
     public void dispose() {
-
         vkDeviceWaitIdle(device);
+
+
 
         for(VkFrame frame : frames){
             vkDestroySemaphore(device, frame.imageAcquiredSemaphore, null);
@@ -1177,15 +1181,21 @@ public class VkRenderer extends Renderer {
             vkDestroyFence(device, frame.inFlightFence, null);
         }
 
+        disposeDisplay();
+
+
+
         vkDestroyCommandPool(device, sharedCommandPool, null);
 
+        vmaDestroyAllocator(allocator.getId());
+        vkDestroySurfaceKHR(instance, surface, null);
+        EXTDebugUtils.vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, null);
 
 
 
 
 
 
-        disposeDisplay();
 
 
 

@@ -15,15 +15,14 @@ public abstract class Renderer implements Disposable {
     private static RenderAPI api;
     protected RendererSettings settings;
     protected List<RenderQueue> renderQueues = new ArrayList<>();
+    protected static Ref ref;
 
 
-
-    public Renderer(int width, int height, RendererSettings settings){
+    public Renderer(Ref parent, int width, int height, RendererSettings settings){
+        this.ref = parent.add(this);
         this.width = width;
         this.height = height;
         this.settings = settings;
-
-        Disposer.add("renderer", this);
     }
     public abstract void onSurfaceResized(int width, int height);
     public RenderQueue newRenderQueue(ShaderProgram shaderProgram){
@@ -48,7 +47,7 @@ public abstract class Renderer implements Disposable {
         return height;
     }
 
-    public static Renderer newRenderer(PlatformWindow window, int width, int height, RendererSettings settings){
+    public static Renderer newRenderer(Ref parent, PlatformWindow window, int width, int height, RendererSettings settings){
         api = settings.backend;
 
 
@@ -61,10 +60,10 @@ public abstract class Renderer implements Disposable {
             long surface = vulkanContext.getPlatformWindowSurface();
             VkInstance instance = vulkanContext.getPlatformWindowInstance();
 
-            VkRenderer vulkanRenderer2D = new VkRenderer(instance, surface, width, height, settings, vulkanContext.getDebugMessenger());
-            window.onRenderContextReady(vulkanContext, vulkanRenderer2D);
+            VkRenderer renderer = new VkRenderer(parent, instance, surface, width, height, settings, vulkanContext.getDebugMessenger());
+            window.onRenderContextReady(vulkanContext, renderer);
 
-            return vulkanRenderer2D;
+            return renderer;
         }
         else if(settings.backend == null){
             Logger.meltdown(Renderer.class, "The target graphics API was not specified in RenderSettings!");
@@ -77,6 +76,9 @@ public abstract class Renderer implements Disposable {
 
         return null;
     }
+
+    public Ref getRef() { return ref; }
+
     public static RenderAPI getRenderAPI() {
         return api;
     }

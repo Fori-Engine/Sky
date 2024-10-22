@@ -149,7 +149,6 @@ public class VkRenderContext extends RenderContext {
                     VkDebugUtilsMessengerCallbackDataEXT callbackData = VkDebugUtilsMessengerCallbackDataEXT.create(pCallbackData);
                     Logger.info(VkRenderer.class, callbackData.pMessageString());
 
-
                     return VK_FALSE;
                 });
 
@@ -180,6 +179,8 @@ public class VkRenderContext extends RenderContext {
                     throw new RuntimeException("Failed to create the debug messenger as the extension is not present");
 
                 debugMessenger = pDebugMessenger.get(0);
+
+
             }
         }
 

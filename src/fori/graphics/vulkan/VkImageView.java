@@ -1,7 +1,7 @@
 package fori.graphics.vulkan;
 
 import fori.graphics.Disposable;
-import fori.graphics.Disposer;
+import fori.graphics.Ref;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.VkDevice;
 import org.lwjgl.vulkan.VkImageViewCreateInfo;
@@ -13,16 +13,16 @@ import static org.lwjgl.vulkan.VK10.*;
 public class VkImageView implements Disposable {
     private VkImage image;
     private VkImageViewCreateInfo imageViewCreateInfo;
-    private LongBuffer pImageView;
     private long handle;
+    private Ref ref;
 
 
-    public VkImageView(VkDevice device, VkImage image, int aspectMask) {
-        Disposer.add("managedResources", this);
+    public VkImageView(Ref parent, VkDevice device, VkImage image, int aspectMask) {
+        ref = parent.add(this);
         this.image = image;
 
         imageViewCreateInfo = VkImageViewCreateInfo.create();
-        pImageView = MemoryUtil.memAllocLong(1);
+        LongBuffer pImageView = MemoryUtil.memAllocLong(1);
 
 
         imageViewCreateInfo.sType(VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO);
@@ -46,6 +46,7 @@ public class VkImageView implements Disposable {
         }
 
         handle = pImageView.get(0);
+        MemoryUtil.memFree(pImageView);
     }
 
     public long getHandle() {
@@ -54,7 +55,13 @@ public class VkImageView implements Disposable {
 
     @Override
     public void dispose() {
+        vkDeviceWaitIdle(VkContextManager.getCurrentDevice());
+        vkDestroyImageView(VkContextManager.getCurrentDevice(), handle, null);
         imageViewCreateInfo.free();
-        MemoryUtil.memFree(pImageView);
+    }
+
+    @Override
+    public Ref getRef() {
+        return ref;
     }
 }

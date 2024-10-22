@@ -4,6 +4,7 @@ import fori.Logger;
 import fori.asset.Asset;
 import fori.asset.TextureData;
 import fori.graphics.Buffer;
+import fori.graphics.Ref;
 import fori.graphics.Texture;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
@@ -25,9 +26,11 @@ public class VkTexture extends Texture {
     public boolean isCorrectLayout;
 
 
-    public VkTexture(Asset<TextureData> textureData, Filter minFilter, Filter magFilter) {
-        super(textureData, minFilter, magFilter);
+    public VkTexture(Ref parent, Asset<TextureData> textureData, Filter minFilter, Filter magFilter) {
+        super(parent, textureData, minFilter, magFilter);
+
         image = new VkImage(
+                ref,
                 VkGlobalAllocator.getAllocator(),
                 VkContextManager.getCurrentDevice(),
                 getWidth(),
@@ -39,7 +42,7 @@ public class VkTexture extends Texture {
 
 
 
-        imageData = Buffer.newBuffer(getWidth() * getHeight() * 4, Buffer.Usage.ImageBackingBuffer, Buffer.Type.CPUGPUShared, false);
+        imageData = Buffer.newBuffer(ref, getWidth() * getHeight() * 4, Buffer.Usage.ImageBackingBuffer, Buffer.Type.CPUGPUShared, false);
         ByteBuffer bytes = imageData.map();
         bytes.put(getTextureData());
         imageData.unmap();
@@ -47,7 +50,7 @@ public class VkTexture extends Texture {
 
 
 
-        imageView = new VkImageView(VkContextManager.getCurrentDevice(), image, VK_IMAGE_ASPECT_COLOR_BIT);
+        imageView = new VkImageView(image.getRef(), VkContextManager.getCurrentDevice(), image, VK_IMAGE_ASPECT_COLOR_BIT);
 
         try(MemoryStack stack = stackPush()){
             VkSamplerCreateInfo samplerCreateInfo = VkSamplerCreateInfo.calloc(stack);
@@ -145,7 +148,16 @@ public class VkTexture extends Texture {
 
     @Override
     public void dispose() {
+        vkDeviceWaitIdle(VkContextManager.getCurrentDevice());
+
         vkDestroySampler(VkContextManager.getCurrentDevice(), sampler, null);
 
+
+
+    }
+
+    @Override
+    public Ref getRef() {
+        return ref;
     }
 }

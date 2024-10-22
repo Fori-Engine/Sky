@@ -1,5 +1,7 @@
 package noir.citizens;
 
+import fori.Stage;
+import fori.Time;
 import fori.asset.AssetPacks;
 import fori.ecs.Engine;
 import fori.ecs.EntitySystem;
@@ -38,7 +40,7 @@ public class UISystem extends EntitySystem {
                     AssetPacks.<String> getAsset("core:assets/shaders/vulkan/UI.glsl").asset
             );
 
-            shaderProgram = ShaderProgram.newShaderProgram(shaderSources.vertexShader, shaderSources.fragmentShader);
+            shaderProgram = ShaderProgram.newShaderProgram(renderer.getRef(), shaderSources.vertexShader, shaderSources.fragmentShader);
             shaderProgram.bind(
                     new Attributes.Type[]{
                             PositionFloat3,
@@ -74,7 +76,12 @@ public class UISystem extends EntitySystem {
         }
 
 
-        font = Font.getDefault();
+        font = new Font(
+                renderer.getRef(),
+                AssetPacks.getAsset("core:assets/fonts/kanit-lightitalic/kanit.png"),
+                AssetPacks.getAsset("core:assets/fonts/kanit-lightitalic/kanit.fnt")
+        );
+
     }
 
     public void drawText(float x, float y, String text, Font font, Color color, RenderQueue renderQueue){
@@ -247,7 +254,12 @@ public class UISystem extends EntitySystem {
         RenderQueue renderQueue = renderer.getRenderQueueByShaderProgram(shaderProgram);
         renderQueue.reset();
 
-        String text = "This is a test of my text renderer \nsupporting all the hot new things like \n new lines and \t\t tabs";
+        String text = "Frames Per Sec: " + Time.framesPerSecond() + "\nThis is a test of my text renderer \nsupporting all the hot new things like \nnew lines and \t\t tabs";
+
+
+
+
+
         drawText(0, 40, text, font, Color.WHITE, renderQueue);
 
 
@@ -273,7 +285,7 @@ public class UISystem extends EntitySystem {
 
         long end = System.currentTimeMillis() - start;
 
-        System.out.println("UISystem.update[renderQueue.updateQueue] " + end + "ms");
+        //System.out.println("UISystem.update[renderQueue.updateQueue] " + end + "ms");
 
 
 

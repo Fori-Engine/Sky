@@ -12,6 +12,7 @@ import org.lwjgl.vulkan.*;
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.util.shaderc.Shaderc.shaderc_glsl_fragment_shader;
@@ -29,8 +30,8 @@ public class VkShaderProgram extends ShaderProgram {
     private ArrayList<Long> descriptorPools = new ArrayList<>(VkRenderer.FRAMES_IN_FLIGHT);
 
 
-    public VkShaderProgram(String vertexShaderSource, String fragmentShaderSource) {
-        super(vertexShaderSource, fragmentShaderSource);
+    public VkShaderProgram(Ref parent, String vertexShaderSource, String fragmentShaderSource) {
+        super(parent, vertexShaderSource, fragmentShaderSource);
         try(MemoryStack stack = MemoryStack.stackPush()){
             ByteBuffer entryPoint = MemoryUtil.memUTF8("main");
             vertexShaderBinary = ShaderCompiler.compile(vertexShaderSource, shaderc_glsl_vertex_shader);
@@ -352,6 +353,26 @@ public class VkShaderProgram extends ShaderProgram {
 
     @Override
     public void dispose() {
+        vkDeviceWaitIdle(VkContextManager.getCurrentDevice());
 
+        vkDestroyShaderModule(VkContextManager.getCurrentDevice(), vertexShaderModule, null);
+        vkDestroyShaderModule(VkContextManager.getCurrentDevice(), fragmentShaderModule, null);
+
+        for(List<Long> frameDescriptorSetLayouts : descriptorSetLayouts){
+            for(long descriptorSetLayouts : frameDescriptorSetLayouts)
+                vkDestroyDescriptorSetLayout(VkContextManager.getCurrentDevice(), descriptorSetLayouts, null);
+        }
+
+        for(long descriptorPool : descriptorPools)
+            vkDestroyDescriptorPool(VkContextManager.getCurrentDevice(), descriptorPool, null);
+
+
+
+
+    }
+
+    @Override
+    public Ref getRef() {
+        return ref;
     }
 }
