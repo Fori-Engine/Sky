@@ -60,7 +60,7 @@ switch (OperatingSystem.current()) {
         break
 }
 
-project.ext.lwjglVersion = "3.3.4"
+project.ext.lwjglVersion = "3.3.3"
 project.ext.jomlVersion = "1.10.7"
 
 dependencies {
