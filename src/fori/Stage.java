@@ -4,7 +4,7 @@ import fori.graphics.Disposable;
 import fori.graphics.Ref;
 
 public abstract class Stage {
-    private static Ref rootRef;
+    private Ref rootRef;
 
 
 
