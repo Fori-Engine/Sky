@@ -83,7 +83,7 @@ public class RenderSystem extends EntitySystem {
 
                 for (int i = 0; i < renderQueue.getFramesInFlight(); i++) {
                     ByteBuffer transformsBufferData = renderQueue.transformsBuffer[i].get();
-                    ByteBuffer cameraBufferData = renderQueue.cameraBuffer[i].map();
+                    ByteBuffer cameraBufferData = renderQueue.cameraBuffer[i].get();
 
                     meshComponent.transform.get(renderQueue.getMeshIndex() * SizeUtil.MATRIX_SIZE_BYTES, transformsBufferData);
                     camera.getView().get(0, cameraBufferData);
