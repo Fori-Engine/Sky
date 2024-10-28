@@ -31,7 +31,7 @@ public abstract class Renderer implements Disposable {
     public abstract RenderQueue newRenderQueue(ShaderProgram shaderProgram, int maxVertices, int maxIndices);
     public RenderQueue getRenderQueueByShaderProgram(ShaderProgram shaderProgram){
         for(RenderQueue renderQueue : renderQueues){
-            if(renderQueue.shaderProgram == shaderProgram) return renderQueue;
+            if(renderQueue.getShaderProgram() == shaderProgram) return renderQueue;
         }
         return null;
     }

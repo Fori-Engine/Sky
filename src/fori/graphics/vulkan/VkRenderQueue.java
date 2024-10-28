@@ -13,11 +13,11 @@ import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
 
 public class VkRenderQueue extends RenderQueue {
-    public VkPipeline pipeline;
-    public VkCommandBuffer commandBuffer;
-    public long fence;
-    public VkQueue graphicsQueue;
-    public VkDevice device;
+    private VkPipeline pipeline;
+    private VkCommandBuffer commandBuffer;
+    private long fence;
+    private VkQueue graphicsQueue;
+    private VkDevice device;
 
     public VkRenderQueue(int framesInFlight, long commandPool, VkQueue graphicsQueue, VkDevice device) {
         super(framesInFlight);
@@ -63,6 +63,17 @@ public class VkRenderQueue extends RenderQueue {
         return stagingIndexBuffer;
     }
 
+    public VkPipeline getPipeline() {
+        return pipeline;
+    }
+
+    public void setPipeline(VkPipeline pipeline) {
+        this.pipeline = pipeline;
+    }
+
+    public long getFence() {
+        return fence;
+    }
 
     @Override
     public void updateQueue(int vertexCount, int indexCount) {

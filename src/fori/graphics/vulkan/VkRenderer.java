@@ -840,9 +840,9 @@ public class VkRenderer extends Renderer {
         depthImageView = new VkImageView(ref, device, depthImage, VK_IMAGE_ASPECT_DEPTH_BIT);
 
         for(RenderQueue renderQueue : renderQueues){
-            VkRenderQueue vkRenderCommand = (VkRenderQueue) renderQueue;
+            VkRenderQueue vkRenderQueue = (VkRenderQueue) renderQueue;
 
-            vkRenderCommand.pipeline = createPipeline(device, swapchain, (VkShaderProgram) vkRenderCommand.shaderProgram);
+            vkRenderQueue.setPipeline(createPipeline(device, swapchain, (VkShaderProgram) vkRenderQueue.getShaderProgram()));
 
         }
         frameIndex = 0;
@@ -851,9 +851,9 @@ public class VkRenderer extends Renderer {
     private void disposeDisplay(){
         for(RenderQueue renderQueue : renderQueues){
             VkRenderQueue vkRenderQueue = (VkRenderQueue) renderQueue;
-            vkDestroyPipeline(device, vkRenderQueue.pipeline.pipeline, null);
-            vkDestroyFence(device, vkRenderQueue.fence, null);
-            vkDestroyPipelineLayout(device, vkRenderQueue.pipeline.pipelineLayout, null);
+            vkDestroyPipeline(device, vkRenderQueue.getPipeline().pipeline, null);
+            vkDestroyFence(device, vkRenderQueue.getFence(), null);
+            vkDestroyPipelineLayout(device, vkRenderQueue.getPipeline().pipelineLayout, null);
         }
 
 
@@ -880,73 +880,71 @@ public class VkRenderer extends Renderer {
 
     @Override
     public RenderQueue newRenderQueue(ShaderProgram shaderProgram, int maxVertices, int maxIndices) {
-        VkRenderQueue renderCommand = new VkRenderQueue(FRAMES_IN_FLIGHT, sharedCommandPool, graphicsQueue, device);
-        renderQueues.add(renderCommand);
+        VkRenderQueue vkRenderQueue = new VkRenderQueue(FRAMES_IN_FLIGHT, sharedCommandPool, graphicsQueue, device);
+        renderQueues.add(vkRenderQueue);
 
 
-        renderCommand.stagingVertexBuffer = Buffer.newBuffer(
+        vkRenderQueue.setStagingVertexBuffer(Buffer.newBuffer(
                 getRef(),
                 Attributes.getSize(shaderProgram.getAttributes()) * Float.BYTES * maxVertices,
                 Buffer.Usage.VertexBuffer,
                 Buffer.Type.CPUGPUShared,
                 true
-        );
-        renderCommand.stagingIndexBuffer = Buffer.newBuffer(
+        ));
+        vkRenderQueue.setStagingIndexBuffer(Buffer.newBuffer(
                 getRef(),
                 maxIndices * Integer.BYTES,
                 Buffer.Usage.IndexBuffer,
                 Buffer.Type.CPUGPUShared,
                 true
-        );
-
-        renderCommand.vertexBuffer = Buffer.newBuffer(
+        ));
+        vkRenderQueue.setVertexBuffer(Buffer.newBuffer(
                 getRef(),
                 Attributes.getSize(shaderProgram.getAttributes()) * Float.BYTES * maxVertices,
                 Buffer.Usage.VertexBuffer,
                 Buffer.Type.GPULocal,
                 false
-        );
-        renderCommand.indexBuffer = Buffer.newBuffer(
+        ));
+        vkRenderQueue.setIndexBuffer(Buffer.newBuffer(
                 getRef(),
                 maxIndices * Integer.BYTES,
                 Buffer.Usage.IndexBuffer,
                 Buffer.Type.GPULocal,
                 false
-        );
+        ));
 
         for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
 
 
 
 
-
-            renderCommand.cameraBuffer[i] = Buffer.newBuffer(
+            vkRenderQueue.setCameraBuffer(i, Buffer.newBuffer(
                     getRef(),
                     SizeUtil.MATRIX_SIZE_BYTES * 2,
                     Buffer.Usage.UniformBuffer,
                     Buffer.Type.CPUGPUShared,
                     false
-            );
+            ));
 
 
 
-            renderCommand.transformsBuffer[i] = Buffer.newBuffer(
+            vkRenderQueue.setTransformsBuffer(i, Buffer.newBuffer(
                     getRef(),
                     SizeUtil.MATRIX_SIZE_BYTES * RenderQueue.MAX_MESH_COUNT,
                     Buffer.Usage.ShaderStorageBuffer,
                     Buffer.Type.CPUGPUShared,
                     false
-            );
+            ));
 
         }
 
 
 
 
-        renderCommand.shaderProgram = shaderProgram;
-        renderCommand.pipeline = createPipeline(device, swapchain, (VkShaderProgram) shaderProgram);
+        vkRenderQueue.setShaderProgram(shaderProgram);
+        vkRenderQueue.setPipeline(createPipeline(device, swapchain, (VkShaderProgram) shaderProgram));
 
-        return renderCommand;
+        return vkRenderQueue;
     }
 
     @Override
@@ -1068,14 +1066,14 @@ public class VkRenderer extends Renderer {
 
                     for(RenderQueue renderQueue : renderQueues) {
 
-                        VkBuffer vertexBuffer = (VkBuffer) renderQueue.vertexBuffer;
-                        VkBuffer indexBuffer = (VkBuffer) renderQueue.indexBuffer;
+                        VkBuffer vertexBuffer = (VkBuffer) renderQueue.getVertexBuffer();
+                        VkBuffer indexBuffer = (VkBuffer) renderQueue.getIndexBuffer();
 
 
 
 
-                        VkPipeline pipeline = ((VkRenderQueue) renderQueue).pipeline;
-                        VkShaderProgram shaderProgram = (VkShaderProgram) renderQueue.shaderProgram;
+                        VkPipeline pipeline = ((VkRenderQueue) renderQueue).getPipeline();
+                        VkShaderProgram shaderProgram = (VkShaderProgram) renderQueue.getShaderProgram();
 
 
                         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
@@ -1089,7 +1087,7 @@ public class VkRenderer extends Renderer {
                                 pipeline.pipelineLayout, 0, stack.longs(shaderProgram.getDescriptorSets(frameIndex)), null);
 
 
-                        vkCmdDrawIndexed(commandBuffer, renderQueue.indexCount, 1, 0, 0, 0);
+                        vkCmdDrawIndexed(commandBuffer, renderQueue.getIndexCount(), 1, 0, 0, 0);
                     }
                 }
                 KHRDynamicRendering.vkCmdEndRenderingKHR(commandBuffer);

@@ -247,6 +247,7 @@ public class UISystem extends EntitySystem {
 
     @Override
     public void update(Engine ecs, MessageQueue messageQueue) {
+
         if(renderer.getRenderQueueByShaderProgram(shaderProgram) == null){
             renderer.newRenderQueue(shaderProgram);
         }
@@ -264,13 +265,13 @@ public class UISystem extends EntitySystem {
 
 
 
-        ByteBuffer cameraBuffer = renderQueue.cameraBuffer[renderer.getFrameIndex()].get();
+        ByteBuffer cameraBuffer = renderQueue.getCameraBuffer(renderer.getFrameIndex()).get();
         {
             camera.getView().get(0, cameraBuffer);
             camera.getProj().get(SizeUtil.MATRIX_SIZE_BYTES, cameraBuffer);
         }
 
-        ByteBuffer transformBuffer = renderQueue.transformsBuffer[renderer.getFrameIndex()].get();
+        ByteBuffer transformBuffer = renderQueue.getTransformsBuffer(renderer.getFrameIndex()).get();
         {
             new Matrix4f().identity().get(0, transformBuffer);
         }
@@ -286,6 +287,10 @@ public class UISystem extends EntitySystem {
         long end = System.currentTimeMillis() - start;
 
         //System.out.println("UISystem.update[renderQueue.updateQueue] " + end + "ms");
+
+
+
+
 
 
 

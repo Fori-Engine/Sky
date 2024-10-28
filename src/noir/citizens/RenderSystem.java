@@ -81,9 +81,10 @@ public class RenderSystem extends EntitySystem {
 
                 renderQueue.addTexture(renderQueue.getMeshIndex(), meshComponent.texture);
 
+
                 for (int i = 0; i < renderQueue.getFramesInFlight(); i++) {
-                    ByteBuffer transformsBufferData = renderQueue.transformsBuffer[i].get();
-                    ByteBuffer cameraBufferData = renderQueue.cameraBuffer[i].get();
+                    ByteBuffer transformsBufferData = renderQueue.getTransformsBuffer(i).get();
+                    ByteBuffer cameraBufferData = renderQueue.getCameraBuffer(i).get();
 
                     meshComponent.transform.get(renderQueue.getMeshIndex() * SizeUtil.MATRIX_SIZE_BYTES, transformsBufferData);
                     camera.getView().get(0, cameraBufferData);
@@ -104,7 +105,7 @@ public class RenderSystem extends EntitySystem {
             }
 
             if(meshComponent.queued){
-                ByteBuffer transformsBufferData = renderQueue.transformsBuffer[renderer.getFrameIndex()].get();
+                ByteBuffer transformsBufferData = renderQueue.getTransformsBuffer(renderer.getFrameIndex()).get();
                 meshComponent.transform.get(meshComponent.queueIndex * SizeUtil.MATRIX_SIZE_BYTES, transformsBufferData);
             }
 

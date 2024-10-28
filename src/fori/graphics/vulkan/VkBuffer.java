@@ -17,8 +17,8 @@ import static org.lwjgl.vulkan.VK10.*;
 
 
 public class VkBuffer extends Buffer {
-    private long handle;
 
+    private long handle;
     private LongBuffer pBuffer;
     private PointerBuffer pAllocation;
     private VmaAllocationInfo allocationInfo;
@@ -121,16 +121,16 @@ public class VkBuffer extends Buffer {
 
     @Override
     public void dispose() {
+
+
         vkDeviceWaitIdle(VkContextManager.getCurrentDevice());
-        vmaDestroyBuffer(VkGlobalAllocator.getAllocator().getId(), handle, pAllocation.get(0));
-
-
 
         MemoryUtil.memFree(pBuffer);
         MemoryUtil.memFree(pAllocation);
-
         allocationInfo.free();
         allocationCreateInfo.free();
+        vmaDestroyBuffer(VkGlobalAllocator.getAllocator().getId(), handle, pAllocation.get(0));
+
     }
 
 }

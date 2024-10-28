@@ -5,9 +5,9 @@ import fori.asset.TextureData;
 import fori.graphics.vulkan.VkTexture;
 
 public abstract class Texture implements Disposable {
-    private int width, height;
-    private Filter minFilter, magFilter;
-    private byte[] textureData;
+    protected int width, height;
+    protected Filter minFilter, magFilter;
+    protected byte[] textureData;
     protected Ref ref;
 
     public enum Filter {

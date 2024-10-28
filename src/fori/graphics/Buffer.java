@@ -19,13 +19,13 @@ public abstract class Buffer implements Disposable {
         ImageBackingBuffer
     }
 
-    private Usage usage;
-    private Type type;
+    protected Usage usage;
+    protected Type type;
 
-    private int sizeBytes;
-    private boolean mapped;
+    protected int sizeBytes;
+    protected boolean mapped;
     protected boolean staging;
-    private ByteBuffer data;
+    protected ByteBuffer data;
     protected Ref ref;
 
     public Buffer(Ref parent, int sizeBytes, Usage usage, Type type, boolean staging){
