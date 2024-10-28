@@ -371,8 +371,4 @@ public class VkShaderProgram extends ShaderProgram {
 
     }
 
-    @Override
-    public Ref getRef() {
-        return ref;
-    }
 }

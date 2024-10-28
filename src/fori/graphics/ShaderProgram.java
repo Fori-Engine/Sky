@@ -56,5 +56,8 @@ public abstract class ShaderProgram implements Disposable {
         return null;
     }
 
-
+    @Override
+    public Ref getRef() {
+        return ref;
+    }
 }

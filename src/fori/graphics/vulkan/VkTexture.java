@@ -156,8 +156,4 @@ public class VkTexture extends Texture {
 
     }
 
-    @Override
-    public Ref getRef() {
-        return ref;
-    }
 }

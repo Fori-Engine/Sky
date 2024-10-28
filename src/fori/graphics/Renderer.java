@@ -15,7 +15,7 @@ public abstract class Renderer implements Disposable {
     private static RenderAPI api;
     protected RendererSettings settings;
     protected List<RenderQueue> renderQueues = new ArrayList<>();
-    protected static Ref ref;
+    protected Ref ref;
 
 
     public Renderer(Ref parent, int width, int height, RendererSettings settings){

@@ -81,6 +81,8 @@ public abstract class Buffer implements Disposable {
         return null;
     }
 
-
-
+    @Override
+    public Ref getRef() {
+        return ref;
+    }
 }

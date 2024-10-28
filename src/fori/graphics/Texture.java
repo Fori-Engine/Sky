@@ -50,6 +50,10 @@ public abstract class Texture implements Disposable {
         return null;
     }
 
+    @Override
+    public Ref getRef() {
+        return ref;
+    }
 }
 
 

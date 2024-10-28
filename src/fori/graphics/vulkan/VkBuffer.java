@@ -133,8 +133,4 @@ public class VkBuffer extends Buffer {
         allocationCreateInfo.free();
     }
 
-    @Override
-    public Ref getRef() {
-        return ref;
-    }
 }
