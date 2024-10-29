@@ -7,7 +7,7 @@ public class Main {
 
         Stage noirCitizens = new NoirCitizens();
 
-        noirCitizens.launch();
+        noirCitizens.launch(args);
 
 
         while(true){

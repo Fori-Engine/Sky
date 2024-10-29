@@ -8,7 +8,7 @@ public abstract class Stage {
 
 
 
-    public void launch(){
+    public void launch(String[] args){
         rootRef = new Ref(new Disposable() {
             @Override
             public void dispose() {
@@ -21,7 +21,7 @@ public abstract class Stage {
             }
         });
 
-        init();
+        init(args);
     }
 
     public Ref getStageRef() { return rootRef; }
@@ -31,7 +31,7 @@ public abstract class Stage {
         rootRef.destroyAll();
     }
 
-    public abstract void init();
+    public abstract void init(String[] args);
     public abstract boolean update();
     public abstract void dispose();
 }
