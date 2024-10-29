@@ -113,15 +113,15 @@ public class AssetPack {
 
                     target = new Asset<>(asset.getName(), new TextureData(bytes, w.get(), h.get()));
                 }
-                if(asset.getName().endsWith(".glsl")){
+                else if(asset.getName().endsWith(".glsl")){
                     target = new Asset<>(asset.getName(), FileReader.readFile(asset.getPath()));
                     sizeBytes += target.asset.toString().getBytes().length;
                 }
-                if(asset.getName().endsWith(".fnt")){
+                else if(asset.getName().endsWith(".fnt")){
                     target = new Asset<>(asset.getName(), FileReader.readFile(asset.getPath()));
                     sizeBytes += target.asset.toString().getBytes().length;
                 }
-                if(asset.getName().endsWith(".obj") || asset.getName().endsWith(".fbx")){
+                else if(asset.getName().endsWith(".obj") || asset.getName().endsWith(".fbx") || asset.getName().endsWith(".gltf")){
                     byte[] bytes = null;
                     try {
                         bytes = Files.readAllBytes(asset.toPath());

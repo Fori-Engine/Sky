@@ -4,6 +4,7 @@ import fori.Logger;
 import fori.asset.Asset;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.*;
+import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
 import java.io.ByteArrayInputStream;
@@ -19,38 +20,23 @@ public class Mesh {
     public List<Float> vertices;
     public List<Float> textureUVs;
     public List<Integer> indices;
+    public List<Texture> textures;
     public int vertexCount;
 
-    public Mesh(List<Float> vertices, List<Float> textureUVs, List<Integer> indices, int vertexCount) {
+
+    public Mesh(List<Float> vertices, List<Float> textureUVs, List<Integer> indices, List<Texture> textures, int vertexCount) {
         this.vertices = vertices;
         this.textureUVs = textureUVs;
         this.indices = indices;
         this.vertexCount = vertexCount;
+        this.textures = textures;
     }
 
     public static Mesh newMesh(Asset<byte[]> asset){
-        return newMeshFromObj(asset);
-        //else if(asset.name.endsWith(".noir")) return newMeshFromNoir(asset);
-
-
-    }
-
-    private static Mesh newMeshFromNoir(Asset<byte[]> asset) {
         ArrayList<Float> vertices = new ArrayList<>();
         ArrayList<Float> textureUVs = new ArrayList<>();
         ArrayList<Integer> indices = new ArrayList<>();
-        int vertexCount = 0;
-
-        DataInputStream dataInputStream = new DataInputStream(new ByteArrayInputStream(asset.asset));
-
-
-        return new Mesh(vertices, textureUVs, indices, vertexCount);
-    }
-
-    private static Mesh newMeshFromObj(Asset<byte[]> asset) {
-        ArrayList<Float> vertices = new ArrayList<>();
-        ArrayList<Float> textureUVs = new ArrayList<>();
-        ArrayList<Integer> indices = new ArrayList<>();
+        ArrayList<Texture> textures = new ArrayList<>();
 
         ArrayList<AIMesh> meshList = new ArrayList<>();
 
@@ -63,6 +49,24 @@ public class Mesh {
 
 
         AIScene scene = Assimp.aiImportFileFromMemory(assetData, aiProcess_FlipUVs | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices, (ByteBuffer) null);
+
+
+        int materialCount = scene.mNumMaterials();
+
+        try(MemoryStack stack = MemoryStack.stackPush()) {
+
+            for (int i = 0; i < materialCount; i++) {
+                AIMaterial material = AIMaterial.create(scene.mMaterials().get(i));
+                AIString aiTexturePath = AIString.calloc(stack);
+                aiGetMaterialTexture(material, aiTextureType_DIFFUSE, 0, aiTexturePath, (IntBuffer) null,
+                        null, null, null, null, null);
+                String texturePath = aiTexturePath.dataString();
+
+            }
+
+        }
+
+
         int meshCount = scene.mNumMeshes();
         PointerBuffer meshes = scene.mMeshes();
 
@@ -83,7 +87,7 @@ public class Mesh {
         Logger.info(Mesh.class, loadData.toString());
 
 
-        return new Mesh(vertices, textureUVs, indices, vertices.size() / 3);
+        return new Mesh(vertices, textureUVs, indices, textures, vertices.size() / 3);
     }
 
     private static void openNode(AINode root, List<AIMesh> meshList, List<Float> vertices, List<Float> textureUVs, List<Integer> indices) {

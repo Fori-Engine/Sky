@@ -125,13 +125,13 @@ public class NoirCitizens extends Stage {
                                     1,
                                     ShaderStorageBuffer,
                                     VertexStage
-                            ).sizeBytes(2 * SizeUtil.MATRIX_SIZE_BYTES),
+                            ).sizeBytes(1 * SizeUtil.MATRIX_SIZE_BYTES),
                             new ShaderRes(
                                     "materials",
                                     2,
                                     CombinedSampler,
                                     FragmentStage
-                            ).count(2)
+                            ).count(1)
                     )
             );
 
@@ -141,17 +141,17 @@ public class NoirCitizens extends Stage {
         {
 
             MeshComponent meshComponent = new MeshComponent(
-                    Mesh.newMesh(AssetPacks.getAsset("core:assets/models/bowser.obj")),
+                    Mesh.newMesh(AssetPacks.getAsset("core:assets/models/colt9.fbx")),
                     shaderProgram,
                     Texture.newTexture(
                             renderer.getRef(),
-                            AssetPacks.getAsset("core:assets/bowser_grp.png"),
-                            Texture.Filter.Nearest,
-                            Texture.Filter.Nearest
+                            AssetPacks.getAsset("core:assets/textures/CC9_bolt_BaseColor.png"),
+                            Texture.Filter.Linear,
+                            Texture.Filter.Linear
                     )
             );
 
-            meshComponent.transform.scale(0.1f);
+
 
             ecs.addComponents(
                     player,
@@ -161,32 +161,6 @@ public class NoirCitizens extends Stage {
         }
 
 
-        Entity jimbob = new Entity("JimBob");
-        {
-
-            MeshComponent meshComponent = new MeshComponent(
-                    Mesh.newMesh(AssetPacks.getAsset("core:assets/models/viking_room.obj")),
-                    shaderProgram,
-                    Texture.newTexture(
-                            renderer.getRef(),
-                            AssetPacks.getAsset("core:assets/viking_room.png"),
-                            Texture.Filter.Nearest,
-                            Texture.Filter.Nearest
-                    )
-            );
-            meshComponent.transform.translate(2, 0, 0);
-            meshComponent.transform.scale(2f);
-
-            ecs.addComponents(
-                    jimbob,
-                    meshComponent
-            );
-
-
-
-
-
-        }
 
 
 
