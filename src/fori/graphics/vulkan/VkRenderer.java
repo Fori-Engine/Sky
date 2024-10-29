@@ -4,7 +4,6 @@ import fori.Logger;
 import fori.graphics.*;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.util.vma.Vma;
 import org.lwjgl.vulkan.*;
 
 import java.nio.IntBuffer;
@@ -18,7 +17,6 @@ import static java.lang.Math.clamp;
 import static java.util.stream.Collectors.toSet;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.util.vma.Vma.vmaDestroyAllocator;
-import static org.lwjgl.util.vma.Vma.vmaFreeMemory;
 import static org.lwjgl.vulkan.KHRSurface.*;
 import static org.lwjgl.vulkan.KHRSurface.vkGetPhysicalDeviceSurfacePresentModesKHR;
 import static org.lwjgl.vulkan.KHRSwapchain.*;
@@ -51,7 +49,6 @@ public class VkRenderer extends Renderer {
     private VkFrame[] frames = new VkFrame[FRAMES_IN_FLIGHT];
     private int frameIndex;
     private long sharedCommandPool;
-    private boolean resized = false;
 
 
     private VkImage depthImage;
@@ -670,8 +667,14 @@ public class VkRenderer extends Renderer {
             VkPipelineViewportStateCreateInfo viewportState = VkPipelineViewportStateCreateInfo.calloc(stack);
             {
                 viewportState.sType(VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO);
-                viewportState.pViewports(viewport);
                 viewportState.pScissors(scissor);
+                viewportState.viewportCount(1);
+            }
+
+            VkPipelineDynamicStateCreateInfo dynamicState = VkPipelineDynamicStateCreateInfo.calloc(stack);
+            {
+                dynamicState.sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
+                dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_VIEWPORT));
             }
 
             VkPipelineRasterizationStateCreateInfo rasterizer = VkPipelineRasterizationStateCreateInfo.calloc(stack);
@@ -769,6 +772,7 @@ public class VkRenderer extends Renderer {
                 pipelineInfo.pVertexInputState(vertexInputInfo);
                 pipelineInfo.pInputAssemblyState(inputAssembly);
                 pipelineInfo.pViewportState(viewportState);
+                pipelineInfo.pDynamicState(dynamicState);
                 pipelineInfo.pRasterizationState(rasterizer);
                 pipelineInfo.pMultisampleState(multisampling);
                 pipelineInfo.pColorBlendState(colorBlending);
@@ -820,11 +824,12 @@ public class VkRenderer extends Renderer {
 
 
 
-    private void recreateDisplay(){
+    private void recreateSwapchainAndDepthResources(){
 
-        disposeDisplay();
+        disposeSwapchainAndDepthResources();
         swapchain = createSwapChain(device, surface, width, height, settings.vsync);
         swapchainImageViews = createSwapchainImageViews(device, swapchain);
+
 
         depthImage = new VkImage(
                 ref,
@@ -839,24 +844,12 @@ public class VkRenderer extends Renderer {
 
         depthImageView = new VkImageView(ref, device, depthImage, VK_IMAGE_ASPECT_DEPTH_BIT);
 
-        for(RenderQueue renderQueue : renderQueues){
-            VkRenderQueue vkRenderQueue = (VkRenderQueue) renderQueue;
-
-            vkRenderQueue.setPipeline(createPipeline(device, swapchain, (VkShaderProgram) vkRenderQueue.getShaderProgram()));
-
-        }
         frameIndex = 0;
     }
 
-    private void disposeDisplay(){
-        for(RenderQueue renderQueue : renderQueues){
-            VkRenderQueue vkRenderQueue = (VkRenderQueue) renderQueue;
-            vkDestroyPipeline(device, vkRenderQueue.getPipeline().pipeline, null);
-            vkDestroyFence(device, vkRenderQueue.getFence(), null);
-            vkDestroyPipelineLayout(device, vkRenderQueue.getPipeline().pipelineLayout, null);
-        }
+    private void disposeSwapchainAndDepthResources(){
 
-
+        vkDeviceWaitIdle(device);
         for(long swapchainImageView : swapchainImageViews){
             vkDestroyImageView(device, swapchainImageView, null);
         }
@@ -874,8 +867,6 @@ public class VkRenderer extends Renderer {
     public void onSurfaceResized(int width, int height) {
         this.width = width;
         this.height = height;
-
-        resized = true;
     }
 
     @Override
@@ -970,7 +961,7 @@ public class VkRenderer extends Renderer {
             int acquireNextImageResult = vkAcquireNextImageKHR(device, swapchain.swapChain, UINT64_MAX, frame.imageAcquiredSemaphore, VK_NULL_HANDLE, pImageIndex);
             
             if(acquireNextImageResult == VK_ERROR_OUT_OF_DATE_KHR){
-                recreateDisplay();
+                recreateSwapchainAndDepthResources();
                 return;
             }
             
@@ -1062,7 +1053,10 @@ public class VkRenderer extends Renderer {
 
                 KHRDynamicRendering.vkCmdBeginRenderingKHR(commandBuffer, renderingInfoKHR);
                 {
-
+                    VkViewport.Buffer viewport = VkViewport.calloc(1, stack);
+                    viewport.width(width);
+                    viewport.height(height);
+                    vkCmdSetViewport(commandBuffer, 0, viewport);
 
                     for(RenderQueue renderQueue : renderQueues) {
 
@@ -1148,9 +1142,8 @@ public class VkRenderer extends Renderer {
 
             int presentResult = vkQueuePresentKHR(presentQueue, presentInfo);
 
-            if(presentResult == VK_ERROR_OUT_OF_DATE_KHR || presentResult == VK_SUBOPTIMAL_KHR || resized){
-                resized = false;
-                recreateDisplay();
+            if(presentResult == VK_ERROR_OUT_OF_DATE_KHR || presentResult == VK_SUBOPTIMAL_KHR){
+                recreateSwapchainAndDepthResources();
                 return;
             }
 
@@ -1179,7 +1172,15 @@ public class VkRenderer extends Renderer {
             vkDestroyFence(device, frame.inFlightFence, null);
         }
 
-        disposeDisplay();
+        disposeSwapchainAndDepthResources();
+        for(RenderQueue renderQueue : renderQueues){
+            VkRenderQueue vkRenderQueue = (VkRenderQueue) renderQueue;
+            vkDestroyFence(device, vkRenderQueue.getFence(), null);
+            vkDestroyPipeline(device, vkRenderQueue.getPipeline().pipeline, null);
+            vkDestroyPipelineLayout(device, vkRenderQueue.getPipeline().pipelineLayout, null);
+
+
+        }
 
 
 
