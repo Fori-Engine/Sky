@@ -21,15 +21,17 @@ public class Mesh {
     public List<Float> textureUVs;
     public List<Integer> indices;
     public List<Texture> textures;
+    public List<Integer> textureIndices;
     public int vertexCount;
 
 
-    public Mesh(List<Float> vertices, List<Float> textureUVs, List<Integer> indices, List<Texture> textures, int vertexCount) {
+    public Mesh(List<Float> vertices, List<Float> textureUVs, List<Integer> indices, List<Texture> textures, List<Integer> textureIndices, int vertexCount) {
         this.vertices = vertices;
         this.textureUVs = textureUVs;
         this.indices = indices;
-        this.vertexCount = vertexCount;
         this.textures = textures;
+        this.textureIndices = textureIndices;
+        this.vertexCount = vertexCount;
     }
 
     public static Mesh newMesh(Asset<byte[]> asset){
@@ -37,6 +39,7 @@ public class Mesh {
         ArrayList<Float> textureUVs = new ArrayList<>();
         ArrayList<Integer> indices = new ArrayList<>();
         ArrayList<Texture> textures = new ArrayList<>();
+        ArrayList<Integer> textureIndices = new ArrayList<>();
 
         ArrayList<AIMesh> meshList = new ArrayList<>();
 
@@ -61,6 +64,7 @@ public class Mesh {
                 aiGetMaterialTexture(material, aiTextureType_DIFFUSE, 0, aiTexturePath, (IntBuffer) null,
                         null, null, null, null, null);
                 String texturePath = aiTexturePath.dataString();
+                System.out.println(texturePath);
 
             }
 
@@ -72,6 +76,8 @@ public class Mesh {
 
         for (int i = 0; i < meshCount; i++) meshList.add(AIMesh.create(meshes.get(i)));
 
+
+
         StringBuilder loadData = new StringBuilder();
         loadData.append("Loading Mesh: " + asset.name);
 
@@ -80,17 +86,19 @@ public class Mesh {
 
 
         AINode root = scene.mRootNode();
-        openNode(root, meshList, vertices, textureUVs, indices);
+        openNode(root, meshList, vertices, textureUVs, textureIndices, indices);
         loadData.append("\n\t" + "Vertex Count: " + vertices.size() / Attributes.Type.PositionFloat3.size);
         loadData.append("\n\t" + "Index Count: " + indices.size());
+        loadData.append("\n\t" + "Mesh Count: " + meshCount);
 
         Logger.info(Mesh.class, loadData.toString());
+        MemoryUtil.memFree(assetData);
 
 
-        return new Mesh(vertices, textureUVs, indices, textures, vertices.size() / 3);
+        return new Mesh(vertices, textureUVs, indices, textures, textureIndices, vertices.size() / 3);
     }
 
-    private static void openNode(AINode root, List<AIMesh> meshList, List<Float> vertices, List<Float> textureUVs, List<Integer> indices) {
+    private static void openNode(AINode root, List<AIMesh> meshList, List<Float> vertices, List<Float> textureUVs, List<Integer> textureIndices, List<Integer> indices) {
 
         IntBuffer meshes = root.mMeshes();
         for (int i = 0; i < root.mNumMeshes(); i++) {
@@ -121,6 +129,11 @@ public class Mesh {
 
                 textureUVs.add(aiTextureCoords.x());
                 textureUVs.add(aiTextureCoords.y());
+
+                System.out.println("Material Index: " + mesh.mMaterialIndex());
+
+                textureIndices.add(mesh.mMaterialIndex());
+
             }
 
 
@@ -129,7 +142,7 @@ public class Mesh {
 
         for (int z = 0; z < root.mNumChildren(); z++) {
             AINode child = AINode.create(root.mChildren().get(z));
-            openNode(child, meshList, vertices, textureUVs, indices);
+            openNode(child, meshList, vertices, textureUVs, textureIndices, indices);
         }
 
 

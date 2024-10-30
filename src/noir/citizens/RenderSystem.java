@@ -4,7 +4,6 @@ import fori.ecs.*;
 import fori.graphics.*;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 
 public class RenderSystem extends EntitySystem {
 
@@ -66,7 +65,7 @@ public class RenderSystem extends EntitySystem {
                         }
 
                         if(attribute == Attributes.Type.MaterialBaseIndexFloat1) {
-                            vertexBufferData.putFloat(renderQueue.getMeshIndex());
+                            vertexBufferData.putFloat(meshComponent.mesh.textureIndices.get(vertex));
                         }
 
 
@@ -78,8 +77,14 @@ public class RenderSystem extends EntitySystem {
                 for(int index : meshComponent.mesh.indices)
                     indexBufferData.putInt(renderQueue.getVertexCount() + index);
 
+                Texture[] textures = meshComponent.textures;
+                for (int i = 0; i < textures.length; i++) {
+                    Texture texture = textures[i];
+                    renderQueue.addTexture(i, texture);
 
-                renderQueue.addTexture(renderQueue.getMeshIndex(), meshComponent.texture);
+                }
+
+
 
 
                 for (int i = 0; i < renderQueue.getFramesInFlight(); i++) {

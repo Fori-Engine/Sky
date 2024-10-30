@@ -131,7 +131,7 @@ public class NoirCitizens extends Stage {
                                     2,
                                     CombinedSampler,
                                     FragmentStage
-                            ).count(1)
+                            ).count(3)
                     )
             );
 
@@ -146,6 +146,18 @@ public class NoirCitizens extends Stage {
                     Texture.newTexture(
                             renderer.getRef(),
                             AssetPacks.getAsset("core:assets/textures/CC9_bolt_BaseColor.png"),
+                            Texture.Filter.Linear,
+                            Texture.Filter.Linear
+                    ),
+                    Texture.newTexture(
+                            renderer.getRef(),
+                            AssetPacks.getAsset("core:assets/textures/CC9_frame_BaseColor.png"),
+                            Texture.Filter.Linear,
+                            Texture.Filter.Linear
+                    ),
+                    Texture.newTexture(
+                            renderer.getRef(),
+                            AssetPacks.getAsset("core:assets/textures/CC9_mag_BaseColor.png"),
                             Texture.Filter.Linear,
                             Texture.Filter.Linear
                     )
