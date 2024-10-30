@@ -649,15 +649,7 @@ public class VkRenderer extends Renderer {
                 inputAssembly.primitiveRestartEnable(false);
             }
 
-            VkViewport.Buffer viewport = VkViewport.calloc(1, stack);
-            {
-                viewport.x(0.0f);
-                viewport.y(0.0f);
-                viewport.width(swapchain.swapChainExtent.width());
-                viewport.height(swapchain.swapChainExtent.height());
-                viewport.minDepth(0.0f);
-                viewport.maxDepth(1.0f);
-            }
+
 
             VkRect2D.Buffer scissor = VkRect2D.calloc(1, stack);
             {
@@ -728,6 +720,8 @@ public class VkRenderer extends Renderer {
                 depthStencil.depthTestEnable(true);
                 depthStencil.depthWriteEnable(true);
                 depthStencil.depthCompareOp(VK_COMPARE_OP_LESS);
+                depthStencil.minDepthBounds(0f);
+                depthStencil.maxDepthBounds(1f);
 
 
                 depthStencil.stencilTestEnable(false);
@@ -1054,8 +1048,14 @@ public class VkRenderer extends Renderer {
                 KHRDynamicRendering.vkCmdBeginRenderingKHR(commandBuffer, renderingInfoKHR);
                 {
                     VkViewport.Buffer viewport = VkViewport.calloc(1, stack);
-                    viewport.width(width);
-                    viewport.height(height);
+                    viewport.x(0.0f);
+                    viewport.y(0.0f);
+                    viewport.width(swapchain.swapChainExtent.width());
+                    viewport.height(swapchain.swapChainExtent.height());
+                    viewport.minDepth(0.0f);
+                    viewport.maxDepth(1.0f);
+
+
                     vkCmdSetViewport(commandBuffer, 0, viewport);
 
                     for(RenderQueue renderQueue : renderQueues) {
