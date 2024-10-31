@@ -24,8 +24,6 @@ public class VkRenderQueue extends RenderQueue {
 
         this.graphicsQueue = graphicsQueue;
         this.device = device;
-        transformsBuffer = new VkBuffer[framesInFlight];
-        cameraBuffer = new VkBuffer[framesInFlight];
 
         try(MemoryStack stack = stackPush()) {
 
@@ -159,37 +157,5 @@ public class VkRenderQueue extends RenderQueue {
 
 
         }
-
-
-
-
-
-        ShaderUpdate<Texture>[] textureUpdates = new ShaderUpdate[pendingTextureUpdateIndices.size()];
-        for (int i = 0; i < textureUpdates.length; i++) {
-            int indexOfTextureToUpdate = pendingTextureUpdateIndices.get(i);
-            Texture texture = getTextures()[indexOfTextureToUpdate];
-            textureUpdates[i] = new ShaderUpdate<>("materials", 0, 2, texture).arrayIndex(indexOfTextureToUpdate);
-        }
-
-
-
-
-
-
-        for (int i = 0; i < framesInFlight; i++) {
-
-            shaderProgram.updateBuffers(
-                    i,
-                    new ShaderUpdate<>("camera", 0, 0, cameraBuffer[i]),
-                    new ShaderUpdate<>("transforms", 0, 1, transformsBuffer[i])
-            );
-
-            shaderProgram.updateTextures(i, textureUpdates);
-        }
-
-
-        pendingTextureUpdateIndices.clear();
-
-
     }
 }

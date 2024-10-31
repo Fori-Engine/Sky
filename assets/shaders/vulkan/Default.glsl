@@ -53,6 +53,7 @@ layout(set = 0, binding = 2) uniform sampler2D[] materials;
 
 void main() {
 
+    /*
     int baseIndex = int(inputRenderQueuePos) * MATERIAL_SIZE * MAX_MATERIALS;
     int albedoIndex = baseIndex + int(inputMaterialBaseIndex * MATERIAL_SIZE);
     int metallicIndex = baseIndex + int(inputMaterialBaseIndex * MATERIAL_SIZE) + 1;
@@ -65,4 +66,8 @@ void main() {
 
 
     outputColor = texture(materials[metallicIndex], inputUV);
+
+    */
+
+    outputColor = vec4(inputRenderQueuePos, 0.0, 0.0, 1.0);
 }

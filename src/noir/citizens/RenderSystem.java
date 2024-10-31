@@ -1,9 +1,11 @@
 package noir.citizens;
 
 import fori.Logger;
+import fori.Scene;
 import fori.asset.AssetPacks;
 import fori.ecs.*;
 import fori.graphics.*;
+import org.joml.Matrix4f;
 
 import java.nio.ByteBuffer;
 
@@ -12,6 +14,10 @@ public class RenderSystem extends EntitySystem {
     private Renderer renderer;
     private Camera camera;
     private Texture defaultTexture;
+
+    private Buffer[] lightsBuffers;
+    private Buffer[] transformsBuffers;
+    private Buffer[] cameraBuffers;
 
 
     public RenderSystem(Renderer renderer) {
@@ -22,18 +28,69 @@ public class RenderSystem extends EntitySystem {
                 Texture.Filter.Linear,
                 Texture.Filter.Linear
         );
+
+        lightsBuffers = new Buffer[renderer.getMaxFramesInFlight()];
+        transformsBuffers = new Buffer[renderer.getMaxFramesInFlight()];
+        cameraBuffers = new Buffer[renderer.getMaxFramesInFlight()];
+
+        int maxLights = 10;
+        int maxEntities = 10;
+
+
+        for (int i = 0; i < renderer.getMaxFramesInFlight(); i++) {
+            lightsBuffers[i] = Buffer.newBuffer(
+                    renderer.getRef(),
+                    Light.SIZE * maxLights,
+                    Buffer.Usage.ShaderStorageBuffer,
+                    Buffer.Type.CPUGPUShared,
+                    false
+            );
+
+            transformsBuffers[i] = Buffer.newBuffer(
+                    renderer.getRef(),
+                    SizeUtil.MATRIX_SIZE_BYTES * maxEntities,
+                    Buffer.Usage.ShaderStorageBuffer,
+                    Buffer.Type.CPUGPUShared,
+                    false
+            );
+
+            cameraBuffers[i] = Buffer.newBuffer(
+                    renderer.getRef(),
+                    Camera.SIZE,
+                    Buffer.Usage.UniformBuffer,
+                    Buffer.Type.CPUGPUShared,
+                    false
+            );
+        }
+
+
+
+
+
+
+
+
     }
 
 
     @Override
-    public void update(Engine ecs, MessageQueue messageQueue) {
+    public void update(Scene scene, MessageQueue messageQueue) {
 
 
-        ecs.view(CameraComponent.class, cameraComponent -> RenderSystem.this.camera = cameraComponent.camera);
+        scene.view(CameraComponent.class, (entity, cameraComponent) -> RenderSystem.this.camera = cameraComponent.camera);
 
-        ecs.view(MeshComponent.class, meshComponent -> {
+        scene.view(MeshComponent.class,  (entity, meshComponent) -> {
             if(renderer.getRenderQueueByShaderProgram(meshComponent.shaderProgram) == null){
-                renderer.newRenderQueue(meshComponent.shaderProgram);
+                RenderQueue renderQueue = renderer.newRenderQueue(meshComponent.shaderProgram);
+
+                for (int i = 0; i < renderer.getMaxFramesInFlight(); i++) {
+                    renderQueue.getShaderProgram().updateBuffers(
+                            i,
+                            new ShaderUpdate<>("camera", 0, 0, cameraBuffers[i]),
+                            new ShaderUpdate<>("transforms", 0, 1, transformsBuffers[i])
+                    );
+                }
+
             }
 
             RenderQueue renderQueue = renderer.getRenderQueueByShaderProgram(meshComponent.shaderProgram);
@@ -69,7 +126,7 @@ public class RenderSystem extends EntitySystem {
                         }
 
                         else if(attribute == Attributes.Type.TransformIndexFloat1) {
-                            vertexBufferData.putFloat(renderQueue.getMeshIndex());
+                            vertexBufferData.putFloat(entity.getID());
                         }
 
                         else if(attribute == Attributes.Type.MaterialBaseIndexFloat1) {
@@ -89,6 +146,7 @@ public class RenderSystem extends EntitySystem {
                     indexBufferData.putInt(renderQueue.getVertexCount() + index);
 
 
+                /*
                 int maxTextures = Material.MAX_MATERIALS * Material.SIZE;
 
 
@@ -128,17 +186,28 @@ public class RenderSystem extends EntitySystem {
                     renderQueue.addTexture(textureIndex++, roughness);
                 }
 
+                 */
 
 
 
 
 
+
+
+                renderer.waitForDevice();
+
+                Matrix4f combinedTransform = getCombinedTransform(scene, entity);
+                System.out.println("Combined Transform (" + entity.getTag() + ")\n" + combinedTransform);
 
                 for (int i = 0; i < renderQueue.getFramesInFlight(); i++) {
-                    ByteBuffer transformsBufferData = renderQueue.getTransformsBuffer(i).get();
-                    ByteBuffer cameraBufferData = renderQueue.getCameraBuffer(i).get();
+                    ByteBuffer transformsBufferData = transformsBuffers[i].get();
+                    ByteBuffer cameraBufferData = cameraBuffers[i].get();
 
-                    meshComponent.transform.get(renderQueue.getMeshIndex() * SizeUtil.MATRIX_SIZE_BYTES, transformsBufferData);
+
+                    combinedTransform.get(entity.getID() * SizeUtil.MATRIX_SIZE_BYTES, transformsBufferData);
+
+
+
                     camera.getView().get(0, cameraBufferData);
                     camera.getProj().get(4 * 4 * Float.BYTES, cameraBufferData);
                 }
@@ -148,8 +217,6 @@ public class RenderSystem extends EntitySystem {
                         meshComponent.mesh.vertexCount,
                         meshComponent.mesh.indices.size()
                 );
-
-                meshComponent.queueIndex = renderQueue.getMeshIndex();
                 meshComponent.queued = true;
 
 
@@ -157,27 +224,34 @@ public class RenderSystem extends EntitySystem {
             }
 
             if(meshComponent.queued){
-                ByteBuffer transformsBufferData = renderQueue.getTransformsBuffer(renderer.getFrameIndex()).get();
-                meshComponent.transform.get(meshComponent.queueIndex * SizeUtil.MATRIX_SIZE_BYTES, transformsBufferData);
+                Matrix4f combinedTransform = getCombinedTransform(scene, entity);
+                ByteBuffer transformsBufferData = transformsBuffers[renderer.getFrameIndex()].get();
+                combinedTransform.get(entity.getID() * SizeUtil.MATRIX_SIZE_BYTES, transformsBufferData);
             }
-
-
-
-
-
-
-
-
-
-
-
-
         });
 
 
 
 
 
+    }
+
+
+
+    private Matrix4f getCombinedTransform(Scene scene, Entity entity) {
+        Matrix4f combinedTransform = new Matrix4f();
+        multiplyTransform(scene, entity, combinedTransform);
+        return combinedTransform;
+    }
+
+    private void multiplyTransform(Scene scene, Entity root, Matrix4f combinedTransform) {
+        if(root.getParent() != null) {
+            multiplyTransform(scene, root.getParent(), combinedTransform);
+        }
+
+        MeshComponent meshComponent = scene.get(root, MeshComponent.class);
+        combinedTransform.mul(meshComponent.transform);
+        System.out.println(combinedTransform);
     }
 
     @Override

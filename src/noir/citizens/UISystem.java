@@ -1,5 +1,6 @@
 package noir.citizens;
 
+import fori.Scene;
 import fori.Stage;
 import fori.Time;
 import fori.asset.AssetPacks;
@@ -246,8 +247,9 @@ public class UISystem extends EntitySystem {
     }
 
     @Override
-    public void update(Engine ecs, MessageQueue messageQueue) {
+    public void update(Scene scene, MessageQueue messageQueue) {
 
+        /*
         if(renderer.getRenderQueueByShaderProgram(shaderProgram) == null){
             renderer.newRenderQueue(shaderProgram);
         }
@@ -289,6 +291,8 @@ public class UISystem extends EntitySystem {
         //System.out.println("UISystem.update[renderQueue.updateQueue] " + end + "ms");
 
 
+
+         */
 
 
 

@@ -65,7 +65,7 @@ public class VkRenderer extends Renderer {
 
 
     public VkRenderer(Ref parent, VkInstance instance, long surface, int width, int height, RendererSettings rendererSettings, long debugMessenger) {
-        super(parent, width, height, rendererSettings);
+        super(parent, width, height, FRAMES_IN_FLIGHT, rendererSettings);
         this.instance = instance;
         this.surface = surface;
         this.debugMessenger = debugMessenger;
@@ -898,34 +898,6 @@ public class VkRenderer extends Renderer {
                 false
         ));
 
-        for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
-
-
-
-
-            vkRenderQueue.setCameraBuffer(i, Buffer.newBuffer(
-                    getRef(),
-                    SizeUtil.MATRIX_SIZE_BYTES * 2,
-                    Buffer.Usage.UniformBuffer,
-                    Buffer.Type.CPUGPUShared,
-                    false
-            ));
-
-
-
-            vkRenderQueue.setTransformsBuffer(i, Buffer.newBuffer(
-                    getRef(),
-                    SizeUtil.MATRIX_SIZE_BYTES * RenderQueue.MAX_MESH_COUNT,
-                    Buffer.Usage.ShaderStorageBuffer,
-                    Buffer.Type.CPUGPUShared,
-                    false
-            ));
-
-        }
-
-
-
-
         vkRenderQueue.setShaderProgram(shaderProgram);
         vkRenderQueue.setPipeline(createPipeline(device, swapchain, (VkShaderProgram) shaderProgram));
 
@@ -1157,6 +1129,11 @@ public class VkRenderer extends Renderer {
     @Override
     public int getFrameIndex() {
         return frameIndex;
+    }
+
+    @Override
+    public void waitForDevice() {
+        vkDeviceWaitIdle(device);
     }
 
 

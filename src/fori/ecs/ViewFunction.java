@@ -1,5 +1,5 @@
 package fori.ecs;
 
 public interface ViewFunction<T> {
-    void onViewEntry(T component);
+    void onViewEntry(Entity entity, T component);
 }

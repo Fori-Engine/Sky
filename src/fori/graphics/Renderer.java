@@ -16,13 +16,16 @@ public abstract class Renderer implements Disposable {
     protected RendererSettings settings;
     protected List<RenderQueue> renderQueues = new ArrayList<>();
     protected Ref ref;
+    protected int maxFramesInFlight;
 
 
-    public Renderer(Ref parent, int width, int height, RendererSettings settings){
+
+    public Renderer(Ref parent, int width, int height, int maxFramesInFlight, RendererSettings settings){
         this.ref = parent.add(this);
         this.width = width;
         this.height = height;
         this.settings = settings;
+        this.maxFramesInFlight = maxFramesInFlight;
     }
     public abstract void onSurfaceResized(int width, int height);
     public RenderQueue newRenderQueue(ShaderProgram shaderProgram){
@@ -38,6 +41,7 @@ public abstract class Renderer implements Disposable {
     public abstract void removeQueue(RenderQueue renderQueue);
     public abstract void update();
     public abstract int getFrameIndex();
+    public int getMaxFramesInFlight() { return maxFramesInFlight; }
 
     public int getWidth() {
         return width;
@@ -46,7 +50,7 @@ public abstract class Renderer implements Disposable {
     public int getHeight() {
         return height;
     }
-
+    public abstract void waitForDevice();
     public static Renderer newRenderer(Ref parent, PlatformWindow window, int width, int height, RendererSettings settings){
         api = settings.backend;
 

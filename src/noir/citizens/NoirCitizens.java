@@ -1,6 +1,7 @@
 package noir.citizens;
 
 import fori.Logger;
+import fori.Scene;
 import fori.Stage;
 import fori.asset.AssetPack;
 import fori.asset.AssetPacks;
@@ -22,8 +23,8 @@ import static fori.graphics.ShaderRes.Type.*;
 public class NoirCitizens extends Stage {
     private PlatformWindow window;
     private Renderer renderer;
-    private Engine ecs;
-
+    private Engine engine;
+    private Scene scene;
 
     public void init(String[] cliArgs){
         Options options = new Options();
@@ -88,11 +89,13 @@ public class NoirCitizens extends Stage {
 
         window = new PlatformWindow(width, height, "Noir Citizens", true);
         renderer = Renderer.newRenderer(getStageRef(), window, window.getWidth(), window.getHeight(), new RendererSettings(RenderAPI.Vulkan).validation(validation).vsync(vsync));
-        ecs = new Engine(
+        engine = new Engine(
                 new InputSystem(window),
                 new RenderSystem(renderer),
                 new UISystem(renderer)
         );
+
+        scene = new Scene();
 
         ShaderProgram shaderProgram;
         {
@@ -138,99 +141,43 @@ public class NoirCitizens extends Stage {
 
         }
 
-        Entity player = new Entity("Player");
+        Entity bowser1 = new Entity("Bowser1");
         {
 
             MeshComponent meshComponent = new MeshComponent(
                     Mesh.newMesh(AssetPacks.getAsset("core:assets/models/colt9.fbx")),
                     shaderProgram,
-                    new Material("bolt",
-                            Texture.newTexture(
-                                    renderer.getRef(),
-                                    AssetPacks.getAsset("core:assets/textures/CC9_bolt_BaseColor.png"),
-                                    Texture.Filter.Linear,
-                                    Texture.Filter.Linear
-                            ),
-                            Texture.newTexture(
-                                    renderer.getRef(),
-                                    AssetPacks.getAsset("core:assets/textures/CC9_bolt_Metallic.png"),
-                                    Texture.Filter.Linear,
-                                    Texture.Filter.Linear
-                            ),
-                            Texture.newTexture(
-                                    renderer.getRef(),
-                                    AssetPacks.getAsset("core:assets/textures/CC9_bolt_Normal.png"),
-                                    Texture.Filter.Linear,
-                                    Texture.Filter.Linear
-                            ),
-                            Texture.newTexture(
-                                    renderer.getRef(),
-                                    AssetPacks.getAsset("core:assets/textures/CC9_bolt_Roughness.png"),
-                                    Texture.Filter.Linear,
-                                    Texture.Filter.Linear
-                            )
-                    ),
-                    new Material("frame",
-                            Texture.newTexture(
-                                    renderer.getRef(),
-                                    AssetPacks.getAsset("core:assets/textures/CC9_frame_BaseColor.png"),
-                                    Texture.Filter.Linear,
-                                    Texture.Filter.Linear
-                            ),
-                            Texture.newTexture(
-                                    renderer.getRef(),
-                                    AssetPacks.getAsset("core:assets/textures/CC9_frame_Metallic.png"),
-                                    Texture.Filter.Linear,
-                                    Texture.Filter.Linear
-                            ),
-                            Texture.newTexture(
-                                    renderer.getRef(),
-                                    AssetPacks.getAsset("core:assets/textures/CC9_frame_Normal.png"),
-                                    Texture.Filter.Linear,
-                                    Texture.Filter.Linear
-                            ),
-                            Texture.newTexture(
-                                    renderer.getRef(),
-                                    AssetPacks.getAsset("core:assets/textures/CC9_frame_Roughness.png"),
-                                    Texture.Filter.Linear,
-                                    Texture.Filter.Linear
-                            )
-                    ),
-                    new Material("mag",
-                            Texture.newTexture(
-                                    renderer.getRef(),
-                                    AssetPacks.getAsset("core:assets/textures/CC9_mag_BaseColor.png"),
-                                    Texture.Filter.Linear,
-                                    Texture.Filter.Linear
-                            ),
-                            Texture.newTexture(
-                                    renderer.getRef(),
-                                    AssetPacks.getAsset("core:assets/textures/CC9_mag_Metallic.png"),
-                                    Texture.Filter.Linear,
-                                    Texture.Filter.Linear
-                            ),
-                            Texture.newTexture(
-                                    renderer.getRef(),
-                                    AssetPacks.getAsset("core:assets/textures/CC9_mag_Normal.png"),
-                                    Texture.Filter.Linear,
-                                    Texture.Filter.Linear
-                            ),
-                            Texture.newTexture(
-                                    renderer.getRef(),
-                                    AssetPacks.getAsset("core:assets/textures/CC9_mag_Roughness.png"),
-                                    Texture.Filter.Linear,
-                                    Texture.Filter.Linear
-                            )
-                    )
-
+                    null
             );
 
+            meshComponent.transform.scale(0.15f);
 
 
-            ecs.addComponents(
-                    player,
+            scene.addEntity(
+                    bowser1,
                     meshComponent
             );
+
+        }
+
+        Entity bowser2 = new Entity("Bowser2");
+        {
+
+            MeshComponent meshComponent = new MeshComponent(
+                    Mesh.newMesh(AssetPacks.getAsset("core:assets/models/bowser.obj")),
+                    shaderProgram,
+                    null
+            );
+
+            meshComponent.transform.translate(-12, 0, 0);
+            //meshComponent.transform.scale(0.15f);
+
+
+            scene.addEntity(
+                    bowser2,
+                    meshComponent
+            );
+            scene.addChildEntity(bowser1, bowser2);
 
         }
 
@@ -241,7 +188,7 @@ public class NoirCitizens extends Stage {
         Entity camera = new Entity("Camera");
         {
 
-            ecs.addComponents(
+            scene.addEntity(
                     camera,
                     new CameraComponent(
                             new Camera(
@@ -270,7 +217,7 @@ public class NoirCitizens extends Stage {
         //System.out.println(Time.framesPerSecond());
 
 
-        ecs.update();
+        engine.update(scene);
         renderer.update();
         window.update();
 

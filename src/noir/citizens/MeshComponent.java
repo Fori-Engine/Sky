@@ -13,7 +13,7 @@ public class MeshComponent extends Component {
     public Material[] materials;
     public Matrix4f transform = new Matrix4f().identity();
     boolean queued = false;
-    int queueIndex = 0;
+
 
     public MeshComponent(Mesh mesh, ShaderProgram shaderProgram, Material... materials) {
         this.mesh = mesh;

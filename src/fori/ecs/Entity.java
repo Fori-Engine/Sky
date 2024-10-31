@@ -1,57 +1,33 @@
 package fori.ecs;
 
 public class Entity {
-    public String tag;
-    public int id;
-    public static int currentID;
+    private String tag;
+    private int id;
+    private static int currentID;
+    private Entity parent;
 
     public Entity(String tag) {
         this.tag = tag;
         this.id = currentID++;
     }
 
-
-
-    /*
-    public <T> T get(Class<T> c) {
-
-        for(Component component : components.values()){
-            if(component.getClass() == c || c.isAssignableFrom(component.getClass())) {
-                return c.cast(component);
-            }
-        }
-
-        return null;
+    public String getTag() {
+        return tag;
     }
 
-    public boolean has(Class... c){
-        for(Class d : c){
-            if(!components.containsKey(d)) return false;
-        }
-
-        return true;
+    public int getID() {
+        return id;
     }
 
-    public void put(Component component){
-        components.put(component.getClass(), component);
+    public static int getCurrentID() {
+        return currentID;
     }
 
-    public void removeSpecific(Class c){
-        //TODO: Remove only completely matching types
-        Logger.todo(Entity.class, "TODO: Entity (" + id + ") removeSpecific() [Entity.java]");
+    public void setParent(Entity parent) {
+        this.parent = parent;
     }
 
-    public void removeIfExists(Class c){
-        if(components.containsKey(c)) remove(c);
+    public Entity getParent() {
+        return parent;
     }
-    public void remove(Class c){
-        //Removes all types (even subclasses of that type)
-        components.remove(c);
-    }
-
-    public HashMap<Class, Component> getComponents() {
-        return components;
-    }
-
-     */
 }

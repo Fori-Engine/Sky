@@ -10,8 +10,6 @@ public abstract class RenderQueue {
     protected Buffer stagingIndexBuffer;
     protected Buffer vertexBuffer;
     protected Buffer indexBuffer;
-    protected Buffer[] transformsBuffer;
-    protected Buffer[] cameraBuffer;
     protected int vertexCount;
     protected int indexCount;
     public static final int MAX_MESH_COUNT = 10;
@@ -52,13 +50,6 @@ public abstract class RenderQueue {
         this.indexBuffer = indexBuffer;
     }
 
-    public void setTransformsBuffer(int index, Buffer transformsBuffer) {
-        this.transformsBuffer[index] = transformsBuffer;
-    }
-
-    public void setCameraBuffer(int index, Buffer cameraBuffer) {
-        this.cameraBuffer[index] = cameraBuffer;
-    }
 
     public void setVertexCount(int vertexCount) {
         this.vertexCount = vertexCount;
@@ -96,13 +87,6 @@ public abstract class RenderQueue {
         return indexBuffer;
     }
 
-    public Buffer getTransformsBuffer(int index) {
-        return transformsBuffer[index];
-    }
-
-    public Buffer getCameraBuffer(int index) {
-        return cameraBuffer[index];
-    }
 
     public int getIndexCount() {
         return indexCount;

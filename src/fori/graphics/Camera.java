@@ -5,6 +5,7 @@ import org.joml.Matrix4f;
 public class Camera {
     private Matrix4f proj, view;
     private boolean invertY;
+    public static final int SIZE = SizeUtil.MATRIX_SIZE_BYTES * 2;
 
     public Camera(Matrix4f view, Matrix4f proj, boolean invertY) {
         this.view = view;
