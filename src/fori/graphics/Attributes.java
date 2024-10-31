@@ -4,6 +4,7 @@ public class Attributes {
     public enum Type {
         PositionFloat3(3),
         NormalFloat(3),
+        RenderQueuePosFloat1(1),
         TransformIndexFloat1(1),
         UVFloat2(2),
         MaterialBaseIndexFloat1(1),

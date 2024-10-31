@@ -107,6 +107,7 @@ public class NoirCitizens extends Stage {
             shaderProgram.bind(
                     new Attributes.Type[]{
                             PositionFloat3,
+                            RenderQueuePosFloat1,
                             TransformIndexFloat1,
                             UVFloat2,
                             MaterialBaseIndexFloat1
@@ -125,13 +126,13 @@ public class NoirCitizens extends Stage {
                                     1,
                                     ShaderStorageBuffer,
                                     VertexStage
-                            ).sizeBytes(1 * SizeUtil.MATRIX_SIZE_BYTES),
+                            ).sizeBytes(10 * SizeUtil.MATRIX_SIZE_BYTES),
                             new ShaderRes(
                                     "materials",
                                     2,
                                     CombinedSampler,
                                     FragmentStage
-                            ).count(3)
+                            ).count((3 * 4))
                     )
             );
 
@@ -143,24 +144,85 @@ public class NoirCitizens extends Stage {
             MeshComponent meshComponent = new MeshComponent(
                     Mesh.newMesh(AssetPacks.getAsset("core:assets/models/colt9.fbx")),
                     shaderProgram,
-                    Texture.newTexture(
-                            renderer.getRef(),
-                            AssetPacks.getAsset("core:assets/textures/CC9_bolt_BaseColor.png"),
-                            Texture.Filter.Linear,
-                            Texture.Filter.Linear
+                    new Material("bolt",
+                            Texture.newTexture(
+                                    renderer.getRef(),
+                                    AssetPacks.getAsset("core:assets/textures/CC9_bolt_BaseColor.png"),
+                                    Texture.Filter.Linear,
+                                    Texture.Filter.Linear
+                            ),
+                            Texture.newTexture(
+                                    renderer.getRef(),
+                                    AssetPacks.getAsset("core:assets/textures/CC9_bolt_Metallic.png"),
+                                    Texture.Filter.Linear,
+                                    Texture.Filter.Linear
+                            ),
+                            Texture.newTexture(
+                                    renderer.getRef(),
+                                    AssetPacks.getAsset("core:assets/textures/CC9_bolt_Normal.png"),
+                                    Texture.Filter.Linear,
+                                    Texture.Filter.Linear
+                            ),
+                            Texture.newTexture(
+                                    renderer.getRef(),
+                                    AssetPacks.getAsset("core:assets/textures/CC9_bolt_Roughness.png"),
+                                    Texture.Filter.Linear,
+                                    Texture.Filter.Linear
+                            )
                     ),
-                    Texture.newTexture(
-                            renderer.getRef(),
-                            AssetPacks.getAsset("core:assets/textures/CC9_frame_BaseColor.png"),
-                            Texture.Filter.Linear,
-                            Texture.Filter.Linear
+                    new Material("frame",
+                            Texture.newTexture(
+                                    renderer.getRef(),
+                                    AssetPacks.getAsset("core:assets/textures/CC9_frame_BaseColor.png"),
+                                    Texture.Filter.Linear,
+                                    Texture.Filter.Linear
+                            ),
+                            Texture.newTexture(
+                                    renderer.getRef(),
+                                    AssetPacks.getAsset("core:assets/textures/CC9_frame_Metallic.png"),
+                                    Texture.Filter.Linear,
+                                    Texture.Filter.Linear
+                            ),
+                            Texture.newTexture(
+                                    renderer.getRef(),
+                                    AssetPacks.getAsset("core:assets/textures/CC9_frame_Normal.png"),
+                                    Texture.Filter.Linear,
+                                    Texture.Filter.Linear
+                            ),
+                            Texture.newTexture(
+                                    renderer.getRef(),
+                                    AssetPacks.getAsset("core:assets/textures/CC9_frame_Roughness.png"),
+                                    Texture.Filter.Linear,
+                                    Texture.Filter.Linear
+                            )
                     ),
-                    Texture.newTexture(
-                            renderer.getRef(),
-                            AssetPacks.getAsset("core:assets/textures/CC9_mag_BaseColor.png"),
-                            Texture.Filter.Linear,
-                            Texture.Filter.Linear
+                    new Material("mag",
+                            Texture.newTexture(
+                                    renderer.getRef(),
+                                    AssetPacks.getAsset("core:assets/textures/CC9_mag_BaseColor.png"),
+                                    Texture.Filter.Linear,
+                                    Texture.Filter.Linear
+                            ),
+                            Texture.newTexture(
+                                    renderer.getRef(),
+                                    AssetPacks.getAsset("core:assets/textures/CC9_mag_Metallic.png"),
+                                    Texture.Filter.Linear,
+                                    Texture.Filter.Linear
+                            ),
+                            Texture.newTexture(
+                                    renderer.getRef(),
+                                    AssetPacks.getAsset("core:assets/textures/CC9_mag_Normal.png"),
+                                    Texture.Filter.Linear,
+                                    Texture.Filter.Linear
+                            ),
+                            Texture.newTexture(
+                                    renderer.getRef(),
+                                    AssetPacks.getAsset("core:assets/textures/CC9_mag_Roughness.png"),
+                                    Texture.Filter.Linear,
+                                    Texture.Filter.Linear
+                            )
                     )
+
             );
 
 

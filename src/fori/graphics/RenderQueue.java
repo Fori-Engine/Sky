@@ -18,7 +18,7 @@ public abstract class RenderQueue {
     public static final int MAX_VERTEX_COUNT = 200000;
     public static final int MAX_INDEX_COUNT = 200000;
     protected int meshIndex;
-    protected Texture[] textures = new Texture[MAX_MESH_COUNT];
+    protected Texture[] textures = new Texture[MAX_MESH_COUNT * Material.MAX_MATERIALS * Material.SIZE];
     protected final int framesInFlight;
     protected List<Integer> pendingTextureUpdateIndices = new ArrayList<>();
 
