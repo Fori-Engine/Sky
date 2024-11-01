@@ -18,10 +18,15 @@ layout(set = 0, binding = 0) uniform Camera {
 } camera;
 
 layout(std140, set = 0, binding = 1) readonly buffer Transforms {
-
     mat4 models[];
 } transforms;
 
+/*
+layout(std140, set = 0, binding = 2) readonly buffer MaterialMap {
+    float[] array;
+} materialMap;
+
+*/
 
 
 void main() {
@@ -69,5 +74,5 @@ void main() {
 
     */
 
-    outputColor = vec4(inputRenderQueuePos, 0.0, 0.0, 1.0);
+    outputColor = vec4(inputUV.xy, 0.0, 1.0);
 }
