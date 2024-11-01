@@ -144,21 +144,12 @@ public class NoirCitizens extends Stage {
         Entity bowser1 = new Entity("Bowser1");
         {
 
-            MeshComponent meshComponent = new MeshComponent(
-                    Mesh.newMesh(AssetPacks.getAsset("core:assets/models/colt9.fbx")),
-                    shaderProgram,
-                    null
-            );
-
-            meshComponent.transform.scale(0.15f);
+        Entity colt9 = Mesh.separateMeshesToEntities(AssetPacks.getAsset("core:assets/models/colt9.fbx"), shaderProgram, "Colt9", scene);
+        scene.get(colt9, MeshComponent.class).transform.scale(0.15f);
 
 
-            scene.addEntity(
-                    bowser1,
-                    meshComponent
-            );
 
-        }
+
 
         Entity bowser2 = new Entity("Bowser2");
         {
@@ -169,15 +160,15 @@ public class NoirCitizens extends Stage {
                     null
             );
 
+            meshComponent.transform.scale(0.15f);
             meshComponent.transform.translate(-12, 0, 0);
-            //meshComponent.transform.scale(0.15f);
 
 
             scene.addEntity(
                     bowser2,
                     meshComponent
             );
-            scene.addChildEntity(bowser1, bowser2);
+            //scene.addChildEntity(bowser1, bowser2);
 
         }
 

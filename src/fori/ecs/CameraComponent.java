@@ -1,6 +1,5 @@
-package noir.citizens;
+package fori.ecs;
 
-import fori.ecs.Component;
 import fori.graphics.Camera;
 
 public class CameraComponent extends Component {

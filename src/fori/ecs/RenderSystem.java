@@ -1,9 +1,7 @@
-package noir.citizens;
+package fori.ecs;
 
-import fori.Logger;
 import fori.Scene;
 import fori.asset.AssetPacks;
-import fori.ecs.*;
 import fori.graphics.*;
 import org.joml.Matrix4f;
 
@@ -14,7 +12,6 @@ public class RenderSystem extends EntitySystem {
     private Renderer renderer;
     private Camera camera;
     private Texture defaultTexture;
-
     private Buffer[] lightsBuffers;
     private Buffer[] transformsBuffers;
     private Buffer[] cameraBuffers;
@@ -34,8 +31,6 @@ public class RenderSystem extends EntitySystem {
         cameraBuffers = new Buffer[renderer.getMaxFramesInFlight()];
 
         int maxLights = 10;
-        int maxEntities = 10;
-
 
         for (int i = 0; i < renderer.getMaxFramesInFlight(); i++) {
             lightsBuffers[i] = Buffer.newBuffer(
@@ -48,7 +43,7 @@ public class RenderSystem extends EntitySystem {
 
             transformsBuffers[i] = Buffer.newBuffer(
                     renderer.getRef(),
-                    SizeUtil.MATRIX_SIZE_BYTES * maxEntities,
+                    SizeUtil.MATRIX_SIZE_BYTES * (RenderQueue.MAX_MESH_COUNT * renderer.getMaxRenderQueueCount()),
                     Buffer.Usage.ShaderStorageBuffer,
                     Buffer.Type.CPUGPUShared,
                     false
@@ -62,13 +57,6 @@ public class RenderSystem extends EntitySystem {
                     false
             );
         }
-
-
-
-
-
-
-
 
     }
 
@@ -88,6 +76,7 @@ public class RenderSystem extends EntitySystem {
                             i,
                             new ShaderUpdate<>("camera", 0, 0, cameraBuffers[i]),
                             new ShaderUpdate<>("transforms", 0, 1, transformsBuffers[i])
+                            //new ShaderUpdate<>("materialMap", 0, 2, materialMap[i])
                     );
                 }
 
@@ -130,7 +119,7 @@ public class RenderSystem extends EntitySystem {
                         }
 
                         else if(attribute == Attributes.Type.MaterialBaseIndexFloat1) {
-                            vertexBufferData.putFloat(meshComponent.mesh.textureIndices.get(vertex));
+                            vertexBufferData.putFloat(entity.getID());
                         }
 
                         else if(attribute == Attributes.Type.RenderQueuePosFloat1) {
@@ -197,7 +186,7 @@ public class RenderSystem extends EntitySystem {
                 renderer.waitForDevice();
 
                 Matrix4f combinedTransform = getCombinedTransform(scene, entity);
-                System.out.println("Combined Transform (" + entity.getTag() + ")\n" + combinedTransform);
+
 
                 for (int i = 0; i < renderQueue.getFramesInFlight(); i++) {
                     ByteBuffer transformsBufferData = transformsBuffers[i].get();
@@ -251,7 +240,6 @@ public class RenderSystem extends EntitySystem {
 
         MeshComponent meshComponent = scene.get(root, MeshComponent.class);
         combinedTransform.mul(meshComponent.transform);
-        System.out.println(combinedTransform);
     }
 
     @Override

@@ -1136,6 +1136,11 @@ public class VkRenderer extends Renderer {
         vkDeviceWaitIdle(device);
     }
 
+    @Override
+    public int getMaxRenderQueueCount() {
+        return 10;
+    }
+
 
     @Override
     public void dispose() {

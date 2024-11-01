@@ -52,6 +52,7 @@ public abstract class Renderer implements Disposable {
     }
     public abstract void waitForDevice();
     public static Renderer newRenderer(Ref parent, PlatformWindow window, int width, int height, RendererSettings settings){
+    public abstract int getMaxRenderQueueCount();
         api = settings.backend;
 
 

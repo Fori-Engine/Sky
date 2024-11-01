@@ -12,7 +12,7 @@ public abstract class RenderQueue {
     protected Buffer indexBuffer;
     protected int vertexCount;
     protected int indexCount;
-    public static final int MAX_MESH_COUNT = 10;
+    public static final int MAX_MESH_COUNT = 100;
     public static final int MAX_VERTEX_COUNT = 200000;
     public static final int MAX_INDEX_COUNT = 200000;
     protected int meshIndex;
