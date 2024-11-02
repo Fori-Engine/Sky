@@ -1,6 +1,7 @@
 package fori.graphics;
 
 import fori.Logger;
+import fori.Surface;
 import fori.graphics.vulkan.VkRenderContext;
 import fori.graphics.vulkan.VkRenderer;
 import org.lwjgl.vulkan.VkInstance;
@@ -58,17 +59,22 @@ public abstract class Renderer implements Disposable {
 
         if(settings.backend == RenderAPI.Vulkan){
 
-            VkRenderContext vulkanContext = new VkRenderContext(settings);
-            window.configureAndCreateWindow(vulkanContext);
-            vulkanContext.readyDisplay(window);
+            VkRenderContext vkContext = new VkRenderContext();
 
-            long surface = vulkanContext.getPlatformWindowSurface();
-            VkInstance instance = vulkanContext.getPlatformWindowInstance();
+            vkContext.enableHints();
 
-            VkRenderer renderer = new VkRenderer(parent, instance, surface, width, height, settings, vulkanContext.getDebugMessenger());
-            window.onRenderContextReady(vulkanContext, renderer);
+            surface.init();
 
-            return renderer;
+            vkContext.setup();
+            vkContext.readyDisplay(surface);
+
+            surface.display();
+
+
+            long vkSurface = vkContext.getVkSurface();
+            VkInstance instance = vkContext.getInstance();
+
+            return new VkRenderer(parent, instance, vkSurface, width, height, settings, vkContext.getDebugMessenger());
         }
         else if(settings.backend == null){
             Logger.meltdown(Renderer.class, "The target graphics API was not specified in RenderSettings!");

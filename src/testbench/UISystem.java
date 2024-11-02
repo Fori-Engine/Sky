@@ -1,10 +1,7 @@
-package noir.citizens;
+package testbench;
 
 import fori.Scene;
-import fori.Stage;
-import fori.Time;
 import fori.asset.AssetPacks;
-import fori.ecs.Engine;
 import fori.ecs.EntitySystem;
 import fori.ecs.MessageQueue;
 import fori.graphics.*;

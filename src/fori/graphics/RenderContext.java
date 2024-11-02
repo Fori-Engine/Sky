@@ -1,16 +1,9 @@
 package fori.graphics;
 
+import fori.Surface;
+
 public abstract class RenderContext {
-
-    public enum SurfaceType {
-        PlatformWindow,
-        Canvas
-    }
-
     public abstract void enableHints();
-    public abstract void setup(PlatformWindow window);
-    public abstract void swapBuffers(PlatformWindow window);
-    public abstract void readyDisplay(PlatformWindow window);
-
-
+    public abstract void setup();
+    public abstract void readyDisplay(Surface surface);
 }

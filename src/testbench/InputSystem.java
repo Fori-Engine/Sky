@@ -1,28 +1,29 @@
-package noir.citizens;
+package testbench;
 
 import fori.Input;
 import fori.Scene;
+import fori.Surface;
 import fori.Time;
-import fori.ecs.Engine;
 import fori.ecs.EntitySystem;
+import fori.ecs.MeshComponent;
 import fori.ecs.MessageQueue;
-import fori.graphics.PlatformWindow;
 
 public class InputSystem extends EntitySystem {
-    private PlatformWindow window;
+    private Surface surface;
 
-    public InputSystem(PlatformWindow window) {
-        this.window = window;
+    public InputSystem(Surface surface) {
+        this.surface = surface;
     }
 
     @Override
     public void update(Scene scene, MessageQueue messageQueue) {
 
+        /*
 
 
         scene.view(MeshComponent.class, (entity, meshComponent) -> {
 
-            if(entity.getTag().equals("Bowser1")) {
+            if(entity.getTag().equals("Colt9")) {
 
                 if (window.isKeyPressed(Input.KEY_RIGHT)) meshComponent.transform.translate(2 * Time.deltaTime(), 0, 0);
                 if (window.isKeyPressed(Input.KEY_LEFT)) meshComponent.transform.translate(-2 * Time.deltaTime(), 0, 0);
@@ -39,6 +40,8 @@ public class InputSystem extends EntitySystem {
 
             }
         });
+
+         */
 
 
 

@@ -1,18 +1,17 @@
-package noir.citizens;
+package testbench;
 
-import fori.Logger;
-import fori.Scene;
-import fori.Stage;
+import fori.*;
 import fori.asset.AssetPack;
 import fori.asset.AssetPacks;
-import fori.ecs.Engine;
-import fori.ecs.Entity;
+import fori.ecs.*;
 import fori.graphics.*;
+
 import org.apache.commons.cli.*;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import java.io.File;
+import java.lang.Math;
 import java.util.Objects;
 
 import static fori.graphics.Attributes.Type.*;
@@ -21,38 +20,44 @@ import static fori.graphics.ShaderRes.ShaderStage.VertexStage;
 import static fori.graphics.ShaderRes.Type.*;
 
 public class NoirCitizens extends Stage {
-    private PlatformWindow window;
+    private Surface surface;
     private Renderer renderer;
     private Engine engine;
     private Scene scene;
 
     public void init(String[] cliArgs){
-        Options options = new Options();
 
-        Option widthOption = new Option("width", true, "The width of the window");
+
+
+
+        Options options = new Options();
         {
-            widthOption.setRequired(false);
-            options.addOption(widthOption);
-        }
-        Option heightOption = new Option("height", true, "The height of the window");
-        {
-            heightOption.setRequired(false);
-            options.addOption(heightOption);
-        }
-        Option vsyncOption = new Option("vsync", true, "Enable or disable VSync");
-        {
-            vsyncOption.setRequired(false);
-            options.addOption(vsyncOption);
-        }
-        Option validationOption = new Option("validation", true, "Enable or disable graphics API validation");
-        {
-            validationOption.setRequired(false);
-            options.addOption(validationOption);
-        }
-        Option logDstOption = new Option("logdst", true, "Configure the destination file of logger output");
-        {
-            logDstOption.setRequired(false);
-            options.addOption(logDstOption);
+
+            Option widthOption = new Option("width", true, "The width of the window");
+            {
+                widthOption.setRequired(false);
+                options.addOption(widthOption);
+            }
+            Option heightOption = new Option("height", true, "The height of the window");
+            {
+                heightOption.setRequired(false);
+                options.addOption(heightOption);
+            }
+            Option vsyncOption = new Option("vsync", true, "Enable or disable VSync");
+            {
+                vsyncOption.setRequired(false);
+                options.addOption(vsyncOption);
+            }
+            Option validationOption = new Option("validation", true, "Enable or disable graphics API validation");
+            {
+                validationOption.setRequired(false);
+                options.addOption(validationOption);
+            }
+            Option logDstOption = new Option("logdst", true, "Configure the destination file of logger output");
+            {
+                logDstOption.setRequired(false);
+                options.addOption(logDstOption);
+            }
         }
 
         CommandLineParser parser = new DefaultParser();
@@ -74,23 +79,16 @@ public class NoirCitizens extends Stage {
         String logDstPath = cmd.getOptionValue("logdst");
 
 
-        System.out.println("Vsync " + vsync);
-
-
-
-
-
-
-
         AssetPacks.open("core", AssetPack.openLocal(new File("assets")));
 
         if(logDstPath == null) Logger.setConsoleTarget(System.out);
         else Logger.setFileTarget(new File(logDstPath));
 
-        window = new PlatformWindow(width, height, "Noir Citizens", true);
-        renderer = Renderer.newRenderer(getStageRef(), window, window.getWidth(), window.getHeight(), new RendererSettings(RenderAPI.Vulkan).validation(validation).vsync(vsync));
+        surface = new GLFWSurface("Fori", width, height, true);
+
+        renderer = Renderer.newRenderer(getStageRef(), surface, surface.getWidth(), surface.getHeight(), new RendererSettings(RenderAPI.Vulkan).validation(validation).vsync(vsync));
         engine = new Engine(
-                new InputSystem(window),
+                new InputSystem(surface),
                 new RenderSystem(renderer),
                 new UISystem(renderer)
         );
@@ -141,8 +139,6 @@ public class NoirCitizens extends Stage {
 
         }
 
-        Entity bowser1 = new Entity("Bowser1");
-        {
 
         Entity colt9 = Mesh.separateMeshesToEntities(AssetPacks.getAsset("core:assets/models/colt9.fbx"), shaderProgram, "Colt9", scene);
         scene.get(colt9, MeshComponent.class).transform.scale(0.15f);
@@ -210,12 +206,12 @@ public class NoirCitizens extends Stage {
 
         engine.update(scene);
         renderer.update();
-        window.update();
+        surface.update();
 
-        return !window.shouldClose();
+        return !surface.shouldClose();
     }
 
     public void dispose(){
-        window.close();
+        surface.dispose();
     }
 }

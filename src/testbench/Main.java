@@ -1,9 +1,10 @@
-package noir.citizens;
+package testbench;
 
 import fori.Stage;
 
 public class Main {
     public static void main(String[] args) {
+
 
         Stage noirCitizens = new NoirCitizens();
 

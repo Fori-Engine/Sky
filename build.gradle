@@ -66,7 +66,6 @@ project.ext.jomlVersion = "1.10.7"
 dependencies {
 
     implementation 'com.esotericsoftware:kryo:5.6.0'
-
     implementation group: 'commons-cli', name: 'commons-cli', version: '1.9.0'
     implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
     implementation "org.lwjgl:lwjgl-assimp"
@@ -84,6 +83,7 @@ dependencies {
     runtimeOnly "org.lwjgl:lwjgl-stb::$lwjglNatives"
     runtimeOnly "org.lwjgl:lwjgl-vma::$lwjglNatives"
     runtimeOnly "org.lwjgl:lwjgl-assimp::$lwjglNatives"
+
 
     if (lwjglNatives == "natives-macos" || lwjglNatives == "natives-macos-arm64") runtimeOnly "org.lwjgl:lwjgl-vulkan::$lwjglNatives"
     implementation "org.joml:joml:${jomlVersion}"

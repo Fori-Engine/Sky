@@ -1,9 +1,12 @@
 package fori.graphics.vulkan;
 
 import fori.Logger;
+import fori.Surface;
+import fori.GLFWSurface;
+import fori.graphics.RenderAPI;
 import fori.graphics.RenderContext;
-import fori.graphics.PlatformWindow;
-import fori.graphics.RendererSettings;
+
+import fori.graphics.DebugUtil;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
@@ -15,9 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 import static java.util.stream.Collectors.toSet;
-import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.glfw.GLFWVulkan.glfwCreateWindowSurface;
-import static org.lwjgl.glfw.GLFWVulkan.glfwGetRequiredInstanceExtensions;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
 import static org.lwjgl.vulkan.EXTDebugUtils.*;
@@ -26,9 +27,8 @@ import static org.lwjgl.vulkan.VK13.VK_API_VERSION_1_3;
 
 public class VkRenderContext extends RenderContext {
 
-    private long platformWindowSurface;
-    private VkInstance platformWindowInstance;
-    private RendererSettings rendererSettings;
+    private long vkSurface;
+    private VkInstance instance;
     private static final List<String> validationLayers = new ArrayList<>();
     static {
         validationLayers.add("VK_LAYER_KHRONOS_validation");
@@ -37,37 +37,38 @@ public class VkRenderContext extends RenderContext {
 
 
 
-    public VkRenderContext(RendererSettings rendererSettings) {
-        this.rendererSettings = rendererSettings;
+    public VkRenderContext() {
+
     }
 
     @Override
     public void enableHints() {
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    }
-
-    @Override
-    public void setup(PlatformWindow window) {
-
 
     }
 
     @Override
-    public void swapBuffers(PlatformWindow window) {
+    public void setup() {
+
 
     }
 
+
+
     @Override
-    public void readyDisplay(PlatformWindow window) {
-        platformWindowInstance = createInstance("Fori", validationLayers);
-        platformWindowSurface = createSurface(platformWindowInstance, window);
+    public void readyDisplay(Surface surface) {
+        if(!surface.supportsRenderAPI(RenderAPI.Vulkan)) {
+            throw new RuntimeException(Logger.error(GLFWSurface.class, "The surface does not support Vulkan"));
+        }
+
+        instance = createInstance("Fori", validationLayers, surface);
+        vkSurface = surface.getVulkanSurface(instance);
     }
 
     public long getDebugMessenger() {
         return debugMessenger;
     }
 
-    private VkInstance createInstance(String appName, List<String> validationLayers){
+    private VkInstance createInstance(String appName, List<String> validationLayers, Surface surface){
 
         boolean validation = validationLayers != null;
 
@@ -118,23 +119,26 @@ public class VkRenderContext extends RenderContext {
 
 
             PointerBuffer totalRequiredInstanceExtensions = null;
-            PointerBuffer glfwExtensions = glfwGetRequiredInstanceExtensions();
+            PointerBuffer windowInstanceExtensions = surface.getVulkanInstanceExtensions();
 
 
-            int instanceExtensionCount = glfwExtensions.capacity();
+
+
+            //System.exit(1);
+
+            int instanceExtensionCount = windowInstanceExtensions.capacity();
             if(validation) instanceExtensionCount++;
 
 
             totalRequiredInstanceExtensions = stack.mallocPointer(instanceExtensionCount);
 
 
-            totalRequiredInstanceExtensions.put(glfwExtensions);
+            totalRequiredInstanceExtensions.put(windowInstanceExtensions);
             if(validation) totalRequiredInstanceExtensions.put(stack.UTF8(VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
 
+            DebugUtil.printPointerBuffer("totalRequiredInstanceExtensions", totalRequiredInstanceExtensions);
 
             createInfo.ppEnabledExtensionNames(totalRequiredInstanceExtensions.rewind());
-
-
             VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = null;
 
             if (validation) {
@@ -186,23 +190,7 @@ public class VkRenderContext extends RenderContext {
 
         return instance;
     }
-    private static long createSurface(VkInstance instance, PlatformWindow window) {
 
-        long surface;
-
-        try(MemoryStack stack = stackPush()) {
-
-            LongBuffer pSurface = stack.longs(VK_NULL_HANDLE);
-
-            if(glfwCreateWindowSurface(instance, window.getGLFWHandle(), null, pSurface) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create window surface");
-            }
-
-            surface = pSurface.get(0);
-        }
-
-        return surface;
-    }
     private static PointerBuffer validationLayersAsPointerBuffer(List<String> validationLayers, MemoryStack stack) {
 
         PointerBuffer buffer = stack.mallocPointer(validationLayers.size());
@@ -215,10 +203,10 @@ public class VkRenderContext extends RenderContext {
     }
 
 
-    public long getPlatformWindowSurface() {
-        return platformWindowSurface;
+    public long getVkSurface() {
+        return vkSurface;
     }
-    public VkInstance getPlatformWindowInstance() {
-        return platformWindowInstance;
+    public VkInstance getInstance() {
+        return instance;
     }
 }
