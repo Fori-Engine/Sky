@@ -1,38 +1,59 @@
 package testbench;
 
+
 import fori.Scene;
 import fori.asset.AssetPacks;
 import fori.ecs.EntitySystem;
 import fori.ecs.MessageQueue;
 import fori.graphics.*;
 import org.joml.Matrix4f;
+import org.lwjgl.nuklear.*;
+import org.lwjgl.system.MemoryStack;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
 
 import static fori.graphics.Attributes.Type.*;
-import static fori.graphics.Attributes.Type.MaterialBaseIndexFloat1;
-import static fori.graphics.ShaderRes.ShaderStage.FragmentStage;
 import static fori.graphics.ShaderRes.ShaderStage.VertexStage;
 import static fori.graphics.ShaderRes.Type.*;
+import static org.lwjgl.nuklear.Nuklear.*;
+
+
 
 public class UISystem extends EntitySystem {
 
-    private Renderer renderer;
     private ShaderProgram shaderProgram;
-    private Texture texture;
-    private Camera camera;
-    private Font font;
+    private NkContext context;
+    private NkAllocator allocator;
+    private Renderer renderer;
+    private NkBuffer commands;
+    private NkDrawNullTexture drawNullTexture;
+    private NkDrawVertexLayoutElement.Buffer vertexLayout;
+
 
     public UISystem(Renderer renderer) {
         this.renderer = renderer;
-        camera = new Camera(
-                new Matrix4f().identity(),
-                new Matrix4f().ortho(0, renderer.getWidth(), 0, renderer.getHeight(), 0, 1, true),
-                false
-        );
+        Matrix4f proj = new Matrix4f().ortho(0, renderer.getWidth(), 0, renderer.getHeight(), 0, 1, true);
 
-        //Shader Setup
+        allocator = NkAllocator.create();
+
+        context = NkContext.create();
+        nk_init(context, allocator, null);
+
+        drawNullTexture = NkDrawNullTexture.create();
+        drawNullTexture.texture().id(0);
+        drawNullTexture.uv().set(0, 0);
+
+        commands = NkBuffer.create();
+
+        vertexLayout = NkDrawVertexLayoutElement.create(4)
+                .position(0).attribute(NK_VERTEX_POSITION).format(NK_FORMAT_FLOAT).offset(0)
+                .position(1).attribute(NK_VERTEX_TEXCOORD).format(NK_FORMAT_FLOAT).offset(8)
+                .position(2).attribute(NK_VERTEX_COLOR).format(NK_FORMAT_R8G8B8A8).offset(16)
+                .position(3).attribute(NK_VERTEX_ATTRIBUTE_COUNT).format(NK_FORMAT_COUNT).offset(0)
+                .flip();
+
+
         {
             ShaderReader.ShaderSources shaderSources = ShaderReader.readCombinedVertexFragmentSources(
                     AssetPacks.<String> getAsset("core:assets/shaders/vulkan/UI.glsl").asset
@@ -41,44 +62,32 @@ public class UISystem extends EntitySystem {
             shaderProgram = ShaderProgram.newShaderProgram(renderer.getRef(), shaderSources.vertexShader, shaderSources.fragmentShader);
             shaderProgram.bind(
                     new Attributes.Type[]{
-                            PositionFloat3,
-                            ColorFloat4,
-                            TransformIndexFloat1,
+                            PositionFloat2,
                             UVFloat2,
-                            MaterialBaseIndexFloat1
+                            ColorFloat1
 
                     },
                     new ShaderResSet(
                             0,
                             new ShaderRes(
-                                    "camera",
+                                    "proj",
                                     0,
                                     UniformBuffer,
                                     VertexStage
-                            ).sizeBytes(2 * SizeUtil.MATRIX_SIZE_BYTES),
-                            new ShaderRes(
-                                    "transforms",
-                                    1,
-                                    ShaderStorageBuffer,
-                                    VertexStage
-                            ).sizeBytes(1 * SizeUtil.MATRIX_SIZE_BYTES),
-                            new ShaderRes(
-                                    "materials",
-                                    2,
-                                    CombinedSampler,
-                                    FragmentStage
-                            ).count(1)
+                            ).sizeBytes(SizeUtil.MATRIX_SIZE_BYTES)
                     )
             );
 
+            Buffer buffer = Buffer.newBuffer(renderer.getRef(), SizeUtil.MATRIX_SIZE_BYTES, Buffer.Usage.UniformBuffer, Buffer.Type.CPUGPUShared, false);
+            proj.get(buffer.get());
+
+            for (int i = 0; i < renderer.getMaxFramesInFlight(); i++) {
+                shaderProgram.updateBuffers(i, new ShaderUpdate<>("proj", 0, 0, buffer));
+            }
+
+
+
         }
-
-
-        font = new Font(
-                renderer.getRef(),
-                AssetPacks.getAsset("core:assets/fonts/kanit-lightitalic/kanit.png"),
-                AssetPacks.getAsset("core:assets/fonts/kanit-lightitalic/kanit.fnt")
-        );
 
     }
 
@@ -246,7 +255,7 @@ public class UISystem extends EntitySystem {
     @Override
     public void update(Scene scene, MessageQueue messageQueue) {
 
-        /*
+
         if(renderer.getRenderQueueByShaderProgram(shaderProgram) == null){
             renderer.newRenderQueue(shaderProgram);
         }
@@ -254,42 +263,48 @@ public class UISystem extends EntitySystem {
         RenderQueue renderQueue = renderer.getRenderQueueByShaderProgram(shaderProgram);
         renderQueue.reset();
 
-        String text = "Frames Per Sec: " + Time.framesPerSecond() + "\nThis is a test of my text renderer \nsupporting all the hot new things like \nnew lines and \t\t tabs";
+        ByteBuffer vertexBuffer = renderQueue.getDefaultVertexBuffer().get();
+        ByteBuffer indexBuffer = renderQueue.getDefaultIndexBuffer().get();
 
+        try(MemoryStack stack = MemoryStack.stackPush()) {
 
+            NkConvertConfig config = NkConvertConfig.calloc(stack)
+                    .vertex_layout(vertexLayout)
+                    .vertex_size(20)
+                    .vertex_alignment(4)
+                    .tex_null(drawNullTexture)
+                    .circle_segment_count(22)
+                    .curve_segment_count(22)
+                    .arc_segment_count(22)
+                    .global_alpha(1.0f)
+                    .shape_AA(nk_true)
+                    .line_AA(nk_true);
 
+            // setup buffers to load vertices and elements
+            NkBuffer vbuf = NkBuffer.malloc(stack);
+            NkBuffer ebuf = NkBuffer.malloc(stack);
 
+            nk_buffer_init_fixed(vbuf, vertexBuffer);
+            nk_buffer_init_fixed(ebuf, indexBuffer);
+            nk_convert(context, commands, vbuf, ebuf, config);
 
-        drawText(0, 40, text, font, Color.WHITE, renderQueue);
+            for (NkDrawCommand cmd = nk__draw_begin(context, commands); cmd != null; cmd = nk__draw_next(cmd, commands, context)) {
+                if (cmd.elem_count() == 0) {
+                    continue;
+                }
 
+                //glDrawElements(GL_TRIANGLES, cmd.elem_count(), GL_UNSIGNED_SHORT, offset);
+                //offset += cmd.elem_count() * 2;
+            }
+            nk_clear(context);
+            nk_buffer_clear(commands);
 
-
-        ByteBuffer cameraBuffer = renderQueue.getCameraBuffer(renderer.getFrameIndex()).get();
-        {
-            camera.getView().get(0, cameraBuffer);
-            camera.getProj().get(SizeUtil.MATRIX_SIZE_BYTES, cameraBuffer);
         }
 
-        ByteBuffer transformBuffer = renderQueue.getTransformsBuffer(renderer.getFrameIndex()).get();
-        {
-            new Matrix4f().identity().get(0, transformBuffer);
-        }
-
-        renderQueue.addTexture(0, font.getTexture());
-
-
-        long start = System.currentTimeMillis();
-
-        renderQueue.updateQueue(4 * text.length(), 6 * text.length());
-
-
-        long end = System.currentTimeMillis() - start;
-
-        //System.out.println("UISystem.update[renderQueue.updateQueue] " + end + "ms");
 
 
 
-         */
+
 
 
 

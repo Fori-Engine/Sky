@@ -2,8 +2,9 @@ package fori.graphics;
 
 public class Attributes {
     public enum Type {
+        PositionFloat2(2),
         PositionFloat3(3),
-        NormalFloat(3),
+        ColorFloat1(1),
         RenderQueuePosFloat1(1),
         TransformIndexFloat1(1),
         UVFloat2(2),
