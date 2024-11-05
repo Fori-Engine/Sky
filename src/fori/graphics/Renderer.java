@@ -58,18 +58,8 @@ public abstract class Renderer implements Disposable {
 
 
         if(settings.backend == RenderAPI.Vulkan){
-
             VkRenderContext vkContext = new VkRenderContext();
-
-            vkContext.enableHints();
-
-            surface.init();
-
-            vkContext.setup();
             vkContext.readyDisplay(surface);
-
-            surface.display();
-
 
             long vkSurface = vkContext.getVkSurface();
             VkInstance instance = vkContext.getInstance();

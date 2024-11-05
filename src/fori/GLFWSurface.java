@@ -8,6 +8,7 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 import static org.lwjgl.vulkan.VK10.VK_NULL_HANDLE;
 import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
 
+import fori.graphics.Ref;
 import fori.graphics.RenderAPI;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -20,10 +21,9 @@ import java.nio.LongBuffer;
 public class GLFWSurface extends Surface {
 
     private long handle;
-    public GLFWSurface(String title, int width, int height, boolean resizable) {
-        super(title, width, height, resizable);
+    public GLFWSurface(Ref parent, String title, int width, int height, boolean resizable) {
+        super(parent, title, width, height, resizable);
 
-        GLFWErrorCallback.createPrint(System.err).set();
 
         if (!glfwInit())
             throw new RuntimeException(Logger.error(GLFWSurface.class, "Failed to initialize GLFW"));
@@ -61,12 +61,7 @@ public class GLFWSurface extends Surface {
         return false;
     }
 
-    @Override
-    public void init() {
-        handle = glfwCreateWindow(width, height, title, NULL, NULL);
-        if (handle == NULL)
-            throw new RuntimeException(Logger.error(GLFWSurface.class, "Failed to create GLFW window"));
-    }
+
 
     private int glfwBool(boolean b){
         return b ? GLFW_TRUE : GLFW_FALSE;
@@ -74,6 +69,9 @@ public class GLFWSurface extends Surface {
 
     @Override
     public void display() {
+        handle = glfwCreateWindow(width, height, title, NULL, NULL);
+        if (handle == NULL)
+            throw new RuntimeException(Logger.error(GLFWSurface.class, "Failed to create GLFW window"));
         glfwShowWindow(handle);
     }
 
@@ -82,7 +80,19 @@ public class GLFWSurface extends Surface {
         glfwPollEvents();
     }
 
+    @Override
+    public int getWidth() {
+        int[] width = new int[1], height = new int[1];
+        glfwGetWindowSize(handle, width, height);
+        return width[0];
+    }
 
+    @Override
+    public int getHeight() {
+        int[] width = new int[1], height = new int[1];
+        glfwGetWindowSize(handle, width, height);
+        return height[0];
+    }
 
     @Override
     public boolean shouldClose() {
@@ -91,9 +101,9 @@ public class GLFWSurface extends Surface {
 
     @Override
     public void dispose() {
-        glfwFreeCallbacks(handle);
         glfwDestroyWindow(handle);
         glfwTerminate();
-        glfwSetErrorCallback(null).free();
     }
+
+
 }

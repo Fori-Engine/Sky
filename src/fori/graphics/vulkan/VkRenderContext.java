@@ -41,23 +41,12 @@ public class VkRenderContext extends RenderContext {
 
     }
 
-    @Override
-    public void enableHints() {
-
-    }
-
-    @Override
-    public void setup() {
-
-
-    }
-
 
 
     @Override
     public void readyDisplay(Surface surface) {
         if(!surface.supportsRenderAPI(RenderAPI.Vulkan)) {
-            throw new RuntimeException(Logger.error(GLFWSurface.class, "The surface does not support Vulkan"));
+            throw new RuntimeException(Logger.error(VkRenderContext.class, "The surface does not support Vulkan"));
         }
 
         instance = createInstance("Fori", validationLayers, surface);
