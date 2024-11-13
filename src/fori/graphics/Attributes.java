@@ -5,10 +5,13 @@ public class Attributes {
         PositionFloat2(2),
         PositionFloat3(3),
         ColorFloat1(1),
+        CircleThicknessFloat1(1),
         RenderQueuePosFloat1(1),
         TransformIndexFloat1(1),
         UVFloat2(2),
         MaterialBaseIndexFloat1(1),
+        QuadTypeFloat1(1),
+        TextureIndexFloat1(1),
         ColorFloat4(4);
 
         public int size;

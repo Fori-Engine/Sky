@@ -1,4 +1,5 @@
 package fori;
+import static java.awt.SystemColor.window;
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.glfw.GLFWVulkan.*;
@@ -10,6 +11,7 @@ import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
 
 import fori.graphics.Ref;
 import fori.graphics.RenderAPI;
+import org.joml.Vector2f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.system.MemoryStack;
@@ -77,6 +79,11 @@ public class GLFWSurface extends Surface {
 
     @Override
     public void update() {
+
+        double[] x = new double[1], y = new double[1];
+        glfwGetCursorPos(handle, x, y);
+
+        cursorPos.set(x[0], y[0]);
         glfwPollEvents();
     }
 
@@ -92,6 +99,31 @@ public class GLFWSurface extends Surface {
         int[] width = new int[1], height = new int[1];
         glfwGetWindowSize(handle, width, height);
         return height[0];
+    }
+
+    @Override
+    public boolean getKeyPressed(int key) {
+        return glfwGetKey(handle, key) == GLFW_PRESS;
+    }
+
+    @Override
+    public boolean getKeyReleased(int key) {
+        return glfwGetKey(handle, key) == GLFW_RELEASE;
+    }
+
+    @Override
+    public boolean getMousePressed(int button) {
+        return glfwGetMouseButton(handle, button) == GLFW_PRESS;
+    }
+
+    @Override
+    public boolean getMouseReleased(int button) {
+        return glfwGetMouseButton(handle, button) == GLFW_RELEASE;
+    }
+
+    @Override
+    public Vector2f getMousePos() {
+        return cursorPos;
     }
 
     @Override

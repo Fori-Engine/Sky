@@ -91,7 +91,7 @@ public class NoirCitizens extends Stage {
         engine = new Engine(
                 new InputSystem(surface),
                 new RenderSystem(renderer),
-                new UISystem(renderer)
+                new UISystem(surface, renderer)
         );
 
         scene = new Scene();

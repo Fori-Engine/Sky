@@ -29,10 +29,9 @@ public abstract class Renderer implements Disposable {
         this.maxFramesInFlight = maxFramesInFlight;
     }
     public abstract void onSurfaceResized(int width, int height);
-    public RenderQueue newRenderQueue(ShaderProgram shaderProgram){
-        return newRenderQueue(shaderProgram, RenderQueue.MAX_VERTEX_COUNT, RenderQueue.MAX_INDEX_COUNT);
-    }
-    public abstract RenderQueue newRenderQueue(ShaderProgram shaderProgram, int maxVertices, int maxIndices);
+
+
+    public abstract RenderQueue newRenderQueue(RenderQueueFlags renderQueueFlags);
     public RenderQueue getRenderQueueByShaderProgram(ShaderProgram shaderProgram){
         for(RenderQueue renderQueue : renderQueues){
             if(renderQueue.getShaderProgram() == shaderProgram) return renderQueue;

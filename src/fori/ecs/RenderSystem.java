@@ -69,7 +69,17 @@ public class RenderSystem extends EntitySystem {
 
         scene.view(MeshComponent.class,  (entity, meshComponent) -> {
             if(renderer.getRenderQueueByShaderProgram(meshComponent.shaderProgram) == null){
-                RenderQueue renderQueue = renderer.newRenderQueue(meshComponent.shaderProgram);
+
+                RenderQueueFlags renderQueueFlags = new RenderQueueFlags();
+                renderQueueFlags.shaderProgram = meshComponent.shaderProgram;
+                renderQueueFlags.maxVertices = RenderQueue.MAX_VERTEX_COUNT;
+                renderQueueFlags.maxIndices = RenderQueue.MAX_INDEX_COUNT;
+                renderQueueFlags.depthOp = RenderQueueFlags.DepthOp.LessThan;
+                renderQueueFlags.depthTest = true;
+
+
+
+                RenderQueue renderQueue = renderer.newRenderQueue(renderQueueFlags);
 
                 for (int i = 0; i < renderer.getMaxFramesInFlight(); i++) {
                     renderQueue.getShaderProgram().updateBuffers(
@@ -133,52 +143,6 @@ public class RenderSystem extends EntitySystem {
 
                 for(int index : meshComponent.mesh.indices)
                     indexBufferData.putInt(renderQueue.getVertexCount() + index);
-
-
-                /*
-                int maxTextures = Material.MAX_MATERIALS * Material.SIZE;
-
-
-                Material[] materials = meshComponent.materials;
-
-                int textureIndex = renderQueue.getMeshIndex() * maxTextures;
-
-
-
-                for (int i = 0; i < materials.length; i++) {
-                    Material material = materials[i];
-                    Texture albedo = material.getAlbedo();
-                    Texture metallic = material.getMetallic();
-                    Texture normal = material.getNormal();
-                    Texture roughness = material.getRoughness();
-
-                    if(albedo == null) {
-                        albedo = defaultTexture;
-                        Logger.error(RenderSystem.class, "Material [" + material.getName() + "] does not have an albedo texture configured");
-                    }
-                    if(metallic == null) {
-                        metallic = defaultTexture;
-                        Logger.error(RenderSystem.class, "Material [" + material.getName() + "] does not have a metallic texture configured");
-                    }
-                    if(normal == null) {
-                        normal = defaultTexture;
-                        Logger.error(RenderSystem.class, "Material [" + material.getName() + "] does not have a normal texture configured");
-                    }
-                    if(roughness == null) {
-                        roughness = defaultTexture;
-                        Logger.error(RenderSystem.class, "Material [" + material.getName() + "] does not have a roughness texture configured");
-                    }
-
-                    renderQueue.addTexture(textureIndex++, albedo);
-                    renderQueue.addTexture(textureIndex++, metallic);
-                    renderQueue.addTexture(textureIndex++, normal);
-                    renderQueue.addTexture(textureIndex++, roughness);
-                }
-
-                 */
-
-
-
 
 
 

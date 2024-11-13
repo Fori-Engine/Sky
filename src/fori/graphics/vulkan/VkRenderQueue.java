@@ -88,40 +88,6 @@ public class VkRenderQueue extends RenderQueue {
             }
 
 
-
-            for(Texture texture : textures){
-                VkTexture vkTexture = (VkTexture) texture;
-
-                if(texture != null && !vkTexture.isCorrectLayout) {
-
-
-                    vkTexture.transitionImageLayout(
-                            commandBuffer,
-                            VK_IMAGE_LAYOUT_UNDEFINED,
-                            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
-                    );
-
-                    VkBufferImageCopy.Buffer imageCopies = VkBufferImageCopy.calloc(1, stack);
-                    imageCopies.imageSubresource().aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
-                    imageCopies.imageSubresource().layerCount(1);
-                    imageCopies.imageExtent().set(texture.getWidth(), texture.getHeight(), 1);
-
-
-                    vkCmdCopyBufferToImage(commandBuffer, ((VkBuffer) vkTexture.imageData).getHandle(), vkTexture.image.getHandle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, imageCopies);
-
-                    vkTexture.transitionImageLayout(
-                            commandBuffer,
-                            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-                    );
-
-                    vkTexture.isCorrectLayout = true;
-                }
-
-
-            }
-
-
             VkBufferCopy.Buffer vertexBufferCopy = VkBufferCopy.calloc(1, stack);
             vertexBufferCopy.size((long) vertexCount * Attributes.getSize(shaderProgram.getAttributes()) * Float.BYTES);
             vertexBufferCopy.srcOffset(0);

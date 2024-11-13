@@ -2,57 +2,44 @@ package testbench;
 
 
 import fori.Scene;
+import fori.Surface;
 import fori.asset.AssetPacks;
 import fori.ecs.EntitySystem;
 import fori.ecs.MessageQueue;
 import fori.graphics.*;
+import fori.ui.Adapter;
+import fori.ui.EdgeLayout;
+import fori.ui.FlowLayout;
 import org.joml.Matrix4f;
-import org.lwjgl.nuklear.*;
-import org.lwjgl.system.MemoryStack;
+import org.joml.Vector2f;
 
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.Map;
 
 import static fori.graphics.Attributes.Type.*;
+import static fori.graphics.ShaderRes.ShaderStage.FragmentStage;
 import static fori.graphics.ShaderRes.ShaderStage.VertexStage;
 import static fori.graphics.ShaderRes.Type.*;
-import static org.lwjgl.nuklear.Nuklear.*;
-
+import static fori.ui.AmberUI.*;
+import static fori.ui.Flags.*;
 
 
 public class UISystem extends EntitySystem {
 
     private ShaderProgram shaderProgram;
-    private NkContext context;
-    private NkAllocator allocator;
     private Renderer renderer;
-    private NkBuffer commands;
-    private NkDrawNullTexture drawNullTexture;
-    private NkDrawVertexLayoutElement.Buffer vertexLayout;
+    private Adapter adapter;
+    private Font font;
+    private HashMap<Texture, Integer> textureLookup = new HashMap<>();
+    private int textureIndex;
+    private Surface surface;
 
-
-    public UISystem(Renderer renderer) {
+    public UISystem(Surface surface, Renderer renderer) {
+        this.surface = surface;
         this.renderer = renderer;
         Matrix4f proj = new Matrix4f().ortho(0, renderer.getWidth(), 0, renderer.getHeight(), 0, 1, true);
-
-        allocator = NkAllocator.create();
-
-        context = NkContext.create();
-        nk_init(context, allocator, null);
-
-        drawNullTexture = NkDrawNullTexture.create();
-        drawNullTexture.texture().id(0);
-        drawNullTexture.uv().set(0, 0);
-
-        commands = NkBuffer.create();
-
-        vertexLayout = NkDrawVertexLayoutElement.create(4)
-                .position(0).attribute(NK_VERTEX_POSITION).format(NK_FORMAT_FLOAT).offset(0)
-                .position(1).attribute(NK_VERTEX_TEXCOORD).format(NK_FORMAT_FLOAT).offset(8)
-                .position(2).attribute(NK_VERTEX_COLOR).format(NK_FORMAT_R8G8B8A8).offset(16)
-                .position(3).attribute(NK_VERTEX_ATTRIBUTE_COUNT).format(NK_FORMAT_COUNT).offset(0)
-                .flip();
-
+        font = new Font(renderer.getRef(), AssetPacks.getAsset("core:assets/fonts/open-sans/opensans.png"), AssetPacks.getAsset("core:assets/fonts/open-sans/opensans.fnt"));
 
         {
             ShaderReader.ShaderSources shaderSources = ShaderReader.readCombinedVertexFragmentSources(
@@ -63,8 +50,12 @@ public class UISystem extends EntitySystem {
             shaderProgram.bind(
                     new Attributes.Type[]{
                             PositionFloat2,
+                            QuadTypeFloat1,
+                            ColorFloat4,
+                            CircleThicknessFloat1,
                             UVFloat2,
-                            ColorFloat1
+                            TextureIndexFloat1
+
 
                     },
                     new ShaderResSet(
@@ -74,8 +65,15 @@ public class UISystem extends EntitySystem {
                                     0,
                                     UniformBuffer,
                                     VertexStage
-                            ).sizeBytes(SizeUtil.MATRIX_SIZE_BYTES)
+                            ).sizeBytes(SizeUtil.MATRIX_SIZE_BYTES),
+                            new ShaderRes(
+                                    "textures",
+                                    1,
+                                    CombinedSampler,
+                                    FragmentStage
+                            ).count(1)
                     )
+
             );
 
             Buffer buffer = Buffer.newBuffer(renderer.getRef(), SizeUtil.MATRIX_SIZE_BYTES, Buffer.Usage.UniformBuffer, Buffer.Type.CPUGPUShared, false);
@@ -89,226 +87,296 @@ public class UISystem extends EntitySystem {
 
         }
 
+
+
+
     }
 
-    public void drawText(float x, float y, String text, Font font, Color color, RenderQueue renderQueue){
-
-        ByteBuffer vertexBufferData = renderQueue.getDefaultVertexBuffer().get();
-        vertexBufferData.clear();
-        Texture glyphTexture = font.getTexture();
-        Map<Integer, Glyph> glyphs = font.getGlyphs();
-        float xc = x;
-
-        StringBuilder line = new StringBuilder();
-
-        float spaceXAdvance = glyphs.get((int) ' ').xadvance;
-
-
-        for(char c : text.toCharArray()){
-
-            if(c == '\t'){
-                xc += spaceXAdvance * 4;
-                continue;
-            }
-
-            if(c == '\r'){
-                xc = x;
-                continue;
-            }
-
-            Glyph glyph = glyphs.get((int) c);
-
-            if(c == '\n'){
-
-                float height = font.getLineHeight(line.toString());
-
-                y += height;
-
-
-                line = new StringBuilder();
-                xc = x;
-                continue;
-            }
-
-
-            float xt = glyph.x;
-            float yt = glyph.y;
-
-            float texX = xt / glyphTexture.getWidth();
-            float texY = yt / glyphTexture.getHeight();
-
-            float texW = (xt + glyph.w) / glyphTexture.getWidth();
-            float texH = (yt + glyph.h) / glyphTexture.getHeight();
-
-            //drawTexture(xc + glyph.xo, y + (glyph.yo), glyph.w, glyph.h, glyphTexture, color, new Rect2D(texX, texY, texW, texH), false, false);
-
-            {
-
-
-
-                /*
-                PositionFloat3,
-                            TransformIndexFloat1,
-                            UVFloat2,
-                            MaterialBaseIndexFloat1
-                 */
-
-                {
-                    vertexBufferData.putFloat(xc + glyph.xo);
-                    vertexBufferData.putFloat(y + glyph.yo);
-                    vertexBufferData.putFloat(0);
-
-                    vertexBufferData.putFloat(color.r);
-                    vertexBufferData.putFloat(color.g);
-                    vertexBufferData.putFloat(color.b);
-                    vertexBufferData.putFloat(color.a);
-
-                    vertexBufferData.putFloat(0);
-                    vertexBufferData.putFloat(texX);
-                    vertexBufferData.putFloat(texY);
-                    vertexBufferData.putFloat(0);
-
-                    //
-                    vertexBufferData.putFloat(xc + glyph.xo);
-                    vertexBufferData.putFloat(y + glyph.yo + glyph.h);
-                    vertexBufferData.putFloat(0);
-
-                    vertexBufferData.putFloat(color.r);
-                    vertexBufferData.putFloat(color.g);
-                    vertexBufferData.putFloat(color.b);
-                    vertexBufferData.putFloat(color.a);
-
-                    vertexBufferData.putFloat(0);
-                    vertexBufferData.putFloat(texX);
-                    vertexBufferData.putFloat(texH);
-                    vertexBufferData.putFloat(0);
-
-                    //
-                    vertexBufferData.putFloat(xc + glyph.xo + glyph.w);
-                    vertexBufferData.putFloat(y + glyph.yo + glyph.h);
-                    vertexBufferData.putFloat(0);
-
-                    vertexBufferData.putFloat(color.r);
-                    vertexBufferData.putFloat(color.g);
-                    vertexBufferData.putFloat(color.b);
-                    vertexBufferData.putFloat(color.a);
-
-                    vertexBufferData.putFloat(0);
-                    vertexBufferData.putFloat(texW);
-                    vertexBufferData.putFloat(texH);
-                    vertexBufferData.putFloat(0);
-
-                    //
-                    vertexBufferData.putFloat(xc + glyph.xo + glyph.w);
-                    vertexBufferData.putFloat(y + glyph.yo);
-                    vertexBufferData.putFloat(0);
-
-                    vertexBufferData.putFloat(color.r);
-                    vertexBufferData.putFloat(color.g);
-                    vertexBufferData.putFloat(color.b);
-                    vertexBufferData.putFloat(color.a);
-
-                    vertexBufferData.putFloat(0);
-                    vertexBufferData.putFloat(texW);
-                    vertexBufferData.putFloat(texY);
-                    vertexBufferData.putFloat(0);
-
-
-
-
-                }
-
-
-
-
-            }
-
-
-
-            xc += glyph.xadvance;
-
-            line.append(c);
-
-
-        }
-
-        int numOfIndices = text.length() * 6;
-        int offset = 0;
-
-        ByteBuffer indexBufferData = renderQueue.getDefaultIndexBuffer().get();
-        indexBufferData.clear();
-
-        for (int j = 0; j < numOfIndices; j += 6) {
-
-            indexBufferData.putInt(offset);
-            indexBufferData.putInt(1 + offset);
-            indexBufferData.putInt(2 + offset);
-            indexBufferData.putInt(2 + offset);
-            indexBufferData.putInt(3 + offset);
-            indexBufferData.putInt(offset);
-
-            offset += 4;
-        }
-
-    }
 
     @Override
     public void update(Scene scene, MessageQueue messageQueue) {
-
-
         if(renderer.getRenderQueueByShaderProgram(shaderProgram) == null){
-            renderer.newRenderQueue(shaderProgram);
+
+            RenderQueueFlags renderQueueFlags = new RenderQueueFlags();
+            renderQueueFlags.shaderProgram = shaderProgram;
+            renderQueueFlags.maxVertices = RenderQueue.MAX_VERTEX_COUNT;
+            renderQueueFlags.maxIndices = RenderQueue.MAX_INDEX_COUNT;
+            renderQueueFlags.depthTest = false;
+
+
+            renderer.newRenderQueue(renderQueueFlags);
         }
+
+
+
+
+
 
         RenderQueue renderQueue = renderer.getRenderQueueByShaderProgram(shaderProgram);
         renderQueue.reset();
 
-        ByteBuffer vertexBuffer = renderQueue.getDefaultVertexBuffer().get();
-        ByteBuffer indexBuffer = renderQueue.getDefaultIndexBuffer().get();
 
-        try(MemoryStack stack = MemoryStack.stackPush()) {
-
-            NkConvertConfig config = NkConvertConfig.calloc(stack)
-                    .vertex_layout(vertexLayout)
-                    .vertex_size(20)
-                    .vertex_alignment(4)
-                    .tex_null(drawNullTexture)
-                    .circle_segment_count(22)
-                    .curve_segment_count(22)
-                    .arc_segment_count(22)
-                    .global_alpha(1.0f)
-                    .shape_AA(nk_true)
-                    .line_AA(nk_true);
-
-            // setup buffers to load vertices and elements
-            NkBuffer vbuf = NkBuffer.malloc(stack);
-            NkBuffer ebuf = NkBuffer.malloc(stack);
-
-            nk_buffer_init_fixed(vbuf, vertexBuffer);
-            nk_buffer_init_fixed(ebuf, indexBuffer);
-            nk_convert(context, commands, vbuf, ebuf, config);
-
-            for (NkDrawCommand cmd = nk__draw_begin(context, commands); cmd != null; cmd = nk__draw_next(cmd, commands, context)) {
-                if (cmd.elem_count() == 0) {
-                    continue;
+        {
+            adapter = new Adapter() {
+                @Override
+                public Vector2f getSize() {
+                    return new Vector2f(renderer.getWidth(), renderer.getHeight());
                 }
 
-                //glDrawElements(GL_TRIANGLES, cmd.elem_count(), GL_UNSIGNED_SHORT, offset);
-                //offset += cmd.elem_count() * 2;
-            }
-            nk_clear(context);
-            nk_buffer_clear(commands);
+                @Override
+                public void drawFilledRect(float x, float y, float w, float h, Color color) {
+                    UISystem.this.drawFilledRect(renderQueue, x, y, w, h, color);
+                }
 
+                @Override
+                public void drawText(float x, float y, String text, Font font, Color color) {
+                    Texture glyphsTexture = font.getTexture();
+
+                    Map<Integer, Glyph> glyphs = font.getGlyphs();
+                    float xc = x;
+
+                    StringBuilder line = new StringBuilder();
+
+                    float spaceXAdvance = glyphs.get((int) ' ').xadvance;
+
+
+                    for(char c : text.toCharArray()) {
+
+                        if (c == '\t') {
+                            xc += spaceXAdvance * 4;
+                            continue;
+                        }
+
+                        if (c == '\r') {
+                            xc = x;
+                            continue;
+                        }
+
+                        Glyph glyph = glyphs.get((int) c);
+
+                        if (c == '\n') {
+
+                            float height = font.getLineHeight(line.toString());
+
+                            y += height;
+
+
+                            line = new StringBuilder();
+                            xc = x;
+                            continue;
+                        }
+
+
+                        float xt = glyph.x;
+                        float yt = glyph.y;
+
+                        float texX = xt / glyphsTexture.getWidth();
+                        float texY = yt / glyphsTexture.getHeight();
+
+                        float texW = (xt + glyph.w) / glyphsTexture.getWidth();
+                        float texH = (yt + glyph.h) / glyphsTexture.getHeight();
+
+                        drawTexture(xc + glyph.xo, y + glyph.yo, glyph.w, glyph.h, texX, texY, texW, texH, glyphsTexture, color);
+
+
+                        xc += glyph.xadvance;
+
+                        line.append(c);
+
+                    }
+                }
+
+                @Override
+                public void drawTexture(float x, float y, float w, float h, float tx, float ty, float tw, float th, Texture texture, Color color) {
+                    UISystem.this.drawTexture(renderQueue, x, y, w, h, tx, ty, tw, th, texture, color);
+                }
+
+
+
+            };
+        }
+
+        renderQueue.getDefaultVertexBuffer().get().clear();
+        renderQueue.getDefaultIndexBuffer().get().clear();
+
+
+        setAdapter(adapter);
+        setSurface(surface);
+
+        newContext("AmberUITest");
+        newPanel(new EdgeLayout(), North);
+        {
+
+            newPanel(new EdgeLayout(), North);
+            {
+
+                newPanel(new FlowLayout(Vertical), Center);
+                {
+                    if(button("This is a testa", font, Color.BLUE)) {
+                        System.out.println(9);
+                    }
+                    button("This is a testa", font, Color.RED);
+                    button("This is a testa", font, Color.RED);
+                    button("This is a testa", font, Color.RED);
+
+                    button("This is a testa", font, Color.RED);
+                    button("This is a testa", font, Color.RED);
+                    button("This is a testa", font, Color.RED);
+                    button("This is a testa", font, Color.RED);
+
+                    button("This is a testa", font, Color.RED);
+                    button("This is a testa", font, Color.RED);
+                    button("This is a testa", font, Color.RED);
+                    button("This is a testa", font, Color.RED);
+
+                    button("This is a testa", font, Color.RED);
+                    button("This is a testa", font, Color.RED);
+                    button("This is a testa", font, Color.RED);
+                    button("This is a testa", font, Color.RED);
+
+                }
+                endPanel();
+            }
+            endPanel();
+
+
+        }
+        endPanel();
+
+
+        render();
+
+        endContext();
+
+
+
+        //drawFilledRect(renderQueue, 0, 0, 60, 60, Color.RED);
+
+
+        renderQueue.updateQueue(quadIndex * 4, quadIndex * 12);
+        quadIndex = 0;
+
+
+
+
+
+
+
+    }
+
+    private int quadIndex = 0;
+
+    private void drawFilledRect(RenderQueue renderQueue, float x, float y, float w, float h, Color color) {
+        drawQuad(renderQueue, x, y, w, h, color, 2, -1, new Rect2D(0, 0, 1, 1), false, false, -1);
+    }
+
+    private void drawCircle(RenderQueue renderQueue, float x, float y, float w, float h, Color color, float thickness) {
+        drawQuad(renderQueue, x, y, w, h, color, 1, thickness, new Rect2D(0, 0, 1, 1), false, false, -1);
+    }
+
+    public void drawTexture(RenderQueue renderQueue, float x, float y, float w, float h, float tx, float ty, float tw, float th, Texture texture, Color color) {
+
+        int textureIndex = 0;
+
+        if(textureLookup.containsKey(texture)) {
+             textureIndex = textureLookup.get(texture);
+        }
+        else {
+            textureLookup.put(texture, this.textureIndex);
+            renderer.waitForDevice();
+
+            for (int i = 0; i < renderer.getMaxFramesInFlight(); i++) {
+                shaderProgram.updateTextures(i, new ShaderUpdate<>("textures", 0, 1, texture).arrayIndex(textureIndex));
+            }
+
+            this.textureIndex++;
         }
 
 
+        drawQuad(renderQueue, x, y, w, h, color, 0, 0, new Rect2D(tx, ty, tw, th), false, false, textureIndex);
 
 
 
 
+    }
+
+    private void drawQuad(RenderQueue renderQueue, float x, float y, float w, float h, Color color, int type, float thickness, Rect2D uv, boolean xFlip, boolean yFlip, int textureIndex) {
+        ByteBuffer vertexBuffer = renderQueue.getDefaultVertexBuffer().get();
+        ByteBuffer indexBuffer = renderQueue.getDefaultIndexBuffer().get();
+
+        Rect2D copy = new Rect2D(uv.x, uv.y, uv.w, uv.h);
+
+        if(xFlip){
+            float temp = copy.x;
+            copy.x = copy.w;
+            copy.w = temp;
+        }
+
+        if(yFlip){
+            float temp = copy.y;
+            copy.y = copy.h;
+            copy.h = temp;
+        }
 
 
+        vertexBuffer.putFloat(x);
+        vertexBuffer.putFloat(y);
+        vertexBuffer.putFloat(type);
+        vertexBuffer.putFloat(color.r);
+        vertexBuffer.putFloat(color.g);
+        vertexBuffer.putFloat(color.b);
+        vertexBuffer.putFloat(color.a);
+        vertexBuffer.putFloat(thickness);
+        vertexBuffer.putFloat(copy.x);
+        vertexBuffer.putFloat(copy.y);
+        vertexBuffer.putFloat(textureIndex);
+
+        vertexBuffer.putFloat(x);
+        vertexBuffer.putFloat(y + h);
+        vertexBuffer.putFloat(type);
+        vertexBuffer.putFloat(color.r);
+        vertexBuffer.putFloat(color.g);
+        vertexBuffer.putFloat(color.b);
+        vertexBuffer.putFloat(color.a);
+        vertexBuffer.putFloat(thickness);
+        vertexBuffer.putFloat(copy.x);
+        vertexBuffer.putFloat(copy.h);
+        vertexBuffer.putFloat(textureIndex);
+
+        vertexBuffer.putFloat(x + w);
+        vertexBuffer.putFloat(y + h);
+        vertexBuffer.putFloat(type);
+        vertexBuffer.putFloat(color.r);
+        vertexBuffer.putFloat(color.g);
+        vertexBuffer.putFloat(color.b);
+        vertexBuffer.putFloat(color.a);
+        vertexBuffer.putFloat(thickness);
+        vertexBuffer.putFloat(copy.w);
+        vertexBuffer.putFloat(copy.h);
+        vertexBuffer.putFloat(textureIndex);
+
+        vertexBuffer.putFloat(x + w);
+        vertexBuffer.putFloat(y);
+        vertexBuffer.putFloat(type);
+        vertexBuffer.putFloat(color.r);
+        vertexBuffer.putFloat(color.g);
+        vertexBuffer.putFloat(color.b);
+        vertexBuffer.putFloat(color.a);
+        vertexBuffer.putFloat(thickness);
+        vertexBuffer.putFloat(copy.w);
+        vertexBuffer.putFloat(copy.y);
+        vertexBuffer.putFloat(textureIndex);
+
+        int offset = (quadIndex) * 4;
 
 
+        indexBuffer.putInt(offset);
+        indexBuffer.putInt(1 + offset);
+        indexBuffer.putInt(2 + offset);
+        indexBuffer.putInt(2 + offset);
+        indexBuffer.putInt(3 + offset);
+        indexBuffer.putInt(offset);
+
+        quadIndex++;
     }
 }

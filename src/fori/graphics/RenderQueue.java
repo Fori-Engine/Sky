@@ -1,6 +1,7 @@
 package fori.graphics;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public abstract class RenderQueue {
@@ -19,7 +20,6 @@ public abstract class RenderQueue {
     protected Texture[] textures = new Texture[MAX_MESH_COUNT * Material.MAX_MATERIALS * Material.SIZE];
     protected final int framesInFlight;
     protected List<Integer> pendingTextureUpdateIndices = new ArrayList<>();
-
 
     public RenderQueue(int framesInFlight){
         this.framesInFlight = framesInFlight;
@@ -122,6 +122,8 @@ public abstract class RenderQueue {
 
     public abstract Buffer getDefaultVertexBuffer();
     public abstract Buffer getDefaultIndexBuffer();
+
+
     public void reset(){
         meshIndex = 0;
         vertexCount = 0;

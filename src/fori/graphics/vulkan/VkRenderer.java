@@ -58,8 +58,7 @@ public class VkRenderer extends Renderer {
     private VkRenderingInfoKHR renderingInfoKHR;
     private VkRenderingAttachmentInfo.Buffer colorAttachment;
     private VkRenderingAttachmentInfoKHR depthAttachment;
-
-
+    private boolean requestResize;
 
 
 
@@ -579,9 +578,12 @@ public class VkRenderer extends Renderer {
 
         return swapChainImageViews;
     }
-    private VkPipeline createPipeline(VkDevice device, VkSwapchain swapchain, VkShaderProgram shaderProgram) {
+    private VkPipeline createPipeline(VkDevice device, VkSwapchain swapchain, RenderQueueFlags renderQueueFlags) {
 
-        Attributes.Type[] attributes = shaderProgram.getAttributes();
+        VkShaderProgram vkShaderProgram = (VkShaderProgram) renderQueueFlags.shaderProgram;
+
+
+        Attributes.Type[] attributes = vkShaderProgram.getAttributes();
         long pipelineLayout;
         long graphicsPipeline = 0;
 
@@ -717,9 +719,9 @@ public class VkRenderer extends Renderer {
             VkPipelineDepthStencilStateCreateInfo depthStencil = VkPipelineDepthStencilStateCreateInfo.calloc(stack);
             {
                 depthStencil.sType(VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO);
-                depthStencil.depthTestEnable(true);
-                depthStencil.depthWriteEnable(true);
-                depthStencil.depthCompareOp(VK_COMPARE_OP_LESS);
+                depthStencil.depthTestEnable(renderQueueFlags.depthTest);
+                depthStencil.depthWriteEnable(renderQueueFlags.depthTest);
+                depthStencil.depthCompareOp(toVkDepthCompareOpEnum(renderQueueFlags.depthOp));
                 depthStencil.minDepthBounds(0f);
                 depthStencil.maxDepthBounds(1f);
 
@@ -734,8 +736,8 @@ public class VkRenderer extends Renderer {
             VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.calloc(stack);
             {
                 pipelineLayoutInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
-                pipelineLayoutInfo.setLayoutCount(shaderProgram.getShaderResSets().length);
-                pipelineLayoutInfo.pSetLayouts(stack.longs(shaderProgram.getAllDescriptorSetLayouts()));
+                pipelineLayoutInfo.setLayoutCount(vkShaderProgram.getShaderResSets().length);
+                pipelineLayoutInfo.pSetLayouts(stack.longs(vkShaderProgram.getAllDescriptorSetLayouts()));
 
 
             }
@@ -755,14 +757,10 @@ public class VkRenderer extends Renderer {
 
 
 
-
-
-
-
             VkGraphicsPipelineCreateInfo.Buffer pipelineInfo = VkGraphicsPipelineCreateInfo.calloc(1, stack);
             {
                 pipelineInfo.sType(VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO);
-                pipelineInfo.pStages(shaderProgram.getShaderStages());
+                pipelineInfo.pStages(vkShaderProgram.getShaderStages());
                 pipelineInfo.pVertexInputState(vertexInputInfo);
                 pipelineInfo.pInputAssemblyState(inputAssembly);
                 pipelineInfo.pViewportState(viewportState);
@@ -793,6 +791,30 @@ public class VkRenderer extends Renderer {
 
         return new VkPipeline(pipelineLayout, graphicsPipeline);
     }
+
+    private int toVkDepthCompareOpEnum(RenderQueueFlags.DepthOp depthOp) {
+        if(depthOp == null) return -1;
+        switch(depthOp) {
+            case LessThan -> {
+                return VK_COMPARE_OP_LESS;
+            }
+            case GreaterThan -> {
+                return VK_COMPARE_OP_GREATER;
+            }
+            case LessOrEqualTo -> {
+                return VK_COMPARE_OP_LESS_OR_EQUAL;
+            }
+            case GreaterOrEqualTo -> {
+                return VK_COMPARE_OP_GREATER_OR_EQUAL;
+            }
+            case Always -> {
+                return VK_COMPARE_OP_ALWAYS;
+            }
+        }
+
+        throw new RuntimeException(Logger.error(VkRenderer.class, "The depth operation for this pipeline is an invalid value [" + depthOp + "]"));
+    }
+
     private long createCommandPool(VkDevice device, int queueFamily) {
 
         long commandPool = 0;
@@ -861,45 +883,46 @@ public class VkRenderer extends Renderer {
     public void onSurfaceResized(int width, int height) {
         this.width = width;
         this.height = height;
+        requestResize = true;
     }
 
     @Override
-    public RenderQueue newRenderQueue(ShaderProgram shaderProgram, int maxVertices, int maxIndices) {
+    public RenderQueue newRenderQueue(RenderQueueFlags renderQueueFlags) {
         VkRenderQueue vkRenderQueue = new VkRenderQueue(FRAMES_IN_FLIGHT, sharedCommandPool, graphicsQueue, device);
         renderQueues.add(vkRenderQueue);
 
 
         vkRenderQueue.setStagingVertexBuffer(Buffer.newBuffer(
                 getRef(),
-                Attributes.getSize(shaderProgram.getAttributes()) * Float.BYTES * maxVertices,
+                Attributes.getSize(renderQueueFlags.shaderProgram.getAttributes()) * Float.BYTES * renderQueueFlags.maxVertices,
                 Buffer.Usage.VertexBuffer,
                 Buffer.Type.CPUGPUShared,
                 true
         ));
         vkRenderQueue.setStagingIndexBuffer(Buffer.newBuffer(
                 getRef(),
-                maxIndices * Integer.BYTES,
+                renderQueueFlags.maxIndices * Integer.BYTES,
                 Buffer.Usage.IndexBuffer,
                 Buffer.Type.CPUGPUShared,
                 true
         ));
         vkRenderQueue.setVertexBuffer(Buffer.newBuffer(
                 getRef(),
-                Attributes.getSize(shaderProgram.getAttributes()) * Float.BYTES * maxVertices,
+                Attributes.getSize(renderQueueFlags.shaderProgram.getAttributes()) * Float.BYTES * renderQueueFlags.maxVertices,
                 Buffer.Usage.VertexBuffer,
                 Buffer.Type.GPULocal,
                 false
         ));
         vkRenderQueue.setIndexBuffer(Buffer.newBuffer(
                 getRef(),
-                maxIndices * Integer.BYTES,
+                renderQueueFlags.maxIndices * Integer.BYTES,
                 Buffer.Usage.IndexBuffer,
                 Buffer.Type.GPULocal,
                 false
         ));
 
-        vkRenderQueue.setShaderProgram(shaderProgram);
-        vkRenderQueue.setPipeline(createPipeline(device, swapchain, (VkShaderProgram) shaderProgram));
+        vkRenderQueue.setShaderProgram(renderQueueFlags.shaderProgram);
+        vkRenderQueue.setPipeline(createPipeline(device, swapchain, renderQueueFlags));
 
         return vkRenderQueue;
     }
@@ -918,26 +941,24 @@ public class VkRenderer extends Renderer {
     public void update() {
 
         try(MemoryStack stack = stackPush()) {
+
+
+
+
+
+
             VkFrame frame = frames[frameIndex];
             IntBuffer pImageIndex = stack.ints(0);
 
             vkWaitForFences(device, frame.inFlightFence, true, UINT64_MAX);
-
-
-            int acquireNextImageResult = vkAcquireNextImageKHR(device, swapchain.swapChain, UINT64_MAX, frame.imageAcquiredSemaphore, VK_NULL_HANDLE, pImageIndex);
-            
-            if(acquireNextImageResult == VK_ERROR_OUT_OF_DATE_KHR){
+            int acquireNextImageKHRResult = vkAcquireNextImageKHR(device, swapchain.swapChain, UINT64_MAX, frame.imageAcquiredSemaphore, VK_NULL_HANDLE, pImageIndex);
+            if(acquireNextImageKHRResult == VK_ERROR_OUT_OF_DATE_KHR) {
                 recreateSwapchainAndDepthResources();
                 return;
             }
-            
 
-            
-            
+
             int imageIndex = pImageIndex.get(0);
-
-
-
             vkResetFences(device, frame.inFlightFence);
             vkResetCommandBuffer(frame.renderCommandBuffer, 0);
             {
@@ -1029,7 +1050,6 @@ public class VkRenderer extends Renderer {
 
 
                     vkCmdSetViewport(commandBuffer, 0, viewport);
-
                     for(RenderQueue renderQueue : renderQueues) {
 
                         VkBuffer vertexBuffer = (VkBuffer) renderQueue.getVertexBuffer();
@@ -1040,21 +1060,27 @@ public class VkRenderer extends Renderer {
 
                         VkPipeline pipeline = ((VkRenderQueue) renderQueue).getPipeline();
                         VkShaderProgram shaderProgram = (VkShaderProgram) renderQueue.getShaderProgram();
-
-
                         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
                         LongBuffer vertexBuffers = stack.longs(vertexBuffer.getHandle());
                         LongBuffer offsets = stack.longs(0);
 
                         vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
-                        vkCmdBindIndexBuffer(commandBuffer, indexBuffer.getHandle(), 0, VK_INDEX_TYPE_UINT32);
+
                         vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                                 pipeline.pipelineLayout, 0, stack.longs(shaderProgram.getDescriptorSets(frameIndex)), null);
 
-
+                        vkCmdBindIndexBuffer(commandBuffer, indexBuffer.getHandle(), 0, VK_INDEX_TYPE_UINT32);
                         vkCmdDrawIndexed(commandBuffer, renderQueue.getIndexCount(), 1, 0, 0, 0);
+
+
+
+
+
+
+
                     }
+
                 }
                 KHRDynamicRendering.vkCmdEndRenderingKHR(commandBuffer);
 
@@ -1112,11 +1138,8 @@ public class VkRenderer extends Renderer {
 
             presentInfo.pImageIndices(pImageIndex);
 
-            int presentResult = vkQueuePresentKHR(presentQueue, presentInfo);
-
-            if(presentResult == VK_ERROR_OUT_OF_DATE_KHR || presentResult == VK_SUBOPTIMAL_KHR){
+            if(vkQueuePresentKHR(presentQueue, presentInfo) == VK_ERROR_OUT_OF_DATE_KHR) {
                 recreateSwapchainAndDepthResources();
-                return;
             }
 
             frameIndex = (frameIndex + 1) % FRAMES_IN_FLIGHT;
