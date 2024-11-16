@@ -24,8 +24,9 @@ public class AmberUI {
     private static String currentContext;
     private static Surface surface;
     private static Widget lastWidget;
-    private static LinkedList<Widget> windows = new LinkedList<>();
+    private static List<Widget> windows = new ArrayList<>();
     public static String lastWidgetType = "";
+    private static Widget selectedWindow;
 
 
     public static final void setAdapter(Adapter adapter) { AmberUI.currentAdapter = adapter;}
@@ -61,6 +62,8 @@ public class AmberUI {
 
     public static void render() {
         currentWidgetID = 0;
+
+
 
         for(Widget window : windows) {
             window.draw(currentAdapter, 0, 0, window.getWidth(), window.getHeight());
@@ -109,13 +112,17 @@ public class AmberUI {
 
                 boolean selected = headerRect.contains(surface.getMousePos().x, surface.getMousePos().y) && surface.getMousePressed(Input.MOUSE_BUTTON_LEFT);
 
-                if(selected && !windowEvent.initialSelect) {
+                if(selected && !windowEvent.initialSelect && selectedWindow == null) {
                     windowEvent.initialSelect = true;
                     windowEvent.sx = surface.getMousePos().x - windowEvent.x;
                     windowEvent.sy = surface.getMousePos().y - windowEvent.y;
+                    selectedWindow = this;
                 }
 
-                if(surface.getMouseReleased(Input.MOUSE_BUTTON_LEFT)) windowEvent.initialSelect = false;
+                if(surface.getMouseReleased(Input.MOUSE_BUTTON_LEFT)) {
+                    windowEvent.initialSelect = false;
+                    selectedWindow = null;
+                }
 
                 adapter.drawFilledRect(headerRect.x, headerRect.y, headerRect.w, headerRect.h, windowColor);
                 adapter.drawFilledRect(headerRect.x, headerRect.y + headerRect.h - 1, headerRect.w, 1, Color.BLACK);
@@ -146,7 +153,7 @@ public class AmberUI {
 
         lastWidget = widget;
         lastWidgetType = "window";
-        System.out.println(lastWidgetType);
+
     }
 
     public static void newPanel(Layout layout, int... layoutInParent){
@@ -179,7 +186,6 @@ public class AmberUI {
 
         lastWidget = widget;
         lastWidgetType = "panel";
-        System.out.println(lastWidgetType);
     }
 
     public static void text(String text, Font font, Color color, int... layoutInParent){
@@ -207,7 +213,6 @@ public class AmberUI {
 
         lastWidget = widget;
         lastWidgetType = "text";
-        System.out.println(lastWidgetType);
     }
 
     public static boolean button(String text, Font font, Color color, int... layoutInParent){
@@ -284,8 +289,6 @@ public class AmberUI {
 
         lastWidget = widget;
         lastWidgetType = "button";
-        System.out.println(lastWidgetType);
-
 
         ButtonEvent buttonEvent = getEvent(myID);
         if(buttonEvent == null) return false;

@@ -238,7 +238,7 @@ public class UISystem extends EntitySystem {
             }
             endPanel();
         }
-        System.out.println(lastWidgetType);
+
         endWindow();
 
         newWindow("Window 2", 300, 300, font, new FlowLayout(Horizontal));
