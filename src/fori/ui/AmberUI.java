@@ -1,10 +1,12 @@
 package fori.ui;
 
 import fori.Input;
+import fori.Math;
 import fori.Surface;
 import fori.graphics.Color;
 import fori.graphics.Font;
 import fori.graphics.Rect2D;
+import org.lwjgl.system.MathUtil;
 
 import java.util.*;
 
@@ -99,26 +101,29 @@ public class AmberUI {
 
     public static void text(String text, Font font, Color color, int... layoutInParent){
         int myID = getNewID();
+        float padding = 7;
         submit(layoutInParent, new Widget() {
             @Override
             public void draw(Adapter adapter, float x, float y, float w, float h) {
-                adapter.drawText(x, y, text, font, color);
+                adapter.drawText(x + padding, y + padding, text, font, color);
             }
 
             @Override
             public float getWidth() {
-                return font.getWidthOf(text);
+                return font.getWidthOf(text) + padding * 2;
             }
 
             @Override
             public float getHeight() {
-                return font.getHeightOf(text);
+                return font.getHeightOf(text) + padding * 2;
             }
         });
     }
 
     public static boolean button(String text, Font font, Color color, int... layoutInParent){
         int myID = getNewID();
+        float padding = 7;
+
         submit(layoutInParent, new Widget() {
             @Override
             public void draw(Adapter adapter, float x, float y, float w, float h) {
@@ -127,9 +132,32 @@ public class AmberUI {
                     addEvent(myID, new ButtonEvent());
                 }
 
+                Color baseColor = new Color(56f / 255, 56f / 255, 56f / 255, 1);
+
                 ButtonEvent buttonEvent = getEvent(myID);
 
-                boolean isPressed = surface.getMousePressed(Input.MOUSE_BUTTON_LEFT) && new Rect2D(x, y, w, h).contains(surface.getMousePos().x, surface.getMousePos().y);
+
+
+                boolean hovered = new Rect2D(x, y, w, h).contains(surface.getMousePos().x, surface.getMousePos().y);
+                boolean isPressed = surface.getMousePressed(Input.MOUSE_BUTTON_LEFT) && hovered;
+
+                if(hovered) {
+                    baseColor = new Color(102f / 255, 102f / 255, 102f / 255, 1.0f);
+                }
+                if(isPressed) {
+                    baseColor = new Color(120f / 255, 120f / 255, 120f / 255, 1.0f);
+                }
+
+                adapter.drawFilledCircle(x, y, 20, 20, 1, baseColor);
+                adapter.drawFilledCircle(x + w - 20, y, 20, 20, 1, baseColor);
+                adapter.drawFilledCircle(x, y + h - 20 , 20, 20, 1, baseColor);
+                adapter.drawFilledCircle(x + w - 20, y + h - 20, 20, 20, 1, baseColor);
+
+                adapter.drawFilledRect(x, y + 10, w, h - 20, baseColor);
+                adapter.drawFilledRect(x + 10, y, w - 20, h, baseColor);
+
+
+                adapter.drawText(x + padding, y + padding - 3, text, font, color);
 
                 if(isPressed) {
                     if (!buttonEvent.lock) {
@@ -140,12 +168,8 @@ public class AmberUI {
                     if(buttonEvent.buttonPressed) {
                         buttonEvent.buttonPressed = false;
                     }
-                    adapter.drawFilledRect(x, y, w, h, Color.LIGHT_GRAY);
                 }
-                else {
-                    adapter.drawFilledRect(x, y, w, h, Color.BLACK);
-                }
-                adapter.drawText(x, y, text, font, color);
+
 
 
 
@@ -160,18 +184,78 @@ public class AmberUI {
 
             @Override
             public float getWidth() {
-                return font.getWidthOf(text);
+                return font.getWidthOf(text) + padding * 2;
             }
 
             @Override
             public float getHeight() {
-                return font.getHeightOf(text);
+                return font.getHeightOf(text) + padding * 2;
             }
         });
 
         ButtonEvent buttonEvent = getEvent(myID);
         if(buttonEvent == null) return false;
         else return buttonEvent.buttonPressed;
+    }
+
+    public static float slider(String text, Font font, Color color, float max, int... layoutInParent){
+        int myID = getNewID();
+        float padding = 7;
+
+        submit(layoutInParent, new Widget() {
+            @Override
+            public void draw(Adapter adapter, float x, float y, float w, float h) {
+                Map<Integer, Event> eventMap = contextBasedEventMap.get(currentContext);
+                if(!eventMap.containsKey(myID)) {
+                    addEvent(myID, new SliderEvent());
+                }
+
+                Color barColor = new Color(188f / 255, 188f / 255, 188f / 255, 1);
+                Color grabColor = new Color(56f / 255, 56f / 255, 56f / 255, 1);
+
+
+                SliderEvent sliderEvent = getEvent(myID);
+
+
+                float barHeight = 6;
+                float barWidth = w;
+
+                float grabWidth = 15;
+                float grabHeight = h - 10;
+
+                Rect2D grab = new Rect2D(x, y + (h / 2) - (grabHeight / 2), grabWidth, grabHeight);
+                grab.x += (sliderEvent.value / max) * w;
+
+
+                boolean isPressed = surface.getMousePressed(Input.MOUSE_BUTTON_LEFT) && grab.contains(surface.getMousePos().x, surface.getMousePos().y);
+                grab.x = Math.clamp(surface.getMousePos().x, x, x + w);
+
+
+                adapter.drawFilledRect(x, y + (h / 2) - (barHeight / 2), barWidth, barHeight, barColor);
+                adapter.drawFilledRect(grab.x, grab.y, grab.w, grab.h, grabColor);
+
+                sliderEvent.value = max * ((grab.x - x) / w);
+
+                String valueText = String.format("%.2f", sliderEvent.value);
+                adapter.drawText(x + w - font.getWidthOf(valueText), y + grabHeight + 5, valueText, font, Color.WHITE);
+
+            }
+
+            @Override
+            public float getWidth() {
+                return font.getWidthOf(text) + padding * 2;
+            }
+
+            @Override
+            public float getHeight() {
+
+                return font.getHeightOf(text) + padding * 2;
+            }
+        });
+
+        SliderEvent sliderEvent = getEvent(myID);
+        if(sliderEvent == null) return 0f;
+        else return sliderEvent.value;
     }
 
     public static int getNewID(){

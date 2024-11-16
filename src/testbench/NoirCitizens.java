@@ -79,7 +79,7 @@ public class NoirCitizens extends Stage {
         String logDstPath = cmd.getOptionValue("logdst");
 
 
-        AssetPacks.open("core", AssetPack.openLocal(new File("assets")));
+        AssetPacks.open("core", AssetPack.openPack(new File("assets.pkg")));
 
         if(logDstPath == null) Logger.setConsoleTarget(System.out);
         else Logger.setFileTarget(new File(logDstPath));

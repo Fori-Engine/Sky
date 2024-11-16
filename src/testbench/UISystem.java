@@ -34,6 +34,7 @@ public class UISystem extends EntitySystem {
     private HashMap<Texture, Integer> textureLookup = new HashMap<>();
     private int textureIndex;
     private Surface surface;
+    private float value;
 
     public UISystem(Surface surface, Renderer renderer) {
         this.surface = surface;
@@ -176,7 +177,7 @@ public class UISystem extends EntitySystem {
                         float texW = (xt + glyph.w) / glyphsTexture.getWidth();
                         float texH = (yt + glyph.h) / glyphsTexture.getHeight();
 
-                        drawTexture(xc + glyph.xo, y + glyph.yo, glyph.w, glyph.h, texX, texY, texW, texH, glyphsTexture, color);
+                        UISystem.this.drawTexture(renderQueue, xc + glyph.xo, y + glyph.yo, glyph.w, glyph.h, texX, texY, texW, texH, glyphsTexture, color);
 
 
                         xc += glyph.xadvance;
@@ -191,6 +192,10 @@ public class UISystem extends EntitySystem {
                     UISystem.this.drawTexture(renderQueue, x, y, w, h, tx, ty, tw, th, texture, color);
                 }
 
+                @Override
+                public void drawFilledCircle(float x, float y, float w, float h, float thickness, Color color) {
+                    UISystem.this.drawCircle(renderQueue, x, y, w, h, color, thickness);
+                }
 
 
             };
@@ -206,33 +211,40 @@ public class UISystem extends EntitySystem {
         newContext("AmberUITest");
         newPanel(new EdgeLayout(), North);
         {
-
+            button("This is a test", font, Color.WHITE, West);
+            button("This is a test", font, Color.WHITE, East);
+            button("This is a test", font, Color.WHITE, South);
             newPanel(new EdgeLayout(), North);
             {
 
+
                 newPanel(new FlowLayout(Vertical), Center);
                 {
-                    if(button("This is a testa", font, Color.BLUE)) {
+                    text("This is a text", font, Color.WHITE);
+                    if(button("This is the test", font, Color.BLUE)) {
                         System.out.println(9);
                     }
-                    button("This is a testa", font, Color.RED);
-                    button("This is a testa", font, Color.RED);
-                    button("This is a testa", font, Color.RED);
+                    button("This is a test", font, Color.WHITE);
+                    button("This is a test", font, Color.WHITE);
+                    button("This is a test", font, Color.WHITE);
 
-                    button("This is a testa", font, Color.RED);
-                    button("This is a testa", font, Color.RED);
-                    button("This is a testa", font, Color.RED);
-                    button("This is a testa", font, Color.RED);
+                    button("This is a test", font, Color.RED);
+                    button("This is a test", font, Color.RED);
+                    button("This is a test", font, Color.RED);
+                    button("This is a test", font, Color.RED);
 
-                    button("This is a testa", font, Color.RED);
-                    button("This is a testa", font, Color.RED);
-                    button("This is a testa", font, Color.RED);
-                    button("This is a testa", font, Color.RED);
+                    button("This is a test", font, Color.GREEN);
+                    button("This is a test", font, Color.GREEN);
+                    button("This is a test", font, Color.GREEN);
+                    button("This is a test", font, Color.GREEN);
 
-                    button("This is a testa", font, Color.RED);
-                    button("This is a testa", font, Color.RED);
-                    button("This is a testa", font, Color.RED);
-                    button("This is a testa", font, Color.RED);
+                    button("This is a test", font, Color.LIGHT_GRAY);
+                    button("This is a test", font, Color.LIGHT_GRAY);
+                    button("This is a test", font, Color.LIGHT_GRAY);
+                    button("This is a test", font, Color.LIGHT_GRAY);
+
+                    value = slider("This is a test", font, Color.LIGHT_GRAY, 20);
+                    System.out.println(value);
 
                 }
                 endPanel();
