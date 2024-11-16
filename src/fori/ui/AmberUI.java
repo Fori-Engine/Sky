@@ -9,17 +9,24 @@ import fori.graphics.Rect2D;
 import org.lwjgl.system.MathUtil;
 
 import java.util.*;
+import java.util.function.Function;
 
 
 public class AmberUI {
 
-    private static Widget root;
     private static Adapter currentAdapter;
     private static final HashMap<String, HashMap<Integer, Event>> contextBasedEventMap = new HashMap<>();
     private static int currentWidgetID = 0;
     private static final Stack<PanelScope> panelScopes = new Stack<>();
+    private static final Stack<WindowScope> windowScopes = new Stack<>();
+
+
     private static String currentContext;
     private static Surface surface;
+    private static Widget lastWidget;
+    private static LinkedList<Widget> windows = new LinkedList<>();
+    public static String lastWidgetType = "";
+
 
     public static final void setAdapter(Adapter adapter) { AmberUI.currentAdapter = adapter;}
 
@@ -44,7 +51,7 @@ public class AmberUI {
     }
 
     public static void endContext(){
-        root = null;
+        windows.clear();
         panelScopes.clear();
     }
     public static void clearEvents() {
@@ -54,8 +61,9 @@ public class AmberUI {
 
     public static void render() {
         currentWidgetID = 0;
-        if (root != null) {
-            root.draw(currentAdapter, 0, 0, (int) currentAdapter.getSize().x, (int) currentAdapter.getSize().y);
+
+        for(Widget window : windows) {
+            window.draw(currentAdapter, 0, 0, window.getWidth(), window.getHeight());
         }
 
     }
@@ -65,9 +73,80 @@ public class AmberUI {
         if(!panelScopes.isEmpty()) {
             panelScopes.peek().childWidgets.add(widget);
         }
-        else {
-            root = widget;
-        }
+    }
+
+    public static void newWindow(String title, float x, float y, Font font, Layout layout) {
+        int myID = getNewID();
+        windowScopes.push(new WindowScope(title, x, y, myID, font));
+        newPanel(layout);
+    }
+
+    public static void endWindow() {
+        endPanel();
+
+        WindowScope windowScope = windowScopes.pop();
+        float padding = 7;
+        Widget last = lastWidget;
+
+
+        Widget widget = new Widget() {
+            @Override
+            public void draw(Adapter adapter, float x, float y, float width, float height) {
+                Map<Integer, Event> eventMap = contextBasedEventMap.get(currentContext);
+                if(!eventMap.containsKey(windowScope.myID)) {
+                    addEvent(windowScope.myID, new WindowEvent(windowScope.x, windowScope.y));
+                }
+
+                WindowEvent windowEvent = getEvent(windowScope.myID);
+
+                Color windowColor = new Color(56f / 255, 56f / 255, 56f / 255, 1);
+
+
+
+
+                Rect2D headerRect = new Rect2D(windowEvent.x, windowEvent.y - 30, getWidth(), 30);
+                Rect2D windowRect = new Rect2D(windowEvent.x, windowEvent.y, getWidth(), getHeight());
+
+                boolean selected = headerRect.contains(surface.getMousePos().x, surface.getMousePos().y) && surface.getMousePressed(Input.MOUSE_BUTTON_LEFT);
+
+                if(selected && !windowEvent.initialSelect) {
+                    windowEvent.initialSelect = true;
+                    windowEvent.sx = surface.getMousePos().x - windowEvent.x;
+                    windowEvent.sy = surface.getMousePos().y - windowEvent.y;
+                }
+
+                if(surface.getMouseReleased(Input.MOUSE_BUTTON_LEFT)) windowEvent.initialSelect = false;
+
+                adapter.drawFilledRect(headerRect.x, headerRect.y, headerRect.w, headerRect.h, windowColor);
+                adapter.drawFilledRect(headerRect.x, headerRect.y + headerRect.h - 1, headerRect.w, 1, Color.BLACK);
+
+                adapter.drawFilledRect(windowRect.x, windowRect.y, windowRect.w, windowRect.h, windowColor);
+                adapter.drawText(headerRect.x, headerRect.y, windowScope.title, windowScope.font, Color.WHITE);
+
+                last.draw(adapter, windowEvent.x, windowEvent.y, width, height);
+
+                if(windowEvent.initialSelect) {
+                    windowEvent.x =  surface.getMousePos().x - (windowEvent.sx);
+                    windowEvent.y =  surface.getMousePos().y - (windowEvent.sy);
+                }
+            }
+
+            @Override
+            public float getWidth() {
+                return java.lang.Math.max(windowScope.font.getWidthOf(windowScope.title), last.getWidth()) + padding * 2;
+            }
+
+            @Override
+            public float getHeight() {
+                return last.getHeight() + padding * 2;
+            }
+        };
+        windows.add(widget);
+        submit(new int[]{}, widget);
+
+        lastWidget = widget;
+        lastWidgetType = "window";
+        System.out.println(lastWidgetType);
     }
 
     public static void newPanel(Layout layout, int... layoutInParent){
@@ -77,11 +156,12 @@ public class AmberUI {
 
     public static void endPanel(){
         PanelScope panelScope = panelScopes.pop();
+        Widget last = lastWidget;
 
-        submit(panelScope.layoutInParent, new Widget() {
+        Widget widget = new Widget() {
             @Override
             public void draw(Adapter adapter, float x, float y, float width, float height) {
-                panelScope.layout.layoutAndDraw(root, panelScope.childWidgets, panelScope, adapter, x, y, width, height);
+                panelScope.layout.layoutAndDraw(panelScope.childWidgets, panelScope, adapter, x, y, width, height);
             }
 
             @Override
@@ -93,16 +173,21 @@ public class AmberUI {
             public float getHeight() {
                 return panelScope.layout.getHeight(panelScope.childWidgets);
             }
-        });
+        };
 
+        submit(panelScope.layoutInParent, widget);
 
-
+        lastWidget = widget;
+        lastWidgetType = "panel";
+        System.out.println(lastWidgetType);
     }
 
     public static void text(String text, Font font, Color color, int... layoutInParent){
         int myID = getNewID();
         float padding = 7;
-        submit(layoutInParent, new Widget() {
+        Widget last = lastWidget;
+
+        Widget widget = new Widget() {
             @Override
             public void draw(Adapter adapter, float x, float y, float w, float h) {
                 adapter.drawText(x + padding, y + padding, text, font, color);
@@ -117,19 +202,25 @@ public class AmberUI {
             public float getHeight() {
                 return font.getHeightOf(text) + padding * 2;
             }
-        });
+        };
+        submit(layoutInParent, widget);
+
+        lastWidget = widget;
+        lastWidgetType = "text";
+        System.out.println(lastWidgetType);
     }
 
     public static boolean button(String text, Font font, Color color, int... layoutInParent){
         int myID = getNewID();
         float padding = 7;
+        Widget last = lastWidget;
 
-        submit(layoutInParent, new Widget() {
+        Widget widget = new Widget() {
             @Override
             public void draw(Adapter adapter, float x, float y, float w, float h) {
                 Map<Integer, Event> eventMap = contextBasedEventMap.get(currentContext);
                 if(!eventMap.containsKey(myID)) {
-                    addEvent(myID, new ButtonEvent());
+                    addEvent(myID, new ButtonEvent(false));
                 }
 
                 Color baseColor = new Color(56f / 255, 56f / 255, 56f / 255, 1);
@@ -177,9 +268,6 @@ public class AmberUI {
                     buttonEvent.lock = false;
                     buttonEvent.buttonPressed = false;
                 }
-
-
-
             }
 
             @Override
@@ -191,7 +279,13 @@ public class AmberUI {
             public float getHeight() {
                 return font.getHeightOf(text) + padding * 2;
             }
-        });
+        };
+        submit(layoutInParent, widget);
+
+        lastWidget = widget;
+        lastWidgetType = "button";
+        System.out.println(lastWidgetType);
+
 
         ButtonEvent buttonEvent = getEvent(myID);
         if(buttonEvent == null) return false;
@@ -201,8 +295,9 @@ public class AmberUI {
     public static float slider(String text, Font font, Color color, float max, int... layoutInParent){
         int myID = getNewID();
         float padding = 7;
+        Widget last = lastWidget;
 
-        submit(layoutInParent, new Widget() {
+        Widget widget = new Widget() {
             @Override
             public void draw(Adapter adapter, float x, float y, float w, float h) {
                 Map<Integer, Event> eventMap = contextBasedEventMap.get(currentContext);
@@ -238,7 +333,6 @@ public class AmberUI {
 
                 String valueText = String.format("%.2f", sliderEvent.value);
                 adapter.drawText(x + w - font.getWidthOf(valueText), y + grabHeight + 5, valueText, font, Color.WHITE);
-
             }
 
             @Override
@@ -251,7 +345,14 @@ public class AmberUI {
 
                 return font.getHeightOf(text) + padding * 2;
             }
-        });
+        };
+
+        submit(layoutInParent, widget);
+
+        lastWidget = widget;
+        lastWidgetType = "slider";
+        System.out.println(lastWidgetType);
+
 
         SliderEvent sliderEvent = getEvent(myID);
         if(sliderEvent == null) return 0f;

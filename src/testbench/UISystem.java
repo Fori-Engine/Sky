@@ -1,15 +1,16 @@
 package testbench;
 
 
+import fori.Input;
 import fori.Scene;
 import fori.Surface;
 import fori.asset.AssetPacks;
-import fori.ecs.EntitySystem;
-import fori.ecs.MessageQueue;
+import fori.ecs.*;
 import fori.graphics.*;
 import fori.ui.Adapter;
 import fori.ui.EdgeLayout;
 import fori.ui.FlowLayout;
+import org.intellij.lang.annotations.Flow;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 
@@ -209,51 +210,110 @@ public class UISystem extends EntitySystem {
         setSurface(surface);
 
         newContext("AmberUITest");
-        newPanel(new EdgeLayout(), North);
+        newWindow("Window 1", 60, 60, font, new EdgeLayout());
         {
-            button("This is a test", font, Color.WHITE, West);
-            button("This is a test", font, Color.WHITE, East);
-            button("This is a test", font, Color.WHITE, South);
             newPanel(new EdgeLayout(), North);
             {
 
 
                 newPanel(new FlowLayout(Vertical), Center);
                 {
-                    text("This is a text", font, Color.WHITE);
-                    if(button("This is the test", font, Color.BLUE)) {
+                    text("This is text", font, Color.WHITE);
+                    if (button("Click me!", font, Color.BLUE)) {
                         System.out.println(9);
                     }
-                    button("This is a test", font, Color.WHITE);
-                    button("This is a test", font, Color.WHITE);
-                    button("This is a test", font, Color.WHITE);
+                    button("Button", font, Color.WHITE);
+                    button("Button", font, Color.WHITE);
+                    button("Button", font, Color.WHITE);
 
-                    button("This is a test", font, Color.RED);
-                    button("This is a test", font, Color.RED);
-                    button("This is a test", font, Color.RED);
-                    button("This is a test", font, Color.RED);
+                    button("Button", font, Color.RED);
+                    button("Button", font, Color.RED);
+                    button("Button", font, Color.RED);
+                    button("Button", font, Color.RED);
 
-                    button("This is a test", font, Color.GREEN);
-                    button("This is a test", font, Color.GREEN);
-                    button("This is a test", font, Color.GREEN);
-                    button("This is a test", font, Color.GREEN);
-
-                    button("This is a test", font, Color.LIGHT_GRAY);
-                    button("This is a test", font, Color.LIGHT_GRAY);
-                    button("This is a test", font, Color.LIGHT_GRAY);
-                    button("This is a test", font, Color.LIGHT_GRAY);
-
-                    value = slider("This is a test", font, Color.LIGHT_GRAY, 20);
-                    System.out.println(value);
+                    text("A really really really really really really really long string", font, Color.WHITE);
 
                 }
                 endPanel();
             }
             endPanel();
-
-
         }
-        endPanel();
+        System.out.println(lastWidgetType);
+        endWindow();
+
+        newWindow("Window 2", 300, 300, font, new FlowLayout(Horizontal));
+        {
+            button("Button", font, Color.RED);
+            button("Button", font, Color.LIGHT_GRAY);
+        }
+        endWindow();
+
+
+        newWindow("Window 3", 600, 600, font, new EdgeLayout());
+        {
+            newPanel(new EdgeLayout(), North);
+            {
+
+
+                newPanel(new FlowLayout(Vertical), Center);
+                {
+                    text("This is text", font, Color.WHITE);
+                    if (button("Click me!", font, Color.BLUE)) {
+                        System.out.println(9);
+                    }
+
+                    newPanel(new FlowLayout(Horizontal));
+                    {
+                        button("Button", font, Color.WHITE);
+                        button("Button", font, Color.WHITE);
+                    }
+                    endPanel();
+
+                    newPanel(new FlowLayout(Horizontal));
+                    {
+                        button("Button", font, Color.RED);
+                        button("Button", font, Color.RED);
+                    }
+                    endPanel();
+
+                    newPanel(new FlowLayout(Horizontal));
+                    {
+                        button("Button", font, Color.GREEN);
+                        button("Button", font, Color.GREEN);
+                    }
+                    endPanel();
+
+                    newPanel(new FlowLayout(Horizontal));
+                    {
+                        button("Button", font, Color.BLUE);
+                        button("Button", font, Color.BLUE);
+                    }
+                    endPanel();
+
+                    newPanel(new FlowLayout(Horizontal));
+                    {
+                        button("Button", font, Color.WHITE);
+                        button("Button", font, Color.WHITE);
+                    }
+                    endPanel();
+
+                    newPanel(new FlowLayout(Horizontal));
+                    {
+                        button("Button", font, Color.WHITE);
+                        button("Button", font, Color.WHITE);
+                    }
+                    endPanel();
+
+
+                }
+                endPanel();
+            }
+            endPanel();
+        }
+        endWindow();
+
+
+
 
 
         render();
@@ -267,12 +327,6 @@ public class UISystem extends EntitySystem {
 
         renderQueue.updateQueue(quadIndex * 4, quadIndex * 12);
         quadIndex = 0;
-
-
-
-
-
-
 
     }
 

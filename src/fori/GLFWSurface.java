@@ -1,6 +1,4 @@
 package fori;
-import static java.awt.SystemColor.window;
-import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.glfw.GLFWVulkan.*;
 import static org.lwjgl.glfw.GLFWVulkan.glfwVulkanSupported;
@@ -13,16 +11,17 @@ import fori.graphics.Ref;
 import fori.graphics.RenderAPI;
 import org.joml.Vector2f;
 import org.lwjgl.PointerBuffer;
-import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkInstance;
 
 import java.nio.LongBuffer;
+import java.util.HashMap;
 
 
 public class GLFWSurface extends Surface {
 
     private long handle;
+    private HashMap<Integer, Boolean> mouseMap = new HashMap<>();
     public GLFWSurface(Ref parent, String title, int width, int height, boolean resizable) {
         super(parent, title, width, height, resizable);
 

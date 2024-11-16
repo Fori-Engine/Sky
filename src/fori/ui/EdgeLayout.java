@@ -6,7 +6,7 @@ import java.util.List;
 public class EdgeLayout extends Layout {
 
     @Override
-    public void layoutAndDraw(Widget root, List<Widget> children, PanelScope panelScope, Adapter adapter, float parentX, float parentY, float w, float h) {
+    public void layoutAndDraw(List<Widget> children, PanelScope panelScope, Adapter adapter, float parentX, float parentY, float w, float h) {
         float myX = parentX, myY = parentY;
 
         float northOffset = 0;

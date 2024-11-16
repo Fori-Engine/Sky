@@ -966,7 +966,7 @@ public class VkRenderer extends Renderer {
                 VkCommandBuffer commandBuffer = frame.renderCommandBuffer;
 
                 VkClearValue colorClearValue = VkClearValue.calloc(stack);
-                colorClearValue.color().float32(stack.floats(0.3f, 0.3f, 0.3f, 1.0f));
+                colorClearValue.color().float32(stack.floats(0.66f, 0.66f, 0.66f, 1.0f));
 
                 VkClearValue depthClearValue = VkClearValue.calloc(stack);
                 depthClearValue.depthStencil().set(1.0f, 0);
