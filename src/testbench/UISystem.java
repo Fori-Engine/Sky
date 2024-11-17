@@ -94,6 +94,7 @@ public class UISystem extends EntitySystem {
 
     }
 
+    private boolean run;
 
     @Override
     public void update(Scene scene, MessageQueue messageQueue) {
@@ -209,115 +210,118 @@ public class UISystem extends EntitySystem {
         setAdapter(adapter);
         setSurface(surface);
 
-        newContext("AmberUITest");
-        newWindow("Window 1", 60, 60, font, new EdgeLayout());
+        newContext();
         {
-            newPanel(new EdgeLayout(), North);
+            newWindow("Window 1", 60, 60, font, new EdgeLayout());
             {
-
-
-                newPanel(new FlowLayout(Vertical), Center);
+                newPanel(new EdgeLayout(), North);
                 {
-                    text("This is text", font, Color.WHITE);
-                    if (button("Click me!", font, Color.BLUE)) {
-                        System.out.println(9);
+
+
+                    newPanel(new FlowLayout(Vertical), Center);
+                    {
+                        text("This is text", font, Color.WHITE);
+                        if (button("Click me!", font, Color.BLUE)) {
+                            System.out.println(9);
+                        }
+                        button("Button", font, Color.WHITE);
+                        button("Button", font, Color.WHITE);
+                        button("Button", font, Color.WHITE);
+
+                        if (run) {
+                            //text("This is text", font, Color.WHITE);
+                        }
+
+                        button("Button", font, Color.RED);
+                        button("Button", font, Color.RED);
+                        button("Button", font, Color.RED);
+                        button("Button", font, Color.RED);
+
+                        text("A really really really really really really really long string", font, Color.WHITE);
+
+                        run = true;
                     }
-                    button("Button", font, Color.WHITE);
-                    button("Button", font, Color.WHITE);
-                    button("Button", font, Color.WHITE);
-
-                    button("Button", font, Color.RED);
-                    button("Button", font, Color.RED);
-                    button("Button", font, Color.RED);
-                    button("Button", font, Color.RED);
-
-                    text("A really really really really really really really long string", font, Color.WHITE);
-
+                    endPanel();
                 }
                 endPanel();
             }
-            endPanel();
-        }
 
-        endWindow();
+            endWindow();
 
-        newWindow("Window 2", 300, 300, font, new FlowLayout(Horizontal));
-        {
-            button("Button", font, Color.RED);
-            button("Button", font, Color.LIGHT_GRAY);
-        }
-        endWindow();
-
-
-        newWindow("Window 3", 600, 600, font, new EdgeLayout());
-        {
-            newPanel(new EdgeLayout(), North);
+            newWindow("Window 2", 300, 300, font, new FlowLayout(Horizontal));
             {
+                button("Button", font, Color.RED);
+                button("Button", font, Color.LIGHT_GRAY);
+            }
+            endWindow();
 
 
-                newPanel(new FlowLayout(Vertical), Center);
+            newWindow("Window 3", 600, 600, font, new EdgeLayout());
+            {
+                newPanel(new EdgeLayout(), North);
                 {
-                    text("This is text", font, Color.WHITE);
-                    if (button("Click me!", font, Color.BLUE)) {
-                        System.out.println(9);
-                    }
 
-                    newPanel(new FlowLayout(Horizontal));
+
+                    newPanel(new FlowLayout(Vertical), Center);
                     {
-                        button("Button", font, Color.WHITE);
-                        button("Button", font, Color.WHITE);
+                        text("This is text", font, Color.WHITE);
+                        if (button("Click me!", font, Color.BLUE)) {
+                            System.out.println(9);
+                        }
+
+                        newPanel(new FlowLayout(Horizontal));
+                        {
+                            button("Button", font, Color.WHITE);
+                            button("Button", font, Color.WHITE);
+                        }
+                        endPanel();
+
+                        newPanel(new FlowLayout(Horizontal));
+                        {
+                            button("Button", font, Color.RED);
+                            button("Button", font, Color.RED);
+                        }
+                        endPanel();
+
+                        newPanel(new FlowLayout(Horizontal));
+                        {
+                            button("Button", font, Color.GREEN);
+                            button("Button", font, Color.GREEN);
+                        }
+                        endPanel();
+
+                        newPanel(new FlowLayout(Horizontal));
+                        {
+                            button("Button", font, Color.BLUE);
+                            button("Button", font, Color.BLUE);
+                        }
+                        endPanel();
+
+                        newPanel(new FlowLayout(Horizontal));
+                        {
+                            button("Button", font, Color.WHITE);
+                            button("Button", font, Color.WHITE);
+                        }
+                        endPanel();
+
+                        newPanel(new FlowLayout(Horizontal));
+                        {
+                            button("Button", font, Color.WHITE);
+                            button("Button", font, Color.WHITE);
+                        }
+                        endPanel();
+
+
                     }
                     endPanel();
-
-                    newPanel(new FlowLayout(Horizontal));
-                    {
-                        button("Button", font, Color.RED);
-                        button("Button", font, Color.RED);
-                    }
-                    endPanel();
-
-                    newPanel(new FlowLayout(Horizontal));
-                    {
-                        button("Button", font, Color.GREEN);
-                        button("Button", font, Color.GREEN);
-                    }
-                    endPanel();
-
-                    newPanel(new FlowLayout(Horizontal));
-                    {
-                        button("Button", font, Color.BLUE);
-                        button("Button", font, Color.BLUE);
-                    }
-                    endPanel();
-
-                    newPanel(new FlowLayout(Horizontal));
-                    {
-                        button("Button", font, Color.WHITE);
-                        button("Button", font, Color.WHITE);
-                    }
-                    endPanel();
-
-                    newPanel(new FlowLayout(Horizontal));
-                    {
-                        button("Button", font, Color.WHITE);
-                        button("Button", font, Color.WHITE);
-                    }
-                    endPanel();
-
-
                 }
                 endPanel();
             }
-            endPanel();
+            endWindow();
+
+
+            render();
         }
-        endWindow();
-
-
-
-
-
-        render();
-
         endContext();
 
 

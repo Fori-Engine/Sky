@@ -6,22 +6,20 @@ import fori.Surface;
 import fori.graphics.Color;
 import fori.graphics.Font;
 import fori.graphics.Rect2D;
-import org.lwjgl.system.MathUtil;
 
 import java.util.*;
-import java.util.function.Function;
 
 
 public class AmberUI {
 
     private static Adapter currentAdapter;
-    private static final HashMap<String, HashMap<Integer, Event>> contextBasedEventMap = new HashMap<>();
+    private static final HashMap<Integer, Event> eventMap = new HashMap<>();
     private static int currentWidgetID = 0;
     private static final Stack<PanelScope> panelScopes = new Stack<>();
     private static final Stack<WindowScope> windowScopes = new Stack<>();
 
 
-    private static String currentContext;
+
     private static Surface surface;
     private static Widget lastWidget;
     private static List<Widget> windows = new ArrayList<>();
@@ -36,19 +34,16 @@ public class AmberUI {
     }
 
     private static <T> T getEvent(int widgetID) {
-        return (T) contextBasedEventMap.get(currentContext).get(widgetID);
+        return (T) eventMap.get(widgetID);
     }
 
     private static void addEvent(int widgetID, Event event) {
-        contextBasedEventMap.get(currentContext).put(widgetID, event);
+        eventMap.put(widgetID, event);
     }
 
 
-    public static void newContext(String contextName){
-        AmberUI.currentContext = contextName;
+    public static void newContext(){
 
-        if(!contextBasedEventMap.containsKey(contextName))
-            contextBasedEventMap.put(contextName, new HashMap<>());
     }
 
     public static void endContext(){
@@ -56,7 +51,7 @@ public class AmberUI {
         panelScopes.clear();
     }
     public static void clearEvents() {
-        contextBasedEventMap.get(currentContext).clear();
+        eventMap.clear();
     }
 
 
@@ -93,7 +88,6 @@ public class AmberUI {
         Widget widget = new Widget() {
             @Override
             public void draw(Adapter adapter, float x, float y, float width, float height) {
-                Map<Integer, Event> eventMap = contextBasedEventMap.get(currentContext);
                 if(!eventMap.containsKey(windowScope.myID)) {
                     addEvent(windowScope.myID, new WindowEvent(windowScope.x, windowScope.y));
                 }
@@ -225,7 +219,7 @@ public class AmberUI {
         Widget widget = new Widget() {
             @Override
             public void draw(Adapter adapter, float x, float y, float w, float h) {
-                Map<Integer, Event> eventMap = contextBasedEventMap.get(currentContext);
+
                 if(!eventMap.containsKey(myID)) {
                     addEvent(myID, new ButtonEvent(false));
                 }
@@ -305,7 +299,6 @@ public class AmberUI {
         Widget widget = new Widget() {
             @Override
             public void draw(Adapter adapter, float x, float y, float w, float h) {
-                Map<Integer, Event> eventMap = contextBasedEventMap.get(currentContext);
                 if(!eventMap.containsKey(myID)) {
                     addEvent(myID, new SliderEvent());
                 }
