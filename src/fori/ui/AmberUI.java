@@ -63,8 +63,6 @@ public class AmberUI {
     public static void render() {
         currentWidgetID = 0;
 
-
-
         for(Widget window : windows) {
             window.draw(currentAdapter, 0, 0, window.getWidth(), window.getHeight());
         }
@@ -88,7 +86,7 @@ public class AmberUI {
         endPanel();
 
         WindowScope windowScope = windowScopes.pop();
-        float padding = 7;
+
         Widget last = lastWidget;
 
 
@@ -140,12 +138,12 @@ public class AmberUI {
 
             @Override
             public float getWidth() {
-                return java.lang.Math.max(windowScope.font.getWidthOf(windowScope.title), last.getWidth()) + padding * 2;
+                return java.lang.Math.max(windowScope.font.getWidthOf(windowScope.title), last.getWidth());
             }
 
             @Override
             public float getHeight() {
-                return last.getHeight() + padding * 2;
+                return last.getHeight();
             }
         };
         windows.add(widget);
@@ -165,6 +163,7 @@ public class AmberUI {
         PanelScope panelScope = panelScopes.pop();
         Widget last = lastWidget;
 
+
         Widget widget = new Widget() {
             @Override
             public void draw(Adapter adapter, float x, float y, float width, float height) {
@@ -174,11 +173,13 @@ public class AmberUI {
             @Override
             public float getWidth() {
                 return panelScope.layout.getWidth(panelScope.childWidgets);
+
             }
 
             @Override
             public float getHeight() {
                 return panelScope.layout.getHeight(panelScope.childWidgets);
+
             }
         };
 
@@ -190,23 +191,24 @@ public class AmberUI {
 
     public static void text(String text, Font font, Color color, int... layoutInParent){
         int myID = getNewID();
-        float padding = 7;
+
         Widget last = lastWidget;
 
         Widget widget = new Widget() {
             @Override
             public void draw(Adapter adapter, float x, float y, float w, float h) {
-                adapter.drawText(x + padding, y + padding, text, font, color);
+                adapter.drawText(x, y, text, font, color);
             }
 
             @Override
             public float getWidth() {
-                return font.getWidthOf(text) + padding * 2;
+                return font.getWidthOf(text);
             }
 
             @Override
             public float getHeight() {
-                return font.getHeightOf(text) + padding * 2;
+                return font.getHeightOf(text);
+
             }
         };
         submit(layoutInParent, widget);
@@ -217,7 +219,7 @@ public class AmberUI {
 
     public static boolean button(String text, Font font, Color color, int... layoutInParent){
         int myID = getNewID();
-        float padding = 7;
+
         Widget last = lastWidget;
 
         Widget widget = new Widget() {
@@ -253,7 +255,7 @@ public class AmberUI {
                 adapter.drawFilledRect(x + 10, y, w - 20, h, baseColor);
 
 
-                adapter.drawText(x + padding, y + padding - 3, text, font, color);
+                adapter.drawText(x, y, text, font, color);
 
                 if(isPressed) {
                     if (!buttonEvent.lock) {
@@ -277,12 +279,12 @@ public class AmberUI {
 
             @Override
             public float getWidth() {
-                return font.getWidthOf(text) + padding * 2;
+                return font.getWidthOf(text);
             }
 
             @Override
             public float getHeight() {
-                return font.getHeightOf(text) + padding * 2;
+                return font.getHeightOf(text);
             }
         };
         submit(layoutInParent, widget);
