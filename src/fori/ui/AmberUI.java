@@ -17,7 +17,7 @@ public class AmberUI {
     private static int currentWidgetID = 0;
     private static final Stack<PanelScope> panelScopes = new Stack<>();
     private static final Stack<WindowScope> windowScopes = new Stack<>();
-
+    private static Theme currentTheme;
 
 
     private static Surface surface;
@@ -26,6 +26,9 @@ public class AmberUI {
     public static String lastWidgetType = "";
     private static Widget selectedWindow;
 
+    public static final void setTheme(Theme theme) {
+        AmberUI.currentTheme = theme;
+    }
 
     public static final void setAdapter(Adapter adapter) { AmberUI.currentAdapter = adapter;}
 
@@ -85,7 +88,7 @@ public class AmberUI {
         Widget last = lastWidget;
 
 
-        Widget widget = new Widget() {
+        Widget widget = new Widget(currentTheme.windowPadding) {
             @Override
             public void draw(Adapter adapter, float x, float y, float width, float height) {
                 if(!eventMap.containsKey(windowScope.myID)) {
@@ -94,12 +97,7 @@ public class AmberUI {
 
                 WindowEvent windowEvent = getEvent(windowScope.myID);
 
-                Color windowColor = new Color(56f / 255, 56f / 255, 56f / 255, 1);
-
-
-
-
-                Rect2D headerRect = new Rect2D(windowEvent.x, windowEvent.y - 30, getWidth(), 30);
+                Rect2D headerRect = new Rect2D(windowEvent.x, windowEvent.y - windowScope.font.getHeightOf(windowScope.title) - (currentTheme.windowHeaderPadding * 2), getWidth(), windowScope.font.getHeightOf(windowScope.title) + (currentTheme.windowHeaderPadding * 2));
                 Rect2D windowRect = new Rect2D(windowEvent.x, windowEvent.y, getWidth(), getHeight());
 
                 boolean selected = headerRect.contains(surface.getMousePos().x, surface.getMousePos().y) && surface.getMousePressed(Input.MOUSE_BUTTON_LEFT);
@@ -116,13 +114,12 @@ public class AmberUI {
                     selectedWindow = null;
                 }
 
-                adapter.drawFilledRect(headerRect.x, headerRect.y, headerRect.w, headerRect.h, windowColor);
-                adapter.drawFilledRect(headerRect.x, headerRect.y + headerRect.h - 1, headerRect.w, 1, Color.BLACK);
+                adapter.drawFilledRect(headerRect.x, headerRect.y, headerRect.w, headerRect.h, currentTheme.windowHeaderBackground);
 
-                adapter.drawFilledRect(windowRect.x, windowRect.y, windowRect.w, windowRect.h, windowColor);
-                adapter.drawText(headerRect.x, headerRect.y, windowScope.title, windowScope.font, Color.WHITE);
+                adapter.drawFilledRect(windowRect.x, windowRect.y, windowRect.w, windowRect.h, currentTheme.windowBackground);
+                adapter.drawText(headerRect.x + currentTheme.windowHeaderPadding, headerRect.y + currentTheme.windowHeaderPadding, windowScope.title, windowScope.font, Color.WHITE);
 
-                last.draw(adapter, windowEvent.x, windowEvent.y, width, height);
+                last.draw(adapter, windowEvent.x + getPadding(), windowEvent.y + getPadding(), getDrawableWidth(), getDrawableHeight());
 
                 if(windowEvent.initialSelect) {
                     windowEvent.x =  surface.getMousePos().x - (windowEvent.sx);
@@ -132,12 +129,13 @@ public class AmberUI {
 
             @Override
             public float getWidth() {
-                return java.lang.Math.max(windowScope.font.getWidthOf(windowScope.title), last.getWidth());
+                return java.lang.Math.max(windowScope.font.getWidthOf(windowScope.title), last.getWidth()) + getPadding() * 2 + (currentTheme.windowHeaderPadding * 2);
             }
 
             @Override
             public float getHeight() {
-                return last.getHeight();
+                return last.getHeight() + getPadding() * 2;
+
             }
         };
         windows.add(widget);
@@ -158,22 +156,20 @@ public class AmberUI {
         Widget last = lastWidget;
 
 
-        Widget widget = new Widget() {
+        Widget widget = new Widget(currentTheme.panelPadding) {
             @Override
-            public void draw(Adapter adapter, float x, float y, float width, float height) {
-                panelScope.layout.layoutAndDraw(panelScope.childWidgets, panelScope, adapter, x, y, width, height);
+            public void draw(Adapter adapter, float x, float y, float w, float h) {
+                panelScope.layout.layoutAndDraw(panelScope.childWidgets, panelScope, adapter, x + getPadding(), y + getPadding(), getDrawableWidth(), getDrawableHeight());
             }
 
             @Override
             public float getWidth() {
-                return panelScope.layout.getWidth(panelScope.childWidgets);
-
+                return panelScope.layout.getWidth(panelScope.childWidgets) + getPadding() * 2;
             }
 
             @Override
             public float getHeight() {
-                return panelScope.layout.getHeight(panelScope.childWidgets);
-
+                return panelScope.layout.getHeight(panelScope.childWidgets) + getPadding() * 2;
             }
         };
 
@@ -188,20 +184,20 @@ public class AmberUI {
 
         Widget last = lastWidget;
 
-        Widget widget = new Widget() {
+        Widget widget = new Widget(currentTheme.textPadding) {
             @Override
             public void draw(Adapter adapter, float x, float y, float w, float h) {
-                adapter.drawText(x, y, text, font, color);
+                adapter.drawText(x + getPadding(), y + getPadding(), text, font, color);
             }
 
             @Override
             public float getWidth() {
-                return font.getWidthOf(text);
+                return font.getWidthOf(text) + getPadding() * 2;
             }
 
             @Override
             public float getHeight() {
-                return font.getHeightOf(text);
+                return font.getHeightOf(text) + getPadding() * 2;
 
             }
         };
@@ -216,7 +212,7 @@ public class AmberUI {
 
         Widget last = lastWidget;
 
-        Widget widget = new Widget() {
+        Widget widget = new Widget(currentTheme.buttonPadding) {
             @Override
             public void draw(Adapter adapter, float x, float y, float w, float h) {
 
@@ -224,7 +220,7 @@ public class AmberUI {
                     addEvent(myID, new ButtonEvent(false));
                 }
 
-                Color baseColor = new Color(56f / 255, 56f / 255, 56f / 255, 1);
+
 
                 ButtonEvent buttonEvent = getEvent(myID);
 
@@ -233,12 +229,10 @@ public class AmberUI {
                 boolean hovered = new Rect2D(x, y, w, h).contains(surface.getMousePos().x, surface.getMousePos().y);
                 boolean isPressed = surface.getMousePressed(Input.MOUSE_BUTTON_LEFT) && hovered;
 
-                if(hovered) {
-                    baseColor = new Color(102f / 255, 102f / 255, 102f / 255, 1.0f);
-                }
-                if(isPressed) {
-                    baseColor = new Color(120f / 255, 120f / 255, 120f / 255, 1.0f);
-                }
+                Color baseColor = currentTheme.buttonIdleBackground;
+                if(hovered) baseColor = currentTheme.buttonHoverBackground;
+                if(isPressed) baseColor = currentTheme.buttonClickBackground;
+
 
                 adapter.drawFilledCircle(x, y, 20, 20, 1, baseColor);
                 adapter.drawFilledCircle(x + w - 20, y, 20, 20, 1, baseColor);
@@ -249,7 +243,7 @@ public class AmberUI {
                 adapter.drawFilledRect(x + 10, y, w - 20, h, baseColor);
 
 
-                adapter.drawText(x, y, text, font, color);
+                adapter.drawText(x + getPadding(), y + getPadding(), text, font, color);
 
                 if(isPressed) {
                     if (!buttonEvent.lock) {
@@ -273,12 +267,12 @@ public class AmberUI {
 
             @Override
             public float getWidth() {
-                return font.getWidthOf(text);
+                return font.getWidthOf(text) + getPadding() * 2;
             }
 
             @Override
             public float getHeight() {
-                return font.getHeightOf(text);
+                return font.getHeightOf(text) + getPadding() * 2;
             }
         };
         submit(layoutInParent, widget);

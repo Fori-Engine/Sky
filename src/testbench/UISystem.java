@@ -8,6 +8,7 @@ import fori.asset.AssetPacks;
 import fori.ecs.*;
 import fori.graphics.*;
 import fori.ui.Adapter;
+import fori.ui.AmberIJDarcula;
 import fori.ui.EdgeLayout;
 import fori.ui.FlowLayout;
 import org.intellij.lang.annotations.Flow;
@@ -89,9 +90,7 @@ public class UISystem extends EntitySystem {
 
         }
 
-
-
-
+        setTheme(new AmberIJDarcula());
     }
 
     private boolean run;
@@ -212,7 +211,14 @@ public class UISystem extends EntitySystem {
 
         newContext();
         {
-            newWindow("Window 1", 60, 60, font, new EdgeLayout());
+
+            newWindow("Window Leedle Leedle lee", 60, 600, font, new EdgeLayout());
+            {
+                text("This is text", font, Color.BLUE, North);
+            }
+            endWindow();
+
+            newWindow("Window window window window window window window window window window", 60, 60, font, new EdgeLayout());
             {
                 newPanel(new EdgeLayout(), North);
                 {
