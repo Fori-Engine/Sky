@@ -1,17 +1,15 @@
 package testbench;
 
 
-import fori.Input;
 import fori.Scene;
 import fori.Surface;
 import fori.asset.AssetPacks;
 import fori.ecs.*;
 import fori.graphics.*;
 import fori.ui.Adapter;
-import fori.ui.AmberIJDarcula;
+import fori.ui.DarkMode;
 import fori.ui.EdgeLayout;
 import fori.ui.FlowLayout;
-import org.intellij.lang.annotations.Flow;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 
@@ -90,7 +88,7 @@ public class UISystem extends EntitySystem {
 
         }
 
-        setTheme(new AmberIJDarcula());
+        setTheme(new DarkMode());
     }
 
     private boolean run;
@@ -227,21 +225,21 @@ public class UISystem extends EntitySystem {
                     newPanel(new FlowLayout(Vertical), Center);
                     {
                         text("This is text", font, Color.WHITE);
-                        if (button("Click me!", font, Color.BLUE)) {
+                        if (button("Click me!", font)) {
                             System.out.println(9);
                         }
-                        button("Button", font, Color.WHITE);
-                        button("Button", font, Color.WHITE);
-                        button("Button", font, Color.WHITE);
+                        button("Button", font);
+                        button("Button", font);
+                        button("Button", font);
 
                         if (run) {
                             //text("This is text", font, Color.WHITE);
                         }
 
-                        button("Button", font, Color.RED);
-                        button("Button", font, Color.RED);
-                        button("Button", font, Color.RED);
-                        button("Button", font, Color.RED);
+                        button("Button", font);
+                        button("Button", font);
+                        button("Button", font);
+                        button("Button", font);
 
                         text("A really really really really really really really long string", font, Color.WHITE);
 
@@ -256,8 +254,8 @@ public class UISystem extends EntitySystem {
 
             newWindow("Window 2", 300, 300, font, new FlowLayout(Horizontal));
             {
-                button("Button", font, Color.RED);
-                button("Button", font, Color.LIGHT_GRAY);
+                button("Button", font);
+                button("Button", font);
             }
             endWindow();
 
@@ -271,49 +269,49 @@ public class UISystem extends EntitySystem {
                     newPanel(new FlowLayout(Vertical), Center);
                     {
                         text("This is text", font, Color.WHITE);
-                        if (button("Click me!", font, Color.BLUE)) {
+                        if (button("Click me!", font)) {
                             System.out.println(9);
                         }
 
                         newPanel(new FlowLayout(Horizontal));
                         {
-                            button("Button", font, Color.WHITE);
-                            button("Button", font, Color.WHITE);
+                            button("Button", font);
+                            button("Button", font);
                         }
                         endPanel();
 
                         newPanel(new FlowLayout(Horizontal));
                         {
-                            button("Button", font, Color.RED);
-                            button("Button", font, Color.RED);
+                            button("Button", font);
+                            button("Button", font);
                         }
                         endPanel();
 
                         newPanel(new FlowLayout(Horizontal));
                         {
-                            button("Button", font, Color.GREEN);
-                            button("Button", font, Color.GREEN);
+                            button("Button", font);
+                            button("Button", font);
                         }
                         endPanel();
 
                         newPanel(new FlowLayout(Horizontal));
                         {
-                            button("Button", font, Color.BLUE);
-                            button("Button", font, Color.BLUE);
+                            button("Button", font);
+                            button("Button", font);
                         }
                         endPanel();
 
                         newPanel(new FlowLayout(Horizontal));
                         {
-                            button("Button", font, Color.WHITE);
-                            button("Button", font, Color.WHITE);
+                            button("Button", font);
+                            button("Button", font);
                         }
                         endPanel();
 
                         newPanel(new FlowLayout(Horizontal));
                         {
-                            button("Button", font, Color.WHITE);
-                            button("Button", font, Color.WHITE);
+                            button("Button", font);
+                            button("Button", font);
                         }
                         endPanel();
 

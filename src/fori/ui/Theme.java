@@ -9,11 +9,13 @@ public class Theme {
     public Color buttonIdleBackground;
     public Color buttonHoverBackground;
     public Color buttonClickBackground;
+    public Color buttonForeground;
     public float windowPadding;
     public float windowHeaderPadding;
     public float buttonPadding;
     public float textPadding;
     public float panelPadding;
+    public int windowShadowCount;
 
 
 

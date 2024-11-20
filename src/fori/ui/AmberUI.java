@@ -90,7 +90,7 @@ public class AmberUI {
 
         Widget widget = new Widget(currentTheme.windowPadding) {
             @Override
-            public void draw(Adapter adapter, float x, float y, float width, float height) {
+            public void draw(Adapter adapter, float x, float y, float w, float h) {
                 if(!eventMap.containsKey(windowScope.myID)) {
                     addEvent(windowScope.myID, new WindowEvent(windowScope.x, windowScope.y));
                 }
@@ -99,6 +99,13 @@ public class AmberUI {
 
                 Rect2D headerRect = new Rect2D(windowEvent.x, windowEvent.y - windowScope.font.getHeightOf(windowScope.title) - (currentTheme.windowHeaderPadding * 2), getWidth(), windowScope.font.getHeightOf(windowScope.title) + (currentTheme.windowHeaderPadding * 2));
                 Rect2D windowRect = new Rect2D(windowEvent.x, windowEvent.y, getWidth(), getHeight());
+                Rect2D combinedRect = new Rect2D(headerRect.x, headerRect.y, windowRect.w, headerRect.h + windowRect.h);
+
+                for(int shadowIter = 0; shadowIter < currentTheme.windowShadowCount; shadowIter++) {
+                    adapter.drawFilledRect(combinedRect.x - shadowIter, combinedRect.y - shadowIter, combinedRect.w + shadowIter * 2, combinedRect.h + shadowIter * 2, new Color(0, 0, 0, (float) 1 / shadowIter));
+                }
+
+
 
                 boolean selected = headerRect.contains(surface.getMousePos().x, surface.getMousePos().y) && surface.getMousePressed(Input.MOUSE_BUTTON_LEFT);
 
@@ -207,7 +214,7 @@ public class AmberUI {
         lastWidgetType = "text";
     }
 
-    public static boolean button(String text, Font font, Color color, int... layoutInParent){
+    public static boolean button(String text, Font font, int... layoutInParent){
         int myID = getNewID();
 
         Widget last = lastWidget;
@@ -234,6 +241,7 @@ public class AmberUI {
                 if(isPressed) baseColor = currentTheme.buttonClickBackground;
 
 
+
                 adapter.drawFilledCircle(x, y, 20, 20, 1, baseColor);
                 adapter.drawFilledCircle(x + w - 20, y, 20, 20, 1, baseColor);
                 adapter.drawFilledCircle(x, y + h - 20 , 20, 20, 1, baseColor);
@@ -243,7 +251,10 @@ public class AmberUI {
                 adapter.drawFilledRect(x + 10, y, w - 20, h, baseColor);
 
 
-                adapter.drawText(x + getPadding(), y + getPadding(), text, font, color);
+
+                //adapter.drawFilledRect(x, y, w, h, baseColor);
+
+                adapter.drawText(x + getPadding(), y + getPadding(), text, font, currentTheme.buttonForeground);
 
                 if(isPressed) {
                     if (!buttonEvent.lock) {
