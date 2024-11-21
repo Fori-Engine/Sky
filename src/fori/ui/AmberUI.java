@@ -14,7 +14,6 @@ public class AmberUI {
 
     private static Adapter currentAdapter;
     private static final HashMap<Integer, Event> eventMap = new HashMap<>();
-    private static int currentWidgetID = 0;
     private static final Stack<PanelScope> panelScopes = new Stack<>();
     private static final Stack<WindowScope> windowScopes = new Stack<>();
     private static Theme currentTheme;
@@ -59,7 +58,7 @@ public class AmberUI {
 
 
     public static void render() {
-        currentWidgetID = 0;
+
 
         for(Widget window : windows) {
             window.draw(currentAdapter, 0, 0, window.getWidth(), window.getHeight());
@@ -305,6 +304,8 @@ public class AmberUI {
         float padding = 7;
         Widget last = lastWidget;
 
+
+
         Widget widget = new Widget() {
             @Override
             public void draw(Adapter adapter, float x, float y, float w, float h) {
@@ -367,7 +368,7 @@ public class AmberUI {
     }
 
     public static int getNewID(){
-        currentWidgetID++;
-        return currentWidgetID;
+        return StackWalker.getInstance(StackWalker.Option.SHOW_HIDDEN_FRAMES).walk(
+                (s) -> s.skip(2).findFirst()).get().getLineNumber();
     }
 }

@@ -34,7 +34,7 @@ public class UISystem extends EntitySystem {
     private HashMap<Texture, Integer> textureLookup = new HashMap<>();
     private int textureIndex;
     private Surface surface;
-    private float value;
+    private float elapsedTime;
 
     public UISystem(Surface surface, Renderer renderer) {
         this.surface = surface;
@@ -91,7 +91,7 @@ public class UISystem extends EntitySystem {
         setTheme(new DarkMode());
     }
 
-    private boolean run;
+
 
     @Override
     public void update(Scene scene, MessageQueue messageQueue) {
@@ -207,6 +207,8 @@ public class UISystem extends EntitySystem {
         setAdapter(adapter);
         setSurface(surface);
 
+
+
         newContext();
         {
 
@@ -218,9 +220,11 @@ public class UISystem extends EntitySystem {
                 {
                     newPanel(new FlowLayout(Vertical), Center);
                     {
+
                         text("Renderer: " + renderer.getDeviceName(), font);
                         text("Host: " + System.getProperty("os.name") + " " + System.getProperty("os.arch"), font);
                         text("API: " + Renderer.getRenderAPI(), font);
+                        text("AmberUI Render: " + elapsedTime + "ms", font);
                         text(
                                 "Java VM: " +
                                         System.getProperty("java.vendor") + " "
@@ -229,8 +233,13 @@ public class UISystem extends EntitySystem {
                                 font
                         );
                         if(button("Just another button", font)) {
-                            System.out.println("Reloading Script Assemblies");
+                            System.out.println("Doing a thing");
                         }
+                        if(button("Just another button", font)) {
+                            System.out.println("Doing another thing");
+                        }
+
+
                     }
                     endPanel();
                 }
@@ -238,9 +247,6 @@ public class UISystem extends EntitySystem {
             }
 
             endWindow();
-
-
-
 
             render();
         }
