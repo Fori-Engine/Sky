@@ -14,6 +14,7 @@ public class Theme {
     public float windowHeaderPadding;
     public float buttonPadding;
     public float textPadding;
+    public Color textForeground;
     public float panelPadding;
     public int windowShadowCount;
 

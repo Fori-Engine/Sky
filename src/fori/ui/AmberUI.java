@@ -102,7 +102,7 @@ public class AmberUI {
                 Rect2D combinedRect = new Rect2D(headerRect.x, headerRect.y, windowRect.w, headerRect.h + windowRect.h);
 
                 for(int shadowIter = 0; shadowIter < currentTheme.windowShadowCount; shadowIter++) {
-                    adapter.drawFilledRect(combinedRect.x - shadowIter, combinedRect.y - shadowIter, combinedRect.w + shadowIter * 2, combinedRect.h + shadowIter * 2, new Color(0, 0, 0, (float) 1 / shadowIter));
+                    adapter.drawFilledRect(combinedRect.x - shadowIter, combinedRect.y - shadowIter, combinedRect.w + shadowIter * 2, combinedRect.h + shadowIter * 2, new Color(0, 0, 0, (float) 1 / shadowIter + 0.01f));
                 }
 
 
@@ -186,7 +186,7 @@ public class AmberUI {
         lastWidgetType = "panel";
     }
 
-    public static void text(String text, Font font, Color color, int... layoutInParent){
+    public static void text(String text, Font font, int... layoutInParent){
         int myID = getNewID();
 
         Widget last = lastWidget;
@@ -194,7 +194,7 @@ public class AmberUI {
         Widget widget = new Widget(currentTheme.textPadding) {
             @Override
             public void draw(Adapter adapter, float x, float y, float w, float h) {
-                adapter.drawText(x + getPadding(), y + getPadding(), text, font, color);
+                adapter.drawText(x + getPadding(), y + getPadding(), text, font, currentTheme.textForeground);
             }
 
             @Override
@@ -241,18 +241,22 @@ public class AmberUI {
                 if(isPressed) baseColor = currentTheme.buttonClickBackground;
 
 
+                float circleW = 13;
 
-                adapter.drawFilledCircle(x, y, 20, 20, 1, baseColor);
-                adapter.drawFilledCircle(x + w - 20, y, 20, 20, 1, baseColor);
-                adapter.drawFilledCircle(x, y + h - 20 , 20, 20, 1, baseColor);
-                adapter.drawFilledCircle(x + w - 20, y + h - 20, 20, 20, 1, baseColor);
 
-                adapter.drawFilledRect(x, y + 10, w, h - 20, baseColor);
-                adapter.drawFilledRect(x + 10, y, w - 20, h, baseColor);
+                adapter.drawFilledCircle(x, y, circleW, circleW, 1, baseColor);
+                adapter.drawFilledCircle(x + w - circleW, y, circleW, circleW, 1, baseColor);
+                adapter.drawFilledCircle(x, y + h - circleW , circleW, circleW, 1, baseColor);
+                adapter.drawFilledCircle(x + w - circleW, y + h - circleW, circleW, circleW, 1, baseColor);
+
+                adapter.drawFilledRect(x, y + circleW / 2, w, h - circleW, baseColor);
+                adapter.drawFilledRect(x + circleW / 2, y, w - circleW, h, baseColor);
 
 
 
                 //adapter.drawFilledRect(x, y, w, h, baseColor);
+
+
 
                 adapter.drawText(x + getPadding(), y + getPadding(), text, font, currentTheme.buttonForeground);
 

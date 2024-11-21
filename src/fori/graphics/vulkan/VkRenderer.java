@@ -1155,6 +1155,11 @@ public class VkRenderer extends Renderer {
     }
 
     @Override
+    public String getDeviceName() {
+        return physicalDeviceProperties.deviceNameString();
+    }
+
+    @Override
     public void waitForDevice() {
         vkDeviceWaitIdle(device);
     }

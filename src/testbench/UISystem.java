@@ -210,40 +210,27 @@ public class UISystem extends EntitySystem {
         newContext();
         {
 
-            newWindow("Window Leedle Leedle lee", 60, 600, font, new EdgeLayout());
-            {
-                text("This is text", font, Color.BLUE, North);
-            }
-            endWindow();
 
-            newWindow("Window window window window window window window window window window", 60, 60, font, new EdgeLayout());
+
+            newWindow("Fori Engine Demo", 60, 60, font, new EdgeLayout());
             {
                 newPanel(new EdgeLayout(), North);
                 {
-
-
                     newPanel(new FlowLayout(Vertical), Center);
                     {
-                        text("This is text", font, Color.WHITE);
-                        if (button("Click me!", font)) {
-                            System.out.println(9);
+                        text("Renderer: " + renderer.getDeviceName(), font);
+                        text("Host: " + System.getProperty("os.name") + " " + System.getProperty("os.arch"), font);
+                        text("API: " + Renderer.getRenderAPI(), font);
+                        text(
+                                "Java VM: " +
+                                        System.getProperty("java.vendor") + " "
+                                        + System.getProperty("java.vm.name") + " "
+                                        + System.getProperty("java.version"),
+                                font
+                        );
+                        if(button("Just another button", font)) {
+                            System.out.println("Reloading Script Assemblies");
                         }
-                        button("Button", font);
-                        button("Button", font);
-                        button("Button", font);
-
-                        if (run) {
-                            //text("This is text", font, Color.WHITE);
-                        }
-
-                        button("Button", font);
-                        button("Button", font);
-                        button("Button", font);
-                        button("Button", font);
-
-                        text("A really really really really really really really long string", font, Color.WHITE);
-
-                        run = true;
                     }
                     endPanel();
                 }
@@ -252,76 +239,7 @@ public class UISystem extends EntitySystem {
 
             endWindow();
 
-            newWindow("Window 2", 300, 300, font, new FlowLayout(Horizontal));
-            {
-                button("Button", font);
-                button("Button", font);
-            }
-            endWindow();
 
-
-            newWindow("Window 3", 600, 600, font, new EdgeLayout());
-            {
-                newPanel(new EdgeLayout(), North);
-                {
-
-
-                    newPanel(new FlowLayout(Vertical), Center);
-                    {
-                        text("This is text", font, Color.WHITE);
-                        if (button("Click me!", font)) {
-                            System.out.println(9);
-                        }
-
-                        newPanel(new FlowLayout(Horizontal));
-                        {
-                            button("Button", font);
-                            button("Button", font);
-                        }
-                        endPanel();
-
-                        newPanel(new FlowLayout(Horizontal));
-                        {
-                            button("Button", font);
-                            button("Button", font);
-                        }
-                        endPanel();
-
-                        newPanel(new FlowLayout(Horizontal));
-                        {
-                            button("Button", font);
-                            button("Button", font);
-                        }
-                        endPanel();
-
-                        newPanel(new FlowLayout(Horizontal));
-                        {
-                            button("Button", font);
-                            button("Button", font);
-                        }
-                        endPanel();
-
-                        newPanel(new FlowLayout(Horizontal));
-                        {
-                            button("Button", font);
-                            button("Button", font);
-                        }
-                        endPanel();
-
-                        newPanel(new FlowLayout(Horizontal));
-                        {
-                            button("Button", font);
-                            button("Button", font);
-                        }
-                        endPanel();
-
-
-                    }
-                    endPanel();
-                }
-                endPanel();
-            }
-            endWindow();
 
 
             render();

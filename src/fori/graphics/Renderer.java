@@ -42,6 +42,7 @@ public abstract class Renderer implements Disposable {
     public abstract void update();
     public abstract int getFrameIndex();
     public int getMaxFramesInFlight() { return maxFramesInFlight; }
+    public abstract String getDeviceName();
 
     public int getWidth() {
         return width;
