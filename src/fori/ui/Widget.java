@@ -3,8 +3,10 @@ package fori.ui;
 public abstract class Widget {
     public int[] layoutHints;
     public float padding;
+    public int id;
 
-    public Widget(float padding) {
+    public Widget(int id, float padding) {
+        this.id = id;
         this.padding = padding;
     }
 

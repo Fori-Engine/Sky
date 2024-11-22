@@ -8,6 +8,7 @@ import fori.graphics.Font;
 import fori.graphics.Rect2D;
 
 import java.util.*;
+import java.util.List;
 
 
 public class AmberUI {
@@ -23,6 +24,7 @@ public class AmberUI {
     private static Widget lastWidget;
     private static Map<Integer, Widget> windows = new HashMap<>();
     private static List<Widget> windowRenderList = new LinkedList<>();
+    private static Map<Integer, Rect2D> windowOverlaps = new HashMap<>();
     public static String lastWidgetType = "";
     private static int lastSelectedWindowID = -1, selectedWindowID = -1;
 
@@ -52,6 +54,8 @@ public class AmberUI {
     public static void endContext(){
         windows.clear();
         windowRenderList.clear();
+        //windowOverlaps.clear();
+
         panelScopes.clear();
     }
     public static void clearEvents() {
@@ -60,6 +64,10 @@ public class AmberUI {
 
 
     public static void render() {
+
+
+
+
 
 
         if(lastSelectedWindowID != -1) {
@@ -71,6 +79,32 @@ public class AmberUI {
         for(Widget window : windowRenderList) {
             window.draw(currentAdapter, 0, 0, window.getWidth(), window.getHeight());
         }
+
+        for(Widget window : windowRenderList) {
+            for(Widget otherWindow : windowRenderList) {
+                if(window != otherWindow) {
+                    WindowEvent windowEvent = getEvent(window.id);
+                    WindowEvent otherWindowEvent = getEvent(otherWindow.id);
+
+                    Rect2D windowBounds = windowEvent.combinedRect;
+                    Rect2D otherWindowBounds = otherWindowEvent.combinedRect;
+
+                    Rect2D overlap = windowBounds.getOverlap(otherWindowBounds);
+
+                    if(overlap != null) {
+                        //currentAdapter.drawFilledRect(overlap.x, overlap.y, overlap.w, overlap.h, Color.GREEN);
+                        windowOverlaps.put(window.id, overlap);
+                        windowOverlaps.put(otherWindow.id, overlap);
+                    }
+
+
+                }
+            }
+        }
+
+
+
+
 
     }
 
@@ -90,45 +124,61 @@ public class AmberUI {
     public static void endWindow() {
         endPanel();
 
+
+
+
+
         WindowScope windowScope = windowScopes.pop();
 
         Widget last = lastWidget;
 
 
-        Widget widget = new Widget(currentTheme.windowPadding) {
+        Widget widget = new Widget(windowScope.id, currentTheme.windowPadding) {
             @Override
             public void draw(Adapter adapter, float x, float y, float w, float h) {
-                if(!eventMap.containsKey(windowScope.myID)) {
-                    addEvent(windowScope.myID, new WindowEvent(windowScope.x, windowScope.y));
+                if(!eventMap.containsKey(windowScope.id)) {
+                    addEvent(windowScope.id, new WindowEvent(windowScope.x, windowScope.y));
                 }
 
-                WindowEvent windowEvent = getEvent(windowScope.myID);
+                WindowEvent windowEvent = getEvent(windowScope.id);
 
                 Rect2D headerRect = new Rect2D(windowEvent.x, windowEvent.y - windowScope.font.getHeightOf(windowScope.title) - (currentTheme.windowHeaderPadding * 2), getWidth(), windowScope.font.getHeightOf(windowScope.title) + (currentTheme.windowHeaderPadding * 2));
                 Rect2D windowRect = new Rect2D(windowEvent.x, windowEvent.y, getWidth(), getHeight());
                 Rect2D combinedRect = new Rect2D(headerRect.x, headerRect.y, windowRect.w, headerRect.h + windowRect.h);
 
+                windowEvent.combinedRect = combinedRect;
+
+
+
                 for(int shadowIter = 0; shadowIter < currentTheme.windowShadowCount; shadowIter++) {
                     adapter.drawFilledRect(combinedRect.x - shadowIter, combinedRect.y - shadowIter, combinedRect.w + shadowIter * 2, combinedRect.h + shadowIter * 2, new Color(0, 0, 0, (float) 1 / shadowIter + 0.01f));
                 }
 
-
-
                 boolean headerSelected = headerRect.contains(surface.getMousePos().x, surface.getMousePos().y) && surface.getMousePressed(Input.MOUSE_BUTTON_LEFT);
                 boolean windowSelected = windowRect.contains(surface.getMousePos().x, surface.getMousePos().y) && surface.getMousePressed(Input.MOUSE_BUTTON_LEFT);
 
+                boolean canMove = true;
 
-                if(!windowEvent.initialSelect && selectedWindowID == -1) {
-                    if (headerSelected) {
-                        windowEvent.initialSelect = true;
-                        windowEvent.sx = surface.getMousePos().x - windowEvent.x;
-                        windowEvent.sy = surface.getMousePos().y - windowEvent.y;
-                        selectedWindowID = windowScope.myID;
-                        lastSelectedWindowID = selectedWindowID;
-                    }
-                    if (windowSelected) {
-                        selectedWindowID = windowScope.myID;
-                        lastSelectedWindowID = selectedWindowID;
+                Rect2D overlap = windowOverlaps.get(id);
+                if(overlap != null) {
+                    canMove = !overlap.contains(surface.getMousePos().x, surface.getMousePos().y);
+                }
+
+
+                if(canMove) {
+
+                    if (!windowEvent.initialSelect && selectedWindowID == -1) {
+                        if (headerSelected) {
+                            windowEvent.initialSelect = true;
+                            windowEvent.sx = surface.getMousePos().x - windowEvent.x;
+                            windowEvent.sy = surface.getMousePos().y - windowEvent.y;
+                            selectedWindowID = windowScope.id;
+                            lastSelectedWindowID = selectedWindowID;
+                        }
+                        if (windowSelected) {
+                            selectedWindowID = windowScope.id;
+                            lastSelectedWindowID = selectedWindowID;
+                        }
                     }
                 }
 
@@ -163,8 +213,11 @@ public class AmberUI {
 
             }
         };
-        windows.put(windowScope.myID, widget);
+        windows.put(windowScope.id, widget);
         windowRenderList.add(widget);
+        if(lastSelectedWindowID == -1) lastSelectedWindowID = widget.id;
+
+
         submit(new int[]{}, widget);
 
         lastWidget = widget;
@@ -173,8 +226,8 @@ public class AmberUI {
     }
 
     public static void newPanel(Layout layout, int... layoutInParent){
-        int myID = getNewID();
-        panelScopes.push(new PanelScope(layout, layoutInParent));
+        int id = getNewID();
+        panelScopes.push(new PanelScope(id, layout, layoutInParent));
     }
 
     public static void endPanel(){
@@ -182,7 +235,7 @@ public class AmberUI {
         Widget last = lastWidget;
 
 
-        Widget widget = new Widget(currentTheme.panelPadding) {
+        Widget widget = new Widget(panelScope.id, currentTheme.panelPadding) {
             @Override
             public void draw(Adapter adapter, float x, float y, float w, float h) {
                 panelScope.layout.layoutAndDraw(panelScope.childWidgets, panelScope, adapter, x + getPadding(), y + getPadding(), getDrawableWidth(), getDrawableHeight());
@@ -210,7 +263,7 @@ public class AmberUI {
 
         Widget last = lastWidget;
 
-        Widget widget = new Widget(currentTheme.textPadding) {
+        Widget widget = new Widget(myID, currentTheme.textPadding) {
             @Override
             public void draw(Adapter adapter, float x, float y, float w, float h) {
                 adapter.drawText(x + getPadding(), y + getPadding(), text, font, currentTheme.textForeground);
@@ -238,7 +291,7 @@ public class AmberUI {
 
         Widget last = lastWidget;
 
-        Widget widget = new Widget(currentTheme.buttonPadding) {
+        Widget widget = new Widget(myID, currentTheme.buttonPadding) {
             @Override
             public void draw(Adapter adapter, float x, float y, float w, float h) {
 

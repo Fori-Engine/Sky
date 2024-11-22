@@ -20,6 +20,23 @@ public class Rect2D {
         return this;
     }
 
+    public Rect2D getOverlap(Rect2D r1) {
+
+        Rect2D r2 = this;
+
+        float overlapX = Math.max(r1.x, r2.x);
+        float overlapY = Math.max(r1.y, r2.y);
+
+        float overlapWidth = Math.min(r1.x + r1.w, r2.x + r2.w) - overlapX;
+        float overlapHeight = Math.min(r1.y + r1.h, r2.y + r2.h) - overlapY;
+
+        if (overlapWidth <= 0 || overlapHeight <= 0) {
+            return null;
+        }
+
+        return new Rect2D(overlapX, overlapY, overlapWidth, overlapHeight);
+    }
+
 
     public void set(float x, float y, float w, float h){
         this.x = x;
