@@ -21,9 +21,10 @@ public class AmberUI {
 
     private static Surface surface;
     private static Widget lastWidget;
-    private static List<Widget> windows = new ArrayList<>();
+    private static Map<Integer, Widget> windows = new HashMap<>();
+    private static List<Widget> windowRenderList = new LinkedList<>();
     public static String lastWidgetType = "";
-    private static Widget selectedWindow;
+    private static int lastSelectedWindowID = -1, selectedWindowID = -1;
 
     public static final void setTheme(Theme theme) {
         AmberUI.currentTheme = theme;
@@ -50,6 +51,7 @@ public class AmberUI {
 
     public static void endContext(){
         windows.clear();
+        windowRenderList.clear();
         panelScopes.clear();
     }
     public static void clearEvents() {
@@ -60,7 +62,13 @@ public class AmberUI {
     public static void render() {
 
 
-        for(Widget window : windows) {
+        if(lastSelectedWindowID != -1) {
+            Widget lastSelectedWindow = windows.get(lastSelectedWindowID);
+            windowRenderList.remove(lastSelectedWindow);
+            windowRenderList.add(lastSelectedWindow);
+        }
+
+        for(Widget window : windowRenderList) {
             window.draw(currentAdapter, 0, 0, window.getWidth(), window.getHeight());
         }
 
@@ -106,18 +114,29 @@ public class AmberUI {
 
 
 
-                boolean selected = headerRect.contains(surface.getMousePos().x, surface.getMousePos().y) && surface.getMousePressed(Input.MOUSE_BUTTON_LEFT);
+                boolean headerSelected = headerRect.contains(surface.getMousePos().x, surface.getMousePos().y) && surface.getMousePressed(Input.MOUSE_BUTTON_LEFT);
+                boolean windowSelected = windowRect.contains(surface.getMousePos().x, surface.getMousePos().y) && surface.getMousePressed(Input.MOUSE_BUTTON_LEFT);
 
-                if(selected && !windowEvent.initialSelect && selectedWindow == null) {
-                    windowEvent.initialSelect = true;
-                    windowEvent.sx = surface.getMousePos().x - windowEvent.x;
-                    windowEvent.sy = surface.getMousePos().y - windowEvent.y;
-                    selectedWindow = this;
+
+                if(!windowEvent.initialSelect && selectedWindowID == -1) {
+                    if (headerSelected) {
+                        windowEvent.initialSelect = true;
+                        windowEvent.sx = surface.getMousePos().x - windowEvent.x;
+                        windowEvent.sy = surface.getMousePos().y - windowEvent.y;
+                        selectedWindowID = windowScope.myID;
+                        lastSelectedWindowID = selectedWindowID;
+                    }
+                    if (windowSelected) {
+                        selectedWindowID = windowScope.myID;
+                        lastSelectedWindowID = selectedWindowID;
+                    }
                 }
+
+
 
                 if(surface.getMouseReleased(Input.MOUSE_BUTTON_LEFT)) {
                     windowEvent.initialSelect = false;
-                    selectedWindow = null;
+                    selectedWindowID = -1;
                 }
 
                 adapter.drawFilledRect(headerRect.x, headerRect.y, headerRect.w, headerRect.h, currentTheme.windowHeaderBackground);
@@ -144,7 +163,8 @@ public class AmberUI {
 
             }
         };
-        windows.add(widget);
+        windows.put(windowScope.myID, widget);
+        windowRenderList.add(widget);
         submit(new int[]{}, widget);
 
         lastWidget = widget;

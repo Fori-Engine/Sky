@@ -248,6 +248,29 @@ public class UISystem extends EntitySystem {
 
             endWindow();
 
+            newWindow("Another window", 60, 60, font, new EdgeLayout());
+            {
+                newPanel(new EdgeLayout(), North);
+                {
+                    newPanel(new FlowLayout(Vertical), Center);
+                    {
+
+                        text("Pick a favorite color", font);
+                        button("Red", font);
+                        button("Blue", font);
+                        button("Green", font);
+                        button("Yellow", font);
+                        button("Purple aqua with a tinge of teal and a shade of orange", font);
+
+
+                    }
+                    endPanel();
+                }
+                endPanel();
+            }
+
+            endWindow();
+
             render();
         }
         endContext();
