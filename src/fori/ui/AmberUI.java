@@ -165,7 +165,7 @@ public class AmberUI {
                 }
 
 
-                if(canMove) {
+                if(canMove || lastSelectedWindowID == id) {
 
                     if (!windowEvent.initialSelect && selectedWindowID == -1) {
                         if (headerSelected) {
