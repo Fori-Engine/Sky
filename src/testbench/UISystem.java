@@ -236,19 +236,30 @@ public class UISystem extends EntitySystem {
 
             endWindow();
 
-            newWindow("Another window 2", 1230, 700, font, new EdgeLayout());
+            newWindow("Fori Engine Demo", 60, 60, font, new EdgeLayout());
             {
                 newPanel(new EdgeLayout(), North);
                 {
                     newPanel(new FlowLayout(Vertical), Center);
                     {
 
-                        text("Pick a favorite color", font);
-                        button("Red", font);
-                        button("Blue", font);
-                        button("Green", font);
-                        button("Yellow", font);
-                        button("Purple aqua with a tinge of teal and a shade of orange", font);
+                        text("Renderer: " + renderer.getDeviceName(), font);
+                        text("Host: " + System.getProperty("os.name") + " " + System.getProperty("os.arch"), font);
+                        text("API: " + Renderer.getRenderAPI(), font);
+                        text("AmberUI Render: " + elapsedTime + "ms", font);
+                        text(
+                                "Java VM: " +
+                                        System.getProperty("java.vendor") + " "
+                                        + System.getProperty("java.vm.name") + " "
+                                        + System.getProperty("java.version"),
+                                font
+                        );
+                        if(button("Just another button", font)) {
+                            System.out.println("Doing a thing");
+                        }
+                        if(button("Just another button", font)) {
+                            System.out.println("Doing another thing");
+                        }
 
 
                     }
