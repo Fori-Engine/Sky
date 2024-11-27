@@ -7,7 +7,7 @@ public class WindowEvent extends Event {
     public float x = 0, y = 0;
     public float sx = 0, sy = 0;
     public boolean initialSelect;
-    public Rect2D combinedRect;
+    public Rect2D windowRect;
 
     public WindowEvent(float x, float y) {
         this.x = x;

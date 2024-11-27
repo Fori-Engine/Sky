@@ -117,8 +117,8 @@ public class Font implements Disposable {
         String[] lines = string.split("\n");
         float height = 0f;
 
-        for (String ignored : lines) {
-            height += stringHeight(ignored);
+        for (String line : lines) {
+            height += stringHeight(line);
         }
 
         return height;

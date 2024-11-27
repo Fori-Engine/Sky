@@ -129,6 +129,18 @@ public class UISystem extends EntitySystem {
                 }
 
                 @Override
+                public void drawRect(float x, float y, float w, float h, Color color) {
+                    int thickness = 2;
+
+                    drawFilledRect(x, y, thickness, h, color);
+                    drawFilledRect(x, y, w, thickness, color);
+                    drawFilledRect(x + w - thickness, y, thickness, h, color);
+                    drawFilledRect(x, y + h - thickness, w, thickness, color);
+
+
+                }
+
+                @Override
                 public void drawText(float x, float y, String text, Font font, Color color) {
                     Texture glyphsTexture = font.getTexture();
 
@@ -200,8 +212,6 @@ public class UISystem extends EntitySystem {
             };
         }
 
-        renderQueue.getDefaultVertexBuffer().get().clear();
-        renderQueue.getDefaultIndexBuffer().get().clear();
 
 
         setAdapter(adapter);
@@ -235,6 +245,8 @@ public class UISystem extends EntitySystem {
             }
 
             endWindow();
+
+
 
             newWindow("Fori Engine Demo", 60, 60, font, new EdgeLayout());
             {
@@ -271,6 +283,77 @@ public class UISystem extends EntitySystem {
             endWindow();
 
 
+            newWindow("Another another window", 60, 600, font, new EdgeLayout());
+            {
+                newPanel(new EdgeLayout(), North);
+                {
+                    newPanel(new FlowLayout(Vertical), Center);
+                    {
+
+                        text("Renderer: " + renderer.getDeviceName(), font);
+                        text("Host: " + System.getProperty("os.name") + " " + System.getProperty("os.arch"), font);
+                        text("API: " + Renderer.getRenderAPI(), font);
+                        text("AmberUI Render: " + elapsedTime + "ms", font);
+                        text(
+                                "Java VM: " +
+                                        System.getProperty("java.vendor") + " "
+                                        + System.getProperty("java.vm.name") + " "
+                                        + System.getProperty("java.version"),
+                                font
+                        );
+                        if(button("Just another button", font)) {
+                            System.out.println("Doing a thing");
+                        }
+                        if(button("Just another button", font)) {
+                            System.out.println("Doing another thing");
+                        }
+
+
+                    }
+                    endPanel();
+                }
+                endPanel();
+            }
+
+            endWindow();
+
+            newWindow("Another another \n another window", 900, 60, font, new EdgeLayout());
+            {
+                newPanel(new EdgeLayout(), North);
+                {
+                    newPanel(new FlowLayout(Vertical), Center);
+                    {
+
+                        text("Renderer: " + renderer.getDeviceName(), font);
+                        text("Host: " + System.getProperty("os.name") + " " + System.getProperty("os.arch"), font);
+                        text("API: " + Renderer.getRenderAPI(), font);
+                        text("AmberUI Render: " + elapsedTime + "ms", font);
+                        text(
+                                "Java VM: " +
+                                        System.getProperty("java.vendor") + " "
+                                        + System.getProperty("java.vm.name") + " "
+                                        + System.getProperty("java.version"),
+                                font
+                        );
+                        if(button("Just another button", font)) {
+                            System.out.println("Doing a thing");
+                        }
+                        if(button("Just another button", font)) {
+                            System.out.println("Doing another thing");
+                        }
+
+
+                    }
+                    endPanel();
+                }
+                endPanel();
+            }
+
+            endWindow();
+
+
+
+
             render();
         }
         endContext();
@@ -282,6 +365,10 @@ public class UISystem extends EntitySystem {
 
         renderQueue.updateQueue(quadIndex * 4, quadIndex * 12);
         quadIndex = 0;
+        renderQueue.getDefaultVertexBuffer().get().clear();
+        renderQueue.getDefaultIndexBuffer().get().clear();
+
+        System.out.println(surface.getMousePos().x + " " + surface.getMousePos().y);
 
     }
 
