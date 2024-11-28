@@ -130,7 +130,7 @@ public class UISystem extends EntitySystem {
 
                 @Override
                 public void drawRect(float x, float y, float w, float h, Color color) {
-                    int thickness = 2;
+                    int thickness = 1;
 
                     drawFilledRect(x, y, thickness, h, color);
                     drawFilledRect(x, y, w, thickness, color);
@@ -221,31 +221,6 @@ public class UISystem extends EntitySystem {
 
         newContext();
         {
-
-
-            newWindow("Another window", 300, 300, font, new EdgeLayout());
-            {
-                newPanel(new EdgeLayout(), North);
-                {
-                    newPanel(new FlowLayout(Vertical), Center);
-                    {
-
-                        text("Pick a favorite color", font);
-                        button("Red", font);
-                        button("Blue", font);
-                        button("Green", font);
-                        button("Yellow", font);
-                        button("Purple aqua with a tinge of teal and a shade of orange", font);
-
-
-                    }
-                    endPanel();
-                }
-                endPanel();
-            }
-
-            endWindow();
-
 
 
             newWindow("Fori Engine Demo", 60, 60, font, new EdgeLayout());

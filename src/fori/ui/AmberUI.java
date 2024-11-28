@@ -108,11 +108,9 @@ public class AmberUI {
 
 
 
-
-
         WindowScope windowScope = windowScopes.pop();
-
         Widget last = builderLastWidget;
+
 
 
         Widget widget = new Widget(windowScope.id, currentTheme.windowPadding) {
@@ -131,15 +129,7 @@ public class AmberUI {
 
 
 
-                for(int shadowIter = 0; shadowIter < currentTheme.windowShadowCount; shadowIter++) {
-                    adapter.drawFilledRect(
-                            windowEvent.windowRect.x - shadowIter,
-                            windowEvent.windowRect.y - shadowIter,
-                            windowEvent.windowRect.w + shadowIter * 2,
-                            windowEvent.windowRect.h + shadowIter * 2,
-                            new Color(0, 0, 0, (float) 1 / shadowIter + 0.01f)
-                    );
-                }
+
 
                 boolean isWindowSelected = getInputEvent(id, (_, e) -> e.windowRect.contains(surface.getMousePos().x, surface.getMousePos().y) && surface.getMousePressed(Input.MOUSE_BUTTON_LEFT));
 
@@ -172,13 +162,13 @@ public class AmberUI {
                     runtimeSelectedWindowID = -1;
                 }
 
-                adapter.drawFilledRect(headerRect.x, headerRect.y, headerRect.w, headerRect.h, currentTheme.windowHeaderBackground);
 
                 adapter.drawFilledRect(clientRect.x, clientRect.y, clientRect.w, clientRect.h, currentTheme.windowBackground);
-                adapter.drawText(headerRect.x + currentTheme.windowHeaderPadding, headerRect.y + currentTheme.windowHeaderPadding, windowScope.title, windowScope.font, Color.WHITE);
 
                 last.draw(adapter, windowEvent.x + getPadding(), windowEvent.y + getPadding(), getDrawableWidth(), getDrawableHeight());
 
+                adapter.drawFilledRect(headerRect.x, headerRect.y, headerRect.w, headerRect.h, currentTheme.windowHeaderBackground);
+                adapter.drawText(headerRect.x + currentTheme.windowHeaderPadding, headerRect.y + currentTheme.windowHeaderPadding, windowScope.title + " (" + runtimeWindowRenderList.indexOf(runtimeWindows.get(id)) + ")", windowScope.font, Color.WHITE);
                 if(windowEvent.initialSelect) {
                     windowEvent.x =  surface.getMousePos().x - (windowEvent.sx);
                     windowEvent.y =  surface.getMousePos().y - (windowEvent.sy);
@@ -285,22 +275,13 @@ public class AmberUI {
             if (windowEvent != null) {
 
                 if (inputFunction.input(window, windowEvent)) {
-
-
-
                     int index = runtimeWindowRenderList.indexOf(window);
-
                     if (index > highestIndex) highestIndex = index;
                 }
             }
         }
-        if(highestIndex == -1) {
-            System.out.println("No window contains the event!");
-            return false;
-        }
-        System.out.println("The window contains the event");
+        if(highestIndex == -1) return false;
         return runtimeWindowRenderList.get(highestIndex).id == windowID;
-
     }
 
 
