@@ -621,7 +621,7 @@ public class VkRenderer extends Renderer {
 
 
                 VkVertexInputAttributeDescription.Buffer attributeDescriptions =
-                        VkVertexInputAttributeDescription.calloc(attributes.length);
+                        VkVertexInputAttributeDescription.calloc(attributes.length, stack);
 
                 int offset = 0;
 
