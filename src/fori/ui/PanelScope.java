@@ -1,9 +1,11 @@
 package fori.ui;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 public class PanelScope {
-    public ArrayList<fori.ui.Widget> childWidgets = new ArrayList<>();
+    public List<Widget> childWidgets = new LinkedList<>();
     public int[] layoutInParent;
     public Layout layout;
     public int id;

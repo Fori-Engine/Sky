@@ -142,60 +142,7 @@ public class UISystem extends EntitySystem {
 
                 @Override
                 public void drawText(float x, float y, String text, Font font, Color color) {
-                    Texture glyphsTexture = font.getTexture();
-
-                    Map<Integer, Glyph> glyphs = font.getGlyphs();
-                    float xc = x;
-
-                    StringBuilder line = new StringBuilder();
-
-                    float spaceXAdvance = glyphs.get((int) ' ').xadvance;
-
-
-                    for(char c : text.toCharArray()) {
-
-                        if (c == '\t') {
-                            xc += spaceXAdvance * 4;
-                            continue;
-                        }
-
-                        if (c == '\r') {
-                            xc = x;
-                            continue;
-                        }
-
-                        Glyph glyph = glyphs.get((int) c);
-
-                        if (c == '\n') {
-
-                            float height = font.getLineHeight(line.toString());
-
-                            y += height;
-
-
-                            line = new StringBuilder();
-                            xc = x;
-                            continue;
-                        }
-
-
-                        float xt = glyph.x;
-                        float yt = glyph.y;
-
-                        float texX = xt / glyphsTexture.getWidth();
-                        float texY = yt / glyphsTexture.getHeight();
-
-                        float texW = (xt + glyph.w) / glyphsTexture.getWidth();
-                        float texH = (yt + glyph.h) / glyphsTexture.getHeight();
-
-                        UISystem.this.drawTexture(renderQueue, xc + glyph.xo, y + glyph.yo, glyph.w, glyph.h, texX, texY, texW, texH, glyphsTexture, color);
-
-
-                        xc += glyph.xadvance;
-
-                        line.append(c);
-
-                    }
+                    UISystem.this.drawText(renderQueue, x, y, text, font, color);
                 }
 
                 @Override
@@ -218,6 +165,7 @@ public class UISystem extends EntitySystem {
         setSurface(surface);
 
 
+        long start;
 
         newContext();
         {
@@ -327,9 +275,113 @@ public class UISystem extends EntitySystem {
             endWindow();
 
 
+            newWindow("Another another \n another window", 900, 60, font, new EdgeLayout());
+            {
+                newPanel(new EdgeLayout(), North);
+                {
+                    newPanel(new FlowLayout(Vertical), Center);
+                    {
 
+                        text("Renderer: " + renderer.getDeviceName(), font);
+                        text("Host: " + System.getProperty("os.name") + " " + System.getProperty("os.arch"), font);
+                        text("API: " + Renderer.getRenderAPI(), font);
+                        text("AmberUI Render: " + elapsedTime + "ms", font);
+                        text(
+                                "Java VM: " +
+                                        System.getProperty("java.vendor") + " "
+                                        + System.getProperty("java.vm.name") + " "
+                                        + System.getProperty("java.version"),
+                                font
+                        );
+                        if(button("Just another button", font)) {
+                            System.out.println("Doing a thing");
+                        }
+                        if(button("Just another button", font)) {
+                            System.out.println("Doing another thing");
+                        }
+
+
+                    }
+                    endPanel();
+                }
+                endPanel();
+            }
+
+            endWindow();
+
+            newWindow("Another another \n another window", 900, 60, font, new EdgeLayout());
+            {
+                newPanel(new EdgeLayout(), North);
+                {
+                    newPanel(new FlowLayout(Vertical), Center);
+                    {
+
+                        text("Renderer: " + renderer.getDeviceName(), font);
+                        text("Host: " + System.getProperty("os.name") + " " + System.getProperty("os.arch"), font);
+                        text("API: " + Renderer.getRenderAPI(), font);
+                        text("AmberUI Render: " + elapsedTime + "ms", font);
+                        text(
+                                "Java VM: " +
+                                        System.getProperty("java.vendor") + " "
+                                        + System.getProperty("java.vm.name") + " "
+                                        + System.getProperty("java.version"),
+                                font
+                        );
+                        if(button("Just another button", font)) {
+                            System.out.println("Doing a thing");
+                        }
+                        if(button("Just another button", font)) {
+                            System.out.println("Doing another thing");
+                        }
+
+
+                    }
+                    endPanel();
+                }
+                endPanel();
+            }
+
+            endWindow();
+
+            newWindow("Another another \n another window", 900, 60, font, new EdgeLayout());
+            {
+                newPanel(new EdgeLayout(), North);
+                {
+                    newPanel(new FlowLayout(Vertical), Center);
+                    {
+
+                        text("Renderer: " + renderer.getDeviceName(), font);
+                        text("Host: " + System.getProperty("os.name") + " " + System.getProperty("os.arch"), font);
+                        text("API: " + Renderer.getRenderAPI(), font);
+                        text("AmberUI Render: " + elapsedTime + "ms", font);
+                        text(
+                                "Java VM: " +
+                                        System.getProperty("java.vendor") + " "
+                                        + System.getProperty("java.vm.name") + " "
+                                        + System.getProperty("java.version"),
+                                font
+                        );
+                        if(button("Just another button", font)) {
+                            System.out.println("Doing a thing");
+                        }
+                        if(button("Just another button", font)) {
+                            System.out.println("Doing another thing");
+                        }
+
+
+                    }
+                    endPanel();
+                }
+                endPanel();
+            }
+
+            endWindow();
+
+            start = System.currentTimeMillis();
 
             render();
+
+            elapsedTime = System.currentTimeMillis() - start;
         }
         endContext();
 
@@ -343,8 +395,68 @@ public class UISystem extends EntitySystem {
         renderQueue.getDefaultVertexBuffer().get().clear();
         renderQueue.getDefaultIndexBuffer().get().clear();
 
-        System.out.println(surface.getMousePos().x + " " + surface.getMousePos().y);
 
+        System.out.println(elapsedTime);
+
+    }
+
+    private void drawText(RenderQueue renderQueue, float x, float y, String text, Font font, Color color) {
+        Texture glyphsTexture = font.getTexture();
+
+        Glyph[] glyphs = font.getGlyphs();
+        float xc = x;
+
+        StringBuilder line = new StringBuilder();
+
+        float spaceXAdvance = glyphs[' '].xadvance;
+
+
+        for(char c : text.toCharArray()) {
+
+            if (c == '\t') {
+                xc += spaceXAdvance * 4;
+                continue;
+            }
+
+            if (c == '\r') {
+                xc = x;
+                continue;
+            }
+
+            Glyph glyph = glyphs[c];
+
+            if (c == '\n') {
+
+                float height = font.getLineHeight(line.toString());
+
+                y += height;
+
+
+                line = new StringBuilder();
+                xc = x;
+                continue;
+            }
+
+
+            float xt = glyph.x;
+            float yt = glyph.y;
+
+            float texX = xt / glyphsTexture.getWidth();
+            float texY = yt / glyphsTexture.getHeight();
+
+            float texW = (xt + glyph.w) / glyphsTexture.getWidth();
+            float texH = (yt + glyph.h) / glyphsTexture.getHeight();
+
+            UISystem.this.drawTexture(renderQueue, xc + glyph.xo, y + glyph.yo, glyph.w, glyph.h, texX, texY, texW, texH, glyphsTexture, color);
+
+
+            xc += glyph.xadvance;
+
+            line.append(c);
+
+
+
+        }
     }
 
     private int quadIndex = 0;

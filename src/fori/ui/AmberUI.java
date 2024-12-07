@@ -87,6 +87,7 @@ public class AmberUI {
 
 
 
+
     }
 
     public static void submit(int[] layoutHints, Widget widget){
@@ -116,6 +117,9 @@ public class AmberUI {
         Widget widget = new Widget(windowScope.id, currentTheme.windowPadding) {
             @Override
             public void draw(Adapter adapter, float x, float y, float w, float h) {
+
+
+
                 if(!eventMap.containsKey(windowScope.id)) {
                     addEvent(windowScope.id, new WindowEvent(windowScope.x, windowScope.y));
                 }
@@ -128,13 +132,7 @@ public class AmberUI {
                 windowEvent.windowRect = new Rect2D(headerRect.x, headerRect.y, clientRect.w, headerRect.h + clientRect.h);
 
 
-
-
-
                 boolean isWindowSelected = getInputEvent(id, (_, e) -> e.windowRect.contains(surface.getMousePos().x, surface.getMousePos().y) && surface.getMousePressed(Input.MOUSE_BUTTON_LEFT));
-
-
-
 
                 if(isWindowSelected) {
                     boolean inHeader = headerRect.contains(surface.getMousePos().x, surface.getMousePos().y);
@@ -173,6 +171,8 @@ public class AmberUI {
                     windowEvent.x =  surface.getMousePos().x - (windowEvent.sx);
                     windowEvent.y =  surface.getMousePos().y - (windowEvent.sy);
                 }
+
+
             }
 
             @Override

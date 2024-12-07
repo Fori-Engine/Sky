@@ -15,7 +15,7 @@ public class Font implements Disposable {
     private Asset<TextureData> textureAsset;
     private Asset<String> fnt;
     private Texture texture;
-    private HashMap<Integer, Glyph> glyphs = new HashMap<>();
+    private Glyph[] glyphs = new Glyph[1024];
     private float defaultLineHeight;
     private Ref ref;
 
@@ -62,7 +62,7 @@ public class Font implements Disposable {
                 float xAdvance = Float.parseFloat(parameters.get("xadvance"));
 
 
-                glyphs.put(id, new Glyph(x, y, w, h, xo, yo, xAdvance));
+                glyphs[id] = new Glyph(x, y, w, h, xo, yo, xAdvance);
 
             }
 
@@ -76,7 +76,7 @@ public class Font implements Disposable {
         return texture;
     }
 
-    public HashMap<Integer, Glyph> getGlyphs() {
+    public Glyph[] getGlyphs() {
         return glyphs;
     }
 
@@ -130,7 +130,7 @@ public class Font implements Disposable {
 
         for (char c : line.toCharArray()){
 
-            x += glyphs.get((int) c).xadvance;
+            x += glyphs[c].xadvance;
         }
 
         return x;
@@ -142,7 +142,7 @@ public class Font implements Disposable {
 
         for (char c : line.toCharArray()){
 
-            Glyph glyph = glyphs.get((int) c);
+            Glyph glyph = glyphs[c];
 
             float n = glyph.h + glyph.yo;
 
