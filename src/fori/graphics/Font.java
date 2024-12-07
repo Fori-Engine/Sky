@@ -128,7 +128,8 @@ public class Font implements Disposable {
 
         float x = 0;
 
-        for (char c : line.toCharArray()){
+        for (int i = 0; i < line.length(); i++){
+            char c = line.charAt(i);
 
             x += glyphs[c].xadvance;
         }
@@ -140,7 +141,9 @@ public class Font implements Disposable {
 
         float h = 0;
 
-        for (char c : line.toCharArray()){
+        for (int i = 0; i < line.length(); i++){
+            char c = line.charAt(i);
+
 
             Glyph glyph = glyphs[c];
 
@@ -156,21 +159,28 @@ public class Font implements Disposable {
 
 
     public float getWidthOf(String string){
-        String[] lines = string.split("\n");
+
+        float cw = 0f;
         float width = 0f;
 
-        for(String line : lines){
-            float lineWidth = stringWidth(line);
+        for (int i = 0; i < string.length(); i++) {
+            char c = string.charAt(i);
 
-            if(lineWidth > width){
-                width = lineWidth;
+            if(c == '\n') {
+                if(cw > width) {
+                    width = cw;
+                    cw = 0f;
+                    continue;
+                }
             }
+
+            cw += glyphs[c].xadvance;
+
+            if(i == string.length() - 1) width = cw;
+
         }
 
         return width;
-
-
-
     }
 
     @Override
