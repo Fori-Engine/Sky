@@ -76,7 +76,4 @@ public class Scene {
         return views;
     }
 
-
-
-
 }

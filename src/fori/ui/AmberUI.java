@@ -14,19 +14,21 @@ import java.util.List;
 public class AmberUI {
 
     private static Adapter currentAdapter;
-    private static final HashMap<Integer, Event> eventMap = new HashMap<>();
+    private static final HashMap<String, Event> eventMap = new HashMap<>();
     private static final Stack<PanelScope> panelScopes = new Stack<>();
     private static final Stack<WindowScope> windowScopes = new Stack<>();
     private static Theme currentTheme;
-
-
     private static Surface surface;
     private static Widget builderLastWidget;
-    private static Map<Integer, Widget> runtimeWindows = new HashMap<>();
+    private static Map<String, Widget> runtimeWindows = new HashMap<>();
     private static List<Widget> runtimeWindowRenderList = new ArrayList<>();
     public static String builderLastWidgetType = "";
-    private static int runtimeLastSelectedWindowID = -1, runtimeSelectedWindowID = -1;
-    private static int builderCurrentWindowID;
+    private static String runtimeLastSelectedWindowID = null, runtimeSelectedWindowID = null;
+    private static String builderCurrentWindowID;
+
+    private static Stack<String> namespaces = new Stack<>();
+    private static StringBuilder namespaceAssembly = new StringBuilder();
+
 
 
     public static final void setTheme(Theme theme) {
@@ -39,14 +41,21 @@ public class AmberUI {
         AmberUI.surface = surface;
     }
 
-    private static <T> T getEvent(int widgetID) {
+    private static <T> T getEvent(String widgetID) {
         return (T) eventMap.get(widgetID);
     }
 
-    private static void addEvent(int widgetID, Event event) {
+    private static void addEvent(String widgetID, Event event) {
         eventMap.put(widgetID, event);
     }
 
+    public static void pushNamespace(String namespace) {
+        namespaces.push(namespace);
+    }
+
+    public static void popNamespace() {
+        namespaces.pop();
+    }
 
     public static void newContext(){
 
@@ -65,18 +74,6 @@ public class AmberUI {
 
     public static void render() {
 
-        if(runtimeLastSelectedWindowID != -1) {
-            Widget window = runtimeWindows.get(runtimeLastSelectedWindowID);
-            runtimeWindowRenderList.remove(window);
-            runtimeWindowRenderList.addLast(window);
-
-            for(Widget w : runtimeWindowRenderList) {
-                WindowEvent windowEvent = getEvent(w.id);
-                System.out.println(windowEvent.title);
-            }
-            System.out.println();
-
-        }
 
         for(Widget window : runtimeWindowRenderList) {
             window.draw(currentAdapter, 0, 0, window.getWidth(), window.getHeight());
@@ -91,7 +88,7 @@ public class AmberUI {
     }
 
     public static void newWindow(String title, float x, float y, Font font, Layout layout) {
-        int id = getNewID();
+        String id = getNewID();
         windowScopes.push(new WindowScope(title, x, y, id, font));
         builderCurrentWindowID = id;
         newPanel(layout);
@@ -131,7 +128,7 @@ public class AmberUI {
                     boolean inHeader = headerRect.contains(surface.getMousePos().x, surface.getMousePos().y);
                     boolean inClient = clientRect.contains(surface.getMousePos().x, surface.getMousePos().y);
 
-                    if (!windowEvent.initialSelect && runtimeSelectedWindowID == -1) {
+                    if (!windowEvent.initialSelect && runtimeSelectedWindowID == null) {
                         if (inHeader) {
                             windowEvent.initialSelect = true;
                             windowEvent.sx = surface.getMousePos().x - windowEvent.x;
@@ -150,7 +147,7 @@ public class AmberUI {
 
                 if(surface.getMouseReleased(Input.MOUSE_BUTTON_LEFT)) {
                     windowEvent.initialSelect = false;
-                    runtimeSelectedWindowID = -1;
+                    runtimeSelectedWindowID = null;
                 }
 
 
@@ -188,11 +185,11 @@ public class AmberUI {
 
         builderLastWidget = widget;
         builderLastWidgetType = "window";
-        builderCurrentWindowID = -1;
+        builderCurrentWindowID = null;
     }
 
     public static void newPanel(Layout layout, int... layoutInParent){
-        int id = getNewID();
+        String id = getNewID();
         panelScopes.push(new PanelScope(id, layout, layoutInParent));
     }
 
@@ -225,11 +222,11 @@ public class AmberUI {
     }
 
     public static void text(String text, Font font, int... layoutInParent){
-        int myID = getNewID();
+        String id = getNewID();
 
         Widget last = builderLastWidget;
 
-        Widget widget = new Widget(myID, currentTheme.textPadding) {
+        Widget widget = new Widget(id, currentTheme.textPadding) {
             @Override
             public void draw(Adapter adapter, float x, float y, float w, float h) {
                 adapter.drawText(x + getPadding(), y + getPadding(), text, font, currentTheme.textForeground);
@@ -251,7 +248,7 @@ public class AmberUI {
         builderLastWidgetType = "text";
     }
 
-    public static boolean getInputEvent(int windowID, InputFunction inputFunction) {
+    public static boolean getInputEvent(String windowID, InputFunction inputFunction) {
         //Find all the windows that contain the mouse
         //Whichever window is highest in the queue gets to process the event, and nobody else
 
@@ -278,10 +275,10 @@ public class AmberUI {
 
 
     public static boolean button(String text, Font font, int... layoutInParent){
-        int id = getNewID();
+        String id = getNewID();
 
         Widget last = builderLastWidget;
-        int currentWindowID = builderCurrentWindowID;
+        String currentWindowID = builderCurrentWindowID;
 
         Widget widget = new Widget(id, currentTheme.buttonPadding) {
             @Override
@@ -374,7 +371,7 @@ public class AmberUI {
     }
 
     public static float slider(String text, Font font, Color color, float max, int... layoutInParent){
-        int myID = getNewID();
+        String id = getNewID();
         float padding = 7;
         Widget last = builderLastWidget;
 
@@ -383,15 +380,15 @@ public class AmberUI {
         Widget widget = new Widget() {
             @Override
             public void draw(Adapter adapter, float x, float y, float w, float h) {
-                if(!eventMap.containsKey(myID)) {
-                    addEvent(myID, new SliderEvent());
+                if(!eventMap.containsKey(id)) {
+                    addEvent(id, new SliderEvent());
                 }
 
                 Color barColor = new Color(188f / 255, 188f / 255, 188f / 255, 1);
                 Color grabColor = new Color(56f / 255, 56f / 255, 56f / 255, 1);
 
 
-                SliderEvent sliderEvent = getEvent(myID);
+                SliderEvent sliderEvent = getEvent(id);
 
 
                 float barHeight = 6;
@@ -436,13 +433,21 @@ public class AmberUI {
         System.out.println(builderLastWidgetType);
 
 
-        SliderEvent sliderEvent = getEvent(myID);
+        SliderEvent sliderEvent = getEvent(id);
         if(sliderEvent == null) return 0f;
         else return sliderEvent.value;
     }
 
-    public static int getNewID(){
-        return StackWalker.getInstance(StackWalker.Option.SHOW_HIDDEN_FRAMES).walk(
+
+    public static String getNewID(){
+        namespaceAssembly.setLength(0);
+
+        for(String namespace : namespaces) {
+            namespaceAssembly.append(namespace).append('/');
+        }
+
+
+        return namespaceAssembly.toString() + StackWalker.getInstance(StackWalker.Option.SHOW_HIDDEN_FRAMES).walk(
                 (s) -> s.skip(2).findFirst()).get().getLineNumber();
     }
 }

@@ -141,8 +141,8 @@ public class NoirCitizens extends Stage {
         }
 
 
-        Entity colt9 = Mesh.separateMeshesToEntities(AssetPacks.getAsset("core:assets/models/colt9.fbx"), shaderProgram, "Colt9", scene);
-        scene.get(colt9, MeshComponent.class).transform.scale(0.15f);
+        //Entity colt9 = Mesh.separateMeshesToEntities(AssetPacks.getAsset("core:assets/models/colt9.fbx"), shaderProgram, "Colt9", scene);
+        //scene.get(colt9, MeshComponent.class).transform.scale(0.15f);
 
 
 

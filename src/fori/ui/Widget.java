@@ -3,9 +3,9 @@ package fori.ui;
 public abstract class Widget {
     public int[] layoutHints;
     public float padding;
-    public int id;
+    public String id;
 
-    public Widget(int id, float padding) {
+    public Widget(String id, float padding) {
         this.id = id;
         this.padding = padding;
     }

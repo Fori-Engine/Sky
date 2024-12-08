@@ -8,10 +8,10 @@ public class PanelScope {
     public List<Widget> childWidgets = new LinkedList<>();
     public int[] layoutInParent;
     public Layout layout;
-    public int id;
+    public String id;
 
 
-    public PanelScope(int id, Layout layout, int... layoutInParent) {
+    public PanelScope(String id, Layout layout, int... layoutInParent) {
         this.id = id;
         this.layout = layout;
         this.layoutInParent = layoutInParent;
