@@ -6,6 +6,7 @@ public class RenderQueueFlags {
         GreaterThan,
         LessOrEqualTo,
         GreaterOrEqualTo,
+        Never,
         Always
     }
 

@@ -77,12 +77,15 @@ public class UISystem extends EntitySystem {
 
             );
 
+
+
             Buffer buffer = Buffer.newBuffer(renderer.getRef(), SizeUtil.MATRIX_SIZE_BYTES, Buffer.Usage.UniformBuffer, Buffer.Type.CPUGPUShared, false);
             proj.get(buffer.get());
 
             for (int i = 0; i < renderer.getMaxFramesInFlight(); i++) {
                 shaderProgram.updateBuffers(i, new ShaderUpdate<>("proj", 0, 0, buffer));
             }
+
 
 
 
@@ -95,19 +98,22 @@ public class UISystem extends EntitySystem {
 
     @Override
     public void update(Scene scene, MessageQueue messageQueue) {
+
         if(renderer.getRenderQueueByShaderProgram(shaderProgram) == null){
 
             RenderQueueFlags renderQueueFlags = new RenderQueueFlags();
             renderQueueFlags.shaderProgram = shaderProgram;
             renderQueueFlags.maxVertices = RenderQueue.MAX_VERTEX_COUNT;
             renderQueueFlags.maxIndices = RenderQueue.MAX_INDEX_COUNT;
-            renderQueueFlags.depthTest = false;
             renderQueueFlags.depthOp = RenderQueueFlags.DepthOp.Always;
             renderQueueFlags.depthTest = true;
 
 
             renderer.newRenderQueue(renderQueueFlags);
         }
+
+
+
 
 
 
@@ -206,6 +212,7 @@ public class UISystem extends EntitySystem {
             }
 
             endWindow();
+
 
 
             newWindow("Another another window", 60, 600, font, new EdgeLayout());
@@ -379,6 +386,8 @@ public class UISystem extends EntitySystem {
 
             endWindow();
 
+
+
             start = System.currentTimeMillis();
 
             render();
@@ -389,17 +398,11 @@ public class UISystem extends EntitySystem {
 
 
 
-        //drawFilledRect(renderQueue, 0, 0, 60, 60, Color.RED);
 
-
-        renderQueue.updateQueue(quadIndex * 4, quadIndex * 12);
-        quadIndex = 0;
+        renderQueue.updateQueue(quadCount * 4, quadCount * 6);
+        quadCount = 0;
         renderQueue.getDefaultVertexBuffer().get().clear();
         renderQueue.getDefaultIndexBuffer().get().clear();
-
-
-        System.out.println(elapsedTime);
-
     }
 
     private void drawText(RenderQueue renderQueue, float x, float y, String text, Font font, Color color) {
@@ -448,7 +451,6 @@ public class UISystem extends EntitySystem {
 
             float texW = (xt + glyph.w) / glyphsTexture.getWidth();
             float texH = (yt + glyph.h) / glyphsTexture.getHeight();
-
             UISystem.this.drawTexture(renderQueue, xc + glyph.xo, y + glyph.yo, glyph.w, glyph.h, texX, texY, texW, texH, glyphsTexture, color);
 
 
@@ -461,7 +463,7 @@ public class UISystem extends EntitySystem {
         }
     }
 
-    private int quadIndex = 0;
+    private int quadCount = 0;
 
     private void drawFilledRect(RenderQueue renderQueue, float x, float y, float w, float h, Color color) {
         drawQuad(renderQueue, x, y, w, h, color, 2, -1, new Rect2D(0, 0, 1, 1), false, false, -1);
@@ -472,7 +474,6 @@ public class UISystem extends EntitySystem {
     }
 
     public void drawTexture(RenderQueue renderQueue, float x, float y, float w, float h, float tx, float ty, float tw, float th, Texture texture, Color color) {
-
         int textureIndex = 0;
 
         if(textureList.contains(texture)) {
@@ -491,13 +492,10 @@ public class UISystem extends EntitySystem {
 
 
         drawQuad(renderQueue, x, y, w, h, color, 0, 0, new Rect2D(tx, ty, tw, th), false, false, textureIndex);
-
-
-
-
     }
 
     private void drawQuad(RenderQueue renderQueue, float x, float y, float w, float h, Color color, int type, float thickness, Rect2D uv, boolean xFlip, boolean yFlip, int textureIndex) {
+
         ByteBuffer vertexBuffer = renderQueue.getDefaultVertexBuffer().get();
         ByteBuffer indexBuffer = renderQueue.getDefaultIndexBuffer().get();
 
@@ -516,6 +514,7 @@ public class UISystem extends EntitySystem {
         }
 
 
+
         vertexBuffer.putFloat(x);
         vertexBuffer.putFloat(y);
         vertexBuffer.putFloat(type);
@@ -564,7 +563,7 @@ public class UISystem extends EntitySystem {
         vertexBuffer.putFloat(copy.y);
         vertexBuffer.putFloat(textureIndex);
 
-        int offset = (quadIndex) * 4;
+        int offset = (quadCount) * 4;
 
 
         indexBuffer.putInt(offset);
@@ -574,6 +573,8 @@ public class UISystem extends EntitySystem {
         indexBuffer.putInt(3 + offset);
         indexBuffer.putInt(offset);
 
-        quadIndex++;
+
+        quadCount++;
+
     }
 }

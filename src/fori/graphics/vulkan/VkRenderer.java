@@ -760,21 +760,20 @@ public class VkRenderer extends Renderer {
             VkGraphicsPipelineCreateInfo.Buffer pipelineInfo = VkGraphicsPipelineCreateInfo.calloc(1, stack);
             {
                 pipelineInfo.sType(VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO);
+                pipelineInfo.layout(pipelineLayout);
+                pipelineInfo.pInputAssemblyState(inputAssembly);
+                pipelineInfo.pRasterizationState(rasterizer);
+                pipelineInfo.pColorBlendState(colorBlending);
+                pipelineInfo.pMultisampleState(multisampling);
+                pipelineInfo.pViewportState(viewportState);
+                pipelineInfo.pDepthStencilState(depthStencil);
+                pipelineInfo.pDynamicState(dynamicState);
+                pipelineInfo.stageCount(vkShaderProgram.getShaderStages().capacity());
                 pipelineInfo.pStages(vkShaderProgram.getShaderStages());
                 pipelineInfo.pVertexInputState(vertexInputInfo);
-                pipelineInfo.pInputAssemblyState(inputAssembly);
-                pipelineInfo.pViewportState(viewportState);
-                pipelineInfo.pDynamicState(dynamicState);
-                pipelineInfo.pRasterizationState(rasterizer);
-                pipelineInfo.pMultisampleState(multisampling);
-                pipelineInfo.pColorBlendState(colorBlending);
-                pipelineInfo.pDepthStencilState(depthStencil);
-                pipelineInfo.layout(pipelineLayout);
-                pipelineInfo.subpass(0);
-                pipelineInfo.basePipelineHandle(VK_NULL_HANDLE);
-                pipelineInfo.basePipelineIndex(-1);
                 pipelineInfo.pNext(pipelineRenderingCreateInfoKHR);
             }
+
 
             LongBuffer pGraphicsPipeline = stack.mallocLong(1);
 
@@ -809,6 +808,9 @@ public class VkRenderer extends Renderer {
             }
             case Always -> {
                 return VK_COMPARE_OP_ALWAYS;
+            }
+            case Never -> {
+                return VK_COMPARE_OP_NEVER;
             }
         }
 
