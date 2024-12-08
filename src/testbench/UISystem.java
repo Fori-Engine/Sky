@@ -14,8 +14,8 @@ import org.joml.Matrix4f;
 import org.joml.Vector2f;
 
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 import static fori.graphics.Attributes.Type.*;
 import static fori.graphics.ShaderRes.ShaderStage.FragmentStage;
@@ -31,7 +31,7 @@ public class UISystem extends EntitySystem {
     private Renderer renderer;
     private Adapter adapter;
     private Font font;
-    private HashMap<Texture, Integer> textureLookup = new HashMap<>();
+    private List<Texture> textureList = new ArrayList<>();
     private int textureIndex;
     private Surface surface;
     private float elapsedTime;
@@ -102,6 +102,8 @@ public class UISystem extends EntitySystem {
             renderQueueFlags.maxVertices = RenderQueue.MAX_VERTEX_COUNT;
             renderQueueFlags.maxIndices = RenderQueue.MAX_INDEX_COUNT;
             renderQueueFlags.depthTest = false;
+            renderQueueFlags.depthOp = RenderQueueFlags.DepthOp.Always;
+            renderQueueFlags.depthTest = true;
 
 
             renderer.newRenderQueue(renderQueueFlags);
@@ -473,11 +475,11 @@ public class UISystem extends EntitySystem {
 
         int textureIndex = 0;
 
-        if(textureLookup.containsKey(texture)) {
-             textureIndex = textureLookup.get(texture);
+        if(textureList.contains(texture)) {
+            textureIndex = textureList.indexOf(texture);
         }
         else {
-            textureLookup.put(texture, this.textureIndex);
+            textureList.add(texture);
             renderer.waitForDevice();
 
             for (int i = 0; i < renderer.getMaxFramesInFlight(); i++) {
