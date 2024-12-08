@@ -23,7 +23,7 @@ public class AmberUI {
     private static Surface surface;
     private static Widget builderLastWidget;
     private static Map<Integer, Widget> runtimeWindows = new HashMap<>();
-    private static List<Widget> runtimeWindowRenderList = new LinkedList<>();
+    private static List<Widget> runtimeWindowRenderList = new ArrayList<>();
     public static String builderLastWidgetType = "";
     private static int runtimeLastSelectedWindowID = -1, runtimeSelectedWindowID = -1;
     private static int builderCurrentWindowID;
@@ -53,11 +53,10 @@ public class AmberUI {
     }
 
     public static void endContext(){
-        runtimeWindows.clear();
         runtimeWindowRenderList.clear();
-        //windowOverlaps.clear();
-
         panelScopes.clear();
+        windowScopes.clear();
+        runtimeWindows.clear();
     }
     public static void clearEvents() {
         eventMap.clear();
@@ -66,28 +65,22 @@ public class AmberUI {
 
     public static void render() {
 
-
-
-
-
-
         if(runtimeLastSelectedWindowID != -1) {
-            Widget lastSelectedWindow = runtimeWindows.get(runtimeLastSelectedWindowID);
-            runtimeWindowRenderList.remove(lastSelectedWindow);
-            runtimeWindowRenderList.add(lastSelectedWindow);
+            Widget window = runtimeWindows.get(runtimeLastSelectedWindowID);
+            runtimeWindowRenderList.remove(window);
+            runtimeWindowRenderList.addLast(window);
+
+            for(Widget w : runtimeWindowRenderList) {
+                WindowEvent windowEvent = getEvent(w.id);
+                System.out.println(windowEvent.title);
+            }
+            System.out.println();
+
         }
 
         for(Widget window : runtimeWindowRenderList) {
             window.draw(currentAdapter, 0, 0, window.getWidth(), window.getHeight());
         }
-
-
-
-
-
-
-
-
     }
 
     public static void submit(int[] layoutHints, Widget widget){
@@ -166,7 +159,7 @@ public class AmberUI {
                 last.draw(adapter, windowEvent.x + getPadding(), windowEvent.y + getPadding(), getDrawableWidth(), getDrawableHeight());
 
                 adapter.drawFilledRect(headerRect.x, headerRect.y, headerRect.w, headerRect.h, currentTheme.windowHeaderBackground);
-                adapter.drawText(headerRect.x + currentTheme.windowHeaderPadding, headerRect.y + currentTheme.windowHeaderPadding, windowScope.title + " (" + runtimeWindowRenderList.indexOf(runtimeWindows.get(id)) + ")", windowScope.font, Color.WHITE);
+                adapter.drawText(headerRect.x + currentTheme.windowHeaderPadding, headerRect.y + currentTheme.windowHeaderPadding, windowScope.title, windowScope.font, Color.WHITE);
                 if(windowEvent.initialSelect) {
                     windowEvent.x =  surface.getMousePos().x - (windowEvent.sx);
                     windowEvent.y =  surface.getMousePos().y - (windowEvent.sy);
@@ -189,8 +182,6 @@ public class AmberUI {
         runtimeWindows.put(windowScope.id, widget);
         runtimeWindowRenderList.add(widget);
 
-        //Villager noises
-        if(runtimeLastSelectedWindowID == -1) runtimeLastSelectedWindowID = widget.id;
 
 
         submit(new int[]{}, widget);
