@@ -84,7 +84,7 @@ public class NoirCitizens extends Stage {
         if(logDstPath == null) Logger.setConsoleTarget(System.out);
         else Logger.setFileTarget(new File(logDstPath));
 
-        surface = Surface.newSurface(getStageRef(), "Hello Fori!", 1920, 1080); //new GLFWSurface("Fori", width, height, true);
+        surface = Surface.newSurface(getStageRef(), "Hello Fori!", 1920, 1080);
         surface.display();
 
         renderer = Renderer.newRenderer(surface.getRef(), surface, width, height, new RendererSettings(RenderAPI.Vulkan).validation(validation).vsync(vsync));

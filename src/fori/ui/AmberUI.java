@@ -1,7 +1,6 @@
 package fori.ui;
 
 import fori.Input;
-import fori.Math;
 import fori.Surface;
 import fori.graphics.Color;
 import fori.graphics.Font;
@@ -28,6 +27,7 @@ public class AmberUI {
 
     private static Stack<String> namespaces = new Stack<>();
     private static StringBuilder namespaceAssembly = new StringBuilder();
+    private static Surface.Cursor cursor;
 
 
 
@@ -122,9 +122,9 @@ public class AmberUI {
                 windowEvent.windowRect = new Rect2D(headerRect.x, headerRect.y, clientRect.w, headerRect.h + clientRect.h);
 
 
-                boolean isWindowSelected = getInputEvent(id, (_, e) -> e.windowRect.contains(surface.getMousePos().x, surface.getMousePos().y) && surface.getMousePressed(Input.MOUSE_BUTTON_LEFT));
+                Optional<Boolean> isWindowSelected = isHighestWindowForInput(id, (_, e) -> e.windowRect.contains(surface.getMousePos().x, surface.getMousePos().y) && surface.getMousePressed(Input.MOUSE_BUTTON_LEFT));
 
-                if(isWindowSelected) {
+                if(isWindowSelected.isPresent() && isWindowSelected.get()) {
                     boolean inHeader = headerRect.contains(surface.getMousePos().x, surface.getMousePos().y);
                     boolean inClient = clientRect.contains(surface.getMousePos().x, surface.getMousePos().y);
 
@@ -161,6 +161,43 @@ public class AmberUI {
                     windowEvent.x =  surface.getMousePos().x - (windowEvent.sx);
                     windowEvent.y =  surface.getMousePos().y - (windowEvent.sy);
                 }
+
+
+
+
+                Optional<Boolean> showCursor = isHighestWindowForInput(id, (_, e) -> {
+                    if(e.windowRect.contains(surface.getMousePos().x, surface.getMousePos().y)) {
+                        float indentSize = 10;
+                        float offset = 5;
+
+                        Rect2D leftIndent = new Rect2D(windowEvent.windowRect.x - indentSize + offset, windowEvent.windowRect.y, indentSize, windowEvent.windowRect.h);
+                        Rect2D rightIndent = new Rect2D(windowEvent.windowRect.x + windowEvent.windowRect.w - indentSize + offset, windowEvent.windowRect.y, indentSize, windowEvent.windowRect.h);
+
+                        if (leftIndent.contains(surface.getMousePos().x, surface.getMousePos().y)) {
+                            windowEvent.cursor = Surface.Cursor.ResizeWE;
+                            adapter.drawFilledRect(leftIndent.x, leftIndent.y, leftIndent.w, leftIndent.h, Color.RED);
+                            return true;
+                        }
+                        else if (rightIndent.contains(surface.getMousePos().x, surface.getMousePos().y)) {
+                            windowEvent.cursor = Surface.Cursor.ResizeWE;
+                            adapter.drawFilledRect(rightIndent.x, rightIndent.y, rightIndent.w, rightIndent.h, Color.RED);
+                            return true;
+                        }
+
+                    }
+
+                    return false;
+                });
+                if(showCursor.isPresent()) {
+                    if(showCursor.get()) {
+                        System.out.println(windowEvent.title + " is cursed");
+                    }
+                }
+                else {
+                    System.out.println("No window is cursed");
+                }
+
+
 
 
             }
@@ -248,7 +285,7 @@ public class AmberUI {
         builderLastWidgetType = "text";
     }
 
-    public static boolean getInputEvent(String windowID, InputFunction inputFunction) {
+    public static Optional<Boolean> isHighestWindowForInput(String windowID, InputFunction inputFunction) {
         //Find all the windows that contain the mouse
         //Whichever window is highest in the queue gets to process the event, and nobody else
 
@@ -268,8 +305,8 @@ public class AmberUI {
                 }
             }
         }
-        if(highestIndex == -1) return false;
-        return runtimeWindowRenderList.get(highestIndex).id == windowID;
+        if(highestIndex == -1) return Optional.empty();
+        return Optional.of(runtimeWindowRenderList.get(highestIndex).id == windowID);
     }
 
 
@@ -295,13 +332,13 @@ public class AmberUI {
                 boolean hovered, pressed = false;
 
 
-                boolean isWindowSelected = getInputEvent(currentWindowID, (_, e) -> e.windowRect.contains(surface.getMousePos().x, surface.getMousePos().y));
+                Optional<Boolean> isWindowSelected = isHighestWindowForInput(currentWindowID, (_, e) -> e.windowRect.contains(surface.getMousePos().x, surface.getMousePos().y));
 
 
 
 
 
-                if(isWindowSelected) {
+                if(isWindowSelected.isPresent() && isWindowSelected.get()) {
 
                     hovered = new Rect2D(x, y, w, h).contains(surface.getMousePos().x, surface.getMousePos().y);
                     if(hovered) baseColor = currentTheme.buttonHoverBackground;

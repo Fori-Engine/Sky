@@ -3,7 +3,6 @@ package fori;
 import fori.graphics.Disposable;
 import fori.graphics.Ref;
 import fori.graphics.RenderAPI;
-import fori.graphics.Renderer;
 import org.joml.Vector2f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.vulkan.VkInstance;
@@ -14,6 +13,10 @@ public abstract class Surface implements Disposable {
     protected boolean resizable;
     protected Ref ref;
     protected Vector2f cursorPos = new Vector2f();
+    public enum Cursor {
+        Default,
+        ResizeWE
+    }
 
     public Surface(Ref parent, String title, int width, int height, boolean resizable) {
         ref = parent.add(this);
@@ -40,6 +43,7 @@ public abstract class Surface implements Disposable {
     public abstract boolean getMousePressed(int button);
     public abstract boolean getMouseReleased(int button);
     public abstract Vector2f getMousePos();
+    public abstract void setCursor(Cursor cursor);
 
 
     public static Surface newSurface(Ref parent, String title, int width, int height) {

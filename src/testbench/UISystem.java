@@ -205,19 +205,32 @@ public class UISystem extends EntitySystem {
                                 meshComponent.material = new Material(entity.getTag() + "_PBR", texture, null, null, null);
                                 meshComponent.materialChanged = true;
                             }
-
-
-
-
-
                         }
-
-
                     }
                     endWindow();
                 }
                 popNamespace();
             });
+            newWindow("Window A", 30, 30, font, new FlowLayout(Vertical));
+            {
+                text("Window", font);
+            }
+            endWindow();
+            newWindow("Window B", 30, 30, font, new FlowLayout(Vertical));
+            {
+                text("Window", font);
+            }
+            endWindow();
+            newWindow("Window C", 30, 30, font, new FlowLayout(Vertical));
+            {
+                text("Window", font);
+            }
+            endWindow();
+            newWindow("Window D", 30, 30, font, new FlowLayout(Vertical));
+            {
+                text("Window", font);
+            }
+            endWindow();
 
             start = System.currentTimeMillis();
 

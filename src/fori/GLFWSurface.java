@@ -11,24 +11,26 @@ import fori.graphics.Ref;
 import fori.graphics.RenderAPI;
 import org.joml.Vector2f;
 import org.lwjgl.PointerBuffer;
+import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkInstance;
 
 import java.nio.LongBuffer;
-import java.util.HashMap;
 
 
 public class GLFWSurface extends Surface {
 
     private long handle;
-    private HashMap<Integer, Boolean> mouseMap = new HashMap<>();
+    private Cursor cursor;
     public GLFWSurface(Ref parent, String title, int width, int height, boolean resizable) {
         super(parent, title, width, height, resizable);
 
 
-        if (!glfwInit())
+        if (!glfwInit()) {
             throw new RuntimeException(Logger.error(GLFWSurface.class, "Failed to initialize GLFW"));
+        }
 
+        GLFWErrorCallback.createPrint(System.err).set();
         glfwWindowHint(GLFW_RESIZABLE, glfwBool(resizable));
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     }
@@ -74,6 +76,7 @@ public class GLFWSurface extends Surface {
         if (handle == NULL)
             throw new RuntimeException(Logger.error(GLFWSurface.class, "Failed to create GLFW window"));
         glfwShowWindow(handle);
+
     }
 
     @Override
@@ -123,6 +126,17 @@ public class GLFWSurface extends Surface {
     @Override
     public Vector2f getMousePos() {
         return cursorPos;
+    }
+
+    @Override
+    public void setCursor(Cursor cursor) {
+        if(this.cursor != cursor) {
+            switch (cursor) {
+                case Default -> glfwSetCursor(handle, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
+                case ResizeWE -> glfwSetCursor(handle, glfwCreateStandardCursor(GLFW_RESIZE_EW_CURSOR));
+            }
+            this.cursor = cursor;
+        }
     }
 
     @Override
