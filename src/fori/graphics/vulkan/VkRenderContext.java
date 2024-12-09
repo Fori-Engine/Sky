@@ -57,7 +57,7 @@ public class VkRenderContext extends RenderContext {
         return debugMessenger;
     }
 
-    private VkInstance createInstance(String appName, List<String> validationLayers, Surface surface){
+    public static VkInstance createInstance(String appName, List<String> validationLayers, Surface surface){
 
         boolean validation = validationLayers != null;
 
