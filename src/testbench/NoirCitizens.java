@@ -220,6 +220,6 @@ public class NoirCitizens extends Stage {
     }
 
     public void dispose(){
-        surface.dispose();
+
     }
 }
