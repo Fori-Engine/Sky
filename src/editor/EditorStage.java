@@ -1,4 +1,4 @@
-package testbench;
+package editor;
 
 import fori.*;
 import fori.asset.AssetPack;
@@ -19,7 +19,7 @@ import static fori.graphics.ShaderRes.ShaderStage.FragmentStage;
 import static fori.graphics.ShaderRes.ShaderStage.VertexStage;
 import static fori.graphics.ShaderRes.Type.*;
 
-public class NoirCitizens extends Stage {
+public class EditorStage extends Stage {
     private Surface surface;
     private Renderer renderer;
     private Engine engine;
@@ -89,9 +89,7 @@ public class NoirCitizens extends Stage {
 
         renderer = Renderer.newRenderer(surface.getRef(), surface, width, height, new RendererSettings(RenderAPI.Vulkan).validation(validation).vsync(vsync));
         engine = new Engine(
-                new InputSystem(surface),
-                new RenderSystem(renderer),
-                new UISystem(surface, renderer)
+                new RenderSystem(renderer)
         );
 
         scene = new Scene();
