@@ -370,73 +370,7 @@ public class AmberUI {
         else return buttonEvent.buttonPressed;
     }
 
-    public static float slider(String text, Font font, Color color, float max, int... layoutInParent){
-        String id = getNewID();
-        float padding = 7;
-        Widget last = builderLastWidget;
 
-
-
-        Widget widget = new Widget() {
-            @Override
-            public void draw(Adapter adapter, float x, float y, float w, float h) {
-                if(!eventMap.containsKey(id)) {
-                    addEvent(id, new SliderEvent());
-                }
-
-                Color barColor = new Color(188f / 255, 188f / 255, 188f / 255, 1);
-                Color grabColor = new Color(56f / 255, 56f / 255, 56f / 255, 1);
-
-
-                SliderEvent sliderEvent = getEvent(id);
-
-
-                float barHeight = 6;
-                float barWidth = w;
-
-                float grabWidth = 15;
-                float grabHeight = h - 10;
-
-                Rect2D grab = new Rect2D(x, y + (h / 2) - (grabHeight / 2), grabWidth, grabHeight);
-                grab.x += (sliderEvent.value / max) * w;
-
-
-                boolean isPressed = surface.getMousePressed(Input.MOUSE_BUTTON_LEFT) && grab.contains(surface.getMousePos().x, surface.getMousePos().y);
-                grab.x = Math.clamp(surface.getMousePos().x, x, x + w);
-
-
-                adapter.drawFilledRect(x, y + (h / 2) - (barHeight / 2), barWidth, barHeight, barColor);
-                adapter.drawFilledRect(grab.x, grab.y, grab.w, grab.h, grabColor);
-
-                sliderEvent.value = max * ((grab.x - x) / w);
-
-                String valueText = String.format("%.2f", sliderEvent.value);
-                adapter.drawText(x + w - font.getWidthOf(valueText), y + grabHeight + 5, valueText, font, Color.WHITE);
-            }
-
-            @Override
-            public float getWidth() {
-                return font.getWidthOf(text) + padding * 2;
-            }
-
-            @Override
-            public float getHeight() {
-
-                return font.getHeightOf(text) + padding * 2;
-            }
-        };
-
-        submit(layoutInParent, widget);
-
-        builderLastWidget = widget;
-        builderLastWidgetType = "slider";
-        System.out.println(builderLastWidgetType);
-
-
-        SliderEvent sliderEvent = getEvent(id);
-        if(sliderEvent == null) return 0f;
-        else return sliderEvent.value;
-    }
 
 
     public static String getNewID(){
