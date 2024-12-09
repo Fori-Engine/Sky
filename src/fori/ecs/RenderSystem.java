@@ -86,7 +86,6 @@ public class RenderSystem extends EntitySystem {
                             i,
                             new ShaderUpdate<>("camera", 0, 0, cameraBuffers[i]),
                             new ShaderUpdate<>("transforms", 0, 1, transformsBuffers[i])
-                            //new ShaderUpdate<>("materialMap", 0, 2, materialMap[i])
                     );
                 }
 
@@ -101,6 +100,8 @@ public class RenderSystem extends EntitySystem {
 
                 ByteBuffer indexBufferData = renderQueue.getDefaultIndexBuffer().get();
                 indexBufferData.clear();
+
+                meshComponent.queueIndex = renderQueue.getMeshIndex();
 
                 for (int vertex = 0; vertex < meshComponent.mesh.vertexCount; vertex++) {
 
@@ -124,17 +125,9 @@ public class RenderSystem extends EntitySystem {
                             vertexBufferData.putFloat(v);
                         }
 
-                        else if(attribute == Attributes.Type.TransformIndexFloat1) {
-                            vertexBufferData.putFloat(entity.getID());
-                        }
-
-                        else if(attribute == Attributes.Type.MaterialBaseIndexFloat1) {
-                            vertexBufferData.putFloat(entity.getID());
-                        }
-
-                        else if(attribute == Attributes.Type.RenderQueuePosFloat1) {
-                            vertexBufferData.putFloat(renderQueue.getMeshIndex());
-                        }
+                        else if(attribute == Attributes.Type.TransformIndexFloat1) vertexBufferData.putFloat(meshComponent.queueIndex);
+                        else if(attribute == Attributes.Type.MaterialBaseIndexFloat1) vertexBufferData.putFloat(meshComponent.queueIndex);
+                        else if(attribute == Attributes.Type.RenderQueuePosFloat1) vertexBufferData.putFloat(meshComponent.queueIndex);
 
 
 
@@ -157,8 +150,16 @@ public class RenderSystem extends EntitySystem {
                     ByteBuffer cameraBufferData = cameraBuffers[i].get();
 
 
-                    combinedTransform.get(entity.getID() * SizeUtil.MATRIX_SIZE_BYTES, transformsBufferData);
+                    combinedTransform.get(meshComponent.queueIndex * SizeUtil.MATRIX_SIZE_BYTES, transformsBufferData);
 
+
+                    int index = meshComponent.queueIndex * Material.SIZE;
+                    ShaderProgram shaderProgram = meshComponent.shaderProgram;
+
+                    shaderProgram.updateTextures(i, new ShaderUpdate<>("materials", 0, 2, defaultTexture).arrayIndex(index));
+                    shaderProgram.updateTextures(i, new ShaderUpdate<>("materials", 0, 2, defaultTexture).arrayIndex(index + 1));
+                    shaderProgram.updateTextures(i, new ShaderUpdate<>("materials", 0, 2, defaultTexture).arrayIndex(index + 2));
+                    shaderProgram.updateTextures(i, new ShaderUpdate<>("materials", 0, 2, defaultTexture).arrayIndex(index + 3));
 
 
                     camera.getView().get(0, cameraBufferData);
@@ -179,8 +180,32 @@ public class RenderSystem extends EntitySystem {
             if(meshComponent.queued){
                 Matrix4f combinedTransform = getCombinedTransform(scene, entity);
                 ByteBuffer transformsBufferData = transformsBuffers[renderer.getFrameIndex()].get();
-                combinedTransform.get(entity.getID() * SizeUtil.MATRIX_SIZE_BYTES, transformsBufferData);
+                combinedTransform.get(meshComponent.queueIndex * SizeUtil.MATRIX_SIZE_BYTES, transformsBufferData);
             }
+
+            if(meshComponent.materialChanged) {
+                renderer.waitForDevice();
+                for (int i = 0; i < renderQueue.getFramesInFlight(); i++) {
+                    int index = meshComponent.queueIndex * Material.SIZE;
+                    Material material = meshComponent.material;
+                    ShaderProgram shaderProgram = meshComponent.shaderProgram;
+
+                    if (material.getAlbedo() != null)
+                        shaderProgram.updateTextures(i, new ShaderUpdate<>("materials", 0, 2, material.getAlbedo()).arrayIndex(index));
+                    if (material.getMetallic() != null)
+                        shaderProgram.updateTextures(i, new ShaderUpdate<>("materials", 0, 2, material.getMetallic()).arrayIndex(index + 1));
+                    if (material.getNormal() != null)
+                        shaderProgram.updateTextures(i, new ShaderUpdate<>("materials", 0, 2, material.getNormal()).arrayIndex(index + 2));
+                    if (material.getRoughness() != null)
+                        shaderProgram.updateTextures(i, new ShaderUpdate<>("materials", 0, 2, material.getRoughness()).arrayIndex(index + 3));
+
+                    meshComponent.materialChanged = false;
+                }
+
+            }
+
+
+
         });
 
 

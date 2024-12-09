@@ -1132,6 +1132,9 @@ public class VkRenderer extends Renderer {
                 throw new RuntimeException("Failed to submit draw command buffer");
             }
 
+
+
+
             VkPresentInfoKHR presentInfo = VkPresentInfoKHR.calloc(stack);
             presentInfo.sType(VK_STRUCTURE_TYPE_PRESENT_INFO_KHR);
             presentInfo.pWaitSemaphores(stack.longs(frame.renderFinishedSemaphore));

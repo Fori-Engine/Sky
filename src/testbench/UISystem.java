@@ -12,8 +12,12 @@ import fori.ui.EdgeLayout;
 import fori.ui.FlowLayout;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
+import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
+import java.io.File;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -169,6 +173,7 @@ public class UISystem extends EntitySystem {
 
 
 
+
         setAdapter(adapter);
         setSurface(surface);
 
@@ -185,7 +190,29 @@ public class UISystem extends EntitySystem {
                     newWindow(entity.getTag(), 30, 30, font, new FlowLayout(Vertical));
                     {
                         text(entity.getTag(), font);
-                        button("One clicky boi!", font);
+
+                        if(button("Select PBR", font)) {
+                            String pathString = TinyFileDialogs.tinyfd_openFileDialog("Select an albedo texture", "", null, null, false);
+                            if(pathString != null) {
+                                Path path = Paths.get(pathString);
+                                Path localPath = Paths.get(new File(".").toURI());
+
+                                Path relativePath = localPath.relativize(path);
+
+
+                                Texture texture = Texture.newTexture(renderer.getRef(), AssetPacks.getAsset("core:" + relativePath.toString().replace("\\", "/")), Texture.Filter.Nearest, Texture.Filter.Nearest);
+
+                                meshComponent.material = new Material(entity.getTag() + "_PBR", texture, null, null, null);
+                                meshComponent.materialChanged = true;
+                            }
+
+
+
+
+
+                        }
+
+
                     }
                     endWindow();
                 }
@@ -207,6 +234,8 @@ public class UISystem extends EntitySystem {
         quadCount = 0;
         renderQueue.getDefaultVertexBuffer().get().clear();
         renderQueue.getDefaultIndexBuffer().get().clear();
+
+
     }
 
     private void drawText(RenderQueue renderQueue, float x, float y, String text, Font font, Color color) {

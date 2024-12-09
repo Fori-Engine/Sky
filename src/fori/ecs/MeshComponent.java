@@ -8,17 +8,16 @@ import org.joml.Matrix4f;
 public class MeshComponent extends Component {
     public Mesh mesh;
     public ShaderProgram shaderProgram;
-    public Material[] materials;
+    public Material material;
     public Matrix4f transform = new Matrix4f().identity();
-    boolean queued = false;
+    public boolean queued = false;
+    public boolean materialChanged = false;
+    public int queueIndex = 0;
 
-
-
-
-    public MeshComponent(Mesh mesh, ShaderProgram shaderProgram, Material... materials) {
+    public MeshComponent(Mesh mesh, ShaderProgram shaderProgram, Material material) {
         this.mesh = mesh;
         this.shaderProgram = shaderProgram;
-        this.materials = materials;
+        this.material = material;
 
 
     }
