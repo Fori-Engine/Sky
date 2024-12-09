@@ -77,6 +77,8 @@ dependencies {
     implementation "org.lwjgl:lwjgl-vulkan"
     implementation "org.lwjgl:lwjgl-tinyfd"
 
+    implementation files('dependencies/lwjgl3-awt-1.0.0-20181215.144757-4.jar')
+
 
     runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
     runtimeOnly "org.lwjgl:lwjgl-glfw::$lwjglNatives"

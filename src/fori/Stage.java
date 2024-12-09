@@ -3,12 +3,14 @@ package fori;
 import fori.graphics.Disposable;
 import fori.graphics.Ref;
 
+import java.io.File;
+
 public abstract class Stage {
     private Ref rootRef;
+    protected Surface surface;
 
 
-
-    public void launch(String[] args){
+    public Stage() {
         rootRef = new Ref(new Disposable() {
             @Override
             public void dispose() {
@@ -21,7 +23,13 @@ public abstract class Stage {
             }
         });
 
-        init(args);
+        Logger.setConsoleTarget(System.out);
+    }
+
+    public void launch(String[] args, Surface surface){
+
+
+        init(args, surface);
     }
 
     public Ref getStageRef() { return rootRef; }
@@ -31,7 +39,9 @@ public abstract class Stage {
         rootRef.destroyAll();
     }
 
-    public abstract void init(String[] args);
+    public void init(String[] args, Surface surface) {
+        this.surface = surface;
+    }
     public abstract boolean update();
     public abstract void dispose();
 }

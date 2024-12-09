@@ -20,14 +20,12 @@ import static fori.graphics.ShaderRes.ShaderStage.VertexStage;
 import static fori.graphics.ShaderRes.Type.*;
 
 public class EditorStage extends Stage {
-    private Surface surface;
     private Renderer renderer;
     private Engine engine;
     private Scene scene;
 
-    public void init(String[] cliArgs){
-
-
+    public void init(String[] cliArgs, Surface surface){
+        super.init(cliArgs, surface);
 
 
         Options options = new Options();
@@ -81,10 +79,7 @@ public class EditorStage extends Stage {
 
         AssetPacks.open("core", AssetPack.openLocal(new File("assets")));
 
-        if(logDstPath == null) Logger.setConsoleTarget(System.out);
-        else Logger.setFileTarget(new File(logDstPath));
 
-        surface = Surface.newSurface(getStageRef(), "Hello Fori!", 1920, 1080);
         surface.display();
 
         renderer = Renderer.newRenderer(surface.getRef(), surface, width, height, new RendererSettings(RenderAPI.Vulkan).validation(validation).vsync(vsync));
