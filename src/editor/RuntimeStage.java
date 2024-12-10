@@ -19,7 +19,7 @@ import static fori.graphics.ShaderRes.ShaderStage.FragmentStage;
 import static fori.graphics.ShaderRes.ShaderStage.VertexStage;
 import static fori.graphics.ShaderRes.Type.*;
 
-public class EditorStage extends Stage {
+public class RuntimeStage extends Stage {
     private Renderer renderer;
     private Engine engine;
     private Scene scene;
