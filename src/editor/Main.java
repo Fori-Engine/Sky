@@ -1,48 +1,54 @@
 package editor;
 
+import editor.awt.AWTVK;
 import fori.Stage;
 import fori.Surface;
 import fori.graphics.AWTSurface;
-import fori.graphics.vulkan.VkRenderContext;
-import org.lwjgl.vulkan.awt.AWTVKCanvas;
 import org.lwjgl.vulkan.awt.VKData;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
 
+        SwingUtilities.invokeLater(() -> {
+            Stage stage = new EditorStage();
 
-        Stage stage = new EditorStage();
 
+            JFrame frame = new JFrame("AWT test");
+            frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            frame.setLayout(new BorderLayout());
+            frame.setPreferredSize(new Dimension(1000, 800));
 
-        JFrame frame = new JFrame("AWT test");
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setLayout(new BorderLayout());
-        frame.setPreferredSize(new Dimension(600, 600));
+            Surface awtSurface = new AWTSurface(stage.getStageRef(), "AWT", 1000, 800, false);
 
-        Surface awtSurface = new AWTSurface(stage.getStageRef(), "AWT", 1000, 800, false);
+            Canvas canvas = new Canvas();
 
-        VKData vkData = new VKData();
-        vkData.instance = VkRenderContext.createInstance("Fori", List.of(""), awtSurface);
+            frame.add(canvas, BorderLayout.CENTER);
+            frame.add(new JButton("Lmao"), BorderLayout.NORTH);
+            frame.pack();
 
-        Canvas canvas = new AWTVKCanvas() {
-            @Override
-            public void initVK() {
-                stage.launch(args, awtSurface);
+            long surface = 0;
+            try {
+                surface = AWTVK.create(canvas, awtSurface.getVulkanInstance());
+            } catch (AWTException e) {
+                throw new RuntimeException(e);
             }
+            ((AWTSurface) awtSurface).setVulkanSurface(surface);
+            stage.launch(args, awtSurface);
 
-            @Override
-            public void paintVK() {
-              stage.update();
-            }
-        };
-        frame.add(canvas, BorderLayout.CENTER);
-        frame.pack(); // Packing causes the canvas to be lockable, and is the earliest time it can be used
 
-        frame.setVisible(true);
+            new Timer(16, e -> stage.update()).start();
+
+
+            frame.setVisible(true);
+        });
+
+
 
 
     }

@@ -3,11 +3,21 @@ package fori.graphics;
 import fori.Surface;
 import org.joml.Vector2f;
 import org.lwjgl.PointerBuffer;
+import org.lwjgl.system.MemoryUtil;
+import org.lwjgl.vulkan.KHRDynamicRendering;
 import org.lwjgl.vulkan.VkInstance;
 
+import java.util.List;
+
 public class AWTSurface extends Surface {
+    private long surface;
+    private VkInstance vkInstance;
+
     public AWTSurface(Ref parent, String title, int width, int height, boolean resizable) {
         super(parent, title, width, height, resizable);
+
+        vkInstance = createInstance(title, List.of("VK_LAYER_KHRONOS_validation"));
+
     }
 
     @Override
@@ -42,16 +52,31 @@ public class AWTSurface extends Surface {
 
     @Override
     public PointerBuffer getVulkanInstanceExtensions() {
-        return null;
+
+        PointerBuffer pointerBuffer = MemoryUtil.memAllocPointer(2);
+        pointerBuffer.put(0, MemoryUtil.memUTF8("VK_KHR_surface"));
+        pointerBuffer.put(1, MemoryUtil.memUTF8("VK_KHR_win32_surface"));
+
+
+
+
+        return pointerBuffer;
     }
 
     @Override
     public long getVulkanSurface(VkInstance instance) {
-        return 0;
+        return surface;
+    }
+
+    @Override
+    public VkInstance getVulkanInstance() {
+        return vkInstance;
     }
 
     @Override
     public boolean supportsRenderAPI(RenderAPI api) {
+        if(api == RenderAPI.Vulkan) return true;
+
         return false;
     }
 
@@ -73,5 +98,9 @@ public class AWTSurface extends Surface {
     @Override
     public void dispose() {
 
+    }
+
+    public void setVulkanSurface(long surface) {
+        this.surface = surface;
     }
 }

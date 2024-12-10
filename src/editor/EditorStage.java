@@ -70,8 +70,8 @@ public class EditorStage extends Stage {
             System.exit(1);
         }
 
-        int width = Integer.parseInt(Objects.requireNonNullElse(cmd.getOptionValue("width"), "1920"));
-        int height = Integer.parseInt(Objects.requireNonNullElse(cmd.getOptionValue("height"), "1080"));
+        int width = Integer.parseInt(Objects.requireNonNullElse(cmd.getOptionValue("width"), "1479"));
+        int height = Integer.parseInt(Objects.requireNonNullElse(cmd.getOptionValue("height"), "1105"));
         boolean vsync = Boolean.parseBoolean(Objects.requireNonNullElse(cmd.getOptionValue("vsync"), "true"));
         boolean validation = Boolean.parseBoolean(Objects.requireNonNullElse(cmd.getOptionValue("validation"), "false"));
         String logDstPath = cmd.getOptionValue("logdst");

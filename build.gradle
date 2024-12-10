@@ -76,6 +76,8 @@ dependencies {
     implementation "org.lwjgl:lwjgl-vma"
     implementation "org.lwjgl:lwjgl-vulkan"
     implementation "org.lwjgl:lwjgl-tinyfd"
+    implementation "org.lwjgl:lwjgl-jawt"
+
 
     implementation files('dependencies/lwjgl3-awt-1.0.0-20181215.144757-4.jar')
 
