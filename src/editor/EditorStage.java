@@ -31,16 +31,7 @@ public class EditorStage extends Stage {
         Options options = new Options();
         {
 
-            Option widthOption = new Option("width", true, "The width of the window");
-            {
-                widthOption.setRequired(false);
-                options.addOption(widthOption);
-            }
-            Option heightOption = new Option("height", true, "The height of the window");
-            {
-                heightOption.setRequired(false);
-                options.addOption(heightOption);
-            }
+
             Option vsyncOption = new Option("vsync", true, "Enable or disable VSync");
             {
                 vsyncOption.setRequired(false);
@@ -70,8 +61,6 @@ public class EditorStage extends Stage {
             System.exit(1);
         }
 
-        int width = Integer.parseInt(Objects.requireNonNullElse(cmd.getOptionValue("width"), "1479"));
-        int height = Integer.parseInt(Objects.requireNonNullElse(cmd.getOptionValue("height"), "1105"));
         boolean vsync = Boolean.parseBoolean(Objects.requireNonNullElse(cmd.getOptionValue("vsync"), "true"));
         boolean validation = Boolean.parseBoolean(Objects.requireNonNullElse(cmd.getOptionValue("validation"), "false"));
         String logDstPath = cmd.getOptionValue("logdst");
@@ -82,7 +71,7 @@ public class EditorStage extends Stage {
 
         surface.display();
 
-        renderer = Renderer.newRenderer(surface.getRef(), surface, width, height, new RendererSettings(RenderAPI.Vulkan).validation(validation).vsync(vsync));
+        renderer = Renderer.newRenderer(surface.getRef(), surface, surface.getWidth(), surface.getHeight(), new RendererSettings(RenderAPI.Vulkan).validation(validation).vsync(vsync));
         engine = new Engine(
                 new RenderSystem(renderer)
         );

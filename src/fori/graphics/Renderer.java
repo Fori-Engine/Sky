@@ -18,15 +18,17 @@ public abstract class Renderer implements Disposable {
     protected List<RenderQueue> renderQueues = new ArrayList<>();
     protected Ref ref;
     protected int maxFramesInFlight;
+    protected Surface surface;
 
 
 
-    public Renderer(Ref parent, int width, int height, int maxFramesInFlight, RendererSettings settings){
+    public Renderer(Ref parent, int width, int height, int maxFramesInFlight, RendererSettings settings, Surface surface){
         this.ref = parent.add(this);
         this.width = width;
         this.height = height;
         this.settings = settings;
         this.maxFramesInFlight = maxFramesInFlight;
+        this.surface = surface;
     }
     public abstract void onSurfaceResized(int width, int height);
 
@@ -64,7 +66,7 @@ public abstract class Renderer implements Disposable {
             long vkSurface = vkContext.getVkSurface();
             VkInstance instance = vkContext.getInstance();
 
-            return new VkRenderer(parent, instance, vkSurface, width, height, settings, vkContext.getDebugMessenger());
+            return new VkRenderer(parent, instance, vkSurface, width, height, settings, vkContext.getDebugMessenger(), surface);
         }
         else if(settings.backend == null){
             Logger.meltdown(Renderer.class, "The target graphics API was not specified in RenderSettings!");

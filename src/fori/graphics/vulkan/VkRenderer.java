@@ -1,6 +1,7 @@
 package fori.graphics.vulkan;
 
 import fori.Logger;
+import fori.Surface;
 import fori.graphics.*;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
@@ -43,7 +44,7 @@ public class VkRenderer extends Renderer {
     private VkSwapchainSupportDetails swapchainSupportDetails;
     private List<Long> swapchainImageViews = new ArrayList<>();
 
-    private long surface;
+    private long vkSurface;
     private VkInstance instance;
 
     private VkFrame[] frames = new VkFrame[FRAMES_IN_FLIGHT];
@@ -63,14 +64,14 @@ public class VkRenderer extends Renderer {
 
 
 
-    public VkRenderer(Ref parent, VkInstance instance, long surface, int width, int height, RendererSettings rendererSettings, long debugMessenger) {
-        super(parent, width, height, FRAMES_IN_FLIGHT, rendererSettings);
+    public VkRenderer(Ref parent, VkInstance instance, long vkSurface, int width, int height, RendererSettings rendererSettings, long debugMessenger, Surface surface) {
+        super(parent, width, height, FRAMES_IN_FLIGHT, rendererSettings, surface);
         this.instance = instance;
-        this.surface = surface;
+        this.vkSurface = vkSurface;
         this.debugMessenger = debugMessenger;
 
 
-        physicalDevice = selectPhysicalDevice(instance, surface);
+        physicalDevice = selectPhysicalDevice(instance, vkSurface);
         physicalDeviceProperties = getPhysicalDeviceProperties(physicalDevice);
         VkContextManager.setPhysicalDeviceProperties(physicalDeviceProperties);
         Logger.info(VkRenderer.class, "Selected Physical Device " + physicalDeviceProperties.deviceNameString());
@@ -88,7 +89,7 @@ public class VkRenderer extends Renderer {
         VkContextManager.setGraphicsQueue(graphicsQueue);
         presentQueue = getPresentQueue(device);
         VkContextManager.setGraphicsFamilyIndex(physicalDeviceQueueFamilies.graphicsFamily);
-        swapchain = createSwapChain(device, surface, width, height, rendererSettings.vsync);
+        swapchain = createSwapChain(device, vkSurface, width, height, rendererSettings.vsync);
         swapchainImageViews = createSwapchainImageViews(device, swapchain);
 
         Logger.info(VkRenderer.class, "Max Allowed Allocations: " + physicalDeviceProperties.limits().maxMemoryAllocationCount());
@@ -156,6 +157,7 @@ public class VkRenderer extends Renderer {
         }
 
 
+
         depthImage = new VkImage(
                 ref,
                 allocator,
@@ -168,10 +170,6 @@ public class VkRenderer extends Renderer {
         );
 
         depthImageView = new VkImageView(ref, device, depthImage, VK_IMAGE_ASPECT_DEPTH_BIT);
-
-
-
-
 
 
 
@@ -842,10 +840,10 @@ public class VkRenderer extends Renderer {
 
 
 
-    private void recreateSwapchainAndDepthResources(){
+    private void recreateSwapchainAndDepthResources(int width, int height){
 
         disposeSwapchainAndDepthResources();
-        swapchain = createSwapChain(device, surface, width, height, settings.vsync);
+        swapchain = createSwapChain(device, vkSurface, width, height, settings.vsync);
         swapchainImageViews = createSwapchainImageViews(device, swapchain);
 
 
@@ -945,7 +943,11 @@ public class VkRenderer extends Renderer {
         try(MemoryStack stack = stackPush()) {
 
 
-
+            if(surface.getWidth() != width || surface.getHeight() != height){
+                this.width = surface.getWidth();
+                this.height = surface.getHeight();
+                recreateSwapchainAndDepthResources(this.width, this.height);
+            }
 
 
 
@@ -955,7 +957,7 @@ public class VkRenderer extends Renderer {
             vkWaitForFences(device, frame.inFlightFence, true, UINT64_MAX);
             int acquireNextImageKHRResult = vkAcquireNextImageKHR(device, swapchain.swapChain, UINT64_MAX, frame.imageAcquiredSemaphore, VK_NULL_HANDLE, pImageIndex);
             if(acquireNextImageKHRResult == VK_ERROR_OUT_OF_DATE_KHR) {
-                recreateSwapchainAndDepthResources();
+                recreateSwapchainAndDepthResources(this.width, this.height);
                 return;
             }
 
@@ -1144,7 +1146,7 @@ public class VkRenderer extends Renderer {
             presentInfo.pImageIndices(pImageIndex);
 
             if(vkQueuePresentKHR(presentQueue, presentInfo) == VK_ERROR_OUT_OF_DATE_KHR) {
-                recreateSwapchainAndDepthResources();
+                recreateSwapchainAndDepthResources(this.width, this.height);
             }
 
             frameIndex = (frameIndex + 1) % FRAMES_IN_FLIGHT;
@@ -1202,7 +1204,7 @@ public class VkRenderer extends Renderer {
         vkDestroyCommandPool(device, sharedCommandPool, null);
 
         vmaDestroyAllocator(allocator.getId());
-        vkDestroySurfaceKHR(instance, surface, null);
+        vkDestroySurfaceKHR(instance, vkSurface, null);
         EXTDebugUtils.vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, null);
 
 

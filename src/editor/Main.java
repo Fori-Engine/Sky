@@ -8,8 +8,7 @@ import org.lwjgl.vulkan.awt.VKData;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import java.util.List;
 
 public class Main {
@@ -39,13 +38,17 @@ public class Main {
                 throw new RuntimeException(e);
             }
             ((AWTSurface) awtSurface).setVulkanSurface(surface);
+            ((AWTSurface) awtSurface).setComponent(canvas);
+
             stage.launch(args, awtSurface);
+
 
 
             new Timer(16, e -> stage.update()).start();
 
 
             frame.setVisible(true);
+
         });
 
 

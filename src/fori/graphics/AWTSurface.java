@@ -7,17 +7,34 @@ import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.KHRDynamicRendering;
 import org.lwjgl.vulkan.VkInstance;
 
+import java.awt.*;
 import java.util.List;
 
 public class AWTSurface extends Surface {
     private long surface;
     private VkInstance vkInstance;
+    private java.awt.Component component;
+    private float dpiScaleFactor;
 
     public AWTSurface(Ref parent, String title, int width, int height, boolean resizable) {
         super(parent, title, width, height, resizable);
 
         vkInstance = createInstance(title, List.of("VK_LAYER_KHRONOS_validation"));
 
+        float resolution = Toolkit.getDefaultToolkit().getScreenResolution();
+        dpiScaleFactor = resolution != 100.0f ? (resolution / 96.0f) : resolution;
+    }
+
+
+
+    @Override
+    public int getWidth() {
+        return (int) (component.getWidth() * dpiScaleFactor);
+    }
+
+    @Override
+    public int getHeight() {
+        return (int) (component.getHeight() * dpiScaleFactor);
     }
 
     @Override
@@ -98,6 +115,10 @@ public class AWTSurface extends Surface {
     @Override
     public void dispose() {
 
+    }
+
+    public void setComponent(Component component) {
+        this.component = component;
     }
 
     public void setVulkanSurface(long surface) {
