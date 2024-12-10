@@ -183,18 +183,7 @@ public class EditorStage extends Stage {
 
     public boolean update(){
 
-
-        //System.out.println(Time.framesPerSecond());
-
-
         engine.update(scene);
-
-        if(surface.getWidth() != renderer.getWidth() || surface.getHeight() != renderer.getHeight()) {
-            renderer.onSurfaceResized(surface.getWidth(), surface.getHeight());
-        }
-
-
-
         renderer.update();
         surface.update();
 

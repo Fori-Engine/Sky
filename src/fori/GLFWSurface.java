@@ -29,6 +29,20 @@ public class GLFWSurface extends Surface {
 
     private long handle;
     private Cursor cursor;
+
+    @Override
+    public void requestRenderAPI(RenderAPI api) {
+        if(api == RenderAPI.Vulkan) {
+            try (MemoryStack stack = stackPush()) {
+                vkInstance = createInstance(title, List.of("VK_LAYER_KHRONOS_validation"));
+                LongBuffer pSurface = stack.mallocLong(1);
+                glfwCreateWindowSurface(vkInstance, handle,
+                        null, pSurface);
+                vkSurface = pSurface.get(0);
+            }
+        }
+    }
+
     public GLFWSurface(Ref parent, String title, int width, int height, boolean resizable) {
         super(parent, title, width, height, resizable);
 
@@ -40,34 +54,12 @@ public class GLFWSurface extends Surface {
         GLFWErrorCallback.createPrint(System.err).set();
         glfwWindowHint(GLFW_RESIZABLE, glfwBool(resizable));
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        handle = glfwCreateWindow(width, height, title, NULL, NULL);
     }
 
     @Override
     public PointerBuffer getVulkanInstanceExtensions() {
         return glfwGetRequiredInstanceExtensions();
-    }
-
-    @Override
-    public long getVulkanSurface(VkInstance instance) {
-        long surface;
-
-        try(MemoryStack stack = stackPush()) {
-
-            LongBuffer pSurface = stack.longs(VK_NULL_HANDLE);
-
-            if(glfwCreateWindowSurface(instance, handle, null, pSurface) != VK_SUCCESS) {
-                throw new RuntimeException(Logger.error(GLFWSurface.class, "Failed to create a Vulkan surface"));
-            }
-
-            surface = pSurface.get(0);
-        }
-
-        return surface;
-    }
-
-    @Override
-    public VkInstance getVulkanInstance() {
-        return createInstance(title, List.of("VK_LAYER_KHRONOS_validation"));
     }
 
 
@@ -86,7 +78,6 @@ public class GLFWSurface extends Surface {
 
     @Override
     public void display() {
-        handle = glfwCreateWindow(width, height, title, NULL, NULL);
         if (handle == NULL)
             throw new RuntimeException(Logger.error(GLFWSurface.class, "Failed to create GLFW window"));
         glfwShowWindow(handle);

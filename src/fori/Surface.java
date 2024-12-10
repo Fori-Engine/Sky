@@ -10,6 +10,8 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
+import javax.swing.*;
+import java.awt.*;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.List;
@@ -30,7 +32,10 @@ public abstract class Surface implements Disposable {
     protected Ref ref;
     protected Vector2f cursorPos = new Vector2f();
     protected long vkDebugMessenger;
+    protected long vkSurface;
+    protected VkInstance vkInstance;
 
+    public abstract void requestRenderAPI(RenderAPI api);
 
 
     public enum Cursor {
@@ -73,14 +78,22 @@ public abstract class Surface implements Disposable {
         return new GLFWSurface(parent, title, width, height, resizable);
     }
 
+    public static Surface newAWTSurface(Ref parent, int initialWidth, int initialHeight, JFrame frame, Canvas canvas) {
+        return new AWTSurface(parent, frame.getTitle(), initialWidth, initialHeight, false, canvas);
+    }
+
 
 
     public boolean isResizable() {
         return resizable;
     }
     public abstract PointerBuffer getVulkanInstanceExtensions();
-    public abstract long getVulkanSurface(VkInstance instance);
-    public abstract VkInstance getVulkanInstance();
+    public long getVulkanSurface() {
+        return vkSurface;
+    }
+    public VkInstance getVulkanInstance() {
+        return vkInstance;
+    }
 
     protected VkInstance createInstance(String appName, List<String> validationLayers){
 

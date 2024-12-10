@@ -44,9 +44,10 @@ public class VkRenderContext extends RenderContext {
         if(!surface.supportsRenderAPI(RenderAPI.Vulkan)) {
             throw new RuntimeException(Logger.error(VkRenderContext.class, "The surface does not support Vulkan"));
         }
+        surface.requestRenderAPI(RenderAPI.Vulkan);
 
         instance = surface.getVulkanInstance();
-        vkSurface = surface.getVulkanSurface(instance);
+        vkSurface = surface.getVulkanSurface();
     }
 
     public long getDebugMessenger() {

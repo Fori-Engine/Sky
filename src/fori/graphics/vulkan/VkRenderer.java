@@ -59,7 +59,6 @@ public class VkRenderer extends Renderer {
     private VkRenderingInfoKHR renderingInfoKHR;
     private VkRenderingAttachmentInfo.Buffer colorAttachment;
     private VkRenderingAttachmentInfoKHR depthAttachment;
-    private boolean requestResize;
 
 
 
@@ -859,7 +858,6 @@ public class VkRenderer extends Renderer {
         );
 
         depthImageView = new VkImageView(ref, device, depthImage, VK_IMAGE_ASPECT_DEPTH_BIT);
-
         frameIndex = 0;
     }
 
@@ -879,12 +877,7 @@ public class VkRenderer extends Renderer {
         return device;
     }
 
-    @Override
-    public void onSurfaceResized(int width, int height) {
-        this.width = width;
-        this.height = height;
-        requestResize = true;
-    }
+
 
     @Override
     public RenderQueue newRenderQueue(RenderQueueFlags renderQueueFlags) {
@@ -958,7 +951,7 @@ public class VkRenderer extends Renderer {
             int acquireNextImageKHRResult = vkAcquireNextImageKHR(device, swapchain.swapChain, UINT64_MAX, frame.imageAcquiredSemaphore, VK_NULL_HANDLE, pImageIndex);
             if(acquireNextImageKHRResult == VK_ERROR_OUT_OF_DATE_KHR) {
                 recreateSwapchainAndDepthResources(this.width, this.height);
-                return;
+                acquireNextImageKHRResult = vkAcquireNextImageKHR(device, swapchain.swapChain, UINT64_MAX, frame.imageAcquiredSemaphore, VK_NULL_HANDLE, pImageIndex);
             }
 
 

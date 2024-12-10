@@ -30,7 +30,6 @@ public abstract class Renderer implements Disposable {
         this.maxFramesInFlight = maxFramesInFlight;
         this.surface = surface;
     }
-    public abstract void onSurfaceResized(int width, int height);
 
 
     public abstract RenderQueue newRenderQueue(RenderQueueFlags renderQueueFlags);
