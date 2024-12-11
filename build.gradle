@@ -82,6 +82,9 @@ dependencies {
 
     implementation files('dependencies/lwjgl3-awt-1.0.0-20181215.144757-4.jar')
     implementation files('dependencies/flexdock-core-1.3.jar')
+    implementation files('dependencies/flexdock-view-1.3.jar')
+    implementation files('dependencies/flexdock-perspective-1.3.jar')
+    implementation files('dependencies/flexdock-drag-1.3.jar')
 
 
     runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"

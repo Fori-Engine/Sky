@@ -58,6 +58,4 @@ void main() {
 
 
     outputColor = texture(materials[albedoIndex], inputUV);
-
-    //outputColor = vec4(1.0, 0.0, 0.0, 1.0);
 }

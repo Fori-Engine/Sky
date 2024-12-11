@@ -130,17 +130,24 @@ public class RuntimeStage extends Stage {
 
 
 
-        Entity bowser2 = new Entity("Bowser2");
+        Entity bowser2 = new Entity("VikingRoom");
         {
 
             MeshComponent meshComponent = new MeshComponent(
-                    Mesh.newMesh(AssetPacks.getAsset("core:assets/models/bowser.obj")),
+                    Mesh.newMesh(AssetPacks.getAsset("core:assets/models/viking_room.obj")),
                     shaderProgram,
-                    null
+                    new Material(
+                            "Viking Room",
+                            Texture.newTexture(getStageRef(), AssetPacks.getAsset("core:assets/textures/viking_room.png"), Texture.Filter.Linear, Texture.Filter.Linear),
+                            null,
+                            null,
+                            null
+                    )
             );
+            meshComponent.materialChanged = true;
 
-            meshComponent.transform.scale(0.15f);
-            meshComponent.transform.translate(-12, 0, 0);
+
+
 
 
             scene.addEntity(
