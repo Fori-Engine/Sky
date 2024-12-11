@@ -3,6 +3,7 @@ package fori.graphics;
 import fori.Logger;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class Ref {
@@ -19,6 +20,17 @@ public class Ref {
 
     public Ref add(Disposable disposable) {
         return add(new Ref(disposable));
+    }
+
+    public void remove(Disposable disposable) {
+        for (Iterator<Ref> iterator = children.iterator(); iterator.hasNext(); ) {
+            Ref ref = iterator.next();
+            if (ref.disposable == disposable) {
+                Logger.info(Ref.class, "Stopped tracking reference to " + disposable.getClass().getSimpleName());
+
+                iterator.remove();
+            }
+        }
     }
 
     public Ref add(Ref child){

@@ -868,6 +868,14 @@ public class VkRenderer extends Renderer {
             vkDestroyImageView(device, swapchainImageView, null);
         }
         vkDestroySwapchainKHR(device, swapchain.swapChain, null);
+
+        depthImageView.dispose();
+        depthImage.dispose();
+
+        ref.remove(depthImageView);
+        ref.remove(depthImage);
+
+
     }
 
 
