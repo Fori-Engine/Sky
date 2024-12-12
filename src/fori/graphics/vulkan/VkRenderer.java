@@ -441,7 +441,6 @@ public class VkRenderer extends Renderer {
     private VkExtent2D chooseSwapExtent(MemoryStack stack, VkSurfaceCapabilitiesKHR capabilities, int width, int height) {
 
 
-
         if(capabilities.currentExtent().width() != UINT64_MAX) {
             VkExtent2D extent = VkExtent2D.malloc(stack).set(width, height);
             return extent;
@@ -650,22 +649,18 @@ public class VkRenderer extends Renderer {
 
 
 
-            VkRect2D.Buffer scissor = VkRect2D.calloc(1, stack);
-            {
-                scissor.offset(VkOffset2D.calloc(stack).set(0, 0));
-                scissor.extent(swapchain.swapChainExtent);
-            }
+
             VkPipelineViewportStateCreateInfo viewportState = VkPipelineViewportStateCreateInfo.calloc(stack);
             {
                 viewportState.sType(VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO);
-                viewportState.pScissors(scissor);
                 viewportState.viewportCount(1);
+                viewportState.scissorCount(1);
             }
 
             VkPipelineDynamicStateCreateInfo dynamicState = VkPipelineDynamicStateCreateInfo.calloc(stack);
             {
                 dynamicState.sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
-                dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_VIEWPORT));
+                dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR));
             }
 
             VkPipelineRasterizationStateCreateInfo rasterizer = VkPipelineRasterizationStateCreateInfo.calloc(stack);
@@ -850,14 +845,18 @@ public class VkRenderer extends Renderer {
                 ref,
                 allocator,
                 device,
-                swapchain.swapChainExtent.width(),
-                swapchain.swapChainExtent.height(),
+                width,
+                height,
                 VK_FORMAT_D32_SFLOAT ,
                 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
                 VK_IMAGE_TILING_OPTIMAL
         );
 
         depthImageView = new VkImageView(ref, device, depthImage, VK_IMAGE_ASPECT_DEPTH_BIT);
+
+
+
+
         frameIndex = 0;
     }
 
@@ -874,6 +873,7 @@ public class VkRenderer extends Renderer {
 
         ref.remove(depthImageView);
         ref.remove(depthImage);
+
 
 
     }
@@ -951,16 +951,12 @@ public class VkRenderer extends Renderer {
             }
 
 
-
             VkFrame frame = frames[frameIndex];
             IntBuffer pImageIndex = stack.ints(0);
 
             vkWaitForFences(device, frame.inFlightFence, true, UINT64_MAX);
-            int acquireNextImageKHRResult = vkAcquireNextImageKHR(device, swapchain.swapChain, UINT64_MAX, frame.imageAcquiredSemaphore, VK_NULL_HANDLE, pImageIndex);
-            if(acquireNextImageKHRResult == VK_ERROR_OUT_OF_DATE_KHR) {
-                recreateSwapchainAndDepthResources(this.width, this.height);
-                acquireNextImageKHRResult = vkAcquireNextImageKHR(device, swapchain.swapChain, UINT64_MAX, frame.imageAcquiredSemaphore, VK_NULL_HANDLE, pImageIndex);
-            }
+            vkAcquireNextImageKHR(device, swapchain.swapChain, UINT64_MAX, frame.imageAcquiredSemaphore, VK_NULL_HANDLE, pImageIndex);
+
 
 
             int imageIndex = pImageIndex.get(0);
@@ -971,7 +967,7 @@ public class VkRenderer extends Renderer {
                 VkCommandBuffer commandBuffer = frame.renderCommandBuffer;
 
                 VkClearValue colorClearValue = VkClearValue.calloc(stack);
-                colorClearValue.color().float32(stack.floats(0.66f, 0.66f, 0.66f, 1.0f));
+                colorClearValue.color().float32(stack.floats(0, 0, 0, 1.0f));
 
                 VkClearValue depthClearValue = VkClearValue.calloc(stack);
                 depthClearValue.depthStencil().set(1.0f, 0);
@@ -1050,11 +1046,23 @@ public class VkRenderer extends Renderer {
                     viewport.y(0.0f);
                     viewport.width(swapchain.swapChainExtent.width());
                     viewport.height(swapchain.swapChainExtent.height());
+
+
                     viewport.minDepth(0.0f);
                     viewport.maxDepth(1.0f);
 
 
                     vkCmdSetViewport(commandBuffer, 0, viewport);
+
+                    VkRect2D.Buffer scissor = VkRect2D.calloc(1, stack);
+                    {
+                        scissor.offset(VkOffset2D.calloc(stack).set(0, 0));
+                        scissor.extent(swapchain.swapChainExtent);
+                    }
+
+                    vkCmdSetScissor(commandBuffer, 0, scissor);
+
+
                     for(RenderQueue renderQueue : renderQueues) {
 
                         VkBuffer vertexBuffer = (VkBuffer) renderQueue.getVertexBuffer();
@@ -1146,9 +1154,7 @@ public class VkRenderer extends Renderer {
 
             presentInfo.pImageIndices(pImageIndex);
 
-            if(vkQueuePresentKHR(presentQueue, presentInfo) == VK_ERROR_OUT_OF_DATE_KHR) {
-                recreateSwapchainAndDepthResources(this.width, this.height);
-            }
+            vkQueuePresentKHR(presentQueue, presentInfo);
 
             frameIndex = (frameIndex + 1) % FRAMES_IN_FLIGHT;
 

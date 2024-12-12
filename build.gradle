@@ -31,7 +31,7 @@ jar {
     }
 
     manifest {
-        manifest.attributes["Main-Class"] = "testbench.Main"
+        manifest.attributes["Main-Class"] = "editor.Launcher"
     }
 
 }
