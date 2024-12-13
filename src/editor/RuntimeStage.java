@@ -191,8 +191,7 @@ public class RuntimeStage extends Stage {
     public boolean update(){
 
         engine.update(scene);
-        renderer.update();
-        surface.update();
+        renderer.update(surface.update());
 
         return !surface.shouldClose();
     }

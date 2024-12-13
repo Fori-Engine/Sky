@@ -3,13 +3,19 @@ package fori;
 import editor.awt.AWTVK;
 import fori.graphics.Ref;
 import fori.graphics.RenderAPI;
+import fori.graphics.vulkan.VkContextManager;
 import org.joml.Vector2f;
 import org.lwjgl.PointerBuffer;
+import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.VkInstance;
+import org.lwjgl.vulkan.VkSurfaceCapabilitiesKHR;
 
 import java.awt.*;
 import java.util.List;
+
+import static org.lwjgl.vulkan.KHRSurface.*;
+import static org.lwjgl.vulkan.VK10.vkDeviceWaitIdle;
 
 public class AWTSurface extends Surface {
     private Canvas canvas;
@@ -101,8 +107,29 @@ public class AWTSurface extends Surface {
     }
 
     @Override
-    public void update() {
+    public boolean update() {
+
+        try(MemoryStack stack = MemoryStack.stackPush()) {
+            VkSurfaceCapabilitiesKHR surfaceCapabilitiesKHR = VkSurfaceCapabilitiesKHR.calloc(stack);
+            if(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkContextManager.getCurrentPhysicalDevice(), vkSurface, surfaceCapabilitiesKHR) == VK_ERROR_SURFACE_LOST_KHR) {
+                vkDeviceWaitIdle(VkContextManager.getCurrentDevice());
+                vkSurface = AWTVK.create(canvas, getVulkanInstance());
+                System.out.println("Recreated surface");
+
+                return true;
+            }
+
+
+
+
+        } catch (AWTException e) {
+            throw new RuntimeException(e);
+        }
+
+
         canvas.repaint();
+
+        return false;
     }
 
     @Override

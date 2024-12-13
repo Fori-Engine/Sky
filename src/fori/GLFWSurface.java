@@ -85,13 +85,15 @@ public class GLFWSurface extends Surface {
     }
 
     @Override
-    public void update() {
+    public boolean update() {
 
         double[] x = new double[1], y = new double[1];
         glfwGetCursorPos(handle, x, y);
 
         cursorPos.set(x[0], y[0]);
         glfwPollEvents();
+
+        return true;
     }
 
     @Override

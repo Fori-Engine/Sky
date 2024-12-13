@@ -40,7 +40,7 @@ public abstract class Renderer implements Disposable {
         return null;
     }
     public abstract void removeQueue(RenderQueue renderQueue);
-    public abstract void update();
+    public abstract void update(boolean recreateRenderer);
     public abstract int getFrameIndex();
     public int getMaxFramesInFlight() { return maxFramesInFlight; }
     public abstract String getDeviceName();

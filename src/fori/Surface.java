@@ -235,7 +235,7 @@ public abstract class Surface implements Disposable {
 
     public abstract boolean supportsRenderAPI(RenderAPI api);
     public abstract void display();
-    public abstract void update();
+    public abstract boolean update();
     public abstract boolean shouldClose();
 
 

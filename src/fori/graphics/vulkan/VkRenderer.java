@@ -1,5 +1,6 @@
 package fori.graphics.vulkan;
 
+import editor.awt.AWTVK;
 import fori.Logger;
 import fori.Surface;
 import fori.graphics.*;
@@ -59,8 +60,7 @@ public class VkRenderer extends Renderer {
     private VkRenderingInfoKHR renderingInfoKHR;
     private VkRenderingAttachmentInfo.Buffer colorAttachment;
     private VkRenderingAttachmentInfoKHR depthAttachment;
-
-
+    private boolean surfacePreviouslyLost = false;
 
 
     public VkRenderer(Ref parent, VkInstance instance, long vkSurface, int width, int height, RendererSettings rendererSettings, long debugMessenger, Surface surface) {
@@ -835,8 +835,11 @@ public class VkRenderer extends Renderer {
 
 
     private void recreateSwapchainAndDepthResources(int width, int height){
-
         disposeSwapchainAndDepthResources();
+        createSwapchainAndDepthResources(width, height);
+    }
+
+    private void createSwapchainAndDepthResources(int width, int height){
         swapchain = createSwapChain(device, vkSurface, width, height, settings.vsync);
         swapchainImageViews = createSwapchainImageViews(device, swapchain);
 
@@ -939,9 +942,21 @@ public class VkRenderer extends Renderer {
     }
 
     @Override
-    public void update() {
+    public void update(boolean recreateRenderer) {
 
         try(MemoryStack stack = stackPush()) {
+
+            if(recreateRenderer) {
+                disposeSwapchainAndDepthResources();
+                vkDestroySurfaceKHR(instance, vkSurface, null);
+                this.vkSurface = surface.getVulkanSurface();
+                this.width = surface.getWidth();
+                this.height = surface.getHeight();
+                createSwapchainAndDepthResources(this.width, this.height);
+            }
+
+
+
 
 
             if(surface.getWidth() != width || surface.getHeight() != height){
