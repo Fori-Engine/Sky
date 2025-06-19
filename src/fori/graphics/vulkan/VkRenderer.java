@@ -954,14 +954,6 @@ public class VkRenderer extends Renderer {
             vkAcquireNextImageKHR(device, swapchain.swapChain, UINT64_MAX, frame.imageAcquiredSemaphore, VK_NULL_HANDLE, pImageIndex);
 
 
-            /*
-            (19/06/2025 01:28:34 VkRenderer info) vkQueuePresentKHR(): pPresentInfo->pSwapchains[0] image on queue that cannot present to this surface.
-The Vulkan spec states: Each element of pSwapchains member of pPresentInfo must be a swapchain that is created for a surface for which presentation is supported from queue as determined using a call to vkGetPhysicalDeviceSurfaceSupportKHR (https://vulkan.lunarg.com/doc/view/1.4.313.2/windows/antora/spec/latest/chapters/VK_KHR_surface/wsi.html#VUID-vkQueuePresentKHR-pSwapchains-01292)
-
-             */
-
-
-
             int imageIndex = pImageIndex.get(0);
             vkResetFences(device, frame.inFlightFence);
             vkResetCommandBuffer(frame.renderCommandBuffer, 0);
