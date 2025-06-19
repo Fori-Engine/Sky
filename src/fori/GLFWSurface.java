@@ -96,6 +96,13 @@ public class GLFWSurface extends Surface {
         int newWidth = getWidth();
         int newHeight = getHeight();
 
+        while(newWidth == 0 || newHeight == 0) {
+            newWidth = getWidth();
+            newHeight = getHeight();
+
+            glfwPollEvents();
+        }
+
 
         if(newWidth != width || newHeight != height) {
             width = newWidth;
