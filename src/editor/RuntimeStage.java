@@ -130,6 +130,8 @@ public class RuntimeStage extends Stage {
 
 
 
+
+
         Entity bowser2 = new Entity("VikingRoom");
         {
 
@@ -138,7 +140,7 @@ public class RuntimeStage extends Stage {
                     shaderProgram,
                     new Material(
                             "Viking Room",
-                            Texture.newTexture(getStageRef(), AssetPacks.getAsset("core:assets/textures/viking_room.png"), Texture.Filter.Linear, Texture.Filter.Linear),
+                            Texture.newTexture(renderer.getRef(), AssetPacks.getAsset("core:assets/textures/viking_room.png"), Texture.Filter.Linear, Texture.Filter.Linear),
                             null,
                             null,
                             null
@@ -150,13 +152,20 @@ public class RuntimeStage extends Stage {
 
 
 
+
+
+
             scene.addEntity(
                     bowser2,
                     meshComponent
             );
+
+
             //scene.addChildEntity(bowser1, bowser2);
 
         }
+
+
 
 
 

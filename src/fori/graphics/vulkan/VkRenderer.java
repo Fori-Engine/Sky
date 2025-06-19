@@ -1185,6 +1185,10 @@ The Vulkan spec states: Each element of pSwapchains member of pPresentInfo must 
     public void dispose() {
         vkDeviceWaitIdle(device);
 
+        for(long swapchainImageView : swapchainImageViews){
+            vkDestroyImageView(device, swapchainImageView, null);
+        }
+        vkDestroySwapchainKHR(device, swapchain.swapChain, null);
 
 
         for(VkFrame frame : frames){
