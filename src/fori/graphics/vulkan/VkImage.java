@@ -3,6 +3,7 @@ package fori.graphics.vulkan;
 import fori.graphics.Disposable;
 import fori.graphics.Ref;
 import org.lwjgl.PointerBuffer;
+import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.util.vma.VmaAllocationCreateInfo;
 import org.lwjgl.util.vma.VmaAllocationInfo;
@@ -37,44 +38,43 @@ public class VkImage implements Disposable {
         super();
         ref = parent.add(this);
 
-
-
         this.device = device;
         this.format = format;
         this.allocator = allocator;
 
-
-        extent = VkExtent3D.create().set(width, height, 1);
-
-        imageCreateInfo = VkImageCreateInfo.create();
-        imageCreateInfo.sType(VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO);
-        imageCreateInfo.imageType(VK_IMAGE_TYPE_2D);
-        imageCreateInfo.extent(extent);
-        imageCreateInfo.mipLevels(1);
-        imageCreateInfo.arrayLayers(1);
-        imageCreateInfo.format(format);
-        imageCreateInfo.tiling(tiling);
-        imageCreateInfo.usage(usage);
-        imageCreateInfo.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
-        imageCreateInfo.samples(VK_SAMPLE_COUNT_1_BIT);
-        imageCreateInfo.sharingMode(VK_SHARING_MODE_EXCLUSIVE);
+        try(MemoryStack stack = MemoryStack.stackPush()) {
 
 
+            extent = VkExtent3D.calloc(stack).set(width, height, 1);
 
-        allocationCreateInfo = VmaAllocationCreateInfo.create();
+            imageCreateInfo = VkImageCreateInfo.calloc(stack);
+            imageCreateInfo.sType(VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO);
+            imageCreateInfo.imageType(VK_IMAGE_TYPE_2D);
+            imageCreateInfo.extent(extent);
+            imageCreateInfo.mipLevels(1);
+            imageCreateInfo.arrayLayers(1);
+            imageCreateInfo.format(format);
+            imageCreateInfo.tiling(tiling);
+            imageCreateInfo.usage(usage);
+            imageCreateInfo.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
+            imageCreateInfo.samples(VK_SAMPLE_COUNT_1_BIT);
+            imageCreateInfo.sharingMode(VK_SHARING_MODE_EXCLUSIVE);
 
 
-
-        pImage = MemoryUtil.memAllocLong(1);
-        pAllocation = MemoryUtil.memAllocPointer(1);
+            allocationCreateInfo = VmaAllocationCreateInfo.calloc(stack);
 
 
-        allocationInfo = VmaAllocationInfo.create();
-        vmaCreateImage(allocator.getId(), imageCreateInfo, allocationCreateInfo, pImage, pAllocation, allocationInfo);
+            pImage = stack.callocLong(1);
+            pAllocation = stack.callocPointer(1);
 
-        memory = allocationInfo.deviceMemory();
 
-        handle = pImage.get(0);
+            allocationInfo = VmaAllocationInfo.calloc(stack);
+            vmaCreateImage(allocator.getId(), imageCreateInfo, allocationCreateInfo, pImage, pAllocation, allocationInfo);
+
+            memory = allocationInfo.deviceMemory();
+
+            handle = pImage.get(0);
+        }
     }
 
     public int getFormat() {
@@ -89,16 +89,6 @@ public class VkImage implements Disposable {
     public void dispose() {
         vkDeviceWaitIdle(VkContextManager.getCurrentDevice());
         vmaDestroyImage(VkGlobalAllocator.getAllocator().getId(), handle, pAllocation.get(0));
-
-        //extent.free();
-        //imageCreateInfo.free();
-        MemoryUtil.memFree(pImage);
-        MemoryUtil.memFree(pAllocation);
-
-        //allocationInfo.free();
-        //allocationCreateInfo.free();
-
-
     }
 
     @Override
