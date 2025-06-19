@@ -224,20 +224,21 @@ public class VkRenderer extends Renderer {
                     VkQueueFamilyProperties.Buffer queueFamilies = VkQueueFamilyProperties.malloc(queueFamilyCount.get(0), stack);
                     vkGetPhysicalDeviceQueueFamilyProperties(device, queueFamilyCount, queueFamilies);
 
-                    IntBuffer presentSupport = stack.ints(VK_FALSE);
+                    IntBuffer hasPresentSupport = stack.ints(VK_FALSE);
 
-                    int graphicsFamily = 0, presentFamily = 0;
+                    int graphicsFamilyIndex = 0, presentFamilyIndex = 0;
 
-                    for (int queue = 0; queue < queueFamilies.capacity(); queue++) {
-                        VkQueueFamilyProperties queueFamilyProperties = queueFamilies.get(queue);
+                    for (int queueFamilyIndex = 0; queueFamilyIndex < queueFamilies.capacity(); queueFamilyIndex++) {
+                        VkQueueFamilyProperties queueFamilyProperties = queueFamilies.get(queueFamilyIndex);
 
-                        if ((queueFamilyProperties.queueFlags() & VK_QUEUE_GRAPHICS_BIT) != 0) graphicsFamily = queue;
-                        vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, presentSupport);
-                        if (presentSupport.get(0) == VK_TRUE) presentFamily = queue;
+                        if ((queueFamilyProperties.queueFlags() & VK_QUEUE_GRAPHICS_BIT) != 0) graphicsFamilyIndex = queueFamilyIndex;
+
+                        vkGetPhysicalDeviceSurfaceSupportKHR(device, queueFamilyIndex, surface, hasPresentSupport);
+                        if (hasPresentSupport.get(0) == VK_TRUE) presentFamilyIndex = queueFamilyIndex;
 
 
                     }
-                    physicalDeviceQueueFamilies = new VkPhysicalDeviceQueueFamilies(graphicsFamily, presentFamily);
+                    physicalDeviceQueueFamilies = new VkPhysicalDeviceQueueFamilies(graphicsFamilyIndex, presentFamilyIndex);
                 }
 
                 //Find the requisite extensions
