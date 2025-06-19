@@ -1,10 +1,7 @@
 package fori.graphics;
 
 import fori.Logger;
-import fori.Scene;
 import fori.asset.Asset;
-import fori.ecs.Entity;
-import fori.ecs.MeshComponent;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.*;
 import org.lwjgl.system.MemoryUtil;
@@ -17,14 +14,15 @@ import java.util.List;
 import static org.lwjgl.assimp.Assimp.*;
 
 public class Mesh {
+    public MeshType type;
     public List<Float> vertices;
     public List<Float> textureUVs;
     public List<Integer> indices;
     public List<Integer> textureIndices;
     public int vertexCount;
 
-
-    public Mesh(List<Float> vertices, List<Float> textureUVs, List<Integer> indices, List<Integer> textureIndices, int vertexCount) {
+    public Mesh(MeshType type, List<Float> vertices, List<Float> textureUVs, List<Integer> indices, List<Integer> textureIndices, int vertexCount) {
+        this.type = type;
         this.vertices = vertices;
         this.textureUVs = textureUVs;
         this.indices = indices;
@@ -33,7 +31,7 @@ public class Mesh {
     }
 
 
-    public static Mesh newMesh(Asset<byte[]> asset){
+    public static Mesh newMesh(MeshType type, Asset<byte[]> asset){
         ArrayList<Float> vertices = new ArrayList<>();
         ArrayList<Float> textureUVs = new ArrayList<>();
         ArrayList<Integer> indices = new ArrayList<>();
@@ -46,10 +44,6 @@ public class Mesh {
         assetData.put(asset.asset);
         assetData.flip();
         AIScene scene = Assimp.aiImportFileFromMemory(assetData, aiProcess_FlipUVs | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices, (ByteBuffer) null);
-
-
-
-
 
         int meshCount = scene.mNumMeshes();
         PointerBuffer meshes = scene.mMeshes();
@@ -71,68 +65,9 @@ public class Mesh {
         MemoryUtil.memFree(assetData);
 
 
-        return new Mesh(vertices, textureUVs, indices, textureIndices, vertices.size() / 3);
-    }
-    public static Entity separateMeshesToEntities(Asset<byte[]> asset, ShaderProgram shaderProgram, String tag, Scene scene){
-        ArrayList<AIMesh> meshList = new ArrayList<>();
-
-
-        ByteBuffer assetData = MemoryUtil.memAlloc(asset.asset.length);
-        assetData.put(asset.asset);
-        assetData.flip();
-        AIScene aiScene = Assimp.aiImportFileFromMemory(assetData, aiProcess_FlipUVs | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices, (ByteBuffer) null);
-
-        int meshCount = aiScene.mNumMeshes();
-        PointerBuffer meshes = aiScene.mMeshes();
-
-        for (int i = 0; i < meshCount; i++) meshList.add(AIMesh.create(meshes.get(i)));
-
-        AINode root = aiScene.mRootNode();
-        return createEntityFromNode(null, root, scene, meshList, shaderProgram, tag == null ? root.mName().dataString() : tag);
+        return new Mesh(type, vertices, textureUVs, indices, textureIndices, vertices.size() / 3);
     }
 
-
-    private static Entity createEntityFromNode(Entity parent, AINode aiNode, Scene scene, List<AIMesh> meshList, ShaderProgram shaderProgram, String name) {
-
-        ArrayList<Float> vertices = new ArrayList<>();
-        ArrayList<Float> textureUVs = new ArrayList<>();
-        ArrayList<Integer> indices = new ArrayList<>();
-        ArrayList<Integer> textureIndices = new ArrayList<>();
-
-        IntBuffer meshes = aiNode.mMeshes();
-        for (int i = 0; i < aiNode.mNumMeshes(); i++) {
-            int meshIndex = meshes.get(i);
-            AIMesh mesh = meshList.get(meshIndex);
-            openMesh(mesh, vertices, textureUVs, textureIndices, indices);
-        }
-
-
-        Entity childEntity = new Entity(name);
-
-
-
-        //Some AINode's (like the root) don't actually have vertices in some cases which causes a validation error
-        scene.addEntity(
-                childEntity,
-                new MeshComponent(
-                        new Mesh(vertices, textureUVs, indices, textureIndices, vertices.size() / 3),
-                        shaderProgram,
-                        null
-                )
-        );
-
-
-        if(parent != null) scene.addChildEntity(parent, childEntity);
-
-
-        for (int z = 0; z < aiNode.mNumChildren(); z++) {
-            AINode child = AINode.create(aiNode.mChildren().get(z));
-
-            createEntityFromNode(childEntity, child, scene, meshList, shaderProgram, child.mName().dataString());
-        }
-
-        return childEntity;
-    }
 
     private static void openMesh(AIMesh mesh, List<Float> vertices, List<Float> textureUVs, List<Integer> textureIndices, List<Integer> indices){
         for (int faceIndex = 0; faceIndex < mesh.mNumFaces(); faceIndex++) {

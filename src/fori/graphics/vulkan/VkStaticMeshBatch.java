@@ -2,6 +2,7 @@ package fori.graphics.vulkan;
 
 import fori.Logger;
 import fori.graphics.*;
+import fori.graphics.aurora.StaticMeshBatch;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
@@ -12,18 +13,19 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
 
-public class VkRenderQueue extends RenderQueue {
+public class VkStaticMeshBatch extends StaticMeshBatch {
     private VkPipeline pipeline;
     private VkCommandBuffer commandBuffer;
     private long fence;
     private VkQueue graphicsQueue;
     private VkDevice device;
+    private Buffer stagingVertexBuffer, stagingIndexBuffer;
 
-    public VkRenderQueue(int framesInFlight, long commandPool, VkQueue graphicsQueue, VkDevice device) {
-        super(framesInFlight);
-
+    public VkStaticMeshBatch(Ref ref, ShaderProgram shaderProgram, int framesInFlight, long commandPool, VkQueue graphicsQueue, VkDevice device, VkPipeline pipeline) {
         this.graphicsQueue = graphicsQueue;
         this.device = device;
+        this.pipeline = pipeline;
+        this.shaderProgram = shaderProgram;
 
         try(MemoryStack stack = stackPush()) {
 
@@ -36,7 +38,7 @@ public class VkRenderQueue extends RenderQueue {
             PointerBuffer pCommandBuffers = stack.mallocPointer(1);
 
             if(vkAllocateCommandBuffers(device, allocInfo, pCommandBuffers) != VK_SUCCESS) {
-                throw new RuntimeException(Logger.error(VkRenderQueue.class, "Failed to create per-RenderCommand command buffer"));
+                throw new RuntimeException(Logger.error(VkStaticMeshBatch.class, "Failed to create per-RenderCommand command buffer"));
             }
 
             commandBuffer = new VkCommandBuffer(pCommandBuffers.get(0), device);
@@ -49,7 +51,63 @@ public class VkRenderQueue extends RenderQueue {
 
             fence = pFence.get(0);
         }
+
+
+
+        stagingVertexBuffer = Buffer.newBuffer(
+                ref,
+                Attributes.getSize(this.shaderProgram.getAttributes()) * Float.BYTES * maxVertexCount,
+                Buffer.Usage.VertexBuffer,
+                Buffer.Type.CPUGPUShared,
+                true
+        );
+        stagingIndexBuffer = Buffer.newBuffer(
+                ref,
+                maxIndexCount * Integer.BYTES,
+                Buffer.Usage.IndexBuffer,
+                Buffer.Type.CPUGPUShared,
+                true
+        );
+        vertexBuffer = Buffer.newBuffer(
+                ref,
+                Attributes.getSize(this.shaderProgram.getAttributes()) * Float.BYTES * maxVertexCount,
+                Buffer.Usage.VertexBuffer,
+                Buffer.Type.GPULocal,
+                false
+        );
+        indexBuffer = Buffer.newBuffer(
+                ref,
+                maxIndexCount * Integer.BYTES,
+                Buffer.Usage.IndexBuffer,
+                Buffer.Type.GPULocal,
+                false
+        );
+
+        transformsBuffers = new Buffer[framesInFlight];
+        cameraBuffers = new Buffer[framesInFlight];
+
+        for (int i = 0; i < framesInFlight; i++) {
+            transformsBuffers[i] = Buffer.newBuffer(
+                    ref,
+                    SizeUtil.MATRIX_SIZE_BYTES,
+                    Buffer.Usage.ShaderStorageBuffer,
+                    Buffer.Type.CPUGPUShared,
+                    false
+            );
+
+            cameraBuffers[i] = Buffer.newBuffer(
+                    ref,
+                    Camera.SIZE,
+                    Buffer.Usage.UniformBuffer,
+                    Buffer.Type.CPUGPUShared,
+                    false
+            );
+        }
+
+
     }
+
+
 
     @Override
     public Buffer getDefaultVertexBuffer() {
@@ -60,6 +118,8 @@ public class VkRenderQueue extends RenderQueue {
     public Buffer getDefaultIndexBuffer() {
         return stagingIndexBuffer;
     }
+
+
 
     public VkPipeline getPipeline() {
         return pipeline;
@@ -74,9 +134,7 @@ public class VkRenderQueue extends RenderQueue {
     }
 
     @Override
-    public void updateQueue(int vertexCount, int indexCount) {
-        super.updateQueue(vertexCount, indexCount);
-
+    public void updateMeshBatch(int vertexCount, int indexCount) {
         vkResetFences(device, fence);
 
         try(MemoryStack stack = stackPush()) {
@@ -84,7 +142,7 @@ public class VkRenderQueue extends RenderQueue {
             beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
 
             if (vkBeginCommandBuffer(commandBuffer, beginInfo) != VK_SUCCESS) {
-                throw new RuntimeException(Logger.error(VkRenderQueue.class, "Failed to start recording per-RenderCommand command buffer"));
+                throw new RuntimeException(Logger.error(VkStaticMeshBatch.class, "Failed to start recording command buffer"));
             }
 
 
@@ -108,7 +166,7 @@ public class VkRenderQueue extends RenderQueue {
             this.indexCount += indexCount;
 
             if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-                throw new RuntimeException(Logger.error(VkRenderQueue.class, "Failed to finish recording per-RenderCommand command buffer"));
+                throw new RuntimeException(Logger.error(VkStaticMeshBatch.class, "Failed to finish recording command buffer"));
             }
 
             VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
@@ -116,7 +174,7 @@ public class VkRenderQueue extends RenderQueue {
             submitInfo.pCommandBuffers(stack.pointers(commandBuffer));
 
             if(vkQueueSubmit(graphicsQueue, submitInfo, fence) != VK_SUCCESS) {
-                throw new RuntimeException(Logger.error(VkRenderQueue.class, "Failed to submit per-RenderCommand command buffer"));
+                throw new RuntimeException(Logger.error(VkStaticMeshBatch.class, "Failed to submit command buffer"));
             }
 
             vkWaitForFences(device, fence, true, UINT64_MAX);

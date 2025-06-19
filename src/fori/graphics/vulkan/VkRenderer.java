@@ -3,8 +3,9 @@ package fori.graphics.vulkan;
 import fori.Logger;
 import fori.Surface;
 import fori.graphics.*;
+import fori.graphics.aurora.DynamicMesh;
+import fori.graphics.aurora.StaticMeshBatch;
 import org.lwjgl.PointerBuffer;
-import org.lwjgl.system.Configuration;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
@@ -574,9 +575,8 @@ public class VkRenderer extends Renderer {
 
         return swapChainImageViews;
     }
-    private VkPipeline createPipeline(VkDevice device, VkSwapchain swapchain, RenderQueueFlags renderQueueFlags) {
+    private VkPipeline createPipeline(VkDevice device, VkSwapchain swapchain, VkShaderProgram vkShaderProgram) {
 
-        VkShaderProgram vkShaderProgram = (VkShaderProgram) renderQueueFlags.shaderProgram;
 
 
         Attributes.Type[] attributes = vkShaderProgram.getAttributes();
@@ -711,9 +711,9 @@ public class VkRenderer extends Renderer {
             VkPipelineDepthStencilStateCreateInfo depthStencil = VkPipelineDepthStencilStateCreateInfo.calloc(stack);
             {
                 depthStencil.sType(VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO);
-                depthStencil.depthTestEnable(renderQueueFlags.depthTest);
-                depthStencil.depthWriteEnable(renderQueueFlags.depthTest);
-                depthStencil.depthCompareOp(toVkDepthCompareOpEnum(renderQueueFlags.depthOp));
+                depthStencil.depthTestEnable(true);
+                depthStencil.depthWriteEnable(true);
+                depthStencil.depthCompareOp(toVkDepthCompareOpEnum(DepthTestType.LessThan));
                 depthStencil.minDepthBounds(0f);
                 depthStencil.maxDepthBounds(1f);
 
@@ -783,9 +783,9 @@ public class VkRenderer extends Renderer {
         return new VkPipeline(pipelineLayout, graphicsPipeline);
     }
 
-    private int toVkDepthCompareOpEnum(RenderQueueFlags.DepthOp depthOp) {
-        if(depthOp == null) return -1;
-        switch(depthOp) {
+    private int toVkDepthCompareOpEnum(DepthTestType depthTestType) {
+        if(depthTestType == null) return -1;
+        switch(depthTestType) {
             case LessThan -> {
                 return VK_COMPARE_OP_LESS;
             }
@@ -806,7 +806,7 @@ public class VkRenderer extends Renderer {
             }
         }
 
-        throw new RuntimeException(Logger.error(VkRenderer.class, "The depth operation for this pipeline is an invalid value [" + depthOp + "]"));
+        throw new RuntimeException(Logger.error(VkRenderer.class, "The depth operation for this pipeline is an invalid value [" + depthTestType + "]"));
     }
 
     private long createCommandPool(VkDevice device, int queueFamily) {
@@ -877,55 +877,27 @@ public class VkRenderer extends Renderer {
 
 
 
+
+
+
     @Override
-    public RenderQueue newRenderQueue(RenderQueueFlags renderQueueFlags) {
-        VkRenderQueue vkRenderQueue = new VkRenderQueue(FRAMES_IN_FLIGHT, sharedCommandPool, graphicsQueue, device);
-        renderQueues.add(vkRenderQueue);
+    public StaticMeshBatch submitStaticMesh(Mesh mesh, ShaderProgram shaderProgram, int textureCount) {
+        if(staticMeshBatches.containsKey(shaderProgram)) {
+            return staticMeshBatches.get(shaderProgram);
+        }
+        else {
 
+            VkPipeline pipeline = createPipeline(device, swapchain, (VkShaderProgram) shaderProgram);
+            VkStaticMeshBatch vkStaticMeshBatch = new VkStaticMeshBatch(getRef(), shaderProgram, getMaxFramesInFlight(), sharedCommandPool, graphicsQueue, device, pipeline);
 
-        vkRenderQueue.setStagingVertexBuffer(Buffer.newBuffer(
-                getRef(),
-                Attributes.getSize(renderQueueFlags.shaderProgram.getAttributes()) * Float.BYTES * renderQueueFlags.maxVertices,
-                Buffer.Usage.VertexBuffer,
-                Buffer.Type.CPUGPUShared,
-                true
-        ));
-        vkRenderQueue.setStagingIndexBuffer(Buffer.newBuffer(
-                getRef(),
-                renderQueueFlags.maxIndices * Integer.BYTES,
-                Buffer.Usage.IndexBuffer,
-                Buffer.Type.CPUGPUShared,
-                true
-        ));
-        vkRenderQueue.setVertexBuffer(Buffer.newBuffer(
-                getRef(),
-                Attributes.getSize(renderQueueFlags.shaderProgram.getAttributes()) * Float.BYTES * renderQueueFlags.maxVertices,
-                Buffer.Usage.VertexBuffer,
-                Buffer.Type.GPULocal,
-                false
-        ));
-        vkRenderQueue.setIndexBuffer(Buffer.newBuffer(
-                getRef(),
-                renderQueueFlags.maxIndices * Integer.BYTES,
-                Buffer.Usage.IndexBuffer,
-                Buffer.Type.GPULocal,
-                false
-        ));
-
-        vkRenderQueue.setShaderProgram(renderQueueFlags.shaderProgram);
-        vkRenderQueue.setPipeline(createPipeline(device, swapchain, renderQueueFlags));
-
-        return vkRenderQueue;
+            staticMeshBatches.put(shaderProgram, vkStaticMeshBatch);
+            return vkStaticMeshBatch;
+        }
     }
 
     @Override
-    public void removeQueue(RenderQueue renderQueue) {
-        if(renderQueues.contains(renderQueue)){
-            renderQueues.remove(renderQueue);
-        }
-        else {
-            throw new RuntimeException(Logger.error(VkRenderer.class, "Cannot remove a RenderCommand which was never placed in the queue"));
-        }
+    public DynamicMesh submitDynamicMesh(Mesh mesh, ShaderProgram shaderProgram) {
+        return null;
     }
 
     @Override
@@ -1058,16 +1030,17 @@ public class VkRenderer extends Renderer {
                     vkCmdSetScissor(commandBuffer, 0, scissor);
 
 
-                    for(RenderQueue renderQueue : renderQueues) {
+                    for(StaticMeshBatch staticMeshBatch : staticMeshBatches.values()) {
+                        VkStaticMeshBatch vkStaticMeshBatch = (VkStaticMeshBatch) staticMeshBatch;
 
-                        VkBuffer vertexBuffer = (VkBuffer) renderQueue.getVertexBuffer();
-                        VkBuffer indexBuffer = (VkBuffer) renderQueue.getIndexBuffer();
+                        VkBuffer vertexBuffer = (VkBuffer) vkStaticMeshBatch.getVertexBuffer();
+                        VkBuffer indexBuffer = (VkBuffer) vkStaticMeshBatch.getIndexBuffer();
 
 
 
 
-                        VkPipeline pipeline = ((VkRenderQueue) renderQueue).getPipeline();
-                        VkShaderProgram shaderProgram = (VkShaderProgram) renderQueue.getShaderProgram();
+                        VkPipeline pipeline = vkStaticMeshBatch.getPipeline();
+                        VkShaderProgram shaderProgram = (VkShaderProgram) vkStaticMeshBatch.shaderProgram;
                         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
                         LongBuffer vertexBuffers = stack.longs(vertexBuffer.getHandle());
@@ -1079,13 +1052,7 @@ public class VkRenderer extends Renderer {
                                 pipeline.pipelineLayout, 0, stack.longs(shaderProgram.getDescriptorSets(frameIndex)), null);
 
                         vkCmdBindIndexBuffer(commandBuffer, indexBuffer.getHandle(), 0, VK_INDEX_TYPE_UINT32);
-                        vkCmdDrawIndexed(commandBuffer, renderQueue.getIndexCount(), 1, 0, 0, 0);
-
-
-
-
-
-
+                        vkCmdDrawIndexed(commandBuffer, vkStaticMeshBatch.indexCount, 1, 0, 0, 0);
 
                     }
 
@@ -1169,7 +1136,7 @@ public class VkRenderer extends Renderer {
     }
 
     @Override
-    public int getMaxRenderQueueCount() {
+    public int getMaxStaticMeshBatchCount() {
         return 10;
     }
 
@@ -1190,13 +1157,11 @@ public class VkRenderer extends Renderer {
             vkDestroyFence(device, frame.inFlightFence, null);
         }
 
-        for(RenderQueue renderQueue : renderQueues){
-            VkRenderQueue vkRenderQueue = (VkRenderQueue) renderQueue;
-            vkDestroyFence(device, vkRenderQueue.getFence(), null);
-            vkDestroyPipeline(device, vkRenderQueue.getPipeline().pipeline, null);
-            vkDestroyPipelineLayout(device, vkRenderQueue.getPipeline().pipelineLayout, null);
-
-
+        for(StaticMeshBatch staticMeshBatch : staticMeshBatches.values()) {
+            VkStaticMeshBatch vkStaticMeshBatch = (VkStaticMeshBatch) staticMeshBatch;
+            vkDestroyFence(device, vkStaticMeshBatch.getFence(), null);
+            vkDestroyPipeline(device, vkStaticMeshBatch.getPipeline().pipeline, null);
+            vkDestroyPipelineLayout(device, vkStaticMeshBatch.getPipeline().pipelineLayout, null);
         }
 
 

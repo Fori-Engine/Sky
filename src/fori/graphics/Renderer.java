@@ -2,12 +2,16 @@ package fori.graphics;
 
 import fori.Logger;
 import fori.Surface;
+import fori.graphics.aurora.DynamicMesh;
+import fori.graphics.aurora.StaticMeshBatch;
 import fori.graphics.vulkan.VkRenderContext;
 import fori.graphics.vulkan.VkRenderer;
 import org.lwjgl.vulkan.VkInstance;
 
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 public abstract class Renderer implements Disposable {
 
@@ -15,11 +19,11 @@ public abstract class Renderer implements Disposable {
     protected int height;
     private static RenderAPI api;
     protected RendererSettings settings;
-    protected List<RenderQueue> renderQueues = new ArrayList<>();
     protected Ref ref;
     protected int maxFramesInFlight;
     protected Surface surface;
-
+    protected Map<ShaderProgram, StaticMeshBatch> staticMeshBatches;
+    protected List<DynamicMesh> dynamicMeshes;
 
 
     public Renderer(Ref parent, int width, int height, int maxFramesInFlight, RendererSettings settings, Surface surface){
@@ -29,8 +33,16 @@ public abstract class Renderer implements Disposable {
         this.settings = settings;
         this.maxFramesInFlight = maxFramesInFlight;
         this.surface = surface;
+
+        staticMeshBatches = new HashMap<>();
+        dynamicMeshes = new LinkedList<>();
     }
 
+    public abstract StaticMeshBatch submitStaticMesh(Mesh mesh, ShaderProgram shaderProgram, int textureCount);
+    public abstract DynamicMesh submitDynamicMesh(Mesh mesh, ShaderProgram shaderProgram);
+
+
+    /*
 
     public abstract RenderQueue newRenderQueue(RenderQueueFlags renderQueueFlags);
     public RenderQueue getRenderQueueByShaderProgram(ShaderProgram shaderProgram){
@@ -40,6 +52,8 @@ public abstract class Renderer implements Disposable {
         return null;
     }
     public abstract void removeQueue(RenderQueue renderQueue);
+
+     */
     public abstract void update(boolean recreateRenderer);
     public abstract int getFrameIndex();
     public int getMaxFramesInFlight() { return maxFramesInFlight; }
@@ -53,7 +67,7 @@ public abstract class Renderer implements Disposable {
         return height;
     }
     public abstract void waitForDevice();
-    public abstract int getMaxRenderQueueCount();
+    public abstract int getMaxStaticMeshBatchCount();
     public static Renderer newRenderer(Ref parent, Surface surface, int width, int height, RendererSettings settings){
         api = settings.backend;
 

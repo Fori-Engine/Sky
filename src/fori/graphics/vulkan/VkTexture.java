@@ -3,7 +3,6 @@ package fori.graphics.vulkan;
 import fori.Logger;
 import fori.asset.Asset;
 import fori.asset.TextureData;
-import fori.graphics.Attributes;
 import fori.graphics.Buffer;
 import fori.graphics.Ref;
 import fori.graphics.Texture;
@@ -109,7 +108,7 @@ public class VkTexture extends Texture {
             PointerBuffer pCommandBuffers = stack.mallocPointer(1);
 
             if(vkAllocateCommandBuffers(VkContextManager.getCurrentDevice(), allocInfo, pCommandBuffers) != VK_SUCCESS) {
-                throw new RuntimeException(Logger.error(VkRenderQueue.class, "Failed to create per-RenderCommand command buffer"));
+                throw new RuntimeException(Logger.error(VkStaticMeshBatch.class, "Failed to create per-RenderCommand command buffer"));
             }
 
             commandBuffer = new VkCommandBuffer(pCommandBuffers.get(0), VkContextManager.getCurrentDevice());
@@ -129,7 +128,7 @@ public class VkTexture extends Texture {
             beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
 
             if (vkBeginCommandBuffer(commandBuffer, beginInfo) != VK_SUCCESS) {
-                throw new RuntimeException(Logger.error(VkRenderQueue.class, "Failed to start recording per-RenderCommand command buffer"));
+                throw new RuntimeException(Logger.error(VkStaticMeshBatch.class, "Failed to start recording per-RenderCommand command buffer"));
             }
 
             transitionImageLayout(
