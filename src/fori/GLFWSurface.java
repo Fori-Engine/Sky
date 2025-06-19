@@ -93,7 +93,19 @@ public class GLFWSurface extends Surface {
         cursorPos.set(x[0], y[0]);
         glfwPollEvents();
 
-        return true;
+        int newWidth = getWidth();
+        int newHeight = getHeight();
+
+
+        if(newWidth != width || newHeight != height) {
+            width = newWidth;
+            height = newHeight;
+
+            return true;
+        }
+
+
+        return false;
     }
 
     @Override

@@ -90,13 +90,13 @@ public class VkImage implements Disposable {
         vkDeviceWaitIdle(VkContextManager.getCurrentDevice());
         vmaDestroyImage(VkGlobalAllocator.getAllocator().getId(), handle, pAllocation.get(0));
 
-        extent.free();
-        imageCreateInfo.free();
+        //extent.free();
+        //imageCreateInfo.free();
         MemoryUtil.memFree(pImage);
         MemoryUtil.memFree(pAllocation);
 
-        allocationInfo.free();
-        allocationCreateInfo.free();
+        //allocationInfo.free();
+        //allocationCreateInfo.free();
 
 
     }

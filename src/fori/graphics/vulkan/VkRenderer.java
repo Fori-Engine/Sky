@@ -1,10 +1,10 @@
 package fori.graphics.vulkan;
 
-import editor.awt.AWTVK;
 import fori.Logger;
 import fori.Surface;
 import fori.graphics.*;
 import org.lwjgl.PointerBuffer;
+import org.lwjgl.system.Configuration;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
@@ -60,7 +60,6 @@ public class VkRenderer extends Renderer {
     private VkRenderingInfoKHR renderingInfoKHR;
     private VkRenderingAttachmentInfo.Buffer colorAttachment;
     private VkRenderingAttachmentInfoKHR depthAttachment;
-    private boolean surfacePreviouslyLost = false;
 
 
     public VkRenderer(Ref parent, VkInstance instance, long vkSurface, int width, int height, RendererSettings rendererSettings, long debugMessenger, Surface surface) {
@@ -830,15 +829,6 @@ public class VkRenderer extends Renderer {
         return commandPool;
     }
 
-
-
-
-
-    private void recreateSwapchainAndDepthResources(int width, int height){
-        disposeSwapchainAndDepthResources();
-        createSwapchainAndDepthResources(width, height);
-    }
-
     private void createSwapchainAndDepthResources(int width, int height){
         swapchain = createSwapChain(device, vkSurface, width, height, settings.vsync);
         swapchainImageViews = createSwapchainImageViews(device, swapchain);
@@ -856,10 +846,6 @@ public class VkRenderer extends Renderer {
         );
 
         depthImageView = new VkImageView(ref, device, depthImage, VK_IMAGE_ASPECT_DEPTH_BIT);
-
-
-
-
         frameIndex = 0;
     }
 
@@ -948,7 +934,6 @@ public class VkRenderer extends Renderer {
 
             if(recreateRenderer) {
                 disposeSwapchainAndDepthResources();
-                vkDestroySurfaceKHR(instance, vkSurface, null);
                 this.vkSurface = surface.getVulkanSurface();
                 this.width = surface.getWidth();
                 this.height = surface.getHeight();
@@ -959,11 +944,6 @@ public class VkRenderer extends Renderer {
 
 
 
-            if(surface.getWidth() != width || surface.getHeight() != height){
-                this.width = surface.getWidth();
-                this.height = surface.getHeight();
-                recreateSwapchainAndDepthResources(this.width, this.height);
-            }
 
 
             VkFrame frame = frames[frameIndex];
@@ -971,6 +951,13 @@ public class VkRenderer extends Renderer {
 
             vkWaitForFences(device, frame.inFlightFence, true, UINT64_MAX);
             vkAcquireNextImageKHR(device, swapchain.swapChain, UINT64_MAX, frame.imageAcquiredSemaphore, VK_NULL_HANDLE, pImageIndex);
+
+
+            /*
+            (19/06/2025 01:28:34 VkRenderer info) vkQueuePresentKHR(): pPresentInfo->pSwapchains[0] image on queue that cannot present to this surface.
+The Vulkan spec states: Each element of pSwapchains member of pPresentInfo must be a swapchain that is created for a surface for which presentation is supported from queue as determined using a call to vkGetPhysicalDeviceSurfaceSupportKHR (https://vulkan.lunarg.com/doc/view/1.4.313.2/windows/antora/spec/latest/chapters/VK_KHR_surface/wsi.html#VUID-vkQueuePresentKHR-pSwapchains-01292)
+
+             */
 
 
 
@@ -1151,12 +1138,7 @@ public class VkRenderer extends Renderer {
             submitInfo.pCommandBuffers(stack.pointers(frame.renderCommandBuffer));
             submitInfo.pSignalSemaphores(stack.longs(frame.renderFinishedSemaphore));
 
-            int catchVal = vkQueueSubmit(graphicsQueue, submitInfo, frame.inFlightFence);
-
-            if(catchVal != VK_SUCCESS) {
-                System.out.println("Catch: " + catchVal);
-                throw new RuntimeException("Failed to submit draw command buffer");
-            }
+            vkQueueSubmit(graphicsQueue, submitInfo, frame.inFlightFence);
 
 
 
@@ -1211,7 +1193,6 @@ public class VkRenderer extends Renderer {
             vkDestroyFence(device, frame.inFlightFence, null);
         }
 
-        disposeSwapchainAndDepthResources();
         for(RenderQueue renderQueue : renderQueues){
             VkRenderQueue vkRenderQueue = (VkRenderQueue) renderQueue;
             vkDestroyFence(device, vkRenderQueue.getFence(), null);
@@ -1228,14 +1209,6 @@ public class VkRenderer extends Renderer {
         vmaDestroyAllocator(allocator.getId());
         vkDestroySurfaceKHR(instance, vkSurface, null);
         EXTDebugUtils.vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, null);
-
-
-
-
-
-
-
-
 
         vkDestroyDevice(device, null);
         vkDestroyInstance(instance, null);

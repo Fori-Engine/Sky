@@ -57,7 +57,7 @@ public class VkImageView implements Disposable {
     public void dispose() {
         vkDeviceWaitIdle(VkContextManager.getCurrentDevice());
         vkDestroyImageView(VkContextManager.getCurrentDevice(), handle, null);
-        imageViewCreateInfo.free();
+        //imageViewCreateInfo.free();
     }
 
     @Override

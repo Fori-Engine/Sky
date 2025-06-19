@@ -78,9 +78,6 @@ public abstract class Surface implements Disposable {
         return new GLFWSurface(parent, title, width, height, resizable);
     }
 
-    public static Surface newAWTSurface(Ref parent, int initialWidth, int initialHeight, JFrame frame, Canvas canvas) {
-        return new AWTSurface(parent, frame.getTitle(), initialWidth, initialHeight, false, canvas);
-    }
 
 
 

@@ -122,7 +122,7 @@ public class AmberUI {
                 windowEvent.windowRect = new Rect2D(headerRect.x, headerRect.y, clientRect.w, headerRect.h + clientRect.h);
 
 
-                Optional<Boolean> isWindowSelected = isHighestWindowForInput(id, (_, e) -> e.windowRect.contains(surface.getMousePos().x, surface.getMousePos().y) && surface.getMousePressed(Input.MOUSE_BUTTON_LEFT));
+                Optional<Boolean> isWindowSelected = isHighestWindowForInput(id, (ignored, e) -> e.windowRect.contains(surface.getMousePos().x, surface.getMousePos().y) && surface.getMousePressed(Input.MOUSE_BUTTON_LEFT));
 
                 if(isWindowSelected.isPresent() && isWindowSelected.get()) {
                     boolean inHeader = headerRect.contains(surface.getMousePos().x, surface.getMousePos().y);
@@ -165,7 +165,7 @@ public class AmberUI {
 
 
 
-                Optional<Boolean> showCursor = isHighestWindowForInput(id, (_, e) -> {
+                Optional<Boolean> showCursor = isHighestWindowForInput(id, (ignored, e) -> {
                     if(e.windowRect.contains(surface.getMousePos().x, surface.getMousePos().y)) {
                         float indentSize = 10;
                         float offset = 5;
@@ -332,7 +332,7 @@ public class AmberUI {
                 boolean hovered, pressed = false;
 
 
-                Optional<Boolean> isWindowSelected = isHighestWindowForInput(currentWindowID, (_, e) -> e.windowRect.contains(surface.getMousePos().x, surface.getMousePos().y));
+                Optional<Boolean> isWindowSelected = isHighestWindowForInput(currentWindowID, (ignored, e) -> e.windowRect.contains(surface.getMousePos().x, surface.getMousePos().y));
 
 
 
