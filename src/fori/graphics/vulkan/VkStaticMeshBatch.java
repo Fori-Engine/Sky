@@ -156,7 +156,6 @@ public class VkStaticMeshBatch extends StaticMeshBatch {
             vertexBufferCopy.srcOffset(0);
             vertexBufferCopy.dstOffset((long) this.vertexCount * Attributes.getSize(shaderProgram.getAttributes()) * Float.BYTES);
 
-
             vkCmdCopyBuffer(commandBuffer, ((VkBuffer) stagingVertexBuffer).getHandle(), ((VkBuffer) vertexBuffer).getHandle(), vertexBufferCopy);
 
 
@@ -164,6 +163,7 @@ public class VkStaticMeshBatch extends StaticMeshBatch {
             indexBufferCopy.size((long) indexCount * Integer.BYTES);
             indexBufferCopy.srcOffset(0);
             indexBufferCopy.dstOffset((long) this.indexCount * Integer.BYTES);
+
             vkCmdCopyBuffer(commandBuffer, ((VkBuffer) stagingIndexBuffer).getHandle(), ((VkBuffer) indexBuffer).getHandle(), indexBufferCopy);
 
 

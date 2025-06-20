@@ -890,30 +890,10 @@ public class VkRenderer extends Renderer {
         VkStaticMeshBatch vkStaticMeshBatch = new VkStaticMeshBatch(getRef(), shaderProgram, getMaxFramesInFlight(), sharedCommandPool, graphicsQueue, device, pipeline, maxVertexCount, maxIndexCount, maxTransformCount);
         staticMeshBatches.put(shaderProgram, vkStaticMeshBatch);
 
-        ByteBuffer vertexBufferData = vkStaticMeshBatch.getDefaultVertexBuffer().get();
-        vertexBufferData.clear();
-
-        ByteBuffer indexBufferData = vkStaticMeshBatch.getDefaultIndexBuffer().get();
-        indexBufferData.clear();
-
         return vkStaticMeshBatch;
     }
 
-    @Override
-    public void submitStaticMesh(StaticMeshBatch staticMeshBatch, Mesh mesh) {
-        if(mesh.type != MeshType.Static) {
-            throw new RuntimeException("Mesh of type " + mesh.type + " passed to submitStaticMesh()");
-        }
 
-        VkStaticMeshBatch vkStaticMeshBatch = (VkStaticMeshBatch) staticMeshBatch;
-        mesh.put(vkStaticMeshBatch.vertexCount, vkStaticMeshBatch.getShaderProgram(), vkStaticMeshBatch.getDefaultVertexBuffer().get(), vkStaticMeshBatch.getDefaultIndexBuffer().get());
-        vkStaticMeshBatch.updateMeshBatch(
-                mesh.vertexCount,
-                mesh.indices.size()
-        );
-
-
-    }
 
     @Override
     public DynamicMesh submitDynamicMesh(Mesh mesh, ShaderProgram shaderProgram) {

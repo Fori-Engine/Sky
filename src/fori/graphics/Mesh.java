@@ -67,7 +67,54 @@ public class Mesh {
 
         return new Mesh(type, vertices, textureUVs, indices, textureIndices, vertices.size() / 3);
     }
-    public void put(int currentVertexCount, ShaderProgram shaderProgram, ByteBuffer vertexBufferData, ByteBuffer indexBufferData) {
+
+    public static Mesh newTestQuad(MeshType type) {
+        ArrayList<Float> vertices = new ArrayList<>();
+        ArrayList<Float> textureUVs = new ArrayList<>();
+        ArrayList<Integer> indices = new ArrayList<>();
+        ArrayList<Integer> textureIndices = new ArrayList<>();
+
+        vertices.add(-0.5f);
+        vertices.add(-0.5f);
+        vertices.add(0.0f);
+
+        vertices.add(0.5f);
+        vertices.add(-0.5f);
+        vertices.add(0.0f);
+
+        vertices.add(0.5f);
+        vertices.add(0.5f);
+        vertices.add(0.0f);
+
+        vertices.add(-0.5f);
+        vertices.add(0.5f);
+        vertices.add(0.0f);
+
+        indices.add(0);
+        indices.add(1);
+        indices.add(2);
+        indices.add(2);
+        indices.add(3);
+        indices.add(0);
+
+        textureUVs.add(0.0f);
+        textureUVs.add(0.0f);
+
+        textureUVs.add(0.0f);
+        textureUVs.add(0.0f);
+
+        textureUVs.add(0.0f);
+        textureUVs.add(0.0f);
+
+        textureUVs.add(0.0f);
+        textureUVs.add(0.0f);
+
+
+        return new Mesh(type, vertices, textureUVs, indices, textureIndices, vertices.size() / 3);
+
+    }
+
+    public void put(int currentVertexCount, ShaderProgram shaderProgram, int transformIndex, ByteBuffer vertexBufferData, ByteBuffer indexBufferData) {
         for (int vertex = 0; vertex < vertexCount; vertex++) {
 
 
@@ -90,12 +137,13 @@ public class Mesh {
                     vertexBufferData.putFloat(v);
                 }
 
-                else if(attribute == Attributes.Type.TransformIndexFloat1) vertexBufferData.putFloat(0);
+                else if(attribute == Attributes.Type.TransformIndexFloat1) vertexBufferData.putFloat(transformIndex);
             }
         }
 
-        for(int index : indices)
+        for(int index : indices) {
             indexBufferData.putInt(currentVertexCount + index);
+        }
     }
 
 

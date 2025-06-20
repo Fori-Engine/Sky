@@ -6,8 +6,10 @@ import fori.graphics.aurora.DynamicMesh;
 import fori.graphics.aurora.StaticMeshBatch;
 import fori.graphics.vulkan.VkRenderContext;
 import fori.graphics.vulkan.VkRenderer;
+import fori.graphics.vulkan.VkStaticMeshBatch;
 import org.lwjgl.vulkan.VkInstance;
 
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -39,22 +41,34 @@ public abstract class Renderer implements Disposable {
     }
 
     public abstract StaticMeshBatch newStaticMeshBatch(int maxVertices, int maxIndices, int maxTransforms, ShaderProgram shaderProgram);
-    public abstract void submitStaticMesh(StaticMeshBatch staticMeshBatch, Mesh mesh);
+    public void submitStaticMesh(StaticMeshBatch staticMeshBatch, Mesh mesh, int transformIndex) {
+        if(mesh.type != MeshType.Static) {
+            throw new RuntimeException("Mesh of type " + mesh.type + " passed to submitStaticMesh()");
+        }
+
+        ByteBuffer vertexBufferData = staticMeshBatch.getDefaultVertexBuffer().get();
+        vertexBufferData.clear();
+
+        ByteBuffer indexBufferData = staticMeshBatch.getDefaultIndexBuffer().get();
+        indexBufferData.clear();
+
+        mesh.put(
+                staticMeshBatch.vertexCount,
+                staticMeshBatch.getShaderProgram(),
+                transformIndex,
+                staticMeshBatch.getDefaultVertexBuffer().get(),
+                staticMeshBatch.getDefaultIndexBuffer().get()
+        );
+
+        staticMeshBatch.updateMeshBatch(
+                mesh.vertexCount,
+                mesh.indices.size()
+        );
+    }
     public abstract DynamicMesh submitDynamicMesh(Mesh mesh, ShaderProgram shaderProgram);
 
 
-    /*
 
-    public abstract RenderQueue newRenderQueue(RenderQueueFlags renderQueueFlags);
-    public RenderQueue getRenderQueueByShaderProgram(ShaderProgram shaderProgram){
-        for(RenderQueue renderQueue : renderQueues){
-            if(renderQueue.getShaderProgram() == shaderProgram) return renderQueue;
-        }
-        return null;
-    }
-    public abstract void removeQueue(RenderQueue renderQueue);
-
-     */
     public abstract void update(boolean recreateRenderer);
     public abstract int getFrameIndex();
     public int getMaxFramesInFlight() { return maxFramesInFlight; }
