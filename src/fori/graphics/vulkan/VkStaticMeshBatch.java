@@ -28,9 +28,10 @@ public class VkStaticMeshBatch extends StaticMeshBatch {
                              VkQueue graphicsQueue,
                              VkDevice device,
                              VkPipeline pipeline,
-                             int maxVertices,
-                             int maxIndices) {
-        super(maxVertices, maxIndices, shaderProgram);
+                             int maxVertexCount,
+                             int maxIndexCount,
+                             int maxTransformCount) {
+        super(maxVertexCount, maxIndexCount, maxTransformCount, shaderProgram);
         this.graphicsQueue = graphicsQueue;
         this.device = device;
         this.pipeline = pipeline;
@@ -64,28 +65,28 @@ public class VkStaticMeshBatch extends StaticMeshBatch {
 
         stagingVertexBuffer = Buffer.newBuffer(
                 ref,
-                Attributes.getSize(this.shaderProgram.getAttributes()) * Float.BYTES * maxVertexCount,
+                Attributes.getSize(this.shaderProgram.getAttributes()) * Float.BYTES * this.maxVertexCount,
                 Buffer.Usage.VertexBuffer,
                 Buffer.Type.CPUGPUShared,
                 true
         );
         stagingIndexBuffer = Buffer.newBuffer(
                 ref,
-                maxIndexCount * Integer.BYTES,
+                this.maxIndexCount * Integer.BYTES,
                 Buffer.Usage.IndexBuffer,
                 Buffer.Type.CPUGPUShared,
                 true
         );
         vertexBuffer = Buffer.newBuffer(
                 ref,
-                Attributes.getSize(this.shaderProgram.getAttributes()) * Float.BYTES * maxVertexCount,
+                Attributes.getSize(this.shaderProgram.getAttributes()) * Float.BYTES * this.maxVertexCount,
                 Buffer.Usage.VertexBuffer,
                 Buffer.Type.GPULocal,
                 false
         );
         indexBuffer = Buffer.newBuffer(
                 ref,
-                maxIndexCount * Integer.BYTES,
+                this.maxIndexCount * Integer.BYTES,
                 Buffer.Usage.IndexBuffer,
                 Buffer.Type.GPULocal,
                 false
@@ -97,7 +98,7 @@ public class VkStaticMeshBatch extends StaticMeshBatch {
         for (int i = 0; i < framesInFlight; i++) {
             transformsBuffers[i] = Buffer.newBuffer(
                     ref,
-                    SizeUtil.MATRIX_SIZE_BYTES,
+                    SizeUtil.MATRIX_SIZE_BYTES * maxTransformCount,
                     Buffer.Usage.ShaderStorageBuffer,
                     Buffer.Type.CPUGPUShared,
                     false

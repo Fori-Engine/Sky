@@ -4,8 +4,6 @@ public class RendererSettings {
     public boolean validation = true;
     public RenderAPI backend;
     public boolean vsync;
-    public int maxStaticMeshBatchVertexCount;
-    public int maxStaticMeshBatchIndexCount;
 
     public RendererSettings(RenderAPI backend) {
         this.backend = backend;
@@ -21,13 +19,5 @@ public class RendererSettings {
         return this;
     }
 
-    public RendererSettings setMaxStaticMeshBatchVertexCount(int maxStaticMeshBatchVertexCount) {
-        this.maxStaticMeshBatchVertexCount = maxStaticMeshBatchVertexCount;
-        return this;
-    }
 
-    public RendererSettings setMaxStaticMeshBatchIndexCount(int maxStaticMeshBatchIndexCount) {
-        this.maxStaticMeshBatchIndexCount = maxStaticMeshBatchIndexCount;
-        return this;
-    }
 }

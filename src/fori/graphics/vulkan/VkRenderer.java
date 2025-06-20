@@ -877,41 +877,42 @@ public class VkRenderer extends Renderer {
     }
 
 
+    @Override
+    public StaticMeshBatch newStaticMeshBatch(int maxVertexCount, int maxIndexCount, int maxTransformCount, ShaderProgram shaderProgram) {
+        Logger.info(VkRenderer.class,
+                "Creating new StaticMeshBatch with:\n" +
+                        "\t " + maxVertexCount + " max vertices\n" +
+                        "\t " + maxIndexCount + " max indices\n" +
+                        "\t " + maxTransformCount + " max transforms\n"
+        );
 
+        VkPipeline pipeline = createPipeline(device, swapchain, (VkShaderProgram) shaderProgram);
+        VkStaticMeshBatch vkStaticMeshBatch = new VkStaticMeshBatch(getRef(), shaderProgram, getMaxFramesInFlight(), sharedCommandPool, graphicsQueue, device, pipeline, maxVertexCount, maxIndexCount, maxTransformCount);
+        staticMeshBatches.put(shaderProgram, vkStaticMeshBatch);
 
+        ByteBuffer vertexBufferData = vkStaticMeshBatch.getDefaultVertexBuffer().get();
+        vertexBufferData.clear();
 
+        ByteBuffer indexBufferData = vkStaticMeshBatch.getDefaultIndexBuffer().get();
+        indexBufferData.clear();
+
+        return vkStaticMeshBatch;
+    }
 
     @Override
-    public StaticMeshBatch submitStaticMesh(Mesh mesh, ShaderProgram shaderProgram) {
+    public void submitStaticMesh(StaticMeshBatch staticMeshBatch, Mesh mesh) {
         if(mesh.type != MeshType.Static) {
             throw new RuntimeException("Mesh of type " + mesh.type + " passed to submitStaticMesh()");
         }
 
-        VkStaticMeshBatch vkStaticMeshBatch;
-
-        if(staticMeshBatches.containsKey(shaderProgram))
-            vkStaticMeshBatch = (VkStaticMeshBatch) staticMeshBatches.get(shaderProgram);
-        else {
-            VkPipeline pipeline = createPipeline(device, swapchain, (VkShaderProgram) shaderProgram);
-            vkStaticMeshBatch = new VkStaticMeshBatch(getRef(), shaderProgram, getMaxFramesInFlight(), sharedCommandPool, graphicsQueue, device, pipeline, settings.maxStaticMeshBatchVertexCount, settings.maxStaticMeshBatchIndexCount);
-            staticMeshBatches.put(shaderProgram, vkStaticMeshBatch);
-
-            ByteBuffer vertexBufferData = vkStaticMeshBatch.getDefaultVertexBuffer().get();
-            vertexBufferData.clear();
-
-            ByteBuffer indexBufferData = vkStaticMeshBatch.getDefaultIndexBuffer().get();
-            indexBufferData.clear();
-
-        }
-
-        mesh.put(vkStaticMeshBatch.vertexCount, shaderProgram, vkStaticMeshBatch.getDefaultVertexBuffer().get(), vkStaticMeshBatch.getDefaultIndexBuffer().get());
+        VkStaticMeshBatch vkStaticMeshBatch = (VkStaticMeshBatch) staticMeshBatch;
+        mesh.put(vkStaticMeshBatch.vertexCount, vkStaticMeshBatch.getShaderProgram(), vkStaticMeshBatch.getDefaultVertexBuffer().get(), vkStaticMeshBatch.getDefaultIndexBuffer().get());
         vkStaticMeshBatch.updateMeshBatch(
                 mesh.vertexCount,
                 mesh.indices.size()
         );
 
 
-        return vkStaticMeshBatch;
     }
 
     @Override

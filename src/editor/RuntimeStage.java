@@ -79,9 +79,6 @@ public class RuntimeStage extends Stage {
                 new RendererSettings(RenderAPI.Vulkan)
                         .validation(validation)
                         .vsync(vsync)
-                        .setMaxStaticMeshBatchVertexCount(100000)
-                        .setMaxStaticMeshBatchIndexCount(100000)
-
         );
 
 
@@ -146,7 +143,10 @@ public class RuntimeStage extends Stage {
 
 
         Mesh mesh = Mesh.newMesh(MeshType.Static, AssetPacks.getAsset("core:assets/models/viking_room.obj"));
-        StaticMeshBatch staticMeshBatch = renderer.submitStaticMesh(mesh, shaderProgram);
+
+        StaticMeshBatch staticMeshBatch = renderer.newStaticMeshBatch(100000, 100000, 1, shaderProgram);
+        renderer.submitStaticMesh(staticMeshBatch, mesh);
+
         Texture texture = Texture.newTexture(renderer.getRef(), AssetPacks.getAsset("core:assets/textures/viking_room.png"), Texture.Filter.Linear, Texture.Filter.Linear);
         Matrix4f transform = new Matrix4f().identity();
 
