@@ -158,7 +158,6 @@ public abstract class Surface implements Disposable {
             totalRequiredInstanceExtensions.put(windowInstanceExtensions);
             if(validation) totalRequiredInstanceExtensions.put(stack.UTF8(VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
 
-            DebugUtil.printPointerBuffer("totalRequiredInstanceExtensions", totalRequiredInstanceExtensions);
 
             createInfo.ppEnabledExtensionNames(totalRequiredInstanceExtensions.rewind());
             VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = null;

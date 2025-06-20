@@ -33,7 +33,6 @@ public class AssetPack {
 
         AssetMap assetMap = new AssetMap();
         AssetPack assetPack = new AssetPack(assetMap);
-        System.out.println("Indexing AssetMap...");
         generateAssetMap(assetMap, path);
 
         return assetPack;
@@ -71,7 +70,6 @@ public class AssetPack {
 
 
         AssetMap assetMap = new AssetMap();
-        System.out.println("Indexing AssetMap...");
         generateAssetMap(assetMap, dir);
 
 
@@ -87,14 +85,11 @@ public class AssetPack {
 
         output.flush();
         output.close();
-
-        System.out.println("File Size: " + assetMap.sizeBytes + " bytes");
     }
+
     private static void generateAssetMap(AssetMap assetMap, File path){
         for(File asset : path.listFiles()){
             if(!asset.isDirectory()){
-                System.out.println("\t" + asset.getPath());
-
                 Asset target = null;
                 int sizeBytes = 0;
 
@@ -132,13 +127,7 @@ public class AssetPack {
                     target = new Asset<>(asset.getName(), bytes);
                     sizeBytes += bytes.length;
                 }
-
-                System.out.println("\t\t(" + sizeBytes + ") bytes");
                 assetMap.sizeBytes += sizeBytes;
-
-
-
-
                 assetMap.put(asset.getPath().replace(File.separatorChar, '/'), target);
             }
             else {

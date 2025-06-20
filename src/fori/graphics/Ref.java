@@ -48,7 +48,6 @@ public class Ref {
     }
 
     public void destroyAll(Ref ref){
-        System.out.println(getDepthString(ref) + " " + ref.disposable.getClass().getSimpleName());
 
         for(Ref child : ref.children){
             destroyAll(child);
