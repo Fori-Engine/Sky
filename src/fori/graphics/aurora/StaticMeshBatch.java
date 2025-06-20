@@ -44,6 +44,14 @@ public abstract class StaticMeshBatch {
         return shaderProgram;
     }
 
+    public int getVertexCount() {
+        return vertexCount;
+    }
+
+    public int getIndexCount() {
+        return indexCount;
+    }
+
     public abstract void updateMeshBatch(int vertexCount, int indexCount);
 
 }

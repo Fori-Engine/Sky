@@ -14,12 +14,12 @@ import java.util.List;
 import static org.lwjgl.assimp.Assimp.*;
 
 public class Mesh {
-    public MeshType type;
-    public List<Float> vertices;
-    public List<Float> textureUVs;
-    public List<Integer> indices;
-    public List<Integer> textureIndices;
-    public int vertexCount;
+    private MeshType type;
+    private List<Float> vertices;
+    private List<Float> textureUVs;
+    private List<Integer> indices;
+    private List<Integer> textureIndices;
+    private int vertexCount;
 
     public Mesh(MeshType type, List<Float> vertices, List<Float> textureUVs, List<Integer> indices, List<Integer> textureIndices, int vertexCount) {
         this.type = type;
@@ -192,9 +192,15 @@ public class Mesh {
     }
 
 
+    public MeshType getType() {
+        return type;
+    }
 
+    public int getVertexCount() {
+        return vertexCount;
+    }
 
-
-
-
+    public int getIndexCount() {
+        return indices.size();
+    }
 }

@@ -647,9 +647,6 @@ public class VulkanRenderer extends Renderer {
                 inputAssembly.primitiveRestartEnable(false);
             }
 
-
-
-
             VkPipelineViewportStateCreateInfo viewportState = VkPipelineViewportStateCreateInfo.calloc(stack);
             {
                 viewportState.sType(VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO);

@@ -41,8 +41,8 @@ public abstract class Renderer implements Disposable {
 
     public abstract StaticMeshBatch newStaticMeshBatch(int maxVertices, int maxIndices, int maxTransforms, ShaderProgram shaderProgram);
     public void submitStaticMesh(StaticMeshBatch staticMeshBatch, Mesh mesh, int transformIndex) {
-        if(mesh.type != MeshType.Static) {
-            throw new RuntimeException("Mesh of type " + mesh.type + " passed to submitStaticMesh()");
+        if(mesh.getType() != MeshType.Static) {
+            throw new RuntimeException("Mesh of type " + mesh.getType() + " passed to submitStaticMesh()");
         }
 
         ByteBuffer vertexBufferData = staticMeshBatch.getDefaultVertexBuffer().get();
@@ -52,7 +52,7 @@ public abstract class Renderer implements Disposable {
         indexBufferData.clear();
 
         mesh.put(
-                staticMeshBatch.vertexCount,
+                staticMeshBatch.getVertexCount(),
                 staticMeshBatch.getShaderProgram(),
                 transformIndex,
                 staticMeshBatch.getDefaultVertexBuffer().get(),
@@ -60,8 +60,8 @@ public abstract class Renderer implements Disposable {
         );
 
         staticMeshBatch.updateMeshBatch(
-                mesh.vertexCount,
-                mesh.indices.size()
+                mesh.getVertexCount(),
+                mesh.getIndexCount()
         );
     }
     public abstract DynamicMesh submitDynamicMesh(Mesh mesh, ShaderProgram shaderProgram);
