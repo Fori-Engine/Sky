@@ -881,7 +881,11 @@ public class VkRenderer extends Renderer {
 
 
     @Override
-    public StaticMeshBatch submitStaticMesh(Mesh mesh, ShaderProgram shaderProgram, int textureCount) {
+    public StaticMeshBatch submitStaticMesh(Mesh mesh, ShaderProgram shaderProgram) {
+        if(mesh.type != MeshType.Static) {
+            throw new RuntimeException("Mesh of type " + mesh.type + " passed to submitStaticMesh()");
+        }
+
         if(staticMeshBatches.containsKey(shaderProgram)) {
             return staticMeshBatches.get(shaderProgram);
         }

@@ -4,7 +4,6 @@ import fori.graphics.Buffer;
 import fori.graphics.ShaderProgram;
 
 public abstract class StaticMeshBatch {
-    public int textureCount;
     public Buffer[] transformsBuffers;
     public Buffer[] cameraBuffers;
     public Buffer vertexBuffer;

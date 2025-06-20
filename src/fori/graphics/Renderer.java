@@ -38,7 +38,7 @@ public abstract class Renderer implements Disposable {
         dynamicMeshes = new LinkedList<>();
     }
 
-    public abstract StaticMeshBatch submitStaticMesh(Mesh mesh, ShaderProgram shaderProgram, int textureCount);
+    public abstract StaticMeshBatch submitStaticMesh(Mesh mesh, ShaderProgram shaderProgram);
     public abstract DynamicMesh submitDynamicMesh(Mesh mesh, ShaderProgram shaderProgram);
 
 

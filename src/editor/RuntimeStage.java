@@ -135,7 +135,7 @@ public class RuntimeStage extends Stage {
 
 
         Mesh mesh = Mesh.newMesh(MeshType.Static, AssetPacks.getAsset("core:assets/models/viking_room.obj"));
-        StaticMeshBatch staticMeshBatch = renderer.submitStaticMesh(mesh, shaderProgram, 1);
+        StaticMeshBatch staticMeshBatch = renderer.submitStaticMesh(mesh, shaderProgram);
         Texture texture = Texture.newTexture(renderer.getRef(), AssetPacks.getAsset("core:assets/textures/viking_room.png"), Texture.Filter.Linear, Texture.Filter.Linear);
         Matrix4f transform = new Matrix4f().identity();
 
@@ -186,7 +186,7 @@ public class RuntimeStage extends Stage {
             renderer.waitForDevice();
         }
 
-        for(int frameIndex = 0; frameIndex < 2; frameIndex++) {
+        for(int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
             staticMeshBatch.shaderProgram.updateTextures(frameIndex, new ShaderUpdate<>("textures", 0, 2, texture).arrayIndex(0));
             ByteBuffer transformsBufferData = staticMeshBatch.transformsBuffers[frameIndex].get();
             ByteBuffer cameraBufferData = staticMeshBatch.cameraBuffers[frameIndex].get();
