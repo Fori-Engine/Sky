@@ -1,7 +1,7 @@
 package fori.graphics;
 
 import fori.Logger;
-import fori.graphics.vulkan.VkShaderProgram;
+import fori.graphics.vulkan.VulkanShaderProgram;
 
 
 public abstract class ShaderProgram implements Disposable {
@@ -50,7 +50,7 @@ public abstract class ShaderProgram implements Disposable {
     public abstract void dispose();
     public static ShaderProgram newShaderProgram(Ref parent, String vertexShaderSource, String fragmentShaderSource){
         if(Renderer.getRenderAPI() == RenderAPI.Vulkan){
-            return new VkShaderProgram(parent, vertexShaderSource, fragmentShaderSource);
+            return new VulkanShaderProgram(parent, vertexShaderSource, fragmentShaderSource);
         }
 
         return null;

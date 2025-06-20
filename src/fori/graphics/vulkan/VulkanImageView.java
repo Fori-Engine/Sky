@@ -3,7 +3,6 @@ package fori.graphics.vulkan;
 import fori.graphics.Disposable;
 import fori.graphics.Ref;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.VkDevice;
 import org.lwjgl.vulkan.VkImageViewCreateInfo;
 
@@ -11,13 +10,13 @@ import java.nio.LongBuffer;
 
 import static org.lwjgl.vulkan.VK10.*;
 
-public class VkImageView implements Disposable {
-    private VkImage image;
+public class VulkanImageView implements Disposable {
+    private VulkanImage image;
     private long handle;
     private Ref ref;
 
 
-    public VkImageView(Ref parent, VkDevice device, VkImage image, int aspectMask) {
+    public VulkanImageView(Ref parent, VkDevice device, VulkanImage image, int aspectMask) {
         ref = parent.add(this);
         this.image = image;
 
@@ -58,8 +57,8 @@ public class VkImageView implements Disposable {
 
     @Override
     public void dispose() {
-        vkDeviceWaitIdle(VkContextManager.getCurrentDevice());
-        vkDestroyImageView(VkContextManager.getCurrentDevice(), handle, null);
+        vkDeviceWaitIdle(VulkanDeviceManager.getCurrentDevice());
+        vkDestroyImageView(VulkanDeviceManager.getCurrentDevice(), handle, null);
     }
 
     @Override

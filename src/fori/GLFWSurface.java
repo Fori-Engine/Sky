@@ -1,28 +1,19 @@
 package fori;
-import static java.util.stream.Collectors.toSet;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.glfw.GLFWVulkan.*;
 import static org.lwjgl.glfw.GLFWVulkan.glfwVulkanSupported;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
-import static org.lwjgl.vulkan.EXTDebugUtils.*;
-import static org.lwjgl.vulkan.VK10.*;
-import static org.lwjgl.vulkan.VK13.VK_API_VERSION_1_3;
 
-import fori.graphics.DebugUtil;
 import fori.graphics.Ref;
 import fori.graphics.RenderAPI;
-import fori.graphics.vulkan.VkRenderer;
 import org.joml.Vector2f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.*;
 
-import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.List;
-import java.util.Set;
 
 
 public class GLFWSurface extends Surface {

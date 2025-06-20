@@ -1,7 +1,7 @@
 package fori.graphics;
 
 import fori.Logger;
-import fori.graphics.vulkan.VkBuffer;
+import fori.graphics.vulkan.VulkanBuffer;
 
 import java.nio.ByteBuffer;
 
@@ -76,7 +76,7 @@ public abstract class Buffer implements Disposable {
     }
 
     public static Buffer newBuffer(Ref parent, int sizeBytes, Usage usage, Type type, boolean staging){
-        if(Renderer.getRenderAPI() == RenderAPI.Vulkan) return new VkBuffer(parent, sizeBytes, usage, type, staging);
+        if(Renderer.getRenderAPI() == RenderAPI.Vulkan) return new VulkanBuffer(parent, sizeBytes, usage, type, staging);
 
         return null;
     }

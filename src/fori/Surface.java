@@ -4,14 +4,12 @@ import fori.graphics.DebugUtil;
 import fori.graphics.Disposable;
 import fori.graphics.Ref;
 import fori.graphics.RenderAPI;
-import fori.graphics.vulkan.VkRenderer;
+import fori.graphics.vulkan.VulkanRenderer;
 import org.joml.Vector2f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
-import javax.swing.*;
-import java.awt.*;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.List;
@@ -175,7 +173,7 @@ public abstract class Surface implements Disposable {
                 debugCreateInfo.pfnUserCallback((messageSeverity, messageTypes, pCallbackData, pUserData) -> {
 
                     VkDebugUtilsMessengerCallbackDataEXT callbackData = VkDebugUtilsMessengerCallbackDataEXT.create(pCallbackData);
-                    Logger.info(VkRenderer.class, callbackData.pMessageString());
+                    Logger.info(VulkanRenderer.class, callbackData.pMessageString());
 
                     return VK_FALSE;
                 });

@@ -9,7 +9,6 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
-import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.*;
@@ -29,7 +28,7 @@ import static org.lwjgl.vulkan.KHRSynchronization2.VK_IMAGE_LAYOUT_ATTACHMENT_OP
 import static org.lwjgl.vulkan.VK13.*;
 
 
-public class VkRenderer extends Renderer {
+public class VulkanRenderer extends Renderer {
 
     public static final int FRAMES_IN_FLIGHT = 2;
 
@@ -37,34 +36,34 @@ public class VkRenderer extends Renderer {
     private long debugMessenger;
     private VkPhysicalDevice physicalDevice;
     private VkPhysicalDeviceProperties physicalDeviceProperties;
-    private VkPhysicalDeviceQueueFamilies physicalDeviceQueueFamilies;
+    private VulkanPhysicalDeviceQueueFamilies physicalDeviceQueueFamilies;
     private static final Set<String> DEVICE_EXTENSIONS = Stream.of(VK_KHR_SWAPCHAIN_EXTENSION_NAME, KHRDynamicRendering.VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME)
             .collect(toSet());
 
     private VkDevice device;
     private VkQueue graphicsQueue, presentQueue;
-    private VkSwapchain swapchain;
-    private VkSwapchainSupportDetails swapchainSupportDetails;
+    private VulkanSwapchain swapchain;
+    private VulkanSwapchainSupportInfo swapchainSupportDetails;
     private List<Long> swapchainImageViews = new ArrayList<>();
 
     private long vkSurface;
     private VkInstance instance;
 
-    private VkFrame[] frames = new VkFrame[FRAMES_IN_FLIGHT];
+    private VulkanFrame[] frames = new VulkanFrame[FRAMES_IN_FLIGHT];
     private int frameIndex;
     private long sharedCommandPool;
 
 
-    private VkImage depthImage;
-    private VkImageView depthImageView;
-    private VkGlobalAllocator allocator;
+    private VulkanImage depthImage;
+    private VulkanImageView depthImageView;
+    private VulkanAllocator allocator;
 
     private VkRenderingInfoKHR renderingInfoKHR;
     private VkRenderingAttachmentInfo.Buffer colorAttachment;
     private VkRenderingAttachmentInfoKHR depthAttachment;
 
 
-    public VkRenderer(Ref parent, VkInstance instance, long vkSurface, int width, int height, RendererSettings rendererSettings, long debugMessenger, Surface surface) {
+    public VulkanRenderer(Ref parent, VkInstance instance, long vkSurface, int width, int height, RendererSettings rendererSettings, long debugMessenger, Surface surface) {
         super(parent, width, height, FRAMES_IN_FLIGHT, rendererSettings, surface);
         this.instance = instance;
         this.vkSurface = vkSurface;
@@ -73,12 +72,12 @@ public class VkRenderer extends Renderer {
 
         physicalDevice = selectPhysicalDevice(instance, vkSurface);
         physicalDeviceProperties = getPhysicalDeviceProperties(physicalDevice);
-        VkContextManager.setPhysicalDeviceProperties(physicalDeviceProperties);
-        Logger.info(VkRenderer.class, "Selected Physical Device " + physicalDeviceProperties.deviceNameString());
+        VulkanDeviceManager.setPhysicalDeviceProperties(physicalDeviceProperties);
+        Logger.info(VulkanRenderer.class, "Selected Physical Device " + physicalDeviceProperties.deviceNameString());
         device = createDevice(physicalDevice, rendererSettings.validation);
 
-        VkContextManager.setCurrentDevice(device);
-        VkContextManager.setCurrentPhysicalDevice(physicalDevice);
+        VulkanDeviceManager.setCurrentDevice(device);
+        VulkanDeviceManager.setCurrentPhysicalDevice(physicalDevice);
 
 
 
@@ -86,13 +85,13 @@ public class VkRenderer extends Renderer {
 
 
         graphicsQueue = getGraphicsQueue(device);
-        VkContextManager.setGraphicsQueue(graphicsQueue);
+        VulkanDeviceManager.setGraphicsQueue(graphicsQueue);
         presentQueue = getPresentQueue(device);
-        VkContextManager.setGraphicsFamilyIndex(physicalDeviceQueueFamilies.graphicsFamily);
+        VulkanDeviceManager.setGraphicsFamilyIndex(physicalDeviceQueueFamilies.graphicsFamily);
         swapchain = createSwapChain(device, vkSurface, width, height, rendererSettings.vsync);
         swapchainImageViews = createSwapchainImageViews(device, swapchain);
 
-        Logger.info(VkRenderer.class, "Max Allowed Allocations: " + physicalDeviceProperties.limits().maxMemoryAllocationCount());
+        Logger.info(VulkanRenderer.class, "Max Allowed Allocations: " + physicalDeviceProperties.limits().maxMemoryAllocationCount());
 
 
         //Sync Objects
@@ -121,17 +120,17 @@ public class VkRenderer extends Renderer {
                 vkCreateSemaphore(device, renderFinishedSemaphoreInfo, null, pRenderFinishedSemaphore);
                 vkCreateFence(device, inFlightFenceCreateInfo, null, pInFlightFence);
 
-                frames[i] = new VkFrame(pImageAcquiredSemaphore.get(0), pRenderFinishedSemaphore.get(0), pInFlightFence.get(0));
+                frames[i] = new VulkanFrame(pImageAcquiredSemaphore.get(0), pRenderFinishedSemaphore.get(0), pInFlightFence.get(0));
             }
         }
 
-        VkGlobalAllocator.init(instance, device, physicalDevice);
-        allocator = VkGlobalAllocator.getAllocator();
+        VulkanAllocator.init(instance, device, physicalDevice);
+        allocator = VulkanAllocator.getAllocator();
 
 
         sharedCommandPool = createCommandPool(device, physicalDeviceQueueFamilies.graphicsFamily);
         for(int i = 0; i < FRAMES_IN_FLIGHT; i++) {
-            VkFrame frame = frames[i];
+            VulkanFrame frame = frames[i];
 
 
             try(MemoryStack stack = stackPush()) {
@@ -158,7 +157,7 @@ public class VkRenderer extends Renderer {
 
 
 
-        depthImage = new VkImage(
+        depthImage = new VulkanImage(
                 ref,
                 allocator,
                 device,
@@ -169,7 +168,7 @@ public class VkRenderer extends Renderer {
                 VK_IMAGE_TILING_OPTIMAL
         );
 
-        depthImageView = new VkImageView(ref, device, depthImage, VK_IMAGE_ASPECT_DEPTH_BIT);
+        depthImageView = new VulkanImageView(ref, device, depthImage, VK_IMAGE_ASPECT_DEPTH_BIT);
 
 
 
@@ -240,7 +239,7 @@ public class VkRenderer extends Renderer {
 
 
                     }
-                    physicalDeviceQueueFamilies = new VkPhysicalDeviceQueueFamilies(graphicsFamilyIndex, presentFamilyIndex);
+                    physicalDeviceQueueFamilies = new VulkanPhysicalDeviceQueueFamilies(graphicsFamilyIndex, presentFamilyIndex);
                 }
 
                 //Find the requisite extensions
@@ -259,7 +258,7 @@ public class VkRenderer extends Renderer {
 
                 //Find the write swapchain specifications
                 if(hasExtensions) {
-                    swapchainSupportDetails = new VkSwapchainSupportDetails();
+                    swapchainSupportDetails = new VulkanSwapchainSupportInfo();
                     swapchainSupportDetails.capabilities = VkSurfaceCapabilitiesKHR.malloc(stack);
                     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, swapchainSupportDetails.capabilities);
 
@@ -414,7 +413,7 @@ public class VkRenderer extends Renderer {
         }
 
 
-        Logger.info(VkRenderer.class, "Unable to find sRGB VkSurfaceFormatKHR, using default. Colors may look incorrect.");
+        Logger.info(VulkanRenderer.class, "Unable to find sRGB VkSurfaceFormatKHR, using default. Colors may look incorrect.");
 
         return availableFormats.get(0);
 
@@ -460,9 +459,9 @@ public class VkRenderer extends Renderer {
 
         return actualExtent;
     }
-    private VkSwapchain createSwapChain(VkDevice device, long surface, int width, int height, boolean vsync) {
+    private VulkanSwapchain createSwapChain(VkDevice device, long surface, int width, int height, boolean vsync) {
 
-        VkSwapchain swapchain = new VkSwapchain();
+        VulkanSwapchain swapchain = new VulkanSwapchain();
 
         try(MemoryStack stack = stackPush()) {
 
@@ -537,7 +536,7 @@ public class VkRenderer extends Renderer {
 
         return swapchain;
     }
-    private List<Long> createSwapchainImageViews(VkDevice device, VkSwapchain swapchain) {
+    private List<Long> createSwapchainImageViews(VkDevice device, VulkanSwapchain swapchain) {
 
         List<Long> swapChainImageViews = new ArrayList<>(swapchain.swapChainImages.size());
 
@@ -576,11 +575,11 @@ public class VkRenderer extends Renderer {
 
         return swapChainImageViews;
     }
-    private VkPipeline createPipeline(VkDevice device, VkSwapchain swapchain, VkShaderProgram vkShaderProgram) {
+    private VulkanPipeline createPipeline(VkDevice device, VulkanSwapchain swapchain, VulkanShaderProgram vulkanShaderProgram) {
 
 
 
-        Attributes.Type[] attributes = vkShaderProgram.getAttributes();
+        Attributes.Type[] attributes = vulkanShaderProgram.getAttributes();
         long pipelineLayout;
         long graphicsPipeline = 0;
 
@@ -729,8 +728,8 @@ public class VkRenderer extends Renderer {
             VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.calloc(stack);
             {
                 pipelineLayoutInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
-                pipelineLayoutInfo.setLayoutCount(vkShaderProgram.getShaderResSets().length);
-                pipelineLayoutInfo.pSetLayouts(stack.longs(vkShaderProgram.getAllDescriptorSetLayouts()));
+                pipelineLayoutInfo.setLayoutCount(vulkanShaderProgram.getShaderResSets().length);
+                pipelineLayoutInfo.pSetLayouts(stack.longs(vulkanShaderProgram.getAllDescriptorSetLayouts()));
 
 
             }
@@ -761,8 +760,8 @@ public class VkRenderer extends Renderer {
                 pipelineInfo.pViewportState(viewportState);
                 pipelineInfo.pDepthStencilState(depthStencil);
                 pipelineInfo.pDynamicState(dynamicState);
-                pipelineInfo.stageCount(vkShaderProgram.getShaderStages().capacity());
-                pipelineInfo.pStages(vkShaderProgram.getShaderStages());
+                pipelineInfo.stageCount(vulkanShaderProgram.getShaderStages().capacity());
+                pipelineInfo.pStages(vulkanShaderProgram.getShaderStages());
                 pipelineInfo.pVertexInputState(vertexInputInfo);
                 pipelineInfo.pNext(pipelineRenderingCreateInfoKHR);
             }
@@ -781,7 +780,7 @@ public class VkRenderer extends Renderer {
 
         }
 
-        return new VkPipeline(pipelineLayout, graphicsPipeline);
+        return new VulkanPipeline(pipelineLayout, graphicsPipeline);
     }
 
     private int toVkDepthCompareOpEnum(DepthTestType depthTestType) {
@@ -807,7 +806,7 @@ public class VkRenderer extends Renderer {
             }
         }
 
-        throw new RuntimeException(Logger.error(VkRenderer.class, "The depth operation for this pipeline is an invalid value [" + depthTestType + "]"));
+        throw new RuntimeException(Logger.error(VulkanRenderer.class, "The depth operation for this pipeline is an invalid value [" + depthTestType + "]"));
     }
 
     private long createCommandPool(VkDevice device, int queueFamily) {
@@ -836,7 +835,7 @@ public class VkRenderer extends Renderer {
         swapchainImageViews = createSwapchainImageViews(device, swapchain);
 
 
-        depthImage = new VkImage(
+        depthImage = new VulkanImage(
                 ref,
                 allocator,
                 device,
@@ -847,7 +846,7 @@ public class VkRenderer extends Renderer {
                 VK_IMAGE_TILING_OPTIMAL
         );
 
-        depthImageView = new VkImageView(ref, device, depthImage, VK_IMAGE_ASPECT_DEPTH_BIT);
+        depthImageView = new VulkanImageView(ref, device, depthImage, VK_IMAGE_ASPECT_DEPTH_BIT);
         frameIndex = 0;
     }
 
@@ -879,18 +878,18 @@ public class VkRenderer extends Renderer {
 
     @Override
     public StaticMeshBatch newStaticMeshBatch(int maxVertexCount, int maxIndexCount, int maxTransformCount, ShaderProgram shaderProgram) {
-        Logger.info(VkRenderer.class,
+        Logger.info(VulkanRenderer.class,
                 "Creating new StaticMeshBatch with:\n" +
                         "\t " + maxVertexCount + " max vertices\n" +
                         "\t " + maxIndexCount + " max indices\n" +
                         "\t " + maxTransformCount + " max transforms\n"
         );
 
-        VkPipeline pipeline = createPipeline(device, swapchain, (VkShaderProgram) shaderProgram);
-        VkStaticMeshBatch vkStaticMeshBatch = new VkStaticMeshBatch(getRef(), shaderProgram, getMaxFramesInFlight(), sharedCommandPool, graphicsQueue, device, pipeline, maxVertexCount, maxIndexCount, maxTransformCount);
-        staticMeshBatches.put(shaderProgram, vkStaticMeshBatch);
+        VulkanPipeline pipeline = createPipeline(device, swapchain, (VulkanShaderProgram) shaderProgram);
+        VulkanStaticMeshBatch vulkanStaticMeshBatch = new VulkanStaticMeshBatch(getRef(), shaderProgram, getMaxFramesInFlight(), sharedCommandPool, graphicsQueue, device, pipeline, maxVertexCount, maxIndexCount, maxTransformCount);
+        staticMeshBatches.put(shaderProgram, vulkanStaticMeshBatch);
 
-        return vkStaticMeshBatch;
+        return vulkanStaticMeshBatch;
     }
 
 
@@ -919,7 +918,7 @@ public class VkRenderer extends Renderer {
 
 
 
-            VkFrame frame = frames[frameIndex];
+            VulkanFrame frame = frames[frameIndex];
             IntBuffer pImageIndex = stack.ints(0);
 
             vkWaitForFences(device, frame.inFlightFence, true, UINT64_MAX);
@@ -1031,16 +1030,16 @@ public class VkRenderer extends Renderer {
 
 
                     for(StaticMeshBatch staticMeshBatch : staticMeshBatches.values()) {
-                        VkStaticMeshBatch vkStaticMeshBatch = (VkStaticMeshBatch) staticMeshBatch;
+                        VulkanStaticMeshBatch vulkanStaticMeshBatch = (VulkanStaticMeshBatch) staticMeshBatch;
 
-                        VkBuffer vertexBuffer = (VkBuffer) vkStaticMeshBatch.getVertexBuffer();
-                        VkBuffer indexBuffer = (VkBuffer) vkStaticMeshBatch.getIndexBuffer();
-
-
+                        VulkanBuffer vertexBuffer = (VulkanBuffer) vulkanStaticMeshBatch.getVertexBuffer();
+                        VulkanBuffer indexBuffer = (VulkanBuffer) vulkanStaticMeshBatch.getIndexBuffer();
 
 
-                        VkPipeline pipeline = vkStaticMeshBatch.getPipeline();
-                        VkShaderProgram shaderProgram = (VkShaderProgram) vkStaticMeshBatch.shaderProgram;
+
+
+                        VulkanPipeline pipeline = vulkanStaticMeshBatch.getPipeline();
+                        VulkanShaderProgram shaderProgram = (VulkanShaderProgram) vulkanStaticMeshBatch.shaderProgram;
                         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
                         LongBuffer vertexBuffers = stack.longs(vertexBuffer.getHandle());
@@ -1052,7 +1051,7 @@ public class VkRenderer extends Renderer {
                                 pipeline.pipelineLayout, 0, stack.longs(shaderProgram.getDescriptorSets(frameIndex)), null);
 
                         vkCmdBindIndexBuffer(commandBuffer, indexBuffer.getHandle(), 0, VK_INDEX_TYPE_UINT32);
-                        vkCmdDrawIndexed(commandBuffer, vkStaticMeshBatch.indexCount, 1, 0, 0, 0);
+                        vkCmdDrawIndexed(commandBuffer, vulkanStaticMeshBatch.indexCount, 1, 0, 0, 0);
 
                     }
 
@@ -1151,17 +1150,17 @@ public class VkRenderer extends Renderer {
         vkDestroySwapchainKHR(device, swapchain.swapChain, null);
 
 
-        for(VkFrame frame : frames){
+        for(VulkanFrame frame : frames){
             vkDestroySemaphore(device, frame.imageAcquiredSemaphore, null);
             vkDestroySemaphore(device, frame.renderFinishedSemaphore, null);
             vkDestroyFence(device, frame.inFlightFence, null);
         }
 
         for(StaticMeshBatch staticMeshBatch : staticMeshBatches.values()) {
-            VkStaticMeshBatch vkStaticMeshBatch = (VkStaticMeshBatch) staticMeshBatch;
-            vkDestroyFence(device, vkStaticMeshBatch.getStagingTransferFence(), null);
-            vkDestroyPipeline(device, vkStaticMeshBatch.getPipeline().pipeline, null);
-            vkDestroyPipelineLayout(device, vkStaticMeshBatch.getPipeline().pipelineLayout, null);
+            VulkanStaticMeshBatch vulkanStaticMeshBatch = (VulkanStaticMeshBatch) staticMeshBatch;
+            vkDestroyFence(device, vulkanStaticMeshBatch.getStagingTransferFence(), null);
+            vkDestroyPipeline(device, vulkanStaticMeshBatch.getPipeline().pipeline, null);
+            vkDestroyPipelineLayout(device, vulkanStaticMeshBatch.getPipeline().pipelineLayout, null);
         }
 
 

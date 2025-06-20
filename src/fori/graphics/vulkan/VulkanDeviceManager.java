@@ -2,7 +2,7 @@ package fori.graphics.vulkan;
 
 import org.lwjgl.vulkan.*;
 
-public class VkContextManager {
+public class VulkanDeviceManager {
 
     private static VkDevice currentDevice;
     private static VkPhysicalDevice currentPhysicalDevice;
@@ -10,14 +10,14 @@ public class VkContextManager {
     private static VkQueue graphicsQueue;
     private static VkPhysicalDeviceProperties physicalDeviceProperties;
 
-    private VkContextManager(){}
+    private VulkanDeviceManager(){}
 
     public static VkDevice getCurrentDevice() {
         return currentDevice;
     }
 
     public static void setCurrentDevice(VkDevice currentDevice) {
-        VkContextManager.currentDevice = currentDevice;
+        VulkanDeviceManager.currentDevice = currentDevice;
     }
 
     public static VkPhysicalDevice getCurrentPhysicalDevice() {
@@ -25,7 +25,7 @@ public class VkContextManager {
     }
 
     public static void setCurrentPhysicalDevice(VkPhysicalDevice currentPhysicalDevice) {
-        VkContextManager.currentPhysicalDevice = currentPhysicalDevice;
+        VulkanDeviceManager.currentPhysicalDevice = currentPhysicalDevice;
     }
 
     public static int getGraphicsFamilyIndex() {
@@ -33,7 +33,7 @@ public class VkContextManager {
     }
 
     public static void setGraphicsFamilyIndex(int graphicsFamilyIndex) {
-        VkContextManager.graphicsFamilyIndex = graphicsFamilyIndex;
+        VulkanDeviceManager.graphicsFamilyIndex = graphicsFamilyIndex;
     }
 
     public static VkQueue getGraphicsQueue() {
@@ -41,7 +41,7 @@ public class VkContextManager {
     }
 
     public static void setGraphicsQueue(VkQueue graphicsQueue) {
-        VkContextManager.graphicsQueue = graphicsQueue;
+        VulkanDeviceManager.graphicsQueue = graphicsQueue;
     }
 
     public static VkPhysicalDeviceProperties getPhysicalDeviceProperties() {
@@ -49,6 +49,6 @@ public class VkContextManager {
     }
 
     public static void setPhysicalDeviceProperties(VkPhysicalDeviceProperties physicalDeviceProperties) {
-        VkContextManager.physicalDeviceProperties = physicalDeviceProperties;
+        VulkanDeviceManager.physicalDeviceProperties = physicalDeviceProperties;
     }
 }

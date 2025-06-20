@@ -16,7 +16,7 @@ import static org.lwjgl.vulkan.VK10.*;
 
 
 
-public class VkBuffer extends Buffer {
+public class VulkanBuffer extends Buffer {
 
     private long handle;
     private LongBuffer pBuffer;
@@ -26,7 +26,7 @@ public class VkBuffer extends Buffer {
     private long memory;
     private PointerBuffer mappedMemory;
 
-    public VkBuffer(Ref parent, int sizeBytes, Usage usage, Type type, boolean staging){
+    public VulkanBuffer(Ref parent, int sizeBytes, Usage usage, Type type, boolean staging){
         super(parent, sizeBytes, usage, type, staging);
 
 
@@ -52,7 +52,7 @@ public class VkBuffer extends Buffer {
 
         allocationInfo = VmaAllocationInfo.create();
 
-        vmaCreateBuffer(VkGlobalAllocator.getAllocator().getId(), bufferCreateInfo, allocationCreateInfo, pBuffer, pAllocation, allocationInfo);
+        vmaCreateBuffer(VulkanAllocator.getAllocator().getId(), bufferCreateInfo, allocationCreateInfo, pBuffer, pAllocation, allocationInfo);
         memory = allocationInfo.deviceMemory();
 
         handle = pBuffer.get();
@@ -98,7 +98,7 @@ public class VkBuffer extends Buffer {
     public ByteBuffer map(){
         super.map();
         mappedMemory = MemoryUtil.memAllocPointer(1);
-        vmaMapMemory(VkGlobalAllocator.getAllocator().getId(), pAllocation.get(0), mappedMemory);
+        vmaMapMemory(VulkanAllocator.getAllocator().getId(), pAllocation.get(0), mappedMemory);
         return mappedMemory.getByteBuffer(getSizeBytes());
     }
 
@@ -107,7 +107,7 @@ public class VkBuffer extends Buffer {
     public void unmap(){
         super.unmap();
 
-        vmaUnmapMemory(VkGlobalAllocator.getAllocator().getId(), pAllocation.get(0));
+        vmaUnmapMemory(VulkanAllocator.getAllocator().getId(), pAllocation.get(0));
         MemoryUtil.memFree(mappedMemory);
     }
 
@@ -123,13 +123,13 @@ public class VkBuffer extends Buffer {
     public void dispose() {
 
 
-        vkDeviceWaitIdle(VkContextManager.getCurrentDevice());
+        vkDeviceWaitIdle(VulkanDeviceManager.getCurrentDevice());
 
         MemoryUtil.memFree(pBuffer);
         MemoryUtil.memFree(pAllocation);
         allocationInfo.free();
         allocationCreateInfo.free();
-        vmaDestroyBuffer(VkGlobalAllocator.getAllocator().getId(), handle, pAllocation.get(0));
+        vmaDestroyBuffer(VulkanAllocator.getAllocator().getId(), handle, pAllocation.get(0));
 
     }
 

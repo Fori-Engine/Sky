@@ -4,9 +4,8 @@ import fori.Logger;
 import fori.Surface;
 import fori.graphics.aurora.DynamicMesh;
 import fori.graphics.aurora.StaticMeshBatch;
-import fori.graphics.vulkan.VkRenderContext;
-import fori.graphics.vulkan.VkRenderer;
-import fori.graphics.vulkan.VkStaticMeshBatch;
+import fori.graphics.vulkan.VulkanRenderContext;
+import fori.graphics.vulkan.VulkanRenderer;
 import org.lwjgl.vulkan.VkInstance;
 
 import java.nio.ByteBuffer;
@@ -88,13 +87,13 @@ public abstract class Renderer implements Disposable {
 
 
         if(settings.backend == RenderAPI.Vulkan){
-            VkRenderContext vkContext = new VkRenderContext();
+            VulkanRenderContext vkContext = new VulkanRenderContext();
             vkContext.readyDisplay(surface);
 
             long vkSurface = vkContext.getVkSurface();
             VkInstance instance = vkContext.getInstance();
 
-            return new VkRenderer(parent, instance, vkSurface, width, height, settings, vkContext.getDebugMessenger(), surface);
+            return new VulkanRenderer(parent, instance, vkSurface, width, height, settings, vkContext.getDebugMessenger(), surface);
         }
         else if(settings.backend == null){
             Logger.meltdown(Renderer.class, "The target graphics API was not specified in RenderSettings!");

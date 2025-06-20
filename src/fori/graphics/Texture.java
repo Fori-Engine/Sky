@@ -2,7 +2,7 @@ package fori.graphics;
 
 import fori.asset.Asset;
 import fori.asset.TextureData;
-import fori.graphics.vulkan.VkTexture;
+import fori.graphics.vulkan.VulkanTexture;
 
 public abstract class Texture implements Disposable {
     protected int width, height;
@@ -46,7 +46,7 @@ public abstract class Texture implements Disposable {
     }
 
     public static Texture newTexture(Ref parent, Asset<TextureData> textureData, Filter minFilter, Filter magFilter){
-        if(Renderer.getRenderAPI() == RenderAPI.Vulkan) return new VkTexture(parent, textureData, minFilter, magFilter);
+        if(Renderer.getRenderAPI() == RenderAPI.Vulkan) return new VulkanTexture(parent, textureData, minFilter, magFilter);
         return null;
     }
 

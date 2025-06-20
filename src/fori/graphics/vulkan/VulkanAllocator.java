@@ -12,9 +12,9 @@ import static org.lwjgl.util.vma.Vma.VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT;
 import static org.lwjgl.util.vma.Vma.vmaCreateAllocator;
 import static org.lwjgl.vulkan.VK13.VK_API_VERSION_1_3;
 
-public class VkGlobalAllocator {
+public class VulkanAllocator {
 
-    private static VkGlobalAllocator allocator;
+    private static VulkanAllocator allocator;
     private long id;
 
     public static final void init(VkInstance instance, VkDevice device, VkPhysicalDevice physicalDevice){
@@ -34,8 +34,8 @@ public class VkGlobalAllocator {
         PointerBuffer pAllocator = MemoryUtil.memAllocPointer(1);
         vmaCreateAllocator(allocatorCreateInfo, pAllocator);
 
-        VkGlobalAllocator.allocator = new VkGlobalAllocator();
-        VkGlobalAllocator.allocator.id = pAllocator.get(0);
+        VulkanAllocator.allocator = new VulkanAllocator();
+        VulkanAllocator.allocator.id = pAllocator.get(0);
 
         MemoryUtil.memFree(pAllocator);
     }
@@ -44,7 +44,7 @@ public class VkGlobalAllocator {
         return id;
     }
 
-    public static VkGlobalAllocator getAllocator() {
+    public static VulkanAllocator getAllocator() {
         return allocator;
     }
 }

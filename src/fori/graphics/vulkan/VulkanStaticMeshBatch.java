@@ -8,29 +8,29 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 import java.nio.LongBuffer;
 
-import static fori.graphics.vulkan.VkRenderer.UINT64_MAX;
+import static fori.graphics.vulkan.VulkanRenderer.UINT64_MAX;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
 
-public class VkStaticMeshBatch extends StaticMeshBatch {
-    private VkPipeline pipeline;
+public class VulkanStaticMeshBatch extends StaticMeshBatch {
+    private VulkanPipeline pipeline;
     private VkCommandBuffer commandBuffer;
     private long stagingTransferFence;
     private VkQueue graphicsQueue;
     private VkDevice device;
     private Buffer stagingVertexBuffer, stagingIndexBuffer;
 
-    public VkStaticMeshBatch(Ref ref,
-                             ShaderProgram shaderProgram,
-                             int framesInFlight,
-                             long commandPool,
-                             VkQueue graphicsQueue,
-                             VkDevice device,
-                             VkPipeline pipeline,
-                             int maxVertexCount,
-                             int maxIndexCount,
-                             int maxTransformCount) {
+    public VulkanStaticMeshBatch(Ref ref,
+                                 ShaderProgram shaderProgram,
+                                 int framesInFlight,
+                                 long commandPool,
+                                 VkQueue graphicsQueue,
+                                 VkDevice device,
+                                 VulkanPipeline pipeline,
+                                 int maxVertexCount,
+                                 int maxIndexCount,
+                                 int maxTransformCount) {
         super(maxVertexCount, maxIndexCount, maxTransformCount, shaderProgram);
         this.graphicsQueue = graphicsQueue;
         this.device = device;
@@ -47,7 +47,7 @@ public class VkStaticMeshBatch extends StaticMeshBatch {
             PointerBuffer pCommandBuffers = stack.mallocPointer(1);
 
             if(vkAllocateCommandBuffers(device, allocInfo, pCommandBuffers) != VK_SUCCESS) {
-                throw new RuntimeException(Logger.error(VkStaticMeshBatch.class, "Failed to create per-RenderCommand command buffer"));
+                throw new RuntimeException(Logger.error(VulkanStaticMeshBatch.class, "Failed to create per-RenderCommand command buffer"));
             }
 
             commandBuffer = new VkCommandBuffer(pCommandBuffers.get(0), device);
@@ -130,7 +130,7 @@ public class VkStaticMeshBatch extends StaticMeshBatch {
 
 
 
-    public VkPipeline getPipeline() {
+    public VulkanPipeline getPipeline() {
         return pipeline;
     }
 
@@ -147,7 +147,7 @@ public class VkStaticMeshBatch extends StaticMeshBatch {
             beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
 
             if (vkBeginCommandBuffer(commandBuffer, beginInfo) != VK_SUCCESS) {
-                throw new RuntimeException(Logger.error(VkStaticMeshBatch.class, "Failed to start recording command buffer"));
+                throw new RuntimeException(Logger.error(VulkanStaticMeshBatch.class, "Failed to start recording command buffer"));
             }
 
 
@@ -156,7 +156,7 @@ public class VkStaticMeshBatch extends StaticMeshBatch {
             vertexBufferCopy.srcOffset(0);
             vertexBufferCopy.dstOffset((long) this.vertexCount * Attributes.getSize(shaderProgram.getAttributes()) * Float.BYTES);
 
-            vkCmdCopyBuffer(commandBuffer, ((VkBuffer) stagingVertexBuffer).getHandle(), ((VkBuffer) vertexBuffer).getHandle(), vertexBufferCopy);
+            vkCmdCopyBuffer(commandBuffer, ((VulkanBuffer) stagingVertexBuffer).getHandle(), ((VulkanBuffer) vertexBuffer).getHandle(), vertexBufferCopy);
 
 
             VkBufferCopy.Buffer indexBufferCopy = VkBufferCopy.calloc(1, stack);
@@ -164,14 +164,14 @@ public class VkStaticMeshBatch extends StaticMeshBatch {
             indexBufferCopy.srcOffset(0);
             indexBufferCopy.dstOffset((long) this.indexCount * Integer.BYTES);
 
-            vkCmdCopyBuffer(commandBuffer, ((VkBuffer) stagingIndexBuffer).getHandle(), ((VkBuffer) indexBuffer).getHandle(), indexBufferCopy);
+            vkCmdCopyBuffer(commandBuffer, ((VulkanBuffer) stagingIndexBuffer).getHandle(), ((VulkanBuffer) indexBuffer).getHandle(), indexBufferCopy);
 
 
             this.vertexCount += vertexCount;
             this.indexCount += indexCount;
 
             if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-                throw new RuntimeException(Logger.error(VkStaticMeshBatch.class, "Failed to finish recording command buffer"));
+                throw new RuntimeException(Logger.error(VulkanStaticMeshBatch.class, "Failed to finish recording command buffer"));
             }
 
             VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
@@ -179,7 +179,7 @@ public class VkStaticMeshBatch extends StaticMeshBatch {
             submitInfo.pCommandBuffers(stack.pointers(commandBuffer));
 
             if(vkQueueSubmit(graphicsQueue, submitInfo, stagingTransferFence) != VK_SUCCESS) {
-                throw new RuntimeException(Logger.error(VkStaticMeshBatch.class, "Failed to submit command buffer"));
+                throw new RuntimeException(Logger.error(VulkanStaticMeshBatch.class, "Failed to submit command buffer"));
             }
 
             vkWaitForFences(device, stagingTransferFence, true, UINT64_MAX);
