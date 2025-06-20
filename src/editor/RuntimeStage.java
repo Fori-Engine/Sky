@@ -71,7 +71,18 @@ public class RuntimeStage extends Stage {
 
         surface.display();
 
-        renderer = Renderer.newRenderer(surface.getRef(), surface, surface.getWidth(), surface.getHeight(), new RendererSettings(RenderAPI.Vulkan).validation(validation).vsync(vsync));
+        renderer = Renderer.newRenderer(
+                surface.getRef(),
+                surface,
+                surface.getWidth(),
+                surface.getHeight(),
+                new RendererSettings(RenderAPI.Vulkan)
+                        .validation(validation)
+                        .vsync(vsync)
+                        .setMaxStaticMeshBatchVertexCount(100000)
+                        .setMaxStaticMeshBatchIndexCount(100000)
+
+        );
 
 
 
@@ -139,66 +150,24 @@ public class RuntimeStage extends Stage {
         Texture texture = Texture.newTexture(renderer.getRef(), AssetPacks.getAsset("core:assets/textures/viking_room.png"), Texture.Filter.Linear, Texture.Filter.Linear);
         Matrix4f transform = new Matrix4f().identity();
 
-        {
-            ByteBuffer vertexBufferData = staticMeshBatch.getDefaultVertexBuffer().get();
-            vertexBufferData.clear();
-
-            ByteBuffer indexBufferData = staticMeshBatch.getDefaultIndexBuffer().get();
-            indexBufferData.clear();
-
-
-            for (int vertex = 0; vertex < mesh.vertexCount; vertex++) {
-
-
-                for(Attributes.Type attribute : staticMeshBatch.shaderProgram.getAttributes()){
-                    if(attribute == Attributes.Type.PositionFloat3){
-                        float x = mesh.vertices.get(attribute.size * vertex);
-                        float y = mesh.vertices.get(attribute.size * vertex + 1);
-                        float z = mesh.vertices.get(attribute.size * vertex + 2);
-
-                        vertexBufferData.putFloat(x);
-                        vertexBufferData.putFloat(y);
-                        vertexBufferData.putFloat(z);
-                    }
-
-                    else if(attribute == Attributes.Type.UVFloat2){
-                        float u = mesh.textureUVs.get(attribute.size * vertex);
-                        float v = mesh.textureUVs.get(attribute.size * vertex + 1);
-
-                        vertexBufferData.putFloat(u);
-                        vertexBufferData.putFloat(v);
-                    }
-
-                    else if(attribute == Attributes.Type.TransformIndexFloat1) vertexBufferData.putFloat(0);
-                }
-            }
-
-            for(int index : mesh.indices)
-                indexBufferData.putInt(staticMeshBatch.vertexCount + index);
-
-            staticMeshBatch.updateMeshBatch(
-                    mesh.vertexCount,
-                    mesh.indices.size()
-            );
 
 
 
-            renderer.waitForDevice();
-        }
+
 
         for(int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-            staticMeshBatch.shaderProgram.updateTextures(frameIndex, new ShaderUpdate<>("textures", 0, 2, texture).arrayIndex(0));
-            ByteBuffer transformsBufferData = staticMeshBatch.transformsBuffers[frameIndex].get();
-            ByteBuffer cameraBufferData = staticMeshBatch.cameraBuffers[frameIndex].get();
+            staticMeshBatch.getShaderProgram().updateTextures(frameIndex, new ShaderUpdate<>("textures", 0, 2, texture).arrayIndex(0));
+            ByteBuffer transformsBufferData = staticMeshBatch.getTransformsBuffers()[frameIndex].get();
+            ByteBuffer cameraBufferData = staticMeshBatch.getCameraBuffers()[frameIndex].get();
 
             transform.get(0, transformsBufferData);
             camera.getView().get(0, cameraBufferData);
             camera.getProj().get(4 * 4 * Float.BYTES, cameraBufferData);
 
-            staticMeshBatch.shaderProgram.updateBuffers(
+            staticMeshBatch.getShaderProgram().updateBuffers(
                     frameIndex,
-                    new ShaderUpdate<>("camera", 0, 0, staticMeshBatch.cameraBuffers[frameIndex]),
-                    new ShaderUpdate<>("transforms", 0, 1, staticMeshBatch.transformsBuffers[frameIndex])
+                    new ShaderUpdate<>("camera", 0, 0, staticMeshBatch.getCameraBuffers()[frameIndex]),
+                    new ShaderUpdate<>("transforms", 0, 1, staticMeshBatch.getTransformsBuffers()[frameIndex])
             );
         }
 

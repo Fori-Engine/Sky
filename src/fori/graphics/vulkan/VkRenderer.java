@@ -9,6 +9,7 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
+import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.*;
@@ -886,17 +887,31 @@ public class VkRenderer extends Renderer {
             throw new RuntimeException("Mesh of type " + mesh.type + " passed to submitStaticMesh()");
         }
 
-        if(staticMeshBatches.containsKey(shaderProgram)) {
-            return staticMeshBatches.get(shaderProgram);
-        }
+        VkStaticMeshBatch vkStaticMeshBatch;
+
+        if(staticMeshBatches.containsKey(shaderProgram))
+            vkStaticMeshBatch = (VkStaticMeshBatch) staticMeshBatches.get(shaderProgram);
         else {
-
             VkPipeline pipeline = createPipeline(device, swapchain, (VkShaderProgram) shaderProgram);
-            VkStaticMeshBatch vkStaticMeshBatch = new VkStaticMeshBatch(getRef(), shaderProgram, getMaxFramesInFlight(), sharedCommandPool, graphicsQueue, device, pipeline);
-
+            vkStaticMeshBatch = new VkStaticMeshBatch(getRef(), shaderProgram, getMaxFramesInFlight(), sharedCommandPool, graphicsQueue, device, pipeline, settings.maxStaticMeshBatchVertexCount, settings.maxStaticMeshBatchIndexCount);
             staticMeshBatches.put(shaderProgram, vkStaticMeshBatch);
-            return vkStaticMeshBatch;
+
+            ByteBuffer vertexBufferData = vkStaticMeshBatch.getDefaultVertexBuffer().get();
+            vertexBufferData.clear();
+
+            ByteBuffer indexBufferData = vkStaticMeshBatch.getDefaultIndexBuffer().get();
+            indexBufferData.clear();
+
         }
+
+        mesh.put(vkStaticMeshBatch.vertexCount, shaderProgram, vkStaticMeshBatch.getDefaultVertexBuffer().get(), vkStaticMeshBatch.getDefaultIndexBuffer().get());
+        vkStaticMeshBatch.updateMeshBatch(
+                mesh.vertexCount,
+                mesh.indices.size()
+        );
+
+
+        return vkStaticMeshBatch;
     }
 
     @Override
@@ -1163,7 +1178,7 @@ public class VkRenderer extends Renderer {
 
         for(StaticMeshBatch staticMeshBatch : staticMeshBatches.values()) {
             VkStaticMeshBatch vkStaticMeshBatch = (VkStaticMeshBatch) staticMeshBatch;
-            vkDestroyFence(device, vkStaticMeshBatch.getFence(), null);
+            vkDestroyFence(device, vkStaticMeshBatch.getStagingTransferFence(), null);
             vkDestroyPipeline(device, vkStaticMeshBatch.getPipeline().pipeline, null);
             vkDestroyPipelineLayout(device, vkStaticMeshBatch.getPipeline().pipelineLayout, null);
         }

@@ -16,16 +16,24 @@ import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
 public class VkStaticMeshBatch extends StaticMeshBatch {
     private VkPipeline pipeline;
     private VkCommandBuffer commandBuffer;
-    private long fence;
+    private long stagingTransferFence;
     private VkQueue graphicsQueue;
     private VkDevice device;
     private Buffer stagingVertexBuffer, stagingIndexBuffer;
 
-    public VkStaticMeshBatch(Ref ref, ShaderProgram shaderProgram, int framesInFlight, long commandPool, VkQueue graphicsQueue, VkDevice device, VkPipeline pipeline) {
+    public VkStaticMeshBatch(Ref ref,
+                             ShaderProgram shaderProgram,
+                             int framesInFlight,
+                             long commandPool,
+                             VkQueue graphicsQueue,
+                             VkDevice device,
+                             VkPipeline pipeline,
+                             int maxVertices,
+                             int maxIndices) {
+        super(maxVertices, maxIndices, shaderProgram);
         this.graphicsQueue = graphicsQueue;
         this.device = device;
         this.pipeline = pipeline;
-        this.shaderProgram = shaderProgram;
 
         try(MemoryStack stack = stackPush()) {
 
@@ -49,7 +57,7 @@ public class VkStaticMeshBatch extends StaticMeshBatch {
             transferFenceCreateInfo.sType(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
             vkCreateFence(device, transferFenceCreateInfo, null, pFence);
 
-            fence = pFence.get(0);
+            stagingTransferFence = pFence.get(0);
         }
 
 
@@ -125,17 +133,13 @@ public class VkStaticMeshBatch extends StaticMeshBatch {
         return pipeline;
     }
 
-    public void setPipeline(VkPipeline pipeline) {
-        this.pipeline = pipeline;
-    }
-
-    public long getFence() {
-        return fence;
+    public long getStagingTransferFence() {
+        return stagingTransferFence;
     }
 
     @Override
     public void updateMeshBatch(int vertexCount, int indexCount) {
-        vkResetFences(device, fence);
+        vkResetFences(device, stagingTransferFence);
 
         try(MemoryStack stack = stackPush()) {
             VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
@@ -173,11 +177,11 @@ public class VkStaticMeshBatch extends StaticMeshBatch {
             submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
             submitInfo.pCommandBuffers(stack.pointers(commandBuffer));
 
-            if(vkQueueSubmit(graphicsQueue, submitInfo, fence) != VK_SUCCESS) {
+            if(vkQueueSubmit(graphicsQueue, submitInfo, stagingTransferFence) != VK_SUCCESS) {
                 throw new RuntimeException(Logger.error(VkStaticMeshBatch.class, "Failed to submit command buffer"));
             }
 
-            vkWaitForFences(device, fence, true, UINT64_MAX);
+            vkWaitForFences(device, stagingTransferFence, true, UINT64_MAX);
 
 
         }

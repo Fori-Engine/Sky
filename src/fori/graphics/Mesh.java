@@ -67,6 +67,36 @@ public class Mesh {
 
         return new Mesh(type, vertices, textureUVs, indices, textureIndices, vertices.size() / 3);
     }
+    public void put(int currentVertexCount, ShaderProgram shaderProgram, ByteBuffer vertexBufferData, ByteBuffer indexBufferData) {
+        for (int vertex = 0; vertex < vertexCount; vertex++) {
+
+
+            for(Attributes.Type attribute : shaderProgram.getAttributes()){
+                if(attribute == Attributes.Type.PositionFloat3){
+                    float x = vertices.get(attribute.size * vertex);
+                    float y = vertices.get(attribute.size * vertex + 1);
+                    float z = vertices.get(attribute.size * vertex + 2);
+
+                    vertexBufferData.putFloat(x);
+                    vertexBufferData.putFloat(y);
+                    vertexBufferData.putFloat(z);
+                }
+
+                else if(attribute == Attributes.Type.UVFloat2){
+                    float u = textureUVs.get(attribute.size * vertex);
+                    float v = textureUVs.get(attribute.size * vertex + 1);
+
+                    vertexBufferData.putFloat(u);
+                    vertexBufferData.putFloat(v);
+                }
+
+                else if(attribute == Attributes.Type.TransformIndexFloat1) vertexBufferData.putFloat(0);
+            }
+        }
+
+        for(int index : indices)
+            indexBufferData.putInt(currentVertexCount + index);
+    }
 
 
     private static void openMesh(AIMesh mesh, List<Float> vertices, List<Float> textureUVs, List<Integer> textureIndices, List<Integer> indices){
