@@ -40,7 +40,6 @@ public class Ref {
         }
         child.parent = this;
         children.add(child);
-        Logger.info(Ref.class, "Tracking reference to " + child.disposable.getClass().getSimpleName());
         return child;
     }
 
