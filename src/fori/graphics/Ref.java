@@ -26,8 +26,6 @@ public class Ref {
         for (Iterator<Ref> iterator = children.iterator(); iterator.hasNext(); ) {
             Ref ref = iterator.next();
             if (ref.disposable == disposable) {
-                Logger.info(Ref.class, "Stopped tracking reference to " + disposable.getClass().getSimpleName());
-
                 iterator.remove();
             }
         }
