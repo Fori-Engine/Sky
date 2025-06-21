@@ -16,7 +16,7 @@ public abstract class StaticMeshBatch {
     protected int maxTransformCount;
     protected boolean finalized;
 
-    public StaticMeshBatch(int maxIndexCount, int maxVertexCount, int maxTransformCount, ShaderProgram shaderProgram) {
+    public StaticMeshBatch(int maxVertexCount, int maxIndexCount, int maxTransformCount, ShaderProgram shaderProgram) {
         this.maxIndexCount = maxIndexCount;
         this.maxVertexCount = maxVertexCount;
         this.maxTransformCount = maxTransformCount;
