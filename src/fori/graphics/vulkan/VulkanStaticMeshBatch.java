@@ -20,6 +20,7 @@ public class VulkanStaticMeshBatch extends StaticMeshBatch {
     private VkQueue graphicsQueue;
     private VkDevice device;
     private Buffer stagingVertexBuffer, stagingIndexBuffer;
+    private Ref ref;
 
     public VulkanStaticMeshBatch(Ref ref,
                                  ShaderProgram shaderProgram,
@@ -32,6 +33,7 @@ public class VulkanStaticMeshBatch extends StaticMeshBatch {
                                  int maxIndexCount,
                                  int maxTransformCount) {
         super(maxVertexCount, maxIndexCount, maxTransformCount, shaderProgram);
+        this.ref = ref;
         this.graphicsQueue = graphicsQueue;
         this.device = device;
         this.pipeline = pipeline;
@@ -128,6 +130,18 @@ public class VulkanStaticMeshBatch extends StaticMeshBatch {
         return stagingIndexBuffer;
     }
 
+    @Override
+    public void uploadsFinished() {
+        super.uploadsFinished();
+
+        stagingVertexBuffer.dispose();
+        stagingIndexBuffer.dispose();
+
+        ref.remove(stagingVertexBuffer);
+        ref.remove(stagingIndexBuffer);
+
+        vkDestroyFence(device, stagingTransferFence, null);
+    }
 
 
     public VulkanPipeline getPipeline() {
