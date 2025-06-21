@@ -890,6 +890,31 @@ public class VulkanRenderer extends Renderer {
         return vulkanStaticMeshBatch;
     }
 
+    @Override
+    public void submitStaticMesh(StaticMeshBatch staticMeshBatch, Mesh mesh, int transformIndex) {
+        if(mesh.getType() != MeshType.Static) {
+            throw new RuntimeException("Mesh of type " + mesh.getType() + " passed to submitStaticMesh()");
+        }
+
+        ByteBuffer vertexBufferData = staticMeshBatch.getDefaultVertexBuffer().get();
+        vertexBufferData.clear();
+
+        ByteBuffer indexBufferData = staticMeshBatch.getDefaultIndexBuffer().get();
+        indexBufferData.clear();
+
+        mesh.put(
+                staticMeshBatch.getVertexCount(),
+                staticMeshBatch.getShaderProgram(),
+                transformIndex,
+                staticMeshBatch.getDefaultVertexBuffer().get(),
+                staticMeshBatch.getDefaultIndexBuffer().get()
+        );
+
+        staticMeshBatch.updateMeshBatch(
+                mesh.getVertexCount(),
+                mesh.getIndexCount()
+        );
+    }
 
 
     @Override

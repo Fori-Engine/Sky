@@ -40,30 +40,7 @@ public abstract class Renderer implements Disposable {
     }
 
     public abstract StaticMeshBatch newStaticMeshBatch(int maxVertices, int maxIndices, int maxTransforms, ShaderProgram shaderProgram);
-    public void submitStaticMesh(StaticMeshBatch staticMeshBatch, Mesh mesh, int transformIndex) {
-        if(mesh.getType() != MeshType.Static) {
-            throw new RuntimeException("Mesh of type " + mesh.getType() + " passed to submitStaticMesh()");
-        }
-
-        ByteBuffer vertexBufferData = staticMeshBatch.getDefaultVertexBuffer().get();
-        vertexBufferData.clear();
-
-        ByteBuffer indexBufferData = staticMeshBatch.getDefaultIndexBuffer().get();
-        indexBufferData.clear();
-
-        mesh.put(
-                staticMeshBatch.getVertexCount(),
-                staticMeshBatch.getShaderProgram(),
-                transformIndex,
-                staticMeshBatch.getDefaultVertexBuffer().get(),
-                staticMeshBatch.getDefaultIndexBuffer().get()
-        );
-
-        staticMeshBatch.updateMeshBatch(
-                mesh.getVertexCount(),
-                mesh.getIndexCount()
-        );
-    }
+    public abstract void submitStaticMesh(StaticMeshBatch staticMeshBatch, Mesh mesh, int transformIndex);
     public abstract DynamicMesh submitDynamicMesh(Mesh mesh, int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram);
 
 
