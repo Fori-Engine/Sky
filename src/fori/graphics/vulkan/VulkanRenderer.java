@@ -916,6 +916,68 @@ public class VulkanRenderer extends Renderer {
         );
     }
 
+    @Override
+    public void destroyStaticMeshBatch(StaticMeshBatch staticMeshBatch) {
+        VulkanStaticMeshBatch vulkanStaticMeshBatch = (VulkanStaticMeshBatch) staticMeshBatch;
+
+        for(int frameIndex = 0; frameIndex < getMaxFramesInFlight(); frameIndex++) {
+            Buffer transformsBuffer = vulkanStaticMeshBatch.getTransformsBuffers()[frameIndex];
+            Buffer cameraBuffer = vulkanStaticMeshBatch.getCameraBuffers()[frameIndex];
+
+            transformsBuffer.dispose();
+            cameraBuffer.dispose();
+
+            ref.remove(transformsBuffer);
+            ref.remove(cameraBuffer);
+
+        }
+
+        VulkanPipeline vulkanPipeline = vulkanStaticMeshBatch.getPipeline();
+
+        vkDestroyPipeline(device, vulkanPipeline.pipeline, null);
+        vkDestroyPipelineLayout(device, vulkanPipeline.pipelineLayout, null);
+
+        vulkanStaticMeshBatch.getVertexBuffer().dispose();
+        vulkanStaticMeshBatch.getIndexBuffer().dispose();
+
+
+
+        ref.remove(vulkanStaticMeshBatch.getVertexBuffer());
+        ref.remove(vulkanStaticMeshBatch.getIndexBuffer());
+
+        staticMeshBatches.remove(staticMeshBatch.getShaderProgram());
+    }
+
+    @Override
+    public void destroyDynamicMesh(DynamicMesh dynamicMesh) {
+        VulkanDynamicMesh vulkanDynamicMesh = (VulkanDynamicMesh) dynamicMesh;
+
+        for(int frameIndex = 0; frameIndex < getMaxFramesInFlight(); frameIndex++) {
+            Buffer transformsBuffer = vulkanDynamicMesh.getTransformsBuffers()[frameIndex];
+            Buffer cameraBuffer = vulkanDynamicMesh.getCameraBuffers()[frameIndex];
+
+            transformsBuffer.dispose();
+            cameraBuffer.dispose();
+
+            ref.remove(transformsBuffer);
+            ref.remove(cameraBuffer);
+
+        }
+
+        VulkanPipeline vulkanPipeline = vulkanDynamicMesh.getPipeline();
+
+        vkDestroyPipeline(device, vulkanPipeline.pipeline, null);
+        vkDestroyPipelineLayout(device, vulkanPipeline.pipelineLayout, null);
+
+        vulkanDynamicMesh.getVertexBuffer().dispose();
+        vulkanDynamicMesh.getIndexBuffer().dispose();
+
+        ref.remove(vulkanDynamicMesh.getVertexBuffer());
+        ref.remove(vulkanDynamicMesh.getIndexBuffer());
+
+        dynamicMeshes.remove(vulkanDynamicMesh.getShaderProgram());
+    }
+
 
     @Override
     public DynamicMesh submitDynamicMesh(Mesh mesh, int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram) {
@@ -1238,13 +1300,7 @@ public class VulkanRenderer extends Renderer {
             vkDestroyFence(device, frame.inFlightFence, null);
         }
 
-        for(StaticMeshBatch staticMeshBatch : staticMeshBatches.values()) {
-            VulkanStaticMeshBatch vulkanStaticMeshBatch = (VulkanStaticMeshBatch) staticMeshBatch;
-            if(!staticMeshBatch.isFinalized())
-                vkDestroyFence(device, vulkanStaticMeshBatch.getStagingTransferFence(), null);
-            vkDestroyPipeline(device, vulkanStaticMeshBatch.getPipeline().pipeline, null);
-            vkDestroyPipelineLayout(device, vulkanStaticMeshBatch.getPipeline().pipelineLayout, null);
-        }
+
 
 
 

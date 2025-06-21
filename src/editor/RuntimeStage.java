@@ -26,6 +26,10 @@ import static fori.graphics.ShaderRes.Type.*;
 public class RuntimeStage extends Stage {
     private Renderer renderer;
 
+    private StaticMeshBatch staticMeshBatch1, staticMeshBatch2;
+    private DynamicMesh dynamicMesh1;
+    private boolean pressed = false;
+
     public void init(String[] cliArgs, Surface surface){
         super.init(cliArgs, surface);
 
@@ -146,20 +150,20 @@ public class RuntimeStage extends Stage {
 
 
             Mesh mesh = Mesh.newMesh(MeshType.Static, AssetPacks.getAsset("core:assets/models/viking_room.obj"));
-            StaticMeshBatch staticMeshBatch = renderer.newStaticMeshBatch(100000, 100000, 1, shaderProgram);
+            staticMeshBatch1 = renderer.newStaticMeshBatch(100000, 100000, 1, shaderProgram);
 
-            renderer.submitStaticMesh(staticMeshBatch, mesh, 0);
+            renderer.submitStaticMesh(staticMeshBatch1, mesh, 0);
 
-            staticMeshBatch.uploadsFinished();
+            staticMeshBatch1.uploadsFinished();
 
             Texture texture = Texture.newTexture(renderer.getRef(), AssetPacks.getAsset("core:assets/textures/viking_room.png"), Texture.Filter.Linear, Texture.Filter.Linear);
             Matrix4f transform1 = new Matrix4f().identity().translate(0, -1, 0).rotate((float) (-Math.PI / 2), 1, 0, 0);
 
 
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                staticMeshBatch.getShaderProgram().updateTextures(frameIndex, new ShaderUpdate<>("textures", 0, 2, texture).arrayIndex(0));
-                ByteBuffer transformsBufferData = staticMeshBatch.getTransformsBuffers()[frameIndex].get();
-                ByteBuffer cameraBufferData = staticMeshBatch.getCameraBuffers()[frameIndex].get();
+                staticMeshBatch1.getShaderProgram().updateTextures(frameIndex, new ShaderUpdate<>("textures", 0, 2, texture).arrayIndex(0));
+                ByteBuffer transformsBufferData = staticMeshBatch1.getTransformsBuffers()[frameIndex].get();
+                ByteBuffer cameraBufferData = staticMeshBatch1.getCameraBuffers()[frameIndex].get();
 
                 transform1.get(0, transformsBufferData);
 
@@ -167,10 +171,10 @@ public class RuntimeStage extends Stage {
                 camera.getView().get(0, cameraBufferData);
                 camera.getProj().get(4 * 4 * Float.BYTES, cameraBufferData);
 
-                staticMeshBatch.getShaderProgram().updateBuffers(
+                staticMeshBatch1.getShaderProgram().updateBuffers(
                         frameIndex,
-                        new ShaderUpdate<>("camera", 0, 0, staticMeshBatch.getCameraBuffers()[frameIndex]),
-                        new ShaderUpdate<>("transforms", 0, 1, staticMeshBatch.getTransformsBuffers()[frameIndex])
+                        new ShaderUpdate<>("camera", 0, 0, staticMeshBatch1.getCameraBuffers()[frameIndex]),
+                        new ShaderUpdate<>("transforms", 0, 1, staticMeshBatch1.getTransformsBuffers()[frameIndex])
                 );
             }
         }
@@ -220,7 +224,7 @@ public class RuntimeStage extends Stage {
 
 
             Mesh mesh = Mesh.newMesh(MeshType.Dynamic, AssetPacks.getAsset("core:assets/models/viking_room.obj"));
-            DynamicMesh dynamicMesh = renderer.submitDynamicMesh(mesh, 100000, 100000, shaderProgram);
+            dynamicMesh1 = renderer.submitDynamicMesh(mesh, 100000, 100000, shaderProgram);
 
 
             Texture texture = Texture.newTexture(renderer.getRef(), AssetPacks.getAsset("core:assets/textures/viking_room.png"), Texture.Filter.Linear, Texture.Filter.Linear);
@@ -228,9 +232,9 @@ public class RuntimeStage extends Stage {
 
 
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                dynamicMesh.getShaderProgram().updateTextures(frameIndex, new ShaderUpdate<>("textures", 0, 2, texture).arrayIndex(0));
-                ByteBuffer transformsBufferData = dynamicMesh.getTransformsBuffers()[frameIndex].get();
-                ByteBuffer cameraBufferData = dynamicMesh.getCameraBuffers()[frameIndex].get();
+                dynamicMesh1.getShaderProgram().updateTextures(frameIndex, new ShaderUpdate<>("textures", 0, 2, texture).arrayIndex(0));
+                ByteBuffer transformsBufferData = dynamicMesh1.getTransformsBuffers()[frameIndex].get();
+                ByteBuffer cameraBufferData = dynamicMesh1.getCameraBuffers()[frameIndex].get();
 
                 transform1.get(0, transformsBufferData);
 
@@ -238,10 +242,10 @@ public class RuntimeStage extends Stage {
                 camera.getView().get(0, cameraBufferData);
                 camera.getProj().get(4 * 4 * Float.BYTES, cameraBufferData);
 
-                dynamicMesh.getShaderProgram().updateBuffers(
+                dynamicMesh1.getShaderProgram().updateBuffers(
                         frameIndex,
-                        new ShaderUpdate<>("camera", 0, 0, dynamicMesh.getCameraBuffers()[frameIndex]),
-                        new ShaderUpdate<>("transforms", 0, 1, dynamicMesh.getTransformsBuffers()[frameIndex])
+                        new ShaderUpdate<>("camera", 0, 0, dynamicMesh1.getCameraBuffers()[frameIndex]),
+                        new ShaderUpdate<>("transforms", 0, 1, dynamicMesh1.getTransformsBuffers()[frameIndex])
                 );
             }
         }
@@ -345,18 +349,18 @@ public class RuntimeStage extends Stage {
 
 
 
-            StaticMeshBatch staticMeshBatch = renderer.newStaticMeshBatch(100000, 100000, 1, shaderProgram);
+            staticMeshBatch2 = renderer.newStaticMeshBatch(100000, 100000, 1, shaderProgram);
 
-            renderer.submitStaticMesh(staticMeshBatch, mesh, 0);
-            staticMeshBatch.uploadsFinished();
+            renderer.submitStaticMesh(staticMeshBatch2, mesh, 0);
+            staticMeshBatch2.uploadsFinished();
 
 
             Matrix4f transform1 = new Matrix4f().identity().translate(0, -1, 0);
 
 
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                ByteBuffer transformsBufferData = staticMeshBatch.getTransformsBuffers()[frameIndex].get();
-                ByteBuffer cameraBufferData = staticMeshBatch.getCameraBuffers()[frameIndex].get();
+                ByteBuffer transformsBufferData = staticMeshBatch2.getTransformsBuffers()[frameIndex].get();
+                ByteBuffer cameraBufferData = staticMeshBatch2.getCameraBuffers()[frameIndex].get();
 
                 transform1.get(0, transformsBufferData);
 
@@ -364,10 +368,10 @@ public class RuntimeStage extends Stage {
                 camera.getView().get(0, cameraBufferData);
                 camera.getProj().get(4 * 4 * Float.BYTES, cameraBufferData);
 
-                staticMeshBatch.getShaderProgram().updateBuffers(
+                staticMeshBatch2.getShaderProgram().updateBuffers(
                         frameIndex,
-                        new ShaderUpdate<>("camera", 0, 0, staticMeshBatch.getCameraBuffers()[frameIndex]),
-                        new ShaderUpdate<>("transforms", 0, 1, staticMeshBatch.getTransformsBuffers()[frameIndex])
+                        new ShaderUpdate<>("camera", 0, 0, staticMeshBatch2.getCameraBuffers()[frameIndex]),
+                        new ShaderUpdate<>("transforms", 0, 1, staticMeshBatch2.getTransformsBuffers()[frameIndex])
                 );
             }
 
@@ -375,13 +379,30 @@ public class RuntimeStage extends Stage {
         }
 
 
+
     }
 
     public boolean update(){
         renderer.update(surface.update());
 
+        if(surface.getMousePressed(Input.MOUSE_BUTTON_1) && !pressed) {
+
+            renderer.waitForDevice();
+            renderer.destroyStaticMeshBatch(staticMeshBatch2);
+
+            pressed = true;
+        }
+
+
         return !surface.shouldClose();
     }
+
+    @Override
+    public void closing() {
+        renderer.destroyStaticMeshBatch(staticMeshBatch1);
+        renderer.destroyDynamicMesh(dynamicMesh1);
+    }
+
 
     public void dispose(){
 

@@ -13,6 +13,7 @@ public abstract class DynamicMesh {
     protected int indexCount;
     protected Buffer vertexBuffer;
     protected Buffer indexBuffer;
+    protected boolean finalized;
 
     public DynamicMesh(int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram) {
         this.maxVertexCount = maxVertexCount;
@@ -47,5 +48,11 @@ public abstract class DynamicMesh {
         return indexCount;
     }
 
-    public abstract void updateMesh(int vertexCount, int indexCount);
+    public void updateMesh(int vertexCount, int indexCount) {
+        finalized = true;
+    }
+
+    public boolean isFinalized() {
+        return finalized;
+    }
 }

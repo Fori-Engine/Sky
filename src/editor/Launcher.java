@@ -7,6 +7,8 @@ import org.lwjgl.system.Configuration;
 
 public class Launcher {
     public static void main(String[] args) {
+        Configuration.DEBUG.set(true);
+        Configuration.DEBUG_MEMORY_ALLOCATOR.set(true);
 
         Stage stage = new RuntimeStage();
         Surface surface = Surface.newSurface(stage.getStageRef(), "Runtime", 1000, 800);
@@ -20,6 +22,7 @@ public class Launcher {
             if(!success) break;
         }
 
+        stage.closing();
         stage.close();
 
 

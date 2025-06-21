@@ -41,7 +41,10 @@ public abstract class Renderer implements Disposable {
 
     public abstract StaticMeshBatch newStaticMeshBatch(int maxVertices, int maxIndices, int maxTransforms, ShaderProgram shaderProgram);
     public abstract void submitStaticMesh(StaticMeshBatch staticMeshBatch, Mesh mesh, int transformIndex);
+    public abstract void destroyStaticMeshBatch(StaticMeshBatch staticMeshBatch);
+
     public abstract DynamicMesh submitDynamicMesh(Mesh mesh, int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram);
+    public abstract void destroyDynamicMesh(DynamicMesh dynamicMesh);
 
 
 

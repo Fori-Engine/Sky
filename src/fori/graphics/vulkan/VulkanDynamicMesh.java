@@ -64,6 +64,7 @@ public class VulkanDynamicMesh extends DynamicMesh {
 
     @Override
     public void updateMesh(int vertexCount, int indexCount) {
+        super.updateMesh(vertexCount, indexCount);
         this.vertexCount = vertexCount;
         this.indexCount = indexCount;
     }

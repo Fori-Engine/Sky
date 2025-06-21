@@ -34,6 +34,8 @@ public abstract class Stage {
 
     public Ref getStageRef() { return rootRef; }
 
+    public abstract void closing();
+
     public void close(){
         dispose();
         rootRef.destroyAll();
