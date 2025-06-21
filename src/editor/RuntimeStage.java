@@ -149,6 +149,7 @@ public class RuntimeStage extends Stage {
 
             renderer.submitStaticMesh(staticMeshBatch, mesh, 0);
 
+            staticMeshBatch.uploadsFinished();
 
             Texture texture = Texture.newTexture(renderer.getRef(), AssetPacks.getAsset("core:assets/textures/viking_room.png"), Texture.Filter.Linear, Texture.Filter.Linear);
             Matrix4f transform1 = new Matrix4f().identity();
@@ -275,6 +276,7 @@ public class RuntimeStage extends Stage {
             StaticMeshBatch staticMeshBatch = renderer.newStaticMeshBatch(100000, 100000, 1, shaderProgram);
 
             renderer.submitStaticMesh(staticMeshBatch, mesh, 0);
+            staticMeshBatch.uploadsFinished();
 
 
             Matrix4f transform1 = new Matrix4f().identity().translate(0, -1, 0);

@@ -14,6 +14,7 @@ public abstract class StaticMeshBatch {
     protected int maxVertexCount;
     protected int maxIndexCount;
     protected int maxTransformCount;
+    protected boolean finalized;
 
     public StaticMeshBatch(int maxIndexCount, int maxVertexCount, int maxTransformCount, ShaderProgram shaderProgram) {
         this.maxIndexCount = maxIndexCount;
@@ -24,6 +25,14 @@ public abstract class StaticMeshBatch {
 
     public abstract Buffer getDefaultVertexBuffer();
     public abstract Buffer getDefaultIndexBuffer();
+
+    public void uploadsFinished() {
+        finalized = true;
+    }
+
+    public boolean isFinalized() {
+        return finalized;
+    }
 
     public Buffer getVertexBuffer() {
         return vertexBuffer;

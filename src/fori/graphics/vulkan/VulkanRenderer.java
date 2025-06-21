@@ -1155,7 +1155,8 @@ public class VulkanRenderer extends Renderer {
 
         for(StaticMeshBatch staticMeshBatch : staticMeshBatches.values()) {
             VulkanStaticMeshBatch vulkanStaticMeshBatch = (VulkanStaticMeshBatch) staticMeshBatch;
-            vkDestroyFence(device, vulkanStaticMeshBatch.getStagingTransferFence(), null);
+            if(!staticMeshBatch.isFinalized())
+                vkDestroyFence(device, vulkanStaticMeshBatch.getStagingTransferFence(), null);
             vkDestroyPipeline(device, vulkanStaticMeshBatch.getPipeline().pipeline, null);
             vkDestroyPipelineLayout(device, vulkanStaticMeshBatch.getPipeline().pipelineLayout, null);
         }
