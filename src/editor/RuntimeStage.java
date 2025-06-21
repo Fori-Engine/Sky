@@ -6,6 +6,7 @@ import fori.asset.AssetPacks;
 
 import fori.graphics.*;
 
+import fori.graphics.aurora.DynamicMesh;
 import fori.graphics.aurora.StaticMeshBatch;
 import org.apache.commons.cli.*;
 import org.joml.Matrix4f;
@@ -152,7 +153,7 @@ public class RuntimeStage extends Stage {
             staticMeshBatch.uploadsFinished();
 
             Texture texture = Texture.newTexture(renderer.getRef(), AssetPacks.getAsset("core:assets/textures/viking_room.png"), Texture.Filter.Linear, Texture.Filter.Linear);
-            Matrix4f transform1 = new Matrix4f().identity();
+            Matrix4f transform1 = new Matrix4f().identity().translate(0, -1, 0).rotate((float) (-Math.PI / 2), 1, 0, 0);
 
 
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
@@ -170,6 +171,77 @@ public class RuntimeStage extends Stage {
                         frameIndex,
                         new ShaderUpdate<>("camera", 0, 0, staticMeshBatch.getCameraBuffers()[frameIndex]),
                         new ShaderUpdate<>("transforms", 0, 1, staticMeshBatch.getTransformsBuffers()[frameIndex])
+                );
+            }
+        }
+
+        {
+
+
+            ShaderProgram shaderProgram;
+            {
+                ShaderReader.ShaderSources shaderSources = ShaderReader.readCombinedVertexFragmentSources(
+                        AssetPacks.<String>getAsset("core:assets/shaders/vulkan/Default.glsl").asset
+                );
+
+
+                shaderProgram = ShaderProgram.newShaderProgram(renderer.getRef(), shaderSources.vertexShader, shaderSources.fragmentShader);
+
+                shaderProgram.bind(
+                        new Attributes.Type[]{
+                                PositionFloat3,
+                                TransformIndexFloat1,
+                                UVFloat2,
+                        },
+                        new ShaderResSet(
+                                0,
+                                new ShaderRes(
+                                        "camera",
+                                        0,
+                                        UniformBuffer,
+                                        VertexStage
+                                ).sizeBytes(2 * SizeUtil.MATRIX_SIZE_BYTES),
+                                new ShaderRes(
+                                        "transforms",
+                                        1,
+                                        ShaderStorageBuffer,
+                                        VertexStage
+                                ).sizeBytes(1 * SizeUtil.MATRIX_SIZE_BYTES),
+                                new ShaderRes(
+                                        "textures",
+                                        2,
+                                        CombinedSampler,
+                                        FragmentStage
+                                ).count(1)
+                        )
+                );
+
+            }
+
+
+            Mesh mesh = Mesh.newMesh(MeshType.Dynamic, AssetPacks.getAsset("core:assets/models/viking_room.obj"));
+            DynamicMesh dynamicMesh = renderer.submitDynamicMesh(mesh, 100000, 100000, shaderProgram);
+
+
+            Texture texture = Texture.newTexture(renderer.getRef(), AssetPacks.getAsset("core:assets/textures/viking_room.png"), Texture.Filter.Linear, Texture.Filter.Linear);
+            Matrix4f transform1 = new Matrix4f().identity().translate(0.5f, 0, 0).rotate((float) (Math.PI / 2), 1, 0, 0);
+
+
+            for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
+                dynamicMesh.getShaderProgram().updateTextures(frameIndex, new ShaderUpdate<>("textures", 0, 2, texture).arrayIndex(0));
+                ByteBuffer transformsBufferData = dynamicMesh.getTransformsBuffers()[frameIndex].get();
+                ByteBuffer cameraBufferData = dynamicMesh.getCameraBuffers()[frameIndex].get();
+
+                transform1.get(0, transformsBufferData);
+
+
+                camera.getView().get(0, cameraBufferData);
+                camera.getProj().get(4 * 4 * Float.BYTES, cameraBufferData);
+
+                dynamicMesh.getShaderProgram().updateBuffers(
+                        frameIndex,
+                        new ShaderUpdate<>("camera", 0, 0, dynamicMesh.getCameraBuffers()[frameIndex]),
+                        new ShaderUpdate<>("transforms", 0, 1, dynamicMesh.getTransformsBuffers()[frameIndex])
                 );
             }
         }

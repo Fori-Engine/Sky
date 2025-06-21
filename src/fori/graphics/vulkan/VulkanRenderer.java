@@ -9,6 +9,7 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
+import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.*;
@@ -892,8 +893,41 @@ public class VulkanRenderer extends Renderer {
 
 
     @Override
-    public DynamicMesh submitDynamicMesh(Mesh mesh, ShaderProgram shaderProgram) {
-        return null;
+    public DynamicMesh submitDynamicMesh(Mesh mesh, int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram) {
+
+        VulkanPipeline pipeline = createPipeline(device, swapchain, (VulkanShaderProgram) shaderProgram);
+        VulkanDynamicMesh vulkanDynamicMesh = new VulkanDynamicMesh(
+                getRef(),
+                shaderProgram,
+                getMaxFramesInFlight(),
+                sharedCommandPool,
+                graphicsQueue,
+                device,
+                pipeline,
+                maxVertexCount,
+                maxIndexCount
+        );
+
+        dynamicMeshes.put(shaderProgram, vulkanDynamicMesh);
+
+        ByteBuffer vertexBufferData = vulkanDynamicMesh.getVertexBuffer().get();
+        vertexBufferData.clear();
+
+        ByteBuffer indexBufferData = vulkanDynamicMesh.getIndexBuffer().get();
+        indexBufferData.clear();
+
+        mesh.put(
+                0,
+                shaderProgram,
+                0,
+                vertexBufferData,
+                indexBufferData
+        );
+
+        vulkanDynamicMesh.updateMesh(mesh.getVertexCount(), mesh.getIndexCount());
+
+
+        return vulkanDynamicMesh;
     }
 
     @Override
@@ -1049,6 +1083,32 @@ public class VulkanRenderer extends Renderer {
 
                         vkCmdBindIndexBuffer(commandBuffer, indexBuffer.getHandle(), 0, VK_INDEX_TYPE_UINT32);
                         vkCmdDrawIndexed(commandBuffer, vulkanStaticMeshBatch.indexCount, 1, 0, 0, 0);
+
+                    }
+
+                    for(DynamicMesh dynamicMesh : dynamicMeshes.values()) {
+                        VulkanDynamicMesh vulkanDynamicMesh = (VulkanDynamicMesh) dynamicMesh;
+
+                        VulkanBuffer vertexBuffer = (VulkanBuffer) vulkanDynamicMesh.getVertexBuffer();
+                        VulkanBuffer indexBuffer = (VulkanBuffer) vulkanDynamicMesh.getIndexBuffer();
+
+
+
+
+                        VulkanPipeline pipeline = vulkanDynamicMesh.getPipeline();
+                        VulkanShaderProgram shaderProgram = (VulkanShaderProgram) vulkanDynamicMesh.getShaderProgram();
+                        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
+
+                        LongBuffer vertexBuffers = stack.longs(vertexBuffer.getHandle());
+                        LongBuffer offsets = stack.longs(0);
+
+                        vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
+
+                        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                pipeline.pipelineLayout, 0, stack.longs(shaderProgram.getDescriptorSets(frameIndex)), null);
+
+                        vkCmdBindIndexBuffer(commandBuffer, indexBuffer.getHandle(), 0, VK_INDEX_TYPE_UINT32);
+                        vkCmdDrawIndexed(commandBuffer, vulkanDynamicMesh.getIndexCount(), 1, 0, 0, 0);
 
                     }
 

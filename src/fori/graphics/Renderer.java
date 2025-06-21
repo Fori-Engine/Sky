@@ -24,7 +24,7 @@ public abstract class Renderer implements Disposable {
     protected int maxFramesInFlight;
     protected Surface surface;
     protected Map<ShaderProgram, StaticMeshBatch> staticMeshBatches;
-    protected List<DynamicMesh> dynamicMeshes;
+    protected Map<ShaderProgram, DynamicMesh> dynamicMeshes;
 
 
     public Renderer(Ref parent, int width, int height, int maxFramesInFlight, RendererSettings settings, Surface surface){
@@ -36,7 +36,7 @@ public abstract class Renderer implements Disposable {
         this.surface = surface;
 
         staticMeshBatches = new HashMap<>();
-        dynamicMeshes = new LinkedList<>();
+        dynamicMeshes = new HashMap<>();
     }
 
     public abstract StaticMeshBatch newStaticMeshBatch(int maxVertices, int maxIndices, int maxTransforms, ShaderProgram shaderProgram);
@@ -64,7 +64,7 @@ public abstract class Renderer implements Disposable {
                 mesh.getIndexCount()
         );
     }
-    public abstract DynamicMesh submitDynamicMesh(Mesh mesh, ShaderProgram shaderProgram);
+    public abstract DynamicMesh submitDynamicMesh(Mesh mesh, int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram);
 
 
 
