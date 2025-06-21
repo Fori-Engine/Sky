@@ -667,7 +667,7 @@ public class VulkanRenderer extends Renderer {
                 rasterizer.rasterizerDiscardEnable(false);
 
                 rasterizer.lineWidth(1);
-                rasterizer.polygonMode(VK_POLYGON_MODE_FILL);
+                rasterizer.polygonMode(VK_POLYGON_MODE_LINE);
                 rasterizer.cullMode(VK_CULL_MODE_BACK_BIT);
                 rasterizer.frontFace(VK_FRONT_FACE_COUNTER_CLOCKWISE);
                 rasterizer.depthBiasEnable(false);
