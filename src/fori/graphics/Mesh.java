@@ -45,6 +45,8 @@ public class Mesh {
         assetData.flip();
         AIScene scene = Assimp.aiImportFileFromMemory(assetData, aiProcess_FlipUVs | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices, (ByteBuffer) null);
 
+
+
         int meshCount = scene.mNumMeshes();
         PointerBuffer meshes = scene.mMeshes();
 
@@ -182,6 +184,7 @@ public class Mesh {
         for (int i = 0; i < root.mNumMeshes(); i++) {
             int meshIndex = meshes.get(i);
             AIMesh mesh = meshList.get(meshIndex);
+
             openMesh(mesh, vertices, textureUVs, textureIndices, indices);
         }
 
@@ -189,6 +192,8 @@ public class Mesh {
             AINode child = AINode.create(root.mChildren().get(z));
             openNode(child, meshList, vertices, textureUVs, textureIndices, indices);
         }
+
+
     }
 
 

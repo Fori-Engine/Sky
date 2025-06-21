@@ -1,6 +1,7 @@
 package fori.graphics.vulkan;
 
 import org.lwjgl.PointerBuffer;
+import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.util.vma.VmaAllocatorCreateInfo;
 import org.lwjgl.util.vma.VmaVulkanFunctions;
@@ -18,26 +19,31 @@ public class VulkanAllocator {
     private long id;
 
     public static final void init(VkInstance instance, VkDevice device, VkPhysicalDevice physicalDevice){
-        VmaVulkanFunctions vulkanFunctions = VmaVulkanFunctions.create();
-        vulkanFunctions.set(instance, device);
+
+        try(MemoryStack stack = MemoryStack.stackPush()) {
+            VmaVulkanFunctions vulkanFunctions = VmaVulkanFunctions.calloc(stack);
+            vulkanFunctions.set(instance, device);
 
 
-        VmaAllocatorCreateInfo allocatorCreateInfo = VmaAllocatorCreateInfo.create();
-        allocatorCreateInfo.vulkanApiVersion(VK_API_VERSION_1_3);
-        allocatorCreateInfo.instance(instance);
-        allocatorCreateInfo.physicalDevice(physicalDevice);
-        allocatorCreateInfo.device(device);
-        allocatorCreateInfo.flags(VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT);
-        allocatorCreateInfo.pVulkanFunctions(vulkanFunctions);
+            VmaAllocatorCreateInfo allocatorCreateInfo = VmaAllocatorCreateInfo.calloc(stack);
+            allocatorCreateInfo.vulkanApiVersion(VK_API_VERSION_1_3);
+            allocatorCreateInfo.instance(instance);
+            allocatorCreateInfo.physicalDevice(physicalDevice);
+            allocatorCreateInfo.device(device);
+            allocatorCreateInfo.flags(VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT);
+            allocatorCreateInfo.pVulkanFunctions(vulkanFunctions);
 
 
-        PointerBuffer pAllocator = MemoryUtil.memAllocPointer(1);
-        vmaCreateAllocator(allocatorCreateInfo, pAllocator);
+            PointerBuffer pAllocator = stack.callocPointer(1);
+            vmaCreateAllocator(allocatorCreateInfo, pAllocator);
 
-        VulkanAllocator.allocator = new VulkanAllocator();
-        VulkanAllocator.allocator.id = pAllocator.get(0);
+            VulkanAllocator.allocator = new VulkanAllocator();
+            VulkanAllocator.allocator.id = pAllocator.get(0);
 
-        MemoryUtil.memFree(pAllocator);
+        }
+
+
+
     }
 
     public long getId() {

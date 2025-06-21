@@ -296,7 +296,7 @@ public class VulkanRenderer extends Renderer {
         }
     }
     private VkPhysicalDeviceProperties getPhysicalDeviceProperties(VkPhysicalDevice physicalDevice){
-        VkPhysicalDeviceProperties physicalDeviceProperties = VkPhysicalDeviceProperties.create();
+        VkPhysicalDeviceProperties physicalDeviceProperties = VkPhysicalDeviceProperties.calloc();
         vkGetPhysicalDeviceProperties(physicalDevice, physicalDeviceProperties);
         return physicalDeviceProperties;
     }
@@ -940,8 +940,6 @@ public class VulkanRenderer extends Renderer {
         vulkanStaticMeshBatch.getVertexBuffer().dispose();
         vulkanStaticMeshBatch.getIndexBuffer().dispose();
 
-
-
         ref.remove(vulkanStaticMeshBatch.getVertexBuffer());
         ref.remove(vulkanStaticMeshBatch.getIndexBuffer());
 
@@ -1288,6 +1286,8 @@ public class VulkanRenderer extends Renderer {
     public void dispose() {
         vkDeviceWaitIdle(device);
 
+
+
         for(long swapchainImageView : swapchainImageViews){
             vkDestroyImageView(device, swapchainImageView, null);
         }
@@ -1310,7 +1310,9 @@ public class VulkanRenderer extends Renderer {
         vkDestroySurfaceKHR(instance, vkSurface, null);
         EXTDebugUtils.vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, null);
 
+        physicalDeviceProperties.free();
         vkDestroyDevice(device, null);
+
         vkDestroyInstance(instance, null);
     }
 
