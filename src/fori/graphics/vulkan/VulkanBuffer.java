@@ -3,6 +3,7 @@ package fori.graphics.vulkan;
 import fori.graphics.Buffer;
 import fori.graphics.Ref;
 import org.lwjgl.PointerBuffer;
+import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.util.vma.VmaAllocationCreateInfo;
 import org.lwjgl.util.vma.VmaAllocationInfo;
@@ -20,7 +21,7 @@ public class VulkanBuffer extends Buffer {
 
     private long handle;
     private LongBuffer pBuffer;
-    private PointerBuffer pAllocation;
+    private long allocation;
     private VmaAllocationInfo allocationInfo;
     private VmaAllocationCreateInfo allocationCreateInfo;
     private long memory;
@@ -30,32 +31,35 @@ public class VulkanBuffer extends Buffer {
         super(parent, sizeBytes, usage, type, staging);
 
 
+        try(MemoryStack stack = MemoryStack.stackPush()) {
 
-        VkBufferCreateInfo bufferCreateInfo = VkBufferCreateInfo.create();
-        bufferCreateInfo.sType(VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO);
-        bufferCreateInfo.size(sizeBytes);
-        int vkUsage = toVkUsageType(usage);
+            VkBufferCreateInfo bufferCreateInfo = VkBufferCreateInfo.calloc(stack);
+            bufferCreateInfo.sType(VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO);
+            bufferCreateInfo.size(sizeBytes);
+            int vkUsage = toVkUsageType(usage);
 
-        if(type == Type.CPUGPUShared && staging) vkUsage |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-        if(type == Type.GPULocal) vkUsage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+            if (type == Type.CPUGPUShared && staging) vkUsage |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+            if (type == Type.GPULocal) vkUsage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
-        bufferCreateInfo.usage(vkUsage);
-
-
-        allocationCreateInfo = VmaAllocationCreateInfo.create();
-        allocationCreateInfo.usage(toVkMemoryUsageType(type));
-        allocationCreateInfo.requiredFlags(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-        pBuffer = MemoryUtil.memAllocLong(1);
-        pAllocation = MemoryUtil.memAllocPointer(1);
+            bufferCreateInfo.usage(vkUsage);
 
 
-        allocationInfo = VmaAllocationInfo.create();
+            allocationCreateInfo = VmaAllocationCreateInfo.calloc(stack);
+            allocationCreateInfo.usage(toVkMemoryUsageType(type));
+            allocationCreateInfo.requiredFlags(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-        vmaCreateBuffer(VulkanAllocator.getAllocator().getId(), bufferCreateInfo, allocationCreateInfo, pBuffer, pAllocation, allocationInfo);
-        memory = allocationInfo.deviceMemory();
+            pBuffer = stack.callocLong(1);
+            PointerBuffer pAllocation = stack.callocPointer(1);
 
-        handle = pBuffer.get();
+
+            allocationInfo = VmaAllocationInfo.calloc(stack);
+
+            vmaCreateBuffer(VulkanAllocator.getAllocator().getId(), bufferCreateInfo, allocationCreateInfo, pBuffer, pAllocation, allocationInfo);
+            allocation = pAllocation.get(0);
+            memory = allocationInfo.deviceMemory();
+
+            handle = pBuffer.get();
+        }
 
     }
 
@@ -98,7 +102,7 @@ public class VulkanBuffer extends Buffer {
     public ByteBuffer map(){
         super.map();
         mappedMemory = MemoryUtil.memAllocPointer(1);
-        vmaMapMemory(VulkanAllocator.getAllocator().getId(), pAllocation.get(0), mappedMemory);
+        vmaMapMemory(VulkanAllocator.getAllocator().getId(), allocation, mappedMemory);
         return mappedMemory.getByteBuffer(getSizeBytes());
     }
 
@@ -107,7 +111,7 @@ public class VulkanBuffer extends Buffer {
     public void unmap(){
         super.unmap();
 
-        vmaUnmapMemory(VulkanAllocator.getAllocator().getId(), pAllocation.get(0));
+        vmaUnmapMemory(VulkanAllocator.getAllocator().getId(), allocation);
         MemoryUtil.memFree(mappedMemory);
     }
 
@@ -121,16 +125,9 @@ public class VulkanBuffer extends Buffer {
 
     @Override
     public void dispose() {
-
-
+        if(mapped) unmap();
         vkDeviceWaitIdle(VulkanDeviceManager.getCurrentDevice());
-
-        MemoryUtil.memFree(pBuffer);
-        MemoryUtil.memFree(pAllocation);
-        allocationInfo.free();
-        allocationCreateInfo.free();
-        vmaDestroyBuffer(VulkanAllocator.getAllocator().getId(), handle, pAllocation.get(0));
-
+        vmaDestroyBuffer(VulkanAllocator.getAllocator().getId(), handle, allocation);
     }
 
 }

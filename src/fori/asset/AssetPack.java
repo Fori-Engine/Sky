@@ -9,6 +9,8 @@ import fori.Logger;
 import fori.ExceptionUtil;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.stb.STBImage;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -88,53 +90,55 @@ public class AssetPack {
     }
 
     private static void generateAssetMap(AssetMap assetMap, File path){
-        for(File asset : path.listFiles()){
-            if(!asset.isDirectory()){
-                Asset target = null;
-                int sizeBytes = 0;
 
-                if(asset.getName().endsWith(".png") || asset.getName().endsWith(".jpg") || asset.getName().endsWith("jpeg")){
-                    IntBuffer w = BufferUtils.createIntBuffer(1);
-                    IntBuffer h = BufferUtils.createIntBuffer(1);
-                    IntBuffer channelsInFile = BufferUtils.createIntBuffer(1);
-                    ByteBuffer texture = STBImage.stbi_load(asset.getPath(), w, h, channelsInFile, 4);
-                    int size = texture.remaining();
-                    byte[] bytes = new byte[texture.remaining()];
-                    sizeBytes += size;
+        try(MemoryStack stack = MemoryStack.stackPush()) {
 
-                    texture.limit(size);
-                    texture.get(bytes);
-                    texture.limit(texture.capacity()).rewind();
+            for (File asset : path.listFiles()) {
+                if (!asset.isDirectory()) {
+                    Asset target = null;
+                    int sizeBytes = 0;
 
-                    target = new Asset<>(asset.getName(), new TextureData(bytes, w.get(), h.get()));
-                }
-                else if(asset.getName().endsWith(".glsl")){
-                    target = new Asset<>(asset.getName(), FileReader.readFile(asset.getPath()));
-                    sizeBytes += target.asset.toString().getBytes().length;
-                }
-                else if(asset.getName().endsWith(".fnt")){
-                    target = new Asset<>(asset.getName(), FileReader.readFile(asset.getPath()));
-                    sizeBytes += target.asset.toString().getBytes().length;
-                }
-                else if(asset.getName().endsWith(".obj") || asset.getName().endsWith(".fbx") || asset.getName().endsWith(".gltf")){
-                    byte[] bytes = null;
-                    try {
-                        bytes = Files.readAllBytes(asset.toPath());
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
+                    if (asset.getName().endsWith(".png") || asset.getName().endsWith(".jpg") || asset.getName().endsWith("jpeg")) {
+                        IntBuffer w = stack.callocInt(1);
+                        IntBuffer h = stack.callocInt(1);
+                        IntBuffer channelsInFile = stack.callocInt(1);
+                        ByteBuffer texture = STBImage.stbi_load(asset.getPath(), w, h, channelsInFile, 4);
+                        int size = texture.remaining();
+                        byte[] bytes = new byte[texture.remaining()];
+                        sizeBytes += size;
+
+                        texture.limit(size);
+                        texture.get(bytes);
+                        texture.limit(texture.capacity()).rewind();
+
+                        target = new Asset<>(asset.getName(), new TextureData(bytes, w.get(0), h.get(0)));
+
+                        MemoryUtil.memFree(texture);
+                    } else if (asset.getName().endsWith(".glsl")) {
+                        target = new Asset<>(asset.getName(), FileReader.readFile(asset.getPath()));
+                        sizeBytes += target.asset.toString().getBytes().length;
+                    } else if (asset.getName().endsWith(".fnt")) {
+                        target = new Asset<>(asset.getName(), FileReader.readFile(asset.getPath()));
+                        sizeBytes += target.asset.toString().getBytes().length;
+                    } else if (asset.getName().endsWith(".obj") || asset.getName().endsWith(".fbx") || asset.getName().endsWith(".gltf")) {
+                        byte[] bytes = null;
+                        try {
+                            bytes = Files.readAllBytes(asset.toPath());
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+
+                        target = new Asset<>(asset.getName(), bytes);
+                        sizeBytes += bytes.length;
                     }
-
-                    target = new Asset<>(asset.getName(), bytes);
-                    sizeBytes += bytes.length;
+                    assetMap.sizeBytes += sizeBytes;
+                    assetMap.put(asset.getPath().replace(File.separatorChar, '/'), target);
+                } else {
+                    generateAssetMap(assetMap, asset);
                 }
-                assetMap.sizeBytes += sizeBytes;
-                assetMap.put(asset.getPath().replace(File.separatorChar, '/'), target);
-            }
-            else {
-                generateAssetMap(assetMap, asset);
-            }
 
 
+            }
         }
     }
 
