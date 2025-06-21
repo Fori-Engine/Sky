@@ -1,7 +1,7 @@
 package fori.graphics.vulkan;
 
 import fori.graphics.*;
-import fori.graphics.aurora.DynamicMesh;
+import fori.graphics.DynamicMesh;
 import org.lwjgl.vulkan.VkDevice;
 import org.lwjgl.vulkan.VkQueue;
 

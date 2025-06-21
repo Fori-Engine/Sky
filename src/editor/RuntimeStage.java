@@ -1,13 +1,15 @@
 package editor;
 
+import dev.dominion.ecs.api.Entity;
 import fori.*;
 import fori.asset.AssetPack;
 import fori.asset.AssetPacks;
 
 import fori.graphics.*;
 
-import fori.graphics.aurora.DynamicMesh;
-import fori.graphics.aurora.StaticMeshBatch;
+import fori.graphics.DynamicMesh;
+import fori.graphics.StaticMeshBatch;
+import fori.graphics.ecs.*;
 import org.apache.commons.cli.*;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -15,7 +17,6 @@ import org.joml.Vector3f;
 import java.io.File;
 import java.lang.Math;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Objects;
 
 import static fori.graphics.Attributes.Type.*;
@@ -28,7 +29,7 @@ public class RuntimeStage extends Stage {
 
     private StaticMeshBatch staticMeshBatch1, staticMeshBatch2;
     private DynamicMesh dynamicMesh1;
-    private boolean pressed = false;
+    private Scene scene;
 
     public void init(String[] cliArgs, Surface surface){
         super.init(cliArgs, surface);
@@ -105,10 +106,17 @@ public class RuntimeStage extends Stage {
                 true
         );
 
+        scene = new Scene("Main_Scene");
+
+
+        Entity entity;
+        ShaderProgram shaderProgram;
+        Mesh mesh;
+        Matrix4f transform1;
+
         {
 
 
-            ShaderProgram shaderProgram;
             {
                 ShaderReader.ShaderSources shaderSources = ShaderReader.readCombinedVertexFragmentSources(
                         AssetPacks.<String>getAsset("core:assets/shaders/vulkan/Default.glsl").asset
@@ -149,7 +157,7 @@ public class RuntimeStage extends Stage {
             }
 
 
-            Mesh mesh = Mesh.newMesh(MeshType.Static, AssetPacks.getAsset("core:assets/models/viking_room.obj"));
+            mesh = Mesh.newMesh(MeshType.Static, AssetPacks.getAsset("core:assets/models/viking_room.obj"));
             staticMeshBatch1 = renderer.newStaticMeshBatch(100000, 100000, 1, shaderProgram);
 
             renderer.submitStaticMesh(staticMeshBatch1, mesh, 0);
@@ -157,7 +165,7 @@ public class RuntimeStage extends Stage {
             staticMeshBatch1.uploadsFinished();
 
             Texture texture = Texture.newTexture(renderer.getRef(), AssetPacks.getAsset("core:assets/textures/viking_room.png"), Texture.Filter.Linear, Texture.Filter.Linear);
-            Matrix4f transform1 = new Matrix4f().identity().translate(0, -1, 0).rotate((float) (-Math.PI / 2), 1, 0, 0);
+            transform1 = new Matrix4f().identity().translate(0, -1, 0).rotate((float) (-Math.PI / 2), 1, 0, 0);
 
 
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
@@ -177,8 +185,17 @@ public class RuntimeStage extends Stage {
                         new ShaderUpdate<>("transforms", 0, 1, staticMeshBatch1.getTransformsBuffers()[frameIndex])
                 );
             }
-        }
 
+        }
+        entity = scene.createEntity(
+                new MeshComponent(mesh),
+                new ShaderComponent(shaderProgram),
+                new TransformCompnent(transform1)
+        );
+
+
+
+        /*
         {
 
 
@@ -379,20 +396,17 @@ public class RuntimeStage extends Stage {
         }
 
 
+         */
+
+
+        scene.addSystem(new RenderSystem(renderer, surface));
+        scene.start(3);
+
 
     }
 
     public boolean update(){
         renderer.update(surface.update());
-
-        if(surface.getMousePressed(Input.MOUSE_BUTTON_1) && !pressed) {
-
-            renderer.waitForDevice();
-            renderer.destroyStaticMeshBatch(staticMeshBatch2);
-
-            pressed = true;
-        }
-
 
         return !surface.shouldClose();
     }
@@ -400,7 +414,7 @@ public class RuntimeStage extends Stage {
     @Override
     public void closing() {
         renderer.destroyStaticMeshBatch(staticMeshBatch1);
-        renderer.destroyDynamicMesh(dynamicMesh1);
+        //renderer.destroyDynamicMesh(dynamicMesh1);
     }
 
 

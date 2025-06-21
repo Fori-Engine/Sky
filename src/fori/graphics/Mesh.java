@@ -168,6 +168,7 @@ public class Mesh {
             AIVector3D aiVertex = aiVertices.get();
             AIVector3D aiTextureCoords = mesh.mTextureCoords(0).get(vertexIndex);
 
+
             vertices.add(aiVertex.x());
             vertices.add(aiVertex.y());
             vertices.add(aiVertex.z());

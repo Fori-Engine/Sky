@@ -1,7 +1,4 @@
-package fori.graphics.aurora;
-
-import fori.graphics.Buffer;
-import fori.graphics.ShaderProgram;
+package fori.graphics;
 
 public abstract class StaticMeshBatch {
     protected Buffer[] transformsBuffers;

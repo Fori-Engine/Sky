@@ -75,6 +75,9 @@ dependencies {
     implementation "org.lwjgl:lwjgl-vma"
     implementation "org.lwjgl:lwjgl-vulkan"
 
+    implementation 'dev.dominion.ecs:dominion-ecs-engine:0.9.0'
+
+
 
     runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
     runtimeOnly "org.lwjgl:lwjgl-glfw::$lwjglNatives"

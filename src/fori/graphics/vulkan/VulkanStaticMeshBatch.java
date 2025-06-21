@@ -2,7 +2,7 @@ package fori.graphics.vulkan;
 
 import fori.Logger;
 import fori.graphics.*;
-import fori.graphics.aurora.StaticMeshBatch;
+import fori.graphics.StaticMeshBatch;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;

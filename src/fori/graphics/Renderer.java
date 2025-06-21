@@ -2,16 +2,11 @@ package fori.graphics;
 
 import fori.Logger;
 import fori.Surface;
-import fori.graphics.aurora.DynamicMesh;
-import fori.graphics.aurora.StaticMeshBatch;
 import fori.graphics.vulkan.VulkanRenderContext;
 import fori.graphics.vulkan.VulkanRenderer;
 import org.lwjgl.vulkan.VkInstance;
 
-import java.nio.ByteBuffer;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 
 public abstract class Renderer implements Disposable {
