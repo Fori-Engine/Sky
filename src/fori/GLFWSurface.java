@@ -1,25 +1,36 @@
 package fori;
+import static java.util.stream.Collectors.toSet;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.glfw.GLFWVulkan.*;
 import static org.lwjgl.glfw.GLFWVulkan.glfwVulkanSupported;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
+import static org.lwjgl.vulkan.EXTDebugUtils.*;
+import static org.lwjgl.vulkan.VK10.*;
+import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
+import static org.lwjgl.vulkan.VK13.VK_API_VERSION_1_3;
 
 import fori.graphics.Ref;
 import fori.graphics.RenderAPI;
+import fori.graphics.vulkan.VulkanRenderer;
 import org.joml.Vector2f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
+import org.lwjgl.vulkan.*;
 
+import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.List;
+import java.util.Set;
 
 
 public class GLFWSurface extends Surface {
 
     private long handle;
     private Cursor cursor;
+    private GLFWErrorCallback errorCallback;
 
     @Override
     public void requestRenderAPI(RenderAPI api) {
@@ -42,7 +53,9 @@ public class GLFWSurface extends Surface {
             throw new RuntimeException(Logger.error(GLFWSurface.class, "Failed to initialize GLFW"));
         }
 
-        GLFWErrorCallback.createPrint(System.err).set();
+        errorCallback = GLFWErrorCallback.createPrint(System.err);
+        errorCallback.set();
+
         glfwWindowHint(GLFW_RESIZABLE, glfwBool(resizable));
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         handle = glfwCreateWindow(width, height, title, NULL, NULL);
@@ -53,8 +66,144 @@ public class GLFWSurface extends Surface {
         return glfwGetRequiredInstanceExtensions();
     }
 
+    @Override
+    protected VkInstance createInstance(String appName, List<String> validationLayers){
+
+        boolean validation = validationLayers != null;
+
+        VkInstance instance;
 
 
+
+        try (MemoryStack stack = stackPush()) {
+
+
+            if(validation) {
+
+
+                IntBuffer layerCount = stack.ints(0);
+
+                vkEnumerateInstanceLayerProperties(layerCount, null);
+
+                VkLayerProperties.Buffer availableLayers = VkLayerProperties.malloc(layerCount.get(0), stack);
+
+                vkEnumerateInstanceLayerProperties(layerCount, availableLayers);
+
+                Set<String> availableLayerNames = availableLayers.stream()
+                        .map(VkLayerProperties::layerNameString)
+                        .collect(toSet());
+
+                for(String validationLayerName : validationLayers){
+                    if(!availableLayerNames.contains(validationLayerName)){
+                        throw new RuntimeException("Validation Layer " + validationLayerName + " is not available");
+                    }
+                }
+            }
+
+            VkApplicationInfo appInfo = VkApplicationInfo.calloc(stack);
+
+            appInfo.sType(VK_STRUCTURE_TYPE_APPLICATION_INFO);
+            appInfo.pApplicationName(stack.UTF8Safe(appName));
+            appInfo.applicationVersion(VK_MAKE_VERSION(1, 0, 0));
+            appInfo.pEngineName(stack.UTF8Safe(appName));
+            appInfo.engineVersion(VK_MAKE_VERSION(1, 0, 0));
+            appInfo.apiVersion(VK_API_VERSION_1_3);
+
+            VkInstanceCreateInfo createInfo = VkInstanceCreateInfo.calloc(stack);
+
+            createInfo.sType(VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO);
+            createInfo.pApplicationInfo(appInfo);
+
+
+
+
+            PointerBuffer totalRequiredInstanceExtensions = null;
+            PointerBuffer windowInstanceExtensions = getVulkanInstanceExtensions();
+
+
+
+
+            //System.exit(1);
+
+            int instanceExtensionCount = windowInstanceExtensions.capacity();
+            if(validation) instanceExtensionCount++;
+
+
+            totalRequiredInstanceExtensions = stack.mallocPointer(instanceExtensionCount);
+
+
+            totalRequiredInstanceExtensions.put(windowInstanceExtensions);
+            if(validation) totalRequiredInstanceExtensions.put(stack.UTF8(VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
+
+
+            createInfo.ppEnabledExtensionNames(totalRequiredInstanceExtensions.rewind());
+            VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = null;
+
+            if (validation) {
+                createInfo.ppEnabledLayerNames(validationLayersAsPointerBuffer(validationLayers, stack));
+                vkDebugUtilsMessengerCallbackEXT = new VkDebugUtilsMessengerCallbackEXT() {
+                    @Override
+                    public int invoke(int messageSeverity, int messageTypes, long pCallbackData, long pUserData) {
+                        VkDebugUtilsMessengerCallbackDataEXT callbackData = VkDebugUtilsMessengerCallbackDataEXT.create(pCallbackData);
+                        Logger.info(VulkanRenderer.class, callbackData.pMessageString());
+
+                        return VK_FALSE;
+                    }
+                };
+
+
+
+                debugCreateInfo = VkDebugUtilsMessengerCreateInfoEXT.calloc(stack);
+                debugCreateInfo.sType(VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT);
+                debugCreateInfo.messageSeverity(VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT);
+                debugCreateInfo.messageType(VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT);
+                debugCreateInfo.pfnUserCallback(vkDebugUtilsMessengerCallbackEXT);
+
+                createInfo.pNext(debugCreateInfo.address());
+
+            }
+
+            PointerBuffer instancePtr = stack.mallocPointer(1);
+
+            if (vkCreateInstance(createInfo, null, instancePtr) != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create instance");
+            }
+
+            instance = new VkInstance(instancePtr.get(0), createInfo);
+
+
+            if(validation) {
+
+                LongBuffer pDebugMessenger = stack.longs(VK_NULL_HANDLE);
+
+                int result = 0;
+
+                if (vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT") != NULL) {
+                    result = vkCreateDebugUtilsMessengerEXT(instance, debugCreateInfo, null, pDebugMessenger) == VK_SUCCESS ? VK_SUCCESS : VK_ERROR_EXTENSION_NOT_PRESENT;
+                }
+
+                if (result != VK_SUCCESS)
+                    throw new RuntimeException("Failed to create the debug messenger as the extension is not present");
+
+                vkDebugMessenger = pDebugMessenger.get(0);
+
+
+            }
+        }
+
+        return instance;
+    }
+
+    private static PointerBuffer validationLayersAsPointerBuffer(List<String> validationLayers, MemoryStack stack) {
+
+        PointerBuffer buffer = stack.mallocPointer(validationLayers.size());
+
+        validationLayers.stream()
+                .map(stack::UTF8)
+                .forEach(buffer::put);
+
+        return buffer.rewind();
+    }
     @Override
     public boolean supportsRenderAPI(RenderAPI api) {
         if(api == RenderAPI.Vulkan) return glfwVulkanSupported();
@@ -163,6 +312,8 @@ public class GLFWSurface extends Surface {
 
     @Override
     public void dispose() {
+        if(vkDebugUtilsMessengerCallbackEXT != null) vkDebugUtilsMessengerCallbackEXT.free();
+        errorCallback.free();
         glfwDestroyWindow(handle);
         glfwTerminate();
     }
