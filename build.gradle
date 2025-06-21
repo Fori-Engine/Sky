@@ -6,7 +6,6 @@ plugins {
     id 'application'
 }
 
-mainClassName = 'fori.demo.ForiTestPlatform'
 group 'fori.systems'
 version '0.0.1'
 
@@ -61,7 +60,7 @@ switch (OperatingSystem.current()) {
 }
 
 project.ext.lwjglVersion = "3.3.6"
-project.ext.jomlVersion = "1.10.7"
+project.ext.jomlVersion = "1.10.8"
 
 dependencies {
 
@@ -75,16 +74,6 @@ dependencies {
     implementation "org.lwjgl:lwjgl-stb"
     implementation "org.lwjgl:lwjgl-vma"
     implementation "org.lwjgl:lwjgl-vulkan"
-    implementation "org.lwjgl:lwjgl-tinyfd"
-    implementation "org.lwjgl:lwjgl-jawt"
-
-    implementation 'com.formdev:flatlaf:3.5.4'
-
-    implementation files('dependencies/lwjgl3-awt-1.0.0-20181215.144757-4.jar')
-    implementation files('dependencies/flexdock-core-1.3.jar')
-    implementation files('dependencies/flexdock-view-1.3.jar')
-    implementation files('dependencies/flexdock-perspective-1.3.jar')
-    implementation files('dependencies/flexdock-drag-1.3.jar')
 
 
     runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
@@ -93,7 +82,6 @@ dependencies {
     runtimeOnly "org.lwjgl:lwjgl-stb::$lwjglNatives"
     runtimeOnly "org.lwjgl:lwjgl-vma::$lwjglNatives"
     runtimeOnly "org.lwjgl:lwjgl-assimp::$lwjglNatives"
-    runtimeOnly "org.lwjgl:lwjgl-tinyfd::$lwjglNatives"
 
 
 
