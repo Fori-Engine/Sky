@@ -26,8 +26,6 @@ import static fori.graphics.ShaderRes.Type.*;
 
 public class RuntimeStage extends Stage {
     private Renderer renderer;
-
-    private StaticMeshBatch playerStaticMeshBatch, terrainStaticMeshBatch;
     private Scene scene;
 
     public void init(String[] cliArgs, Surface surface){
@@ -108,10 +106,10 @@ public class RuntimeStage extends Stage {
         scene = new Scene("Main_Scene");
 
 
-        Entity player;
-        ShaderProgram playerShaderProgram;
-        Mesh playerMesh;
-        Matrix4f playerTransform;
+        Entity shop;
+        ShaderProgram shopShaderProgram;
+        Mesh shopMesh;
+        Matrix4f shopTransform;
 
         {
 
@@ -122,9 +120,9 @@ public class RuntimeStage extends Stage {
                 );
 
 
-                playerShaderProgram = ShaderProgram.newShaderProgram(renderer.getRef(), shaderSources.vertexShader, shaderSources.fragmentShader);
+                shopShaderProgram = ShaderProgram.newShaderProgram(renderer.getRef(), shaderSources.vertexShader, shaderSources.fragmentShader);
 
-                playerShaderProgram.bind(
+                shopShaderProgram.bind(
                         new VertexAttributes.Type[]{
                                 PositionFloat3,
                                 TransformIndexFloat1,
@@ -156,40 +154,41 @@ public class RuntimeStage extends Stage {
             }
 
 
-            playerMesh = Mesh.newMesh(MeshType.Static, playerShaderProgram.getAttributes(), AssetPacks.getAsset("core:assets/models/viking_room.obj"));
-            playerStaticMeshBatch = renderer.newStaticMeshBatch(100000, 100000, 1, playerShaderProgram);
+            shopMesh = Mesh.newMesh(MeshType.Static, shopShaderProgram.getAttributes(), AssetPacks.getAsset("core:assets/models/viking_room.obj"));
+            StaticMeshBatch shopStaticMeshBatch = renderer.newStaticMeshBatch(100000, 100000, 1, shopShaderProgram);
 
-            renderer.submitStaticMesh(playerStaticMeshBatch, playerMesh, new MeshUploaderWithTransform(0));
+            renderer.submitStaticMesh(shopStaticMeshBatch, shopMesh, new MeshUploaderWithTransform(0));
 
-            playerStaticMeshBatch.uploadsFinished();
+            shopStaticMeshBatch.uploadsFinished();
+            scene.registerStaticMeshBatch("Shops", shopStaticMeshBatch);
 
             Texture texture = Texture.newTexture(renderer.getRef(), AssetPacks.getAsset("core:assets/textures/viking_room.png"), Texture.Filter.Linear, Texture.Filter.Linear);
-            playerTransform = new Matrix4f().identity().translate(0, -1, 0).rotate((float) (-Math.PI / 2), 1, 0, 0);
+            shopTransform = new Matrix4f().identity().translate(0, -1, 0).rotate((float) (-Math.PI / 2), 1, 0, 0);
 
 
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                playerStaticMeshBatch.getShaderProgram().updateTextures(frameIndex, new ShaderUpdate<>("textures", 0, 2, texture).arrayIndex(0));
-                ByteBuffer transformsBufferData = playerStaticMeshBatch.getTransformsBuffers()[frameIndex].get();
-                ByteBuffer cameraBufferData = playerStaticMeshBatch.getCameraBuffers()[frameIndex].get();
+                shopStaticMeshBatch.getShaderProgram().updateTextures(frameIndex, new ShaderUpdate<>("textures", 0, 2, texture).arrayIndex(0));
+                ByteBuffer transformsBufferData = shopStaticMeshBatch.getTransformsBuffers()[frameIndex].get();
+                ByteBuffer cameraBufferData = shopStaticMeshBatch.getCameraBuffers()[frameIndex].get();
 
-                playerTransform.get(0, transformsBufferData);
+                shopTransform.get(0, transformsBufferData);
 
 
                 camera.getView().get(0, cameraBufferData);
                 camera.getProj().get(4 * 4 * Float.BYTES, cameraBufferData);
 
-                playerStaticMeshBatch.getShaderProgram().updateBuffers(
+                shopStaticMeshBatch.getShaderProgram().updateBuffers(
                         frameIndex,
-                        new ShaderUpdate<>("camera", 0, 0, playerStaticMeshBatch.getCameraBuffers()[frameIndex]),
-                        new ShaderUpdate<>("transforms", 0, 1, playerStaticMeshBatch.getTransformsBuffers()[frameIndex])
+                        new ShaderUpdate<>("camera", 0, 0, shopStaticMeshBatch.getCameraBuffers()[frameIndex]),
+                        new ShaderUpdate<>("transforms", 0, 1, shopStaticMeshBatch.getTransformsBuffers()[frameIndex])
                 );
             }
 
         }
-        player = scene.createEntity(
-                new MeshComponent(playerMesh),
-                new ShaderComponent(playerShaderProgram),
-                new TransformComponent(playerTransform)
+        shop = scene.createEntity(
+                new MeshComponent(shopMesh),
+                new ShaderComponent(shopShaderProgram),
+                new TransformComponent(shopTransform)
         );
 
         Entity terrain;
@@ -232,8 +231,8 @@ public class RuntimeStage extends Stage {
 
             }
 
-            int width = 32;
-            int depth = 32;
+            int width = 128;
+            int depth = 128;
 
             int vertexCount = (width + 1) * (depth + 1);
 
@@ -241,23 +240,23 @@ public class RuntimeStage extends Stage {
             vertexData.put(PositionFloat3, new ArrayList<>());
             List<Integer> indices = new ArrayList<>();
 
-            terrainMesh = new Mesh(MeshType.Static, vertexData, indices, vertexCount);////Mesh.newMesh(MeshType.Static, playerShaderProgram.getAttributes(), AssetPacks.getAsset("core:assets/models/viking_room.obj"));
-            terrainStaticMeshBatch = renderer.newStaticMeshBatch(100000, 100000, 1, terrainShaderProgram);
+            terrainMesh = new Mesh(MeshType.Static, vertexData, indices, vertexCount);
+            StaticMeshBatch terrainStaticMeshBatch = renderer.newStaticMeshBatch(100000, 100000, 1, terrainShaderProgram);
 
             {
                 List<Float> positions = vertexData.get(PositionFloat3);
 
 
 
-                float wSpacing = 0.1f;
-                float zSpacing = 0.1f;
+                float wSpacing = 0.5f;
+                float zSpacing = 0.5f;
 
                 for(int z = 0; z < depth + 1; z++) {
                     for (int x = 0; x < width + 1; x++) {
 
 
                         float xc = (x * wSpacing) - (width * wSpacing) / 2.0f;
-                        float yc = 0.1f * (float) (Math.cos(2 * Math.PI * (x / (width + 1f))) * (Math.cos(2 * Math.PI * (z / (depth + 1f)))));
+                        float yc = -0.5f * (float) (Math.sin(2 * Math.PI * (x / (width + 1f))) * (Math.cos(2 * Math.PI * (z / (depth + 1f)))));
                         float zc = (z * zSpacing) - (depth * zSpacing) / 2.0f;
 
 
@@ -298,6 +297,7 @@ public class RuntimeStage extends Stage {
 
 
             terrainStaticMeshBatch.uploadsFinished();
+            scene.registerStaticMeshBatch("Terrain", terrainStaticMeshBatch);
 
             terrainTransform = new Matrix4f().identity().translate(0, -1, 0);
 
@@ -547,8 +547,8 @@ public class RuntimeStage extends Stage {
 
     @Override
     public void closing() {
-        renderer.destroyStaticMeshBatch(playerStaticMeshBatch);
-        renderer.destroyStaticMeshBatch(terrainStaticMeshBatch);
+        scene.removeStaticMeshBatch(renderer, "Shops");
+        scene.removeStaticMeshBatch(renderer, "Terrain");
         scene.close();
 
         //renderer.destroyDynamicMesh(dynamicMesh1);

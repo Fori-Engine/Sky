@@ -11,7 +11,7 @@ public class Launcher {
         Configuration.DEBUG_MEMORY_ALLOCATOR.set(true);
 
         Stage stage = new RuntimeStage();
-        Surface surface = Surface.newSurface(stage.getStageRef(), "Runtime", 1000, 800);
+        Surface surface = Surface.newSurface(stage.getStageRef(), "Runtime", 1920, 1080);
 
         stage.launch(args, surface);
 
