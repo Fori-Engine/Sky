@@ -5,7 +5,6 @@ import dev.dominion.ecs.api.Entity;
 import dev.dominion.ecs.api.Scheduler;
 import fori.graphics.Renderer;
 import fori.graphics.StaticMeshBatch;
-import org.lwjgl.system.linux.Stat;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,8 +21,12 @@ public class Scene {
         scheduler = dominion.createScheduler();
     }
 
-    public void start(int tickRate) {
-        scheduler.tickAtFixedRate(tickRate);
+    public void tick() {
+        scheduler.tick();
+    }
+
+    public Map<String, StaticMeshBatch> getStaticMeshBatches() {
+        return staticMeshBatches;
     }
 
     public Entity createEntity(Object... components) {
@@ -47,6 +50,10 @@ public class Scene {
         StaticMeshBatch staticMeshBatch = staticMeshBatches.get(name);
         renderer.destroyStaticMeshBatch(staticMeshBatch);
         staticMeshBatches.remove(name);
+    }
+
+    public Dominion getEngine() {
+        return dominion;
     }
 
 

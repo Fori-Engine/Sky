@@ -7,7 +7,6 @@ import fori.asset.AssetPacks;
 
 import fori.graphics.*;
 
-import fori.graphics.DynamicMesh;
 import fori.graphics.StaticMeshBatch;
 import fori.graphics.ecs.*;
 import org.apache.commons.cli.*;
@@ -27,6 +26,10 @@ import static fori.graphics.ShaderRes.Type.*;
 public class RuntimeStage extends Stage {
     private Renderer renderer;
     private Scene scene;
+    Entity shop;
+    Entity terrain;
+
+
 
     public void init(String[] cliArgs, Surface surface){
         super.init(cliArgs, surface);
@@ -106,7 +109,6 @@ public class RuntimeStage extends Stage {
         scene = new Scene("Main_Scene");
 
 
-        Entity shop;
         ShaderProgram shopShaderProgram;
         Mesh shopMesh;
         Matrix4f shopTransform;
@@ -154,7 +156,7 @@ public class RuntimeStage extends Stage {
             }
 
 
-            shopMesh = Mesh.newMesh(MeshType.Static, shopShaderProgram.getAttributes(), AssetPacks.getAsset("core:assets/models/viking_room.obj"));
+            shopMesh = Mesh.newMesh(shopShaderProgram.getAttributes(), AssetPacks.getAsset("core:assets/models/viking_room.obj"));
             StaticMeshBatch shopStaticMeshBatch = renderer.newStaticMeshBatch(100000, 100000, 1, shopShaderProgram);
 
             renderer.submitStaticMesh(shopStaticMeshBatch, shopMesh, new MeshUploaderWithTransform(0));
@@ -184,14 +186,15 @@ public class RuntimeStage extends Stage {
                 );
             }
 
-        }
-        shop = scene.createEntity(
-                new MeshComponent(shopMesh),
-                new ShaderComponent(shopShaderProgram),
-                new TransformComponent(shopTransform)
-        );
 
-        Entity terrain;
+            shop = scene.createEntity(
+                    new StaticMeshComponent(shopStaticMeshBatch, shopMesh),
+                    new ShaderComponent(shopShaderProgram),
+                    new TransformComponent(0, shopTransform)
+            );
+        }
+
+
         ShaderProgram terrainShaderProgram;
         Mesh terrainMesh;
         Matrix4f terrainTransform;
@@ -240,7 +243,7 @@ public class RuntimeStage extends Stage {
             vertexData.put(PositionFloat3, new ArrayList<>());
             List<Integer> indices = new ArrayList<>();
 
-            terrainMesh = new Mesh(MeshType.Static, vertexData, indices, vertexCount);
+            terrainMesh = new Mesh(vertexData, indices, vertexCount);
             StaticMeshBatch terrainStaticMeshBatch = renderer.newStaticMeshBatch(100000, 100000, 1, terrainShaderProgram);
 
             {
@@ -318,12 +321,14 @@ public class RuntimeStage extends Stage {
                 );
             }
 
+            terrain = scene.createEntity(
+                    new StaticMeshComponent(terrainStaticMeshBatch, terrainMesh),
+                    new ShaderComponent(terrainShaderProgram),
+                    new TransformComponent(0, terrainTransform)
+            );
+
         }
-        terrain = scene.createEntity(
-                new MeshComponent(terrainMesh),
-                new ShaderComponent(terrainShaderProgram),
-                new TransformComponent(terrainTransform)
-        );
+
 
 
 
@@ -533,13 +538,20 @@ public class RuntimeStage extends Stage {
          */
 
 
-        scene.addSystem(new RenderSystem(renderer, surface));
-        scene.start(3);
+        scene.addSystem(new RenderSystem(renderer, scene, surface));
 
 
     }
 
+    float rot = 0;
+
     public boolean update(){
+        scene.tick();
+
+        shop.get(TransformComponent.class).transform().identity().rotate(rot, 1, 0, 0);
+        rot += 0.1f;
+
+
         renderer.update(surface.update());
 
         return !surface.shouldClose();

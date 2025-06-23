@@ -892,9 +892,6 @@ public class VulkanRenderer extends Renderer {
 
     @Override
     public void submitStaticMesh(StaticMeshBatch staticMeshBatch, Mesh mesh, MeshUploader meshUploader) {
-        if(mesh.getType() != MeshType.Static) {
-            throw new RuntimeException("Mesh of type " + mesh.getType() + " passed to submitStaticMesh()");
-        }
 
         ByteBuffer vertexBufferData = staticMeshBatch.getDefaultVertexBuffer().get();
         vertexBufferData.clear();

@@ -16,13 +16,11 @@ import java.util.Map;
 import static org.lwjgl.assimp.Assimp.*;
 
 public class Mesh {
-    private MeshType type;
     private Map<VertexAttributes.Type, List<Float>> vertexData;
     private List<Integer> indices;
     private int vertexCount;
 
-    public Mesh(MeshType type, Map<VertexAttributes.Type, List<Float>> vertexData, List<Integer> indices, int vertexCount) {
-        this.type = type;
+    public Mesh(Map<VertexAttributes.Type, List<Float>> vertexData, List<Integer> indices, int vertexCount) {
         this.vertexData = vertexData;
         this.indices = indices;
         this.vertexCount = vertexCount;
@@ -30,7 +28,7 @@ public class Mesh {
 
 
 
-    public static Mesh newMesh(MeshType type, VertexAttributes.Type[] vertexAttributes, Asset<byte[]> asset){
+    public static Mesh newMesh(VertexAttributes.Type[] vertexAttributes, Asset<byte[]> asset){
 
         Map<VertexAttributes.Type, List<Float>> vertexData = new HashMap<>();
         ArrayList<Integer> indices = new ArrayList<>();
@@ -66,7 +64,7 @@ public class Mesh {
         Logger.info(Mesh.class, loadData.toString());
         MemoryUtil.memFree(assetData);
 
-        return new Mesh(type, vertexData, indices, getVertexCount(vertexAttributes, vertexData));
+        return new Mesh(vertexData, indices, getVertexCount(vertexAttributes, vertexData));
     }
 
     public void put(MeshUploader meshUploader, int currentVertexCount, ShaderProgram shaderProgram, ByteBuffer vertexBufferData, ByteBuffer indexBufferData) {
@@ -146,9 +144,6 @@ public class Mesh {
     }
 
 
-    public MeshType getType() {
-        return type;
-    }
 
     public int getVertexCount() {
         return vertexCount;
