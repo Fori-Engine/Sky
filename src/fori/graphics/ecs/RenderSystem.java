@@ -25,12 +25,27 @@ public class RenderSystem implements Runnable {
         System.out.println("RenderSystem is running!");
 
         scene.getEngine().findEntitiesWith(TransformComponent.class, StaticMeshComponent.class).stream().forEach(components -> {
+
+
             TransformComponent transformComponent = components.comp1();
             StaticMeshComponent staticMeshComponent = components.comp2();
 
             ByteBuffer transformsData = staticMeshComponent.staticMeshBatch().getTransformsBuffers()[renderer.getFrameIndex()].get();
             transformComponent.transform().get(transformComponent.transformIndex() * SizeUtil.MATRIX_SIZE_BYTES, transformsData);
+
+            scene.getEngine().findEntitiesWith(CameraComponent.class).stream().forEach(components1 -> {
+                CameraComponent cameraComponent = components1.comp();
+                ByteBuffer cameraData = staticMeshComponent.staticMeshBatch().getCameraBuffers()[renderer.getFrameIndex()].get();
+
+                cameraComponent.camera().getView().get(0, cameraData);
+                cameraComponent.camera().getProj().get(SizeUtil.MATRIX_SIZE_BYTES, cameraData);
+            });
+
+
+
+
         });
+
 
 
     }

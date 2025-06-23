@@ -26,8 +26,9 @@ import static fori.graphics.ShaderRes.Type.*;
 public class RuntimeStage extends Stage {
     private Renderer renderer;
     private Scene scene;
-    Entity shop;
-    Entity terrain;
+    Entity shopEntity;
+    Entity terrainEntity;
+    Entity cameraEntity;
 
 
 
@@ -88,13 +89,8 @@ public class RuntimeStage extends Stage {
                         .vsync(vsync)
         );
 
-        Matrix4f proj = new Matrix4f().perspective(
-                (float) Math.toRadians(45.0f),
-                (float) renderer.getWidth() / renderer.getHeight(),
-                0.01f,
-                100.0f,
-                true
-        );
+        scene = new Scene("Main_Scene");
+
 
         Camera camera = new Camera(
                 new Matrix4f().lookAt(
@@ -102,11 +98,19 @@ public class RuntimeStage extends Stage {
                         new Vector3f(0, 0, 0),
                         new Vector3f(0.0f, 1.0f, 0.0f)
                 ),
-                proj,
+                new Matrix4f().perspective(
+                        (float) Math.toRadians(45.0f),
+                        (float) renderer.getWidth() / renderer.getHeight(),
+                        0.01f,
+                        100.0f,
+                        true
+                ),
                 true
         );
 
-        scene = new Scene("Main_Scene");
+
+        cameraEntity = scene.createEntity(new CameraComponent(camera));
+
 
 
         ShaderProgram shopShaderProgram;
@@ -170,14 +174,6 @@ public class RuntimeStage extends Stage {
 
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
                 shopStaticMeshBatch.getShaderProgram().updateTextures(frameIndex, new ShaderUpdate<>("textures", 0, 2, texture).arrayIndex(0));
-                ByteBuffer transformsBufferData = shopStaticMeshBatch.getTransformsBuffers()[frameIndex].get();
-                ByteBuffer cameraBufferData = shopStaticMeshBatch.getCameraBuffers()[frameIndex].get();
-
-                shopTransform.get(0, transformsBufferData);
-
-
-                camera.getView().get(0, cameraBufferData);
-                camera.getProj().get(4 * 4 * Float.BYTES, cameraBufferData);
 
                 shopStaticMeshBatch.getShaderProgram().updateBuffers(
                         frameIndex,
@@ -187,7 +183,7 @@ public class RuntimeStage extends Stage {
             }
 
 
-            shop = scene.createEntity(
+            shopEntity = scene.createEntity(
                     new StaticMeshComponent(shopStaticMeshBatch, shopMesh),
                     new ShaderComponent(shopShaderProgram),
                     new TransformComponent(0, shopTransform)
@@ -306,14 +302,6 @@ public class RuntimeStage extends Stage {
 
 
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                ByteBuffer transformsBufferData = terrainStaticMeshBatch.getTransformsBuffers()[frameIndex].get();
-                ByteBuffer cameraBufferData = terrainStaticMeshBatch.getCameraBuffers()[frameIndex].get();
-
-                terrainTransform.get(0, transformsBufferData);
-
-                camera.getView().get(0, cameraBufferData);
-                camera.getProj().get(4 * 4 * Float.BYTES, cameraBufferData);
-
                 terrainStaticMeshBatch.getShaderProgram().updateBuffers(
                         frameIndex,
                         new ShaderUpdate<>("camera", 0, 0, terrainStaticMeshBatch.getCameraBuffers()[frameIndex]),
@@ -321,7 +309,7 @@ public class RuntimeStage extends Stage {
                 );
             }
 
-            terrain = scene.createEntity(
+            terrainEntity = scene.createEntity(
                     new StaticMeshComponent(terrainStaticMeshBatch, terrainMesh),
                     new ShaderComponent(terrainShaderProgram),
                     new TransformComponent(0, terrainTransform)
@@ -548,7 +536,7 @@ public class RuntimeStage extends Stage {
     public boolean update(){
         scene.tick();
 
-        shop.get(TransformComponent.class).transform().identity().rotate(rot, 1, 0, 0);
+        shopEntity.get(TransformComponent.class).transform().identity().rotate(rot, 1, 0, 0);
         rot += 0.1f;
 
 
