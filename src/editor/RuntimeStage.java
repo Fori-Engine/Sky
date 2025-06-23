@@ -113,51 +113,47 @@ public class RuntimeStage extends Stage {
 
 
 
-        ShaderProgram shopShaderProgram;
-        Mesh shopMesh;
-        Matrix4f shopTransform;
+
 
         {
+            ShaderProgram shopShaderProgram;
+            Mesh shopMesh;
+
+            ShaderReader.ShaderSources shaderSources = ShaderReader.readCombinedVertexFragmentSources(
+                    AssetPacks.<String>getAsset("core:assets/shaders/vulkan/Default.glsl").asset
+            );
 
 
-            {
-                ShaderReader.ShaderSources shaderSources = ShaderReader.readCombinedVertexFragmentSources(
-                        AssetPacks.<String>getAsset("core:assets/shaders/vulkan/Default.glsl").asset
-                );
+            shopShaderProgram = ShaderProgram.newShaderProgram(renderer.getRef(), shaderSources.vertexShader, shaderSources.fragmentShader);
 
-
-                shopShaderProgram = ShaderProgram.newShaderProgram(renderer.getRef(), shaderSources.vertexShader, shaderSources.fragmentShader);
-
-                shopShaderProgram.bind(
-                        new VertexAttributes.Type[]{
-                                PositionFloat3,
-                                TransformIndexFloat1,
-                                UVFloat2,
-                        },
-                        new ShaderResSet(
-                                0,
-                                new ShaderRes(
-                                        "camera",
-                                        0,
-                                        UniformBuffer,
-                                        VertexStage
-                                ).sizeBytes(2 * SizeUtil.MATRIX_SIZE_BYTES),
-                                new ShaderRes(
-                                        "transforms",
-                                        1,
-                                        ShaderStorageBuffer,
-                                        VertexStage
-                                ).sizeBytes(1 * SizeUtil.MATRIX_SIZE_BYTES),
-                                new ShaderRes(
-                                        "textures",
-                                        2,
-                                        CombinedSampler,
-                                        FragmentStage
-                                ).count(1)
-                        )
-                );
-
-            }
+            shopShaderProgram.bind(
+                    new VertexAttributes.Type[]{
+                            PositionFloat3,
+                            TransformIndexFloat1,
+                            UVFloat2,
+                    },
+                    new ShaderResSet(
+                            0,
+                            new ShaderRes(
+                                    "camera",
+                                    0,
+                                    UniformBuffer,
+                                    VertexStage
+                            ).sizeBytes(2 * SizeUtil.MATRIX_SIZE_BYTES),
+                            new ShaderRes(
+                                    "transforms",
+                                    1,
+                                    ShaderStorageBuffer,
+                                    VertexStage
+                            ).sizeBytes(1 * SizeUtil.MATRIX_SIZE_BYTES),
+                            new ShaderRes(
+                                    "textures",
+                                    2,
+                                    CombinedSampler,
+                                    FragmentStage
+                            ).count(1)
+                    )
+            );
 
 
             shopMesh = Mesh.newMesh(shopShaderProgram.getAttributes(), AssetPacks.getAsset("core:assets/models/viking_room.obj"));
@@ -169,7 +165,6 @@ public class RuntimeStage extends Stage {
             scene.registerStaticMeshBatch("Shops", shopStaticMeshBatch);
 
             Texture texture = Texture.newTexture(renderer.getRef(), AssetPacks.getAsset("core:assets/textures/viking_room.png"), Texture.Filter.Linear, Texture.Filter.Linear);
-            shopTransform = new Matrix4f().identity().translate(0, -1, 0).rotate((float) (-Math.PI / 2), 1, 0, 0);
 
 
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
@@ -186,49 +181,45 @@ public class RuntimeStage extends Stage {
             shopEntity = scene.createEntity(
                     new StaticMeshComponent(shopStaticMeshBatch, shopMesh),
                     new ShaderComponent(shopShaderProgram),
-                    new TransformComponent(0, shopTransform)
+                    new TransformComponent(0, new Matrix4f().identity())
             );
         }
 
 
-        ShaderProgram terrainShaderProgram;
-        Mesh terrainMesh;
-        Matrix4f terrainTransform;
+
 
         {
+            ShaderProgram terrainShaderProgram;
+            Mesh terrainMesh;
+
+            ShaderReader.ShaderSources shaderSources = ShaderReader.readCombinedVertexFragmentSources(
+                    AssetPacks.<String>getAsset("core:assets/shaders/vulkan/Terrain.glsl").asset
+            );
 
 
-            {
-                ShaderReader.ShaderSources shaderSources = ShaderReader.readCombinedVertexFragmentSources(
-                        AssetPacks.<String>getAsset("core:assets/shaders/vulkan/Terrain.glsl").asset
-                );
+            terrainShaderProgram = ShaderProgram.newShaderProgram(renderer.getRef(), shaderSources.vertexShader, shaderSources.fragmentShader);
 
-
-                terrainShaderProgram = ShaderProgram.newShaderProgram(renderer.getRef(), shaderSources.vertexShader, shaderSources.fragmentShader);
-
-                terrainShaderProgram.bind(
-                        new VertexAttributes.Type[]{
-                                PositionFloat3,
-                                TransformIndexFloat1,
-                        },
-                        new ShaderResSet(
-                                0,
-                                new ShaderRes(
-                                        "camera",
-                                        0,
-                                        UniformBuffer,
-                                        VertexStage
-                                ).sizeBytes(2 * SizeUtil.MATRIX_SIZE_BYTES),
-                                new ShaderRes(
-                                        "transforms",
-                                        1,
-                                        ShaderStorageBuffer,
-                                        VertexStage
-                                ).sizeBytes(1 * SizeUtil.MATRIX_SIZE_BYTES)
-                        )
-                );
-
-            }
+            terrainShaderProgram.bind(
+                    new VertexAttributes.Type[]{
+                            PositionFloat3,
+                            TransformIndexFloat1,
+                    },
+                    new ShaderResSet(
+                            0,
+                            new ShaderRes(
+                                    "camera",
+                                    0,
+                                    UniformBuffer,
+                                    VertexStage
+                            ).sizeBytes(2 * SizeUtil.MATRIX_SIZE_BYTES),
+                            new ShaderRes(
+                                    "transforms",
+                                    1,
+                                    ShaderStorageBuffer,
+                                    VertexStage
+                            ).sizeBytes(1 * SizeUtil.MATRIX_SIZE_BYTES)
+                    )
+            );
 
             int width = 128;
             int depth = 128;
@@ -298,9 +289,6 @@ public class RuntimeStage extends Stage {
             terrainStaticMeshBatch.uploadsFinished();
             scene.registerStaticMeshBatch("Terrain", terrainStaticMeshBatch);
 
-            terrainTransform = new Matrix4f().identity().translate(0, -1, 0);
-
-
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
                 terrainStaticMeshBatch.getShaderProgram().updateBuffers(
                         frameIndex,
@@ -312,7 +300,7 @@ public class RuntimeStage extends Stage {
             terrainEntity = scene.createEntity(
                     new StaticMeshComponent(terrainStaticMeshBatch, terrainMesh),
                     new ShaderComponent(terrainShaderProgram),
-                    new TransformComponent(0, terrainTransform)
+                    new TransformComponent(0, new Matrix4f().identity().translate(0, -1, 0))
             );
 
         }
