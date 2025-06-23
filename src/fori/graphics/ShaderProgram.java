@@ -9,7 +9,7 @@ public abstract class ShaderProgram implements Disposable {
     protected String vertexShaderSource = null;
     protected String fragmentShaderSource = null;
     protected ShaderResSet[] resourcesSets;
-    protected Attributes.Type[] attributes;
+    protected VertexAttributes.Type[] attributes;
     protected Ref ref;
 
 
@@ -22,7 +22,7 @@ public abstract class ShaderProgram implements Disposable {
     public abstract void updateBuffers(int frameIndex, ShaderUpdate<Buffer>... bufferUpdates);
     public abstract void updateTextures(int frameIndex, ShaderUpdate<Texture>... textureUpdates);
 
-    public void bind(Attributes.Type[] attributes, ShaderResSet... resourceSets){
+    public void bind(VertexAttributes.Type[] attributes, ShaderResSet... resourceSets){
 
         this.attributes = attributes;
 
@@ -43,7 +43,7 @@ public abstract class ShaderProgram implements Disposable {
         return resourcesSets;
     }
 
-    public Attributes.Type[] getAttributes() {
+    public VertexAttributes.Type[] getAttributes() {
         return attributes;
     }
 

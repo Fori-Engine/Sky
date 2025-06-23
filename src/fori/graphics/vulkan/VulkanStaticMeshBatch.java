@@ -67,7 +67,7 @@ public class VulkanStaticMeshBatch extends StaticMeshBatch {
 
         stagingVertexBuffer = Buffer.newBuffer(
                 ref,
-                Attributes.getSize(this.shaderProgram.getAttributes()) * Float.BYTES * this.maxVertexCount,
+                VertexAttributes.getSize(this.shaderProgram.getAttributes()) * Float.BYTES * this.maxVertexCount,
                 Buffer.Usage.VertexBuffer,
                 Buffer.Type.CPUGPUShared,
                 true
@@ -81,7 +81,7 @@ public class VulkanStaticMeshBatch extends StaticMeshBatch {
         );
         vertexBuffer = Buffer.newBuffer(
                 ref,
-                Attributes.getSize(this.shaderProgram.getAttributes()) * Float.BYTES * this.maxVertexCount,
+                VertexAttributes.getSize(this.shaderProgram.getAttributes()) * Float.BYTES * this.maxVertexCount,
                 Buffer.Usage.VertexBuffer,
                 Buffer.Type.GPULocal,
                 false
@@ -166,9 +166,9 @@ public class VulkanStaticMeshBatch extends StaticMeshBatch {
 
 
             VkBufferCopy.Buffer vertexBufferCopy = VkBufferCopy.calloc(1, stack);
-            vertexBufferCopy.size((long) vertexCount * Attributes.getSize(shaderProgram.getAttributes()) * Float.BYTES);
+            vertexBufferCopy.size((long) vertexCount * VertexAttributes.getSize(shaderProgram.getAttributes()) * Float.BYTES);
             vertexBufferCopy.srcOffset(0);
-            vertexBufferCopy.dstOffset((long) this.vertexCount * Attributes.getSize(shaderProgram.getAttributes()) * Float.BYTES);
+            vertexBufferCopy.dstOffset((long) this.vertexCount * VertexAttributes.getSize(shaderProgram.getAttributes()) * Float.BYTES);
 
             vkCmdCopyBuffer(commandBuffer, ((VulkanBuffer) stagingVertexBuffer).getHandle(), ((VulkanBuffer) vertexBuffer).getHandle(), vertexBufferCopy);
 

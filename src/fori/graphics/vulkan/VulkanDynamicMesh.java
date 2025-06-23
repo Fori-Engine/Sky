@@ -21,7 +21,7 @@ public class VulkanDynamicMesh extends DynamicMesh {
         this.pipeline = pipeline;
         vertexBuffer = Buffer.newBuffer(
                 ref,
-                Attributes.getSize(shaderProgram.getAttributes()) * Float.BYTES * this.maxVertexCount,
+                VertexAttributes.getSize(shaderProgram.getAttributes()) * Float.BYTES * this.maxVertexCount,
                 Buffer.Usage.VertexBuffer,
                 Buffer.Type.CPUGPUShared,
                 false

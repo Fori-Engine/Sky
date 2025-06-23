@@ -580,7 +580,7 @@ public class VulkanRenderer extends Renderer {
 
 
 
-        Attributes.Type[] attributes = vulkanShaderProgram.getAttributes();
+        VertexAttributes.Type[] attributes = vulkanShaderProgram.getAttributes();
         long pipelineLayout;
         long graphicsPipeline = 0;
 
@@ -601,7 +601,7 @@ public class VulkanRenderer extends Renderer {
                 };
 
                 int vertexSize = 0;
-                for(Attributes.Type attribute : attributes){
+                for(VertexAttributes.Type attribute : attributes){
                     vertexSize += attribute.size;
                 }
 
@@ -891,7 +891,7 @@ public class VulkanRenderer extends Renderer {
     }
 
     @Override
-    public void submitStaticMesh(StaticMeshBatch staticMeshBatch, Mesh mesh, int transformIndex) {
+    public void submitStaticMesh(StaticMeshBatch staticMeshBatch, Mesh mesh, MeshUploader meshUploader) {
         if(mesh.getType() != MeshType.Static) {
             throw new RuntimeException("Mesh of type " + mesh.getType() + " passed to submitStaticMesh()");
         }
@@ -903,9 +903,9 @@ public class VulkanRenderer extends Renderer {
         indexBufferData.clear();
 
         mesh.put(
+                meshUploader,
                 staticMeshBatch.getVertexCount(),
                 staticMeshBatch.getShaderProgram(),
-                transformIndex,
                 staticMeshBatch.getDefaultVertexBuffer().get(),
                 staticMeshBatch.getDefaultIndexBuffer().get()
         );
@@ -978,7 +978,7 @@ public class VulkanRenderer extends Renderer {
 
 
     @Override
-    public DynamicMesh submitDynamicMesh(Mesh mesh, int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram) {
+    public DynamicMesh submitDynamicMesh(Mesh mesh, MeshUploader meshUploader, int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram) {
 
         VulkanPipeline pipeline = createPipeline(device, swapchain, (VulkanShaderProgram) shaderProgram);
         VulkanDynamicMesh vulkanDynamicMesh = new VulkanDynamicMesh(
@@ -1002,9 +1002,9 @@ public class VulkanRenderer extends Renderer {
         indexBufferData.clear();
 
         mesh.put(
+                meshUploader,
                 0,
                 shaderProgram,
-                0,
                 vertexBufferData,
                 indexBufferData
         );

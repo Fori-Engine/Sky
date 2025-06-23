@@ -38,4 +38,8 @@ public class Scene {
     }
 
 
+    public void close() {
+        scheduler.shutDown();
+        dominion.close();
+    }
 }

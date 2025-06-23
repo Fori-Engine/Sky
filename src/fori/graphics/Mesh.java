@@ -9,35 +9,37 @@ import org.lwjgl.system.MemoryUtil;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.lwjgl.assimp.Assimp.*;
 
 public class Mesh {
     private MeshType type;
-    private List<Float> vertices;
-    private List<Float> textureUVs;
+    private Map<VertexAttributes.Type, List<Float>> vertexData;
     private List<Integer> indices;
-    private List<Integer> textureIndices;
     private int vertexCount;
 
-    public Mesh(MeshType type, List<Float> vertices, List<Float> textureUVs, List<Integer> indices, List<Integer> textureIndices, int vertexCount) {
+    public Mesh(MeshType type, Map<VertexAttributes.Type, List<Float>> vertexData, List<Integer> indices, int vertexCount) {
         this.type = type;
-        this.vertices = vertices;
-        this.textureUVs = textureUVs;
+        this.vertexData = vertexData;
         this.indices = indices;
-        this.textureIndices = textureIndices;
         this.vertexCount = vertexCount;
     }
 
 
-    public static Mesh newMesh(MeshType type, Asset<byte[]> asset){
-        ArrayList<Float> vertices = new ArrayList<>();
-        ArrayList<Float> textureUVs = new ArrayList<>();
-        ArrayList<Integer> indices = new ArrayList<>();
-        ArrayList<Integer> textureIndices = new ArrayList<>();
 
+    public static Mesh newMesh(MeshType type, VertexAttributes.Type[] vertexAttributes, Asset<byte[]> asset){
+
+        Map<VertexAttributes.Type, List<Float>> vertexData = new HashMap<>();
+        ArrayList<Integer> indices = new ArrayList<>();
         ArrayList<AIMesh> meshList = new ArrayList<>();
+
+        for(VertexAttributes.Type attribute : vertexAttributes) {
+            vertexData.put(attribute, new ArrayList<Float>());
+        }
+
 
 
         ByteBuffer assetData = MemoryUtil.memAlloc(asset.asset.length);
@@ -58,88 +60,19 @@ public class Mesh {
         loadData.append("Loading Mesh: " + asset.name);
 
         AINode root = scene.mRootNode();
-        openNode(root, meshList, vertices, textureUVs, textureIndices, indices);
-        loadData.append("\n\t" + "Vertex Count: " + vertices.size() / Attributes.Type.PositionFloat3.size);
-        loadData.append("\n\t" + "Index Count: " + indices.size());
-        loadData.append("\n\t" + "Mesh Count: " + meshCount);
+        openNode(root, vertexAttributes, meshList, vertexData, indices);
+
 
         Logger.info(Mesh.class, loadData.toString());
         MemoryUtil.memFree(assetData);
 
-
-        return new Mesh(type, vertices, textureUVs, indices, textureIndices, vertices.size() / 3);
+        return new Mesh(type, vertexData, indices, getVertexCount(vertexAttributes, vertexData));
     }
 
-    public static Mesh newTestQuad(MeshType type) {
-        ArrayList<Float> vertices = new ArrayList<>();
-        ArrayList<Float> textureUVs = new ArrayList<>();
-        ArrayList<Integer> indices = new ArrayList<>();
-        ArrayList<Integer> textureIndices = new ArrayList<>();
-
-        vertices.add(-0.5f);
-        vertices.add(-0.5f);
-        vertices.add(0.0f);
-
-        vertices.add(0.5f);
-        vertices.add(-0.5f);
-        vertices.add(0.0f);
-
-        vertices.add(0.5f);
-        vertices.add(0.5f);
-        vertices.add(0.0f);
-
-        vertices.add(-0.5f);
-        vertices.add(0.5f);
-        vertices.add(0.0f);
-
-        indices.add(0);
-        indices.add(1);
-        indices.add(2);
-        indices.add(2);
-        indices.add(3);
-        indices.add(0);
-
-        textureUVs.add(0.0f);
-        textureUVs.add(0.0f);
-
-        textureUVs.add(0.0f);
-        textureUVs.add(0.0f);
-
-        textureUVs.add(0.0f);
-        textureUVs.add(0.0f);
-
-        textureUVs.add(0.0f);
-        textureUVs.add(0.0f);
-
-
-        return new Mesh(type, vertices, textureUVs, indices, textureIndices, vertices.size() / 3);
-
-    }
-
-    public void put(int currentVertexCount, ShaderProgram shaderProgram, int transformIndex, ByteBuffer vertexBufferData, ByteBuffer indexBufferData) {
-        for (int vertex = 0; vertex < vertexCount; vertex++) {
-
-
-            for(Attributes.Type attribute : shaderProgram.getAttributes()){
-                if(attribute == Attributes.Type.PositionFloat3){
-                    float x = vertices.get(attribute.size * vertex);
-                    float y = vertices.get(attribute.size * vertex + 1);
-                    float z = vertices.get(attribute.size * vertex + 2);
-
-                    vertexBufferData.putFloat(x);
-                    vertexBufferData.putFloat(y);
-                    vertexBufferData.putFloat(z);
-                }
-
-                else if(attribute == Attributes.Type.UVFloat2){
-                    float u = textureUVs.get(attribute.size * vertex);
-                    float v = textureUVs.get(attribute.size * vertex + 1);
-
-                    vertexBufferData.putFloat(u);
-                    vertexBufferData.putFloat(v);
-                }
-
-                else if(attribute == Attributes.Type.TransformIndexFloat1) vertexBufferData.putFloat(transformIndex);
+    public void put(MeshUploader meshUploader, int currentVertexCount, ShaderProgram shaderProgram, ByteBuffer vertexBufferData, ByteBuffer indexBufferData) {
+        for (int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++) {
+            for(VertexAttributes.Type vertexAttribute : shaderProgram.getAttributes()){
+                meshUploader.upload(vertexAttribute, vertexIndex, vertexBufferData, vertexData);
             }
         }
 
@@ -148,10 +81,19 @@ public class Mesh {
         }
     }
 
+    private static int getVertexCount(VertexAttributes.Type[] vertexAttributes, Map<VertexAttributes.Type, List<Float>> vertexData) {
+        int vertexSize = 0;
 
-    private static void openMesh(AIMesh mesh, List<Float> vertices, List<Float> textureUVs, List<Integer> textureIndices, List<Integer> indices){
+        for(List<Float> attributeData : vertexData.values()) {
+            vertexSize += attributeData.size();
+        }
+
+        return vertexSize / VertexAttributes.getSize(vertexAttributes);
+    }
+
+    private static void openMesh(AIMesh mesh, VertexAttributes.Type[] vertexAttributes, Map<VertexAttributes.Type, List<Float>> vertexData, List<Integer> indices){
         for (int faceIndex = 0; faceIndex < mesh.mNumFaces(); faceIndex++) {
-            int vertexCount = vertices.size() / 3;
+            int vertexCount = getVertexCount(vertexAttributes, vertexData);
 
             AIFace aiFace = mesh.mFaces().get(faceIndex);
             IntBuffer indicesBuffer = aiFace.mIndices();
@@ -165,33 +107,39 @@ public class Mesh {
         AIVector3D.Buffer aiVertices = mesh.mVertices();
 
         for (int vertexIndex = 0; vertexIndex < mesh.mNumVertices(); vertexIndex++) {
-            AIVector3D aiVertex = aiVertices.get();
-            AIVector3D aiTextureCoords = mesh.mTextureCoords(0).get(vertexIndex);
 
+            for(VertexAttributes.Type vertexAttribute : vertexAttributes) {
+                if(vertexAttribute == VertexAttributes.Type.PositionFloat3) {
+                    AIVector3D aiVertex = aiVertices.get();
+                    List<Float> vertices = vertexData.get(vertexAttribute);
+                    vertices.add(aiVertex.x());
+                    vertices.add(aiVertex.y());
+                    vertices.add(aiVertex.z());
+                }
 
-            vertices.add(aiVertex.x());
-            vertices.add(aiVertex.y());
-            vertices.add(aiVertex.z());
+                if(vertexAttribute == VertexAttributes.Type.UVFloat2) {
+                    AIVector3D aiTextureCoords = mesh.mTextureCoords(0).get(vertexIndex);
+                    List<Float> textureUVs = vertexData.get(vertexAttribute);
+                    textureUVs.add(aiTextureCoords.x());
+                    textureUVs.add(aiTextureCoords.y());
+                }
+            }
 
-            textureUVs.add(aiTextureCoords.x());
-            textureUVs.add(aiTextureCoords.y());
-
-            textureIndices.add(mesh.mMaterialIndex());
 
         }
     }
-    private static void openNode(AINode root, List<AIMesh> meshList, List<Float> vertices, List<Float> textureUVs, List<Integer> textureIndices, List<Integer> indices) {
-        IntBuffer meshes = root.mMeshes();
-        for (int i = 0; i < root.mNumMeshes(); i++) {
+    private static void openNode(AINode parentNode, VertexAttributes.Type[] vertexAttributes, List<AIMesh> meshList, Map<VertexAttributes.Type, List<Float>> vertexData, List<Integer> indices) {
+        IntBuffer meshes = parentNode.mMeshes();
+        for (int i = 0; i < parentNode.mNumMeshes(); i++) {
             int meshIndex = meshes.get(i);
             AIMesh mesh = meshList.get(meshIndex);
 
-            openMesh(mesh, vertices, textureUVs, textureIndices, indices);
+            openMesh(mesh, vertexAttributes, vertexData, indices);
         }
 
-        for (int z = 0; z < root.mNumChildren(); z++) {
-            AINode child = AINode.create(root.mChildren().get(z));
-            openNode(child, meshList, vertices, textureUVs, textureIndices, indices);
+        for (int z = 0; z < parentNode.mNumChildren(); z++) {
+            AINode child = AINode.create(parentNode.mChildren().get(z));
+            openNode(child, vertexAttributes, meshList, vertexData, indices);
         }
 
 
