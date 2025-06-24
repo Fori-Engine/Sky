@@ -93,9 +93,65 @@ public class Mesh {
         return 0;
     }
 
+    public static Mesh newTestQuad() {
+        Map<VertexAttributes.Type, List<Float>> vertexData = new HashMap<>();
+        vertexData.put(VertexAttributes.Type.PositionFloat3, new ArrayList<>());
+        vertexData.put(VertexAttributes.Type.UVFloat2, new ArrayList<>());
+
+
+        ArrayList<Integer> indices = new ArrayList<>();
+
+        List<Float> vertices = vertexData.get(VertexAttributes.Type.PositionFloat3);
+        List<Float> textureUVs = vertexData.get(VertexAttributes.Type.UVFloat2);
+
+
+        vertices.add(-0.5f);
+        vertices.add(-0.5f);
+        vertices.add(0.0f);
+
+        vertices.add(0.5f);
+        vertices.add(-0.5f);
+        vertices.add(0.0f);
+
+        vertices.add(0.5f);
+        vertices.add(0.5f);
+        vertices.add(0.0f);
+
+        vertices.add(-0.5f);
+        vertices.add(0.5f);
+        vertices.add(0.0f);
+
+
+        indices.add(0);
+        indices.add(1);
+        indices.add(2);
+        indices.add(2);
+        indices.add(3);
+        indices.add(0);
+
+        textureUVs.add(0.0f);
+        textureUVs.add(0.0f);
+
+        textureUVs.add(1.0f);
+        textureUVs.add(0.0f);
+
+        textureUVs.add(1.0f);
+        textureUVs.add(1.0f);
+
+        textureUVs.add(0.0f);
+        textureUVs.add(1.0f);
+
+
+
+        return new Mesh(vertexData, indices, 4);
+
+    }
+
     private static void openMesh(AIMesh mesh, VertexAttributes.Type[] vertexAttributes, Map<VertexAttributes.Type, List<Float>> vertexData, List<Integer> indices){
         for (int faceIndex = 0; faceIndex < mesh.mNumFaces(); faceIndex++) {
-            int vertexCount = getVertexCount(vertexAttributes, vertexData);
+            int vertexCount = getVertexCount(vertexData);
+
+
 
             AIFace aiFace = mesh.mFaces().get(faceIndex);
             IntBuffer indicesBuffer = aiFace.mIndices();
@@ -125,6 +181,8 @@ public class Mesh {
                     textureUVs.add(aiTextureCoords.x());
                     textureUVs.add(aiTextureCoords.y());
                 }
+
+
             }
 
 
