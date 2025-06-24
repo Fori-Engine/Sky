@@ -103,6 +103,7 @@ public abstract class Surface implements Disposable {
     }
 
     public abstract boolean supportsRenderAPI(RenderAPI api);
+    public abstract double getTime();
     public abstract void display();
     public abstract boolean update();
     public abstract boolean shouldClose();

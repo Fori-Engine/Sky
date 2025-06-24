@@ -210,6 +210,10 @@ public class GLFWSurface extends Surface {
         return false;
     }
 
+    @Override
+    public double getTime() {
+        return glfwGetTime();
+    }
 
 
     private int glfwBool(boolean b){

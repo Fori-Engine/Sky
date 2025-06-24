@@ -31,6 +31,9 @@ public class RuntimeStage extends Stage {
     Entity cameraEntity;
     Entity playerEntity;
 
+    private float startTime;
+
+    private float rot = 0;
 
 
     public void init(String[] cliArgs, Surface surface){
@@ -363,7 +366,21 @@ public class RuntimeStage extends Stage {
             playerEntity = scene.createEntity(
                     new DynamicMeshComponent(dynamicMesh, mesh),
                     new ShaderComponent(shaderProgram),
-                    new TransformComponent(new Matrix4f().identity().translate(-2, 0, 0))
+                    new TransformComponent(new Matrix4f().identity().translate(-2, 0, 0)),
+                    new ScriptComponent(new Script() {
+                        @Override
+                        public void init(Entity entity) {
+
+                        }
+
+                        @Override
+                        public void update(Entity entity) {
+                            rot += 10f * Time.deltaTime();
+
+                            entity.get(TransformComponent.class).transform().identity().translate(-2, 0, 0).rotate(rot, 0, 1, 0);
+
+                        }
+                    })
             );
         }
 
@@ -377,23 +394,24 @@ public class RuntimeStage extends Stage {
 
 
         scene.addSystem(new RenderSystem(renderer, scene, surface));
+        scene.addSystem(new ScriptSystem(scene));
+
+        startTime = (float) surface.getTime();
 
 
     }
 
-    float rot = 0;
 
     public boolean update(){
         scene.tick();
 
-        shopEntity.get(TransformComponent.class).transform().identity().rotate(rot, 0, 1, 0);
-        playerEntity.get(TransformComponent.class).transform().identity().translate(-2, 0, 0).rotate(rot, 0, 1, 0);
 
-
-        rot += 0.1f;
 
 
         renderer.update(surface.update());
+
+        Time.deltaTime = (float) (surface.getTime() - startTime);
+        startTime = (float) surface.getTime();
 
         return !surface.shouldClose();
     }
