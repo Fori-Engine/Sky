@@ -2,6 +2,7 @@ package fori.graphics.ecs;
 
 import dev.dominion.ecs.api.Dominion;
 import dev.dominion.ecs.api.Entity;
+import dev.dominion.ecs.api.Results;
 import dev.dominion.ecs.api.Scheduler;
 import fori.graphics.Renderer;
 import fori.graphics.StaticMeshBatch;
@@ -9,6 +10,7 @@ import fori.graphics.StaticMeshBatch;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class Scene {
     private Dominion dominion;
@@ -62,7 +64,19 @@ public class Scene {
     }
 
 
-    public void close() {
+    public void close(Renderer renderer) {
+        for(StaticMeshBatch staticMeshBatch : staticMeshBatches.values()) {
+            renderer.destroyStaticMeshBatch(staticMeshBatch);
+        }
+
+        dominion.findEntitiesWith(DynamicMeshComponent.class).stream().forEach(components -> {
+            DynamicMeshComponent dynamicMeshComponent = components.comp();
+            renderer.destroyDynamicMesh(dynamicMeshComponent.dynamicMesh());
+        });
+
+
+
+
         scheduler.shutDown();
         dominion.close();
     }

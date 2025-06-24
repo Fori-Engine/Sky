@@ -401,11 +401,7 @@ public class RuntimeStage extends Stage {
 
     @Override
     public void closing() {
-        scene.removeStaticMeshBatch(renderer, "Shops");
-        scene.removeStaticMeshBatch(renderer, "Terrain");
-        scene.close();
-
-        //renderer.destroyDynamicMesh(dynamicMesh1);
+        scene.close(renderer);
     }
 
 
