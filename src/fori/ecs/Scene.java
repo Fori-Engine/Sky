@@ -1,8 +1,7 @@
-package fori.graphics.ecs;
+package fori.ecs;
 
 import dev.dominion.ecs.api.Dominion;
 import dev.dominion.ecs.api.Entity;
-import dev.dominion.ecs.api.Results;
 import dev.dominion.ecs.api.Scheduler;
 import fori.graphics.Renderer;
 import fori.graphics.StaticMeshBatch;
@@ -10,7 +9,6 @@ import fori.graphics.StaticMeshBatch;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Consumer;
 
 public class Scene {
     private Dominion dominion;

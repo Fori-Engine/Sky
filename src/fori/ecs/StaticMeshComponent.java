@@ -1,4 +1,4 @@
-package fori.graphics.ecs;
+package fori.ecs;
 
 import fori.graphics.Mesh;
 import fori.graphics.StaticMeshBatch;

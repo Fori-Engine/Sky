@@ -8,14 +8,13 @@ import fori.asset.AssetPacks;
 import fori.graphics.*;
 
 import fori.graphics.StaticMeshBatch;
-import fori.graphics.ecs.*;
+import fori.ecs.*;
 import org.apache.commons.cli.*;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import java.io.File;
 import java.lang.Math;
-import java.nio.ByteBuffer;
 import java.util.*;
 
 import static fori.graphics.VertexAttributes.Type.*;

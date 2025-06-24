@@ -1,4 +1,4 @@
-package fori.graphics.ecs;
+package fori.ecs;
 
 import org.joml.Matrix4f;
 

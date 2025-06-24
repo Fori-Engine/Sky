@@ -1,14 +1,11 @@
-package fori.graphics.ecs;
+package fori.ecs;
 
-import dev.dominion.ecs.api.Results;
 import fori.Surface;
 import fori.graphics.Camera;
 import fori.graphics.Renderer;
 import fori.graphics.SizeUtil;
-import org.lwjgl.system.linux.Stat;
 
 import java.nio.ByteBuffer;
-import java.util.function.Consumer;
 
 public class RenderSystem implements Runnable {
     private Renderer renderer;
