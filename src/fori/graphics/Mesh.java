@@ -64,7 +64,8 @@ public class Mesh {
         Logger.info(Mesh.class, loadData.toString());
         MemoryUtil.memFree(assetData);
 
-        return new Mesh(vertexData, indices, getVertexCount(vertexAttributes, vertexData));
+        int vertexCount = getVertexCount(vertexData);
+        return new Mesh(vertexData, indices, vertexCount);
     }
 
     public void put(MeshUploader meshUploader, int currentVertexCount, ShaderProgram shaderProgram, ByteBuffer vertexBufferData, ByteBuffer indexBufferData) {
@@ -79,14 +80,17 @@ public class Mesh {
         }
     }
 
-    private static int getVertexCount(VertexAttributes.Type[] vertexAttributes, Map<VertexAttributes.Type, List<Float>> vertexData) {
-        int vertexSize = 0;
+    private static int getVertexCount(Map<VertexAttributes.Type, List<Float>> vertexData) {
 
-        for(List<Float> attributeData : vertexData.values()) {
-            vertexSize += attributeData.size();
+        for(VertexAttributes.Type vertexAttribute : vertexData.keySet()) {
+            List<Float> attributeData = vertexData.get(vertexAttribute);
+
+            //Don't use dynamically injected vertex attributes to find the vertex count
+            if(!attributeData.isEmpty())
+                return attributeData.size() / vertexAttribute.size;
         }
 
-        return vertexSize / VertexAttributes.getSize(vertexAttributes);
+        return 0;
     }
 
     private static void openMesh(AIMesh mesh, VertexAttributes.Type[] vertexAttributes, Map<VertexAttributes.Type, List<Float>> vertexData, List<Integer> indices){
