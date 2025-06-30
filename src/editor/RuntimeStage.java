@@ -103,7 +103,7 @@ public class RuntimeStage extends Stage {
 
         scene = new Scene("Main_Scene");
         scene.addSystem(new RenderSystem(renderer, scene, surface));
-        scene.addSystem(new NVPhysXSystem(scene, 1f/60f));
+        scene.addSystem(new NVPhysXSystem(scene, 4, 1f/60f));
         scene.addSystem(new ScriptSystem(scene));
 
 

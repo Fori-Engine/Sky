@@ -25,11 +25,12 @@ public class NVPhysXSystem extends EcsSystem {
 
     private Scene scene;
     private float accumulator = 0;
+    private int numThreads;
     private float timestep;
 
-
-    public NVPhysXSystem(Scene scene, float timestep) {
+    public NVPhysXSystem(Scene scene, int numThreads, float timestep) {
         this.scene = scene;
+        this.numThreads = numThreads;
         this.timestep = timestep;
 
         int version = PxTopLevelFunctions.getPHYSICS_VERSION();
@@ -50,7 +51,6 @@ public class NVPhysXSystem extends EcsSystem {
         physics = PxTopLevelFunctions.CreatePhysics(version, foundation, tolerances);
 
 
-        int numThreads = 4;
         cpuDispatcher = PxTopLevelFunctions.DefaultCpuDispatcherCreate(numThreads);
         filterShader = PxTopLevelFunctions.DefaultFilterShader();
 
