@@ -27,6 +27,12 @@ public class MeshUploaderWithTransform implements MeshUploader {
             vertexBufferData.putFloat(attributeData.get(vertexAttribute.size * vertexIndex));
             vertexBufferData.putFloat(attributeData.get(vertexAttribute.size * vertexIndex + 1));
         }
+        else if(vertexAttribute == VertexAttributes.Type.ColorFloat4){
+            vertexBufferData.putFloat(attributeData.get(vertexAttribute.size * vertexIndex));
+            vertexBufferData.putFloat(attributeData.get(vertexAttribute.size * vertexIndex + 1));
+            vertexBufferData.putFloat(attributeData.get(vertexAttribute.size * vertexIndex + 2));
+            vertexBufferData.putFloat(attributeData.get(vertexAttribute.size * vertexIndex + 3));
+        }
 
         else if(vertexAttribute == VertexAttributes.Type.TransformIndexFloat1) vertexBufferData.putFloat(transformIndex);
 

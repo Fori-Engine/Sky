@@ -1,0 +1,25 @@
+package fori.ecs;
+
+import fori.physx.ActorType;
+import fori.physx.Collider;
+import fori.physx.Material;
+import physx.physics.PxMaterial;
+import physx.physics.PxRigidActor;
+import physx.physics.PxShape;
+
+public class NVPhysXComponent {
+    public boolean initialized;
+    public Collider collider;
+    public Material material;
+    public ActorType actorType;
+    public PxShape shape;
+    public PxMaterial pxMaterial;
+    public PxRigidActor actor;
+
+
+    public NVPhysXComponent(Collider collider, Material material, ActorType actorType) {
+        this.collider = collider;
+        this.material = material;
+        this.actorType = actorType;
+    }
+}

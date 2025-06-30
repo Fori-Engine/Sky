@@ -87,6 +87,15 @@ dependencies {
     runtimeOnly "org.lwjgl:lwjgl-assimp::$lwjglNatives"
 
 
+    // java bindings
+    implementation("de.fabmax:physx-jni:2.6.0")
+
+    // native libraries - you can add the one matching your system or all
+    runtimeOnly("de.fabmax:physx-jni:2.6.0:natives-windows")
+    runtimeOnly("de.fabmax:physx-jni:2.6.0:natives-linux")
+    runtimeOnly("de.fabmax:physx-jni:2.6.0:natives-macos")
+    runtimeOnly("de.fabmax:physx-jni:2.6.0:natives-macos-arm64")
+
 
     if (lwjglNatives == "natives-macos" || lwjglNatives == "natives-macos-arm64") runtimeOnly "org.lwjgl:lwjgl-vulkan::$lwjglNatives"
     implementation "org.joml:joml:${jomlVersion}"

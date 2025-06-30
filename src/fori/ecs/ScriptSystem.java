@@ -9,17 +9,17 @@ public class ScriptSystem implements Runnable {
 
     public ScriptSystem(Scene scene) {
         this.scene = scene;
-
-        scene.getEngine().findEntitiesWith(ScriptComponent.class).stream().forEach(components -> {
-            ScriptComponent scriptComponent = components.comp();
-            scriptComponent.script().update(components.entity());
-        });
     }
 
     @Override
     public void run() {
         scene.getEngine().findEntitiesWith(ScriptComponent.class).stream().forEach(components -> {
             ScriptComponent scriptComponent = components.comp();
+
+            if(!scriptComponent.script().initialized) {
+                scriptComponent.script().init(components.entity());
+            }
+
             scriptComponent.script().update(components.entity());
         });
     }

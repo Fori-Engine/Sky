@@ -3,7 +3,8 @@ package fori.ecs;
 
 import dev.dominion.ecs.api.Entity;
 
-public interface Script {
-    void init(Entity entity);
-    void update(Entity entity);
+public abstract class Script {
+    public boolean initialized;
+    public abstract void init(Entity entity);
+    public abstract void update(Entity entity);
 }
