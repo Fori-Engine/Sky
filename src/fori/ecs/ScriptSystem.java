@@ -4,7 +4,7 @@ import dev.dominion.ecs.api.Results;
 
 import java.util.function.Consumer;
 
-public class ScriptSystem implements Runnable {
+public class ScriptSystem extends EcsSystem {
     private Scene scene;
 
     public ScriptSystem(Scene scene) {
@@ -22,5 +22,10 @@ public class ScriptSystem implements Runnable {
 
             scriptComponent.script().update(components.entity());
         });
+    }
+
+    @Override
+    public void dispose() {
+
     }
 }

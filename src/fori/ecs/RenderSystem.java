@@ -7,7 +7,7 @@ import fori.graphics.SizeUtil;
 
 import java.nio.ByteBuffer;
 
-public class RenderSystem implements Runnable {
+public class RenderSystem extends EcsSystem {
     private Renderer renderer;
     private Surface surface;
     private Scene scene;
@@ -62,6 +62,11 @@ public class RenderSystem implements Runnable {
 
 
 
+
+    }
+
+    @Override
+    public void dispose() {
 
     }
 }

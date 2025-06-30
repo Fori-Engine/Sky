@@ -1,6 +1,5 @@
 package fori.ecs;
 
-import dev.dominion.ecs.api.Results;
 import fori.Logger;
 import fori.Time;
 import fori.physx.ActorType;
@@ -12,10 +11,19 @@ import physx.PxTopLevelFunctions;
 import physx.common.*;
 import physx.physics.*;
 
-public class NVPhysXSystem implements Runnable {
+public class NVPhysXSystem extends EcsSystem {
     private PxScene pxScene;
-    private Scene scene;
     private PxPhysics physics;
+    private PxFoundation foundation;
+    private PxDefaultErrorCallback errorCb;
+    private PxDefaultAllocator allocator;
+    private PxSceneDesc sceneDesc;
+    private PxTolerancesScale tolerances;
+    private PxVec3 gravity;
+    private PxDefaultCpuDispatcher cpuDispatcher;
+    private PxSimulationFilterShader filterShader;
+
+    private Scene scene;
     private float accumulator = 0;
     private float timestep;
 
@@ -23,19 +31,19 @@ public class NVPhysXSystem implements Runnable {
     public NVPhysXSystem(Scene scene, float timestep) {
         this.scene = scene;
         this.timestep = timestep;
-        int version = PxTopLevelFunctions.getPHYSICS_VERSION();
 
+        int version = PxTopLevelFunctions.getPHYSICS_VERSION();
         int versionMajor = version >> 24;
         int versionMinor = (version >> 16) & 0xff;
         int versionMicro = (version >> 8) & 0xff;
 
         Logger.info(NVPhysXSystem.class, "Loading NVIDIA PhysX version: " + versionMajor + "." + versionMinor + "." + versionMicro);
 
-        PxDefaultAllocator allocator = new PxDefaultAllocator();
-        PxDefaultErrorCallback errorCb = new PxDefaultErrorCallback();
-        PxFoundation foundation = PxTopLevelFunctions.CreateFoundation(version, allocator, errorCb);
+        allocator = new PxDefaultAllocator();
+        errorCb = new PxDefaultErrorCallback();
+        foundation = PxTopLevelFunctions.CreateFoundation(version, allocator, errorCb);
 
-        PxTolerancesScale tolerances = new PxTolerancesScale();
+        tolerances = new PxTolerancesScale();
         tolerances.setLength(100);
         tolerances.setSpeed(981);
 
@@ -43,14 +51,17 @@ public class NVPhysXSystem implements Runnable {
 
 
         int numThreads = 4;
-        PxDefaultCpuDispatcher cpuDispatcher = PxTopLevelFunctions.DefaultCpuDispatcherCreate(numThreads);
+        cpuDispatcher = PxTopLevelFunctions.DefaultCpuDispatcherCreate(numThreads);
+        filterShader = PxTopLevelFunctions.DefaultFilterShader();
 
-        PxVec3 gravity = new PxVec3(0f, -9.81f, 0f);
-        PxSceneDesc sceneDesc = new PxSceneDesc(tolerances);
+        gravity = new PxVec3(0f, -9.81f, 0f);
+        sceneDesc = new PxSceneDesc(tolerances);
         sceneDesc.setGravity(gravity);
         sceneDesc.setCpuDispatcher(cpuDispatcher);
-        sceneDesc.setFilterShader(PxTopLevelFunctions.DefaultFilterShader());
+        sceneDesc.setFilterShader(filterShader);
         pxScene = physics.createScene(sceneDesc);
+
+
 
 
 
@@ -112,6 +123,15 @@ public class NVPhysXSystem implements Runnable {
                     nvPhysXComponent.shape.setSimulationFilterData(filterData);
                     nvPhysXComponent.actor.attachShape(nvPhysXComponent.shape);
                     pxScene.addActor(nvPhysXComponent.actor);
+
+                    nvPhysXComponent.releaseCallback = () -> {
+                        pxScene.removeActor(nvPhysXComponent.actor);
+                        nvPhysXComponent.actor.release();
+                        nvPhysXComponent.shape.release();
+                        nvPhysXComponent.pxMaterial.release();
+                    };
+
+
                 }
                 nvPhysXComponent.initialized = true;
             }
@@ -146,6 +166,21 @@ public class NVPhysXSystem implements Runnable {
 
 
 
+
+
+    }
+
+    @Override
+    public void dispose() {
+        gravity.destroy();
+        tolerances.destroy();
+        sceneDesc.destroy();
+        pxScene.release();
+        physics.release();
+        cpuDispatcher.destroy();
+        foundation.release();
+        errorCb.destroy();
+        allocator.destroy();
 
 
     }

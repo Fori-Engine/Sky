@@ -1,6 +1,7 @@
 package editor;
 
 import dev.dominion.ecs.api.Entity;
+import dev.dominion.ecs.api.Results;
 import fori.*;
 import fori.asset.AssetPack;
 import fori.asset.AssetPacks;
@@ -23,6 +24,7 @@ import physx.common.PxVec3;
 import java.io.File;
 import java.lang.Math;
 import java.util.*;
+import java.util.function.Consumer;
 
 import static fori.graphics.VertexAttributes.Type.*;
 import static fori.graphics.ShaderRes.ShaderStage.FragmentStage;
@@ -365,6 +367,11 @@ public class RuntimeStage extends Stage {
 
     @Override
     public void closing() {
+        scene.getEngine().findEntitiesWith(NVPhysXComponent.class).stream().forEach(components -> {
+            NVPhysXComponent nvPhysXComponent = components.comp();
+            nvPhysXComponent.release();
+        });
+
         scene.close(renderer);
     }
 

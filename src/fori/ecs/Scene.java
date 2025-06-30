@@ -12,7 +12,7 @@ import java.util.Map;
 
 public class Scene {
     private Dominion dominion;
-    private ArrayList<Runnable> systems = new ArrayList<>();
+    private ArrayList<EcsSystem> systems = new ArrayList<>();
     private Scheduler scheduler;
     private Map<String, StaticMeshBatch> staticMeshBatches = new HashMap<>();
 
@@ -37,7 +37,7 @@ public class Scene {
         dominion.deleteEntity(entity);
     }
 
-    public void addSystem(Runnable system) {
+    public void addSystem(EcsSystem system) {
         systems.add(system);
         scheduler.schedule(system);
     }
@@ -63,6 +63,11 @@ public class Scene {
 
 
     public void close(Renderer renderer) {
+
+        for(EcsSystem system : systems) {
+            system.dispose();
+        }
+
         for(StaticMeshBatch staticMeshBatch : staticMeshBatches.values()) {
             renderer.destroyStaticMeshBatch(staticMeshBatch);
         }
