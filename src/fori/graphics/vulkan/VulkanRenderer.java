@@ -970,7 +970,7 @@ public class VulkanRenderer extends Renderer {
     }
 
     @Override
-    public void render(Scene scene, boolean recreateRenderer) {
+    public void dispatch(Scene scene, boolean recreateRenderer) {
 
         try(MemoryStack stack = stackPush()) {
 

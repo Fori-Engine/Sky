@@ -28,8 +28,9 @@ public class VulkanTexture extends Texture {
     private long fence;
     private long commandPool = 0;
 
-    public VulkanTexture(Ref parent, Asset<TextureData> textureData, Filter minFilter, Filter magFilter) {
-        super(parent, textureData, minFilter, magFilter);
+
+    public VulkanTexture(Ref parent, int width, int height, Asset<TextureData> textureData, Filter minFilter, Filter magFilter) {
+        super(parent, width, height, textureData, minFilter, magFilter);
 
         image = new VulkanImage(
                 ref,
@@ -42,129 +43,125 @@ public class VulkanTexture extends Texture {
                 VK_IMAGE_TILING_OPTIMAL
         );
 
-
-
-        imageData = Buffer.newBuffer(ref, getWidth() * getHeight() * 4, Buffer.Usage.ImageBackingBuffer, Buffer.Type.CPUGPUShared, false);
-        ByteBuffer bytes = imageData.map();
-        bytes.put(getTextureData());
-        imageData.unmap();
-
-
-
-
         imageView = new VulkanImageView(image.getRef(), VulkanDeviceManager.getCurrentDevice(), image, VK_IMAGE_ASPECT_COLOR_BIT);
 
-        try(MemoryStack stack = stackPush()){
-            VkSamplerCreateInfo samplerCreateInfo = VkSamplerCreateInfo.calloc(stack);
-            samplerCreateInfo.sType(VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO);
-            samplerCreateInfo.minFilter(minFilter == Linear ? VK_FILTER_LINEAR : VK_FILTER_NEAREST);
-            samplerCreateInfo.magFilter(magFilter == Linear ? VK_FILTER_LINEAR : VK_FILTER_NEAREST);
-            samplerCreateInfo.addressModeU(VK_SAMPLER_ADDRESS_MODE_REPEAT);
-            samplerCreateInfo.addressModeV(VK_SAMPLER_ADDRESS_MODE_REPEAT);
-            samplerCreateInfo.addressModeW(VK_SAMPLER_ADDRESS_MODE_REPEAT);
-            samplerCreateInfo.anisotropyEnable(true);
-            samplerCreateInfo.maxAnisotropy(VulkanDeviceManager.getPhysicalDeviceProperties().limits().maxSamplerAnisotropy());
-            samplerCreateInfo.borderColor(VK_BORDER_COLOR_INT_OPAQUE_BLACK);
-            samplerCreateInfo.unnormalizedCoordinates(false);
-            samplerCreateInfo.compareEnable(false);
-            samplerCreateInfo.compareOp(VK_COMPARE_OP_ALWAYS);
+        if(textureData != null) {
 
-            samplerCreateInfo.mipmapMode(VK_SAMPLER_MIPMAP_MODE_LINEAR);
 
-            LongBuffer pSampler = stack.callocLong(1);
-            if(vkCreateSampler(VulkanDeviceManager.getCurrentDevice(), samplerCreateInfo, null, pSampler) != VK_SUCCESS){
-                throw new RuntimeException(Logger.error(VulkanTexture.class, "Failed to create sampler!"));
+            imageData = Buffer.newBuffer(ref, getWidth() * getHeight() * 4, Buffer.Usage.ImageBackingBuffer, Buffer.Type.CPUGPUShared, false);
+            ByteBuffer bytes = imageData.map();
+            bytes.put(getTextureData());
+            imageData.unmap();
+
+
+            try (MemoryStack stack = stackPush()) {
+                VkSamplerCreateInfo samplerCreateInfo = VkSamplerCreateInfo.calloc(stack);
+                samplerCreateInfo.sType(VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO);
+                samplerCreateInfo.minFilter(minFilter == Linear ? VK_FILTER_LINEAR : VK_FILTER_NEAREST);
+                samplerCreateInfo.magFilter(magFilter == Linear ? VK_FILTER_LINEAR : VK_FILTER_NEAREST);
+                samplerCreateInfo.addressModeU(VK_SAMPLER_ADDRESS_MODE_REPEAT);
+                samplerCreateInfo.addressModeV(VK_SAMPLER_ADDRESS_MODE_REPEAT);
+                samplerCreateInfo.addressModeW(VK_SAMPLER_ADDRESS_MODE_REPEAT);
+                samplerCreateInfo.anisotropyEnable(true);
+                samplerCreateInfo.maxAnisotropy(VulkanDeviceManager.getPhysicalDeviceProperties().limits().maxSamplerAnisotropy());
+                samplerCreateInfo.borderColor(VK_BORDER_COLOR_INT_OPAQUE_BLACK);
+                samplerCreateInfo.unnormalizedCoordinates(false);
+                samplerCreateInfo.compareEnable(false);
+                samplerCreateInfo.compareOp(VK_COMPARE_OP_ALWAYS);
+
+                samplerCreateInfo.mipmapMode(VK_SAMPLER_MIPMAP_MODE_LINEAR);
+
+                LongBuffer pSampler = stack.callocLong(1);
+                if (vkCreateSampler(VulkanDeviceManager.getCurrentDevice(), samplerCreateInfo, null, pSampler) != VK_SUCCESS) {
+                    throw new RuntimeException(Logger.error(VulkanTexture.class, "Failed to create sampler!"));
+                }
+
+                sampler = pSampler.get(0);
+
             }
 
-            sampler = pSampler.get(0);
 
-        }
-
+            try (MemoryStack stack = stackPush()) {
 
 
+                VkCommandPoolCreateInfo commandPoolCreateInfo = VkCommandPoolCreateInfo.calloc(stack);
+                commandPoolCreateInfo.sType(VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO);
+                commandPoolCreateInfo.flags(VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+                commandPoolCreateInfo.queueFamilyIndex(VulkanDeviceManager.getGraphicsFamilyIndex());
 
-        try(MemoryStack stack = stackPush()) {
+                LongBuffer pCommandPool = stack.mallocLong(1);
+
+                if (vkCreateCommandPool(VulkanDeviceManager.getCurrentDevice(), commandPoolCreateInfo, null, pCommandPool) != VK_SUCCESS) {
+                    throw new RuntimeException("Failed to create command pool");
+                }
+                commandPool = pCommandPool.get(0);
+
+                VkCommandBufferAllocateInfo allocInfo = VkCommandBufferAllocateInfo.calloc(stack);
+                allocInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
+                allocInfo.commandPool(commandPool);
+                allocInfo.level(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+                allocInfo.commandBufferCount(1);
+
+                PointerBuffer pCommandBuffers = stack.mallocPointer(1);
+
+                if (vkAllocateCommandBuffers(VulkanDeviceManager.getCurrentDevice(), allocInfo, pCommandBuffers) != VK_SUCCESS) {
+                    throw new RuntimeException(Logger.error(VulkanStaticMeshBatch.class, "Failed to create per-RenderCommand command buffer"));
+                }
+
+                commandBuffer = new VkCommandBuffer(pCommandBuffers.get(0), VulkanDeviceManager.getCurrentDevice());
+
+                LongBuffer pFence = stack.mallocLong(1);
+
+                VkFenceCreateInfo transferFenceCreateInfo = VkFenceCreateInfo.calloc(stack);
+                transferFenceCreateInfo.sType(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
+                vkCreateFence(VulkanDeviceManager.getCurrentDevice(), transferFenceCreateInfo, null, pFence);
+
+                fence = pFence.get(0);
 
 
+                vkResetFences(VulkanDeviceManager.getCurrentDevice(), fence);
 
-            VkCommandPoolCreateInfo commandPoolCreateInfo = VkCommandPoolCreateInfo.calloc(stack);
-            commandPoolCreateInfo.sType(VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO);
-            commandPoolCreateInfo.flags(VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
-            commandPoolCreateInfo.queueFamilyIndex(VulkanDeviceManager.getGraphicsFamilyIndex());
+                VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
+                beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
 
-            LongBuffer pCommandPool = stack.mallocLong(1);
+                if (vkBeginCommandBuffer(commandBuffer, beginInfo) != VK_SUCCESS) {
+                    throw new RuntimeException(Logger.error(VulkanStaticMeshBatch.class, "Failed to start recording per-RenderCommand command buffer"));
+                }
 
-            if(vkCreateCommandPool(VulkanDeviceManager.getCurrentDevice(), commandPoolCreateInfo, null, pCommandPool) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create command pool");
+                transitionImageLayout(
+                        commandBuffer,
+                        VK_IMAGE_LAYOUT_UNDEFINED,
+                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+                );
+
+                VkBufferImageCopy.Buffer imageCopies = VkBufferImageCopy.calloc(1, stack);
+                imageCopies.imageSubresource().aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
+                imageCopies.imageSubresource().layerCount(1);
+                imageCopies.imageExtent().set(width, height, 1);
+
+
+                vkCmdCopyBufferToImage(commandBuffer, ((VulkanBuffer) imageData).getHandle(), image.getHandle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, imageCopies);
+
+                transitionImageLayout(
+                        commandBuffer,
+                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+                );
+
+                if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+                    throw new RuntimeException(Logger.error(VulkanTexture.class, "Failed to finish recording per-RenderCommand command buffer"));
+                }
+
+                VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
+                submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
+                submitInfo.pCommandBuffers(stack.pointers(commandBuffer));
+
+                if (vkQueueSubmit(VulkanDeviceManager.getGraphicsQueue(), submitInfo, fence) != VK_SUCCESS) {
+                    throw new RuntimeException(Logger.error(VulkanTexture.class, "Failed to submit per-RenderCommand command buffer"));
+                }
+
+                vkWaitForFences(VulkanDeviceManager.getCurrentDevice(), fence, true, UINT64_MAX);
             }
-            commandPool = pCommandPool.get(0);
-
-            VkCommandBufferAllocateInfo allocInfo = VkCommandBufferAllocateInfo.calloc(stack);
-            allocInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
-            allocInfo.commandPool(commandPool);
-            allocInfo.level(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
-            allocInfo.commandBufferCount(1);
-
-            PointerBuffer pCommandBuffers = stack.mallocPointer(1);
-
-            if(vkAllocateCommandBuffers(VulkanDeviceManager.getCurrentDevice(), allocInfo, pCommandBuffers) != VK_SUCCESS) {
-                throw new RuntimeException(Logger.error(VulkanStaticMeshBatch.class, "Failed to create per-RenderCommand command buffer"));
-            }
-
-            commandBuffer = new VkCommandBuffer(pCommandBuffers.get(0), VulkanDeviceManager.getCurrentDevice());
-
-            LongBuffer pFence = stack.mallocLong(1);
-
-            VkFenceCreateInfo transferFenceCreateInfo = VkFenceCreateInfo.calloc(stack);
-            transferFenceCreateInfo.sType(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
-            vkCreateFence(VulkanDeviceManager.getCurrentDevice(), transferFenceCreateInfo, null, pFence);
-
-            fence = pFence.get(0);
-
-
-            vkResetFences(VulkanDeviceManager.getCurrentDevice(), fence);
-
-            VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
-            beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
-
-            if (vkBeginCommandBuffer(commandBuffer, beginInfo) != VK_SUCCESS) {
-                throw new RuntimeException(Logger.error(VulkanStaticMeshBatch.class, "Failed to start recording per-RenderCommand command buffer"));
-            }
-
-            transitionImageLayout(
-                    commandBuffer,
-                    VK_IMAGE_LAYOUT_UNDEFINED,
-                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
-            );
-
-            VkBufferImageCopy.Buffer imageCopies = VkBufferImageCopy.calloc(1, stack);
-            imageCopies.imageSubresource().aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
-            imageCopies.imageSubresource().layerCount(1);
-            imageCopies.imageExtent().set(width, height, 1);
-
-
-
-            vkCmdCopyBufferToImage(commandBuffer, ((VulkanBuffer) imageData).getHandle(), image.getHandle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, imageCopies);
-
-            transitionImageLayout(
-                    commandBuffer,
-                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-            );
-
-            if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-                throw new RuntimeException(Logger.error(VulkanTexture.class, "Failed to finish recording per-RenderCommand command buffer"));
-            }
-
-            VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
-            submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
-            submitInfo.pCommandBuffers(stack.pointers(commandBuffer));
-
-            if(vkQueueSubmit(VulkanDeviceManager.getGraphicsQueue(), submitInfo, fence) != VK_SUCCESS) {
-                throw new RuntimeException(Logger.error(VulkanTexture.class, "Failed to submit per-RenderCommand command buffer"));
-            }
-
-            vkWaitForFences(VulkanDeviceManager.getCurrentDevice(), fence, true, UINT64_MAX);
         }
 
 
