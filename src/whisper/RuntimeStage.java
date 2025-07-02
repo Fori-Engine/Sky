@@ -126,17 +126,21 @@ public class RuntimeStage extends Stage {
 
         //Shop
         {
-            ShaderProgram shopShaderProgram;
-            Mesh shopMesh;
+            ShaderProgram shaderProgram;
+            Mesh mesh;
 
-            ShaderReader.ShaderSources shaderSources = ShaderReader.readCombinedVertexFragmentSources(
+            ShaderReader.ShaderSources shaderSources = ShaderReader.read(
                     AssetPacks.<String>getAsset("core:assets/shaders/vulkan/Default.glsl").asset
             );
 
 
-            shopShaderProgram = ShaderProgram.newShaderProgram(renderer.getRef(), shaderSources.vertexShader, shaderSources.fragmentShader);
+            shaderProgram = ShaderProgram.newShaderProgram(renderer.getRef());
+            shaderProgram.setShaders(
+                    Shader.newShader(shaderProgram.getRef(), ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex)),
+                    Shader.newShader(shaderProgram.getRef(), ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
+            );
 
-            shopShaderProgram.bind(
+            shaderProgram.bind(
                     new VertexAttributes.Type[]{
                             PositionFloat3,
                             TransformIndexFloat1,
@@ -166,10 +170,10 @@ public class RuntimeStage extends Stage {
             );
 
 
-            shopMesh = Mesh.newMesh(shopShaderProgram.getAttributes(), AssetPacks.getAsset("core:assets/models/viking_room.obj"));
-            StaticMeshBatch shopStaticMeshBatch = renderer.newStaticMeshBatch(100000, 100000, 1, shopShaderProgram);
+            mesh = Mesh.newMesh(shaderProgram.getAttributes(), AssetPacks.getAsset("core:assets/models/viking_room.obj"));
+            StaticMeshBatch shopStaticMeshBatch = renderer.newStaticMeshBatch(100000, 100000, 1, shaderProgram);
 
-            shopStaticMeshBatch.submitMesh(shopMesh, new MeshUploaderWithTransform(0));
+            shopStaticMeshBatch.submitMesh(mesh, new MeshUploaderWithTransform(0));
             shopStaticMeshBatch.finish();
 
 
@@ -190,8 +194,8 @@ public class RuntimeStage extends Stage {
 
 
             shopEntity = scene.createEntity(
-                    new StaticMeshComponent(shopStaticMeshBatch, shopMesh),
-                    new ShaderComponent(shopShaderProgram),
+                    new StaticMeshComponent(shopStaticMeshBatch, mesh),
+                    new ShaderComponent(shaderProgram),
                     new TransformComponent(0, new Matrix4f().identity()),
                     new NVPhysXComponent(new BoxCollider(1.5f, 1.5f, 1.5f), new Material(0.05f, 0.05f, 0.99f), ActorType.Dynamic)
             );
@@ -199,22 +203,22 @@ public class RuntimeStage extends Stage {
 
         }
 
-
-
-
-
         //Player
         {
 
 
             ShaderProgram shaderProgram;
             {
-                ShaderReader.ShaderSources shaderSources = ShaderReader.readCombinedVertexFragmentSources(
+                ShaderReader.ShaderSources shaderSources = ShaderReader.read(
                         AssetPacks.<String>getAsset("core:assets/shaders/vulkan/PhysXTest.glsl").asset
                 );
 
 
-                shaderProgram = ShaderProgram.newShaderProgram(renderer.getRef(), shaderSources.vertexShader, shaderSources.fragmentShader);
+                shaderProgram = ShaderProgram.newShaderProgram(renderer.getRef());
+                shaderProgram.setShaders(
+                        Shader.newShader(shaderProgram.getRef(), ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex)),
+                        Shader.newShader(shaderProgram.getRef(), ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
+                );
 
                 shaderProgram.bind(
                         new VertexAttributes.Type[]{
@@ -276,20 +280,23 @@ public class RuntimeStage extends Stage {
             );
         }
 
-
-
         //Level
         {
 
 
             ShaderProgram shaderProgram;
             {
-                ShaderReader.ShaderSources shaderSources = ShaderReader.readCombinedVertexFragmentSources(
+                ShaderReader.ShaderSources shaderSources = ShaderReader.read(
                         AssetPacks.<String>getAsset("core:assets/shaders/vulkan/PhysXTest.glsl").asset
                 );
 
 
-                shaderProgram = ShaderProgram.newShaderProgram(renderer.getRef(), shaderSources.vertexShader, shaderSources.fragmentShader);
+                shaderProgram = ShaderProgram.newShaderProgram(renderer.getRef());
+                shaderProgram.setShaders(
+                        Shader.newShader(shaderProgram.getRef(), ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex)),
+                        Shader.newShader(shaderProgram.getRef(), ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
+                );
+
 
                 shaderProgram.bind(
                         new VertexAttributes.Type[]{

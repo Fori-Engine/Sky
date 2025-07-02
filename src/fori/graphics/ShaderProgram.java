@@ -6,19 +6,17 @@ import fori.graphics.vulkan.VulkanShaderProgram;
 
 public abstract class ShaderProgram implements Disposable {
 
-    protected String vertexShaderSource = null;
-    protected String fragmentShaderSource = null;
+    protected Shader[] shaders;
     protected ShaderResSet[] resourcesSets;
     protected VertexAttributes.Type[] attributes;
     protected Ref ref;
 
 
-    public ShaderProgram(Ref parent, String vertexShaderSource, String fragmentShaderSource){
+    public ShaderProgram(Ref parent){
         ref = parent.add(this);
-        this.vertexShaderSource = vertexShaderSource;
-        this.fragmentShaderSource = fragmentShaderSource;
     }
 
+    public abstract void setShaders(Shader... shaders);
     public abstract void updateBuffers(int frameIndex, ShaderUpdate<Buffer>... bufferUpdates);
     public abstract void updateTextures(int frameIndex, ShaderUpdate<Texture>... textureUpdates);
 
@@ -48,9 +46,9 @@ public abstract class ShaderProgram implements Disposable {
     }
 
     public abstract void dispose();
-    public static ShaderProgram newShaderProgram(Ref parent, String vertexShaderSource, String fragmentShaderSource){
+    public static ShaderProgram newShaderProgram(Ref parent){
         if(Renderer.getRenderAPI() == RenderAPI.Vulkan){
-            return new VulkanShaderProgram(parent, vertexShaderSource, fragmentShaderSource);
+            return new VulkanShaderProgram(parent);
         }
 
         return null;

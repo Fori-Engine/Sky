@@ -6,7 +6,9 @@ import org.lwjgl.system.MemoryUtil;
 import static org.lwjgl.util.shaderc.Shaderc.*;
 
 public class ShaderCompiler {
-    public static ShaderBinary compile(String source, int kind){
+    public static ShaderBinary compile(String source, ShaderType shaderType){
+
+        int kind = getShadercKind(shaderType);
         long compiler = shaderc_compiler_initialize();
         if(compiler == MemoryUtil.NULL){
             throw new RuntimeException(
@@ -25,13 +27,7 @@ public class ShaderCompiler {
                     ));
         }
         if(shaderc_result_get_compilation_status(result) != shaderc_compilation_status_success){
-
-            String shaderType = getShaderType(kind);
             String errorMessage = shaderc_result_get_error_message(result);
-
-
-
-
 
             throw new RuntimeException(
                     Logger.error(
@@ -44,6 +40,22 @@ public class ShaderCompiler {
 
 
         return new ShaderBinary(result, shaderc_result_get_bytes(result));
+    }
+
+    private static int getShadercKind(ShaderType shaderType) {
+        switch (shaderType) {
+            case Vertex -> {
+                return shaderc_glsl_vertex_shader;
+            }
+            case Fragment -> {
+                return shaderc_glsl_fragment_shader;
+            }
+            case Compute -> {
+                return shaderc_glsl_compute_shader;
+            }
+        }
+
+        return -1;
     }
 
     private static String getShaderType(int kind) {

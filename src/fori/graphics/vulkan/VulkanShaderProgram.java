@@ -1,6 +1,5 @@
 package fori.graphics.vulkan;
 
-import fori.Logger;
 import fori.graphics.*;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
@@ -18,8 +17,6 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public class VulkanShaderProgram extends ShaderProgram {
 
-    private ShaderBinary vertexShaderBinary, fragmentShaderBinary;
-    private long vertexShaderModule, fragmentShaderModule;
     private VkPipelineShaderStageCreateInfo.Buffer shaderStages;
 
     private ArrayList<ArrayList<Long>> descriptorSetLayouts = new ArrayList<>(VulkanRenderer.FRAMES_IN_FLIGHT);
@@ -28,56 +25,28 @@ public class VulkanShaderProgram extends ShaderProgram {
     private ByteBuffer entryPoint;
 
 
-    public VulkanShaderProgram(Ref parent, String vertexShaderSource, String fragmentShaderSource) {
-        super(parent, vertexShaderSource, fragmentShaderSource);
+    public VulkanShaderProgram(Ref parent) {
+        super(parent);
         entryPoint = MemoryUtil.memUTF8("main");
-        vertexShaderBinary = ShaderCompiler.compile(vertexShaderSource, shaderc_glsl_vertex_shader);
-        fragmentShaderBinary = ShaderCompiler.compile(fragmentShaderSource, shaderc_glsl_fragment_shader);
-
-        vertexShaderModule = createShaderModule(VulkanDeviceManager.getCurrentDevice(), vertexShaderBinary.bytecode);
-        fragmentShaderModule = createShaderModule(VulkanDeviceManager.getCurrentDevice(), fragmentShaderBinary.bytecode);
-
-        shaderStages = VkPipelineShaderStageCreateInfo.calloc(2);
-
-
-        VkPipelineShaderStageCreateInfo vertexShaderStageInfo = shaderStages.get(0);
-        vertexShaderStageInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
-        vertexShaderStageInfo.stage(VK_SHADER_STAGE_VERTEX_BIT);
-        vertexShaderStageInfo.module(vertexShaderModule);
-        vertexShaderStageInfo.pName(entryPoint);
-
-        VkPipelineShaderStageCreateInfo fragmentShaderStageInfo = shaderStages.get(1);
-        fragmentShaderStageInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
-        fragmentShaderStageInfo.stage(VK_SHADER_STAGE_FRAGMENT_BIT);
-        fragmentShaderStageInfo.module(fragmentShaderModule);
-        fragmentShaderStageInfo.pName(entryPoint);
-
     }
 
-    public static long createShaderModule(VkDevice device, ByteBuffer spirvCode) {
+    @Override
+    public void setShaders(Shader... shaders) {
+        this.shaders = shaders;
+        shaderStages = VkPipelineShaderStageCreateInfo.calloc(shaders.length);
 
-        try(MemoryStack stack = stackPush()) {
+        for (int i = 0; i < shaders.length; i++) {
+            VulkanShader vulkanShader = (VulkanShader) shaders[i];
 
-            VkShaderModuleCreateInfo createInfo = VkShaderModuleCreateInfo.calloc(stack);
-
-            createInfo.sType(VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO);
-            createInfo.pCode(spirvCode);
-
-            LongBuffer pShaderModule = stack.mallocLong(1);
-
-            if(vkCreateShaderModule(device, createInfo, null, pShaderModule) != VK_SUCCESS) {
-
-                throw new RuntimeException(
-                        Logger.error(
-                                VulkanShaderProgram.class,
-                                "Failed to create shader module"
-                        ));
-
-            }
-
-            return pShaderModule.get(0);
+            VkPipelineShaderStageCreateInfo vertexShaderStageInfo = shaderStages.get(i);
+            vertexShaderStageInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
+            vertexShaderStageInfo.stage(vulkanShader.getStage());
+            vertexShaderStageInfo.module(vulkanShader.getModule());
+            vertexShaderStageInfo.pName(entryPoint);
         }
     }
+
+
     @Override
     public void bind(VertexAttributes.Type[] attributes, ShaderResSet... resourceSets) {
         super.bind(attributes, resourceSets);
@@ -349,9 +318,6 @@ public class VulkanShaderProgram extends ShaderProgram {
 
         MemoryUtil.memFree(entryPoint);
         shaderStages.free();
-
-        vkDestroyShaderModule(VulkanDeviceManager.getCurrentDevice(), vertexShaderModule, null);
-        vkDestroyShaderModule(VulkanDeviceManager.getCurrentDevice(), fragmentShaderModule, null);
 
         for(List<Long> frameDescriptorSetLayouts : descriptorSetLayouts){
             for(long descriptorSetLayouts : frameDescriptorSetLayouts)

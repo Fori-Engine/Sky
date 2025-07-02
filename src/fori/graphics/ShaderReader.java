@@ -1,18 +1,18 @@
 package fori.graphics;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 
 public class ShaderReader {
 
-    public static ShaderSources readCombinedVertexFragmentSources(String input){
+    public static ShaderSources read(String shadersSources){
 
-        StringBuilder vertexShader = new StringBuilder();
-        StringBuilder fragmentShader = new StringBuilder();
-        Scanner scanner = new Scanner(input);
+        ShaderSources shaderSources = new ShaderSources();
 
-        int shaderStage = 0;
-        int vertexStage = 1;
-        int fragmentStage = 2;
+        Scanner scanner = new Scanner(shadersSources);
+
+        ShaderType shaderType = null;
 
 
 
@@ -22,25 +22,29 @@ public class ShaderReader {
 
 
             if(line.equals("#type vertex")){
-                shaderStage = vertexStage;
+                shaderType = ShaderType.Vertex;
+                shaderSources.sources.put(ShaderType.Vertex, new StringBuilder());
                 continue;
             }
             else if(line.equals("#type fragment")){
-                shaderStage = fragmentStage;
+                shaderType = ShaderType.Fragment;
+                shaderSources.sources.put(ShaderType.Fragment, new StringBuilder());
+                continue;
+            }
+            else if(line.equals("#type compute")){
+                shaderType = ShaderType.Compute;
+                shaderSources.sources.put(ShaderType.Compute, new StringBuilder());
                 continue;
             }
 
+            shaderSources.sources.get(shaderType).append(line + "\n");
 
-            if(shaderStage == vertexStage){
-                vertexShader.append(line + "\n");
-            }
-            else if(shaderStage == fragmentStage){
-                fragmentShader.append(line + "\n");
-            }
         }
         scanner.close();
 
-        return new ShaderSources(vertexShader.toString(), fragmentShader.toString());
+
+
+        return shaderSources;
     }
 
 
@@ -49,13 +53,14 @@ public class ShaderReader {
 
 
     public static class ShaderSources {
-        public String vertexShader;
-        public String fragmentShader;
+        private Map<ShaderType, StringBuilder> sources = new HashMap<>();
 
+        public ShaderSources() {
 
-        public ShaderSources(String vertexShader, String fragmentShader) {
-            this.vertexShader = vertexShader;
-            this.fragmentShader = fragmentShader;
+        }
+
+        public String getShaderSource(ShaderType shaderType) {
+            return sources.get(shaderType).toString();
         }
     }
 

@@ -6,11 +6,11 @@ import static org.lwjgl.util.shaderc.Shaderc.shaderc_result_release;
 
 public class ShaderBinary {
     public long handle;
-    public ByteBuffer bytecode;
+    public ByteBuffer data;
 
-    public ShaderBinary(long handle, ByteBuffer bytecode) {
+    public ShaderBinary(long handle, ByteBuffer data) {
         this.handle = handle;
-        this.bytecode = bytecode;
+        this.data = data;
     }
 
     public void cleanup() {
