@@ -89,11 +89,6 @@ public class Scene {
             renderer.destroyStaticMeshBatch(staticMeshBatch);
         }
 
-        for(DynamicMesh dynamicMesh : dynamicMeshes) {
-            renderer.destroyDynamicMesh(dynamicMesh);
-        }
-
-
 
         dominion.findEntitiesWith(DynamicMeshComponent.class).stream().forEach(components -> {
             DynamicMeshComponent dynamicMeshComponent = components.comp();
