@@ -1,4 +1,4 @@
-package editor;
+package whisper;
 
 import fori.Stage;
 import fori.Surface;

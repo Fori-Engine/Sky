@@ -1,4 +1,4 @@
-package editor;
+package whisper;
 
 import dev.dominion.ecs.api.Entity;
 import fori.*;
@@ -96,9 +96,11 @@ public class RuntimeStage extends Stage {
         );
 
         scene = new Scene("Main_Scene");
+
         scene.addSystem(new RenderSystem(renderer, scene, surface));
         scene.addSystem(new NVPhysXSystem(scene, 4, 1f/60f));
         scene.addSystem(new ScriptSystem(scene));
+
 
 
         Camera camera = new Camera(
@@ -120,7 +122,6 @@ public class RuntimeStage extends Stage {
 
         //Camera
         cameraEntity = scene.createEntity(new CameraComponent(camera));
-
 
 
         //Shop
@@ -360,7 +361,7 @@ public class RuntimeStage extends Stage {
 
 
 
-        renderer.render(scene, surface.update());
+        renderer.dispatch(scene, surface.update());
 
         Time.deltaTime = (float) (surface.getTime() - startTime);
         startTime = (float) surface.getTime();
