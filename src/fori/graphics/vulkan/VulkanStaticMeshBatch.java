@@ -119,6 +119,25 @@ public class VulkanStaticMeshBatch extends StaticMeshBatch {
     }
 
 
+    @Override
+    public void submitMesh(Mesh mesh, MeshUploader meshUploader) {
+
+        getDefaultVertexBuffer().get().clear();
+        getDefaultIndexBuffer().get().clear();
+
+        mesh.put(
+                meshUploader,
+                getVertexCount(),
+                getShaderProgram(),
+                getDefaultVertexBuffer().get(),
+                getDefaultIndexBuffer().get()
+        );
+
+        updateMeshBatch(
+                mesh.getVertexCount(),
+                mesh.getIndexCount()
+        );
+    }
 
     @Override
     public Buffer getDefaultVertexBuffer() {
@@ -131,8 +150,8 @@ public class VulkanStaticMeshBatch extends StaticMeshBatch {
     }
 
     @Override
-    public void uploadsFinished() {
-        super.uploadsFinished();
+    public void finish() {
+        super.finish();
 
         stagingVertexBuffer.dispose();
         stagingIndexBuffer.dispose();

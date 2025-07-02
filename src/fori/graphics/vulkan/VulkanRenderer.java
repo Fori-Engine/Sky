@@ -2,6 +2,7 @@ package fori.graphics.vulkan;
 
 import fori.Logger;
 import fori.Surface;
+import fori.ecs.Scene;
 import fori.graphics.*;
 import fori.graphics.DynamicMesh;
 import fori.graphics.StaticMeshBatch;
@@ -885,33 +886,11 @@ public class VulkanRenderer extends Renderer {
 
         VulkanPipeline pipeline = createPipeline(device, swapchain, (VulkanShaderProgram) shaderProgram);
         VulkanStaticMeshBatch vulkanStaticMeshBatch = new VulkanStaticMeshBatch(getRef(), shaderProgram, getMaxFramesInFlight(), sharedCommandPool, graphicsQueue, device, pipeline, maxVertexCount, maxIndexCount, maxTransformCount);
-        staticMeshBatches.put(shaderProgram, vulkanStaticMeshBatch);
 
         return vulkanStaticMeshBatch;
     }
 
-    @Override
-    public void submitStaticMesh(StaticMeshBatch staticMeshBatch, Mesh mesh, MeshUploader meshUploader) {
 
-        ByteBuffer vertexBufferData = staticMeshBatch.getDefaultVertexBuffer().get();
-        vertexBufferData.clear();
-
-        ByteBuffer indexBufferData = staticMeshBatch.getDefaultIndexBuffer().get();
-        indexBufferData.clear();
-
-        mesh.put(
-                meshUploader,
-                staticMeshBatch.getVertexCount(),
-                staticMeshBatch.getShaderProgram(),
-                staticMeshBatch.getDefaultVertexBuffer().get(),
-                staticMeshBatch.getDefaultIndexBuffer().get()
-        );
-
-        staticMeshBatch.updateMeshBatch(
-                mesh.getVertexCount(),
-                mesh.getIndexCount()
-        );
-    }
 
     @Override
     public void destroyStaticMeshBatch(StaticMeshBatch staticMeshBatch) {
@@ -939,8 +918,6 @@ public class VulkanRenderer extends Renderer {
 
         ref.remove(vulkanStaticMeshBatch.getVertexBuffer());
         ref.remove(vulkanStaticMeshBatch.getIndexBuffer());
-
-        staticMeshBatches.remove(staticMeshBatch.getShaderProgram());
     }
 
     @Override
@@ -969,13 +946,11 @@ public class VulkanRenderer extends Renderer {
 
         ref.remove(vulkanDynamicMesh.getVertexBuffer());
         ref.remove(vulkanDynamicMesh.getIndexBuffer());
-
-        dynamicMeshes.remove(vulkanDynamicMesh.getShaderProgram());
     }
 
 
     @Override
-    public DynamicMesh submitDynamicMesh(Mesh mesh, MeshUploader meshUploader, int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram) {
+    public DynamicMesh newDynamicMesh(int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram) {
 
         VulkanPipeline pipeline = createPipeline(device, swapchain, (VulkanShaderProgram) shaderProgram);
         VulkanDynamicMesh vulkanDynamicMesh = new VulkanDynamicMesh(
@@ -990,30 +965,12 @@ public class VulkanRenderer extends Renderer {
                 maxIndexCount
         );
 
-        dynamicMeshes.put(shaderProgram, vulkanDynamicMesh);
-
-        ByteBuffer vertexBufferData = vulkanDynamicMesh.getVertexBuffer().get();
-        vertexBufferData.clear();
-
-        ByteBuffer indexBufferData = vulkanDynamicMesh.getIndexBuffer().get();
-        indexBufferData.clear();
-
-        mesh.put(
-                meshUploader,
-                0,
-                shaderProgram,
-                vertexBufferData,
-                indexBufferData
-        );
-
-        vulkanDynamicMesh.updateMesh(mesh.getVertexCount(), mesh.getIndexCount());
-
 
         return vulkanDynamicMesh;
     }
 
     @Override
-    public void update(boolean recreateRenderer) {
+    public void render(Scene scene, boolean recreateRenderer) {
 
         try(MemoryStack stack = stackPush()) {
 
@@ -1142,7 +1099,7 @@ public class VulkanRenderer extends Renderer {
                     vkCmdSetScissor(commandBuffer, 0, scissor);
 
 
-                    for(StaticMeshBatch staticMeshBatch : staticMeshBatches.values()) {
+                    for(StaticMeshBatch staticMeshBatch : scene.getStaticMeshBatches().values()) {
                         VulkanStaticMeshBatch vulkanStaticMeshBatch = (VulkanStaticMeshBatch) staticMeshBatch;
 
                         VulkanBuffer vertexBuffer = (VulkanBuffer) vulkanStaticMeshBatch.getVertexBuffer();
@@ -1168,7 +1125,7 @@ public class VulkanRenderer extends Renderer {
 
                     }
 
-                    for(DynamicMesh dynamicMesh : dynamicMeshes.values()) {
+                    for(DynamicMesh dynamicMesh : scene.getDynamicMeshes()) {
                         VulkanDynamicMesh vulkanDynamicMesh = (VulkanDynamicMesh) dynamicMesh;
 
                         VulkanBuffer vertexBuffer = (VulkanBuffer) vulkanDynamicMesh.getVertexBuffer();

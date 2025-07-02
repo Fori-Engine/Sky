@@ -5,6 +5,8 @@ import fori.graphics.DynamicMesh;
 import org.lwjgl.vulkan.VkDevice;
 import org.lwjgl.vulkan.VkQueue;
 
+import java.nio.ByteBuffer;
+
 public class VulkanDynamicMesh extends DynamicMesh {
     private VulkanPipeline pipeline;
     public VulkanDynamicMesh(Ref ref,
@@ -60,6 +62,27 @@ public class VulkanDynamicMesh extends DynamicMesh {
 
     public VulkanPipeline getPipeline() {
         return pipeline;
+    }
+
+    @Override
+    public void submit(Mesh mesh, MeshUploader meshUploader) {
+
+
+        ByteBuffer vertexBufferData = getVertexBuffer().get();
+        vertexBufferData.clear();
+
+        ByteBuffer indexBufferData = getIndexBuffer().get();
+        indexBufferData.clear();
+
+        mesh.put(
+                meshUploader,
+                0,
+                shaderProgram,
+                vertexBufferData,
+                indexBufferData
+        );
+
+        updateMesh(mesh.getVertexCount(), mesh.getIndexCount());
     }
 
     @Override

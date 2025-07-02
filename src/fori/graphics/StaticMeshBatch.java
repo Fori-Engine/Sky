@@ -20,10 +20,11 @@ public abstract class StaticMeshBatch {
         this.shaderProgram = shaderProgram;
     }
 
+    public abstract void submitMesh(Mesh mesh, MeshUploader meshUploader);
     public abstract Buffer getDefaultVertexBuffer();
     public abstract Buffer getDefaultIndexBuffer();
 
-    public void uploadsFinished() {
+    public void finish() {
         finalized = true;
     }
 

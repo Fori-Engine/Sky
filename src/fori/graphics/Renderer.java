@@ -2,12 +2,10 @@ package fori.graphics;
 
 import fori.Logger;
 import fori.Surface;
+import fori.ecs.Scene;
 import fori.graphics.vulkan.VulkanRenderContext;
 import fori.graphics.vulkan.VulkanRenderer;
 import org.lwjgl.vulkan.VkInstance;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public abstract class Renderer implements Disposable {
 
@@ -18,8 +16,6 @@ public abstract class Renderer implements Disposable {
     protected Ref ref;
     protected int maxFramesInFlight;
     protected Surface surface;
-    protected Map<ShaderProgram, StaticMeshBatch> staticMeshBatches;
-    protected Map<ShaderProgram, DynamicMesh> dynamicMeshes;
 
 
     public Renderer(Ref parent, int width, int height, int maxFramesInFlight, RendererSettings settings, Surface surface){
@@ -30,20 +26,17 @@ public abstract class Renderer implements Disposable {
         this.maxFramesInFlight = maxFramesInFlight;
         this.surface = surface;
 
-        staticMeshBatches = new HashMap<>();
-        dynamicMeshes = new HashMap<>();
     }
 
     public abstract StaticMeshBatch newStaticMeshBatch(int maxVertices, int maxIndices, int maxTransforms, ShaderProgram shaderProgram);
-    public abstract void submitStaticMesh(StaticMeshBatch staticMeshBatch, Mesh mesh, MeshUploader meshUploader);
     public abstract void destroyStaticMeshBatch(StaticMeshBatch staticMeshBatch);
 
-    public abstract DynamicMesh submitDynamicMesh(Mesh mesh, MeshUploader meshUploader, int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram);
+    public abstract DynamicMesh newDynamicMesh(int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram);
     public abstract void destroyDynamicMesh(DynamicMesh dynamicMesh);
 
 
 
-    public abstract void update(boolean recreateRenderer);
+    public abstract void render(Scene scene, boolean recreateRenderer);
     public abstract int getFrameIndex();
     public int getMaxFramesInFlight() { return maxFramesInFlight; }
     public abstract String getDeviceName();

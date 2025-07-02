@@ -1,7 +1,6 @@
 package editor;
 
 import dev.dominion.ecs.api.Entity;
-import dev.dominion.ecs.api.Results;
 import fori.*;
 import fori.asset.AssetPack;
 import fori.asset.AssetPacks;
@@ -15,16 +14,11 @@ import fori.physx.BoxCollider;
 import fori.physx.Material;
 import org.apache.commons.cli.*;
 import org.joml.Matrix4f;
-import org.joml.Quaternionf;
 import org.joml.Vector3f;
-import org.lwjgl.system.linux.Stat;
-import physx.common.PxQuat;
-import physx.common.PxVec3;
 
 import java.io.File;
 import java.lang.Math;
 import java.util.*;
-import java.util.function.Consumer;
 
 import static fori.graphics.VertexAttributes.Type.*;
 import static fori.graphics.ShaderRes.ShaderStage.FragmentStage;
@@ -127,9 +121,9 @@ public class RuntimeStage extends Stage {
         //Camera
         cameraEntity = scene.createEntity(new CameraComponent(camera));
 
+
+
         //Shop
-
-
         {
             ShaderProgram shopShaderProgram;
             Mesh shopMesh;
@@ -174,9 +168,10 @@ public class RuntimeStage extends Stage {
             shopMesh = Mesh.newMesh(shopShaderProgram.getAttributes(), AssetPacks.getAsset("core:assets/models/viking_room.obj"));
             StaticMeshBatch shopStaticMeshBatch = renderer.newStaticMeshBatch(100000, 100000, 1, shopShaderProgram);
 
-            renderer.submitStaticMesh(shopStaticMeshBatch, shopMesh, new MeshUploaderWithTransform(0));
+            shopStaticMeshBatch.submitMesh(shopMesh, new MeshUploaderWithTransform(0));
+            shopStaticMeshBatch.finish();
 
-            shopStaticMeshBatch.uploadsFinished();
+
             scene.registerStaticMeshBatch("Shops", shopStaticMeshBatch);
 
             Texture texture = Texture.newTexture(renderer.getRef(), AssetPacks.getAsset("core:assets/textures/viking_room.png"), Texture.Filter.Linear, Texture.Filter.Linear);
@@ -247,7 +242,10 @@ public class RuntimeStage extends Stage {
 
 
             Mesh mesh = MeshGenerator.newBox(1.0f, 1.0f, 1.0f);
-            DynamicMesh dynamicMesh = renderer.submitDynamicMesh(mesh, new MeshUploaderWithTransform(0), 100000, 100000, shaderProgram);
+            DynamicMesh dynamicMesh = renderer.newDynamicMesh(100000, 100000, shaderProgram);
+            dynamicMesh.submit(mesh, new MeshUploaderWithTransform(0));
+            scene.registerDynamicMesh(dynamicMesh);
+
 
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
                 dynamicMesh.getShaderProgram().updateBuffers(
@@ -276,6 +274,8 @@ public class RuntimeStage extends Stage {
                     })
             );
         }
+
+
 
         //Level
         {
@@ -317,7 +317,10 @@ public class RuntimeStage extends Stage {
 
 
             Mesh mesh = MeshGenerator.newBox(10.0f, 1.0f, 10.0f);
-            DynamicMesh dynamicMesh = renderer.submitDynamicMesh(mesh, new MeshUploaderWithTransform(0), 100000, 100000, shaderProgram);
+            DynamicMesh dynamicMesh = renderer.newDynamicMesh(100000, 100000, shaderProgram);
+            dynamicMesh.submit(mesh, new MeshUploaderWithTransform(0));
+            scene.registerDynamicMesh(dynamicMesh);
+
 
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
                 dynamicMesh.getShaderProgram().updateBuffers(
@@ -357,7 +360,7 @@ public class RuntimeStage extends Stage {
 
 
 
-        renderer.update(surface.update());
+        renderer.render(scene, surface.update());
 
         Time.deltaTime = (float) (surface.getTime() - startTime);
         startTime = (float) surface.getTime();

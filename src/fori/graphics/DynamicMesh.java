@@ -18,6 +18,8 @@ public abstract class DynamicMesh {
         this.shaderProgram = shaderProgram;
     }
 
+    public abstract void submit(Mesh mesh, MeshUploader meshUploader);
+
     public Buffer getVertexBuffer() {
         return vertexBuffer;
     }
