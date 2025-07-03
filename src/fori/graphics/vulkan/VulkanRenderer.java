@@ -948,6 +948,22 @@ public class VulkanRenderer extends Renderer {
         ref.remove(vulkanDynamicMesh.getIndexBuffer());
     }
 
+    @Override
+    public SpriteBatch newSpriteBatch(int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram, Camera camera) {
+        VulkanPipeline pipeline = createPipeline(device, swapchain, (VulkanShaderProgram) shaderProgram);
+        VulkanSpriteBatch vulkanSpriteBatch = new VulkanSpriteBatch(
+                getRef(),
+                getMaxFramesInFlight(),
+                pipeline,
+                maxVertexCount,
+                maxIndexCount,
+                camera,
+                shaderProgram
+        );
+
+        return vulkanSpriteBatch;
+    }
+
 
     @Override
     public DynamicMesh newDynamicMesh(int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram) {
@@ -970,7 +986,7 @@ public class VulkanRenderer extends Renderer {
     }
 
     @Override
-    public void dispatch(Scene scene, boolean recreateRenderer) {
+    public void dispatch(Scene scene, SpriteBatch spriteBatch, boolean recreateRenderer) {
 
         try(MemoryStack stack = stackPush()) {
 
@@ -1151,6 +1167,32 @@ public class VulkanRenderer extends Renderer {
 
                     }
 
+                    //SpriteBatch
+                    {
+                        VulkanSpriteBatch vulkanSpriteBatch = (VulkanSpriteBatch) spriteBatch;
+
+                        VulkanBuffer vertexBuffer = (VulkanBuffer) vulkanSpriteBatch.getVertexBuffer();
+                        VulkanBuffer indexBuffer = (VulkanBuffer) vulkanSpriteBatch.getIndexBuffer();
+
+
+
+
+                        VulkanPipeline pipeline = vulkanSpriteBatch.getPipeline();
+                        VulkanShaderProgram shaderProgram = (VulkanShaderProgram) vulkanSpriteBatch.getShaderProgram();
+                        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
+
+                        LongBuffer vertexBuffers = stack.longs(vertexBuffer.getHandle());
+                        LongBuffer offsets = stack.longs(0);
+
+                        vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
+
+                        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                pipeline.pipelineLayout, 0, stack.longs(shaderProgram.getDescriptorSets(frameIndex)), null);
+
+                        vkCmdBindIndexBuffer(commandBuffer, indexBuffer.getHandle(), 0, VK_INDEX_TYPE_UINT32);
+                        vkCmdDrawIndexed(commandBuffer, vulkanSpriteBatch.getIndexCount(), 1, 0, 0, 0);
+
+                    }
                 }
                 KHRDynamicRendering.vkCmdEndRenderingKHR(commandBuffer);
 

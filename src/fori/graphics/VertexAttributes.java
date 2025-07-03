@@ -3,6 +3,7 @@ package fori.graphics;
 public class VertexAttributes {
     public enum Type {
         PositionFloat3(3),
+        PositionFloat2(2),
         TransformIndexFloat1(1),
         UVFloat2(2),
         ColorFloat4(4);

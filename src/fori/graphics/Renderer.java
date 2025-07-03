@@ -34,9 +34,10 @@ public abstract class Renderer implements Disposable {
     public abstract DynamicMesh newDynamicMesh(int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram);
     public abstract void destroyDynamicMesh(DynamicMesh dynamicMesh);
 
+    public abstract SpriteBatch newSpriteBatch(int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram, Camera camera);
 
 
-    public abstract void dispatch(Scene scene, boolean recreateRenderer);
+    public abstract void dispatch(Scene scene, SpriteBatch spriteBatche, boolean recreateRenderer);
     public abstract int getFrameIndex();
     public int getMaxFramesInFlight() { return maxFramesInFlight; }
     public abstract String getDeviceName();

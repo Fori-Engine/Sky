@@ -9,7 +9,7 @@ import java.nio.ByteBuffer;
 
 public class VulkanDynamicMesh extends DynamicMesh {
     private VulkanPipeline pipeline;
-    public VulkanDynamicMesh(Ref ref,
+    public VulkanDynamicMesh(Ref parent,
                              ShaderProgram shaderProgram,
                              int framesInFlight,
                              long commandPool,
@@ -22,14 +22,14 @@ public class VulkanDynamicMesh extends DynamicMesh {
         super(maxVertexCount, maxIndexCount, shaderProgram);
         this.pipeline = pipeline;
         vertexBuffer = Buffer.newBuffer(
-                ref,
+                parent,
                 VertexAttributes.getSize(shaderProgram.getAttributes()) * Float.BYTES * this.maxVertexCount,
                 Buffer.Usage.VertexBuffer,
                 Buffer.Type.CPUGPUShared,
                 false
         );
         indexBuffer = Buffer.newBuffer(
-                ref,
+                parent,
                 this.maxIndexCount * Integer.BYTES,
                 Buffer.Usage.IndexBuffer,
                 Buffer.Type.CPUGPUShared,
@@ -41,7 +41,7 @@ public class VulkanDynamicMesh extends DynamicMesh {
 
         for (int i = 0; i < framesInFlight; i++) {
             transformsBuffers[i] = Buffer.newBuffer(
-                    ref,
+                    parent,
                     SizeUtil.MATRIX_SIZE_BYTES,
                     Buffer.Usage.ShaderStorageBuffer,
                     Buffer.Type.CPUGPUShared,
@@ -49,7 +49,7 @@ public class VulkanDynamicMesh extends DynamicMesh {
             );
 
             cameraBuffers[i] = Buffer.newBuffer(
-                    ref,
+                    parent,
                     Camera.SIZE,
                     Buffer.Usage.UniformBuffer,
                     Buffer.Type.CPUGPUShared,

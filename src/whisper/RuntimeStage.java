@@ -18,6 +18,7 @@ import org.joml.Vector3f;
 
 import java.io.File;
 import java.lang.Math;
+import java.nio.ByteBuffer;
 import java.util.*;
 
 import static fori.graphics.VertexAttributes.Type.*;
@@ -33,6 +34,7 @@ public class RuntimeStage extends Stage {
     Entity cameraEntity;
     Entity playerEntity;
     Entity levelEntity;
+    SpriteBatch spriteBatch;
 
     private float startTime;
 
@@ -346,6 +348,75 @@ public class RuntimeStage extends Stage {
             );
         }
 
+        //Text
+        {
+
+
+            ShaderProgram shaderProgram;
+            {
+                ShaderReader.ShaderSources shaderSources = ShaderReader.read(
+                        AssetPacks.<String>getAsset("core:assets/shaders/vulkan/SpriteBatch.glsl").asset
+                );
+
+
+                shaderProgram = ShaderProgram.newShaderProgram(renderer.getRef());
+                shaderProgram.setShaders(
+                        Shader.newShader(shaderProgram.getRef(), ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex)),
+                        Shader.newShader(shaderProgram.getRef(), ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
+                );
+
+
+                shaderProgram.bind(
+                        new VertexAttributes.Type[]{
+                                PositionFloat2,
+                                ColorFloat4
+                        },
+                        new ShaderResSet(
+                                0,
+                                new ShaderRes(
+                                        "camera",
+                                        0,
+                                        UniformBuffer,
+                                        VertexStage
+                                ).sizeBytes(SizeUtil.MATRIX_SIZE_BYTES)
+                        )
+                );
+
+            }
+
+
+
+            spriteBatch = renderer.newSpriteBatch(
+                    8,
+                    12,
+                    shaderProgram,
+                    new Camera(
+                            new Matrix4f().identity(),
+                            new Matrix4f().ortho(0, 1920, 0, 1080, 0, 1, true),
+                            false
+                    )
+            );
+
+
+
+            for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
+
+                ByteBuffer cameraData = spriteBatch.getCameraBuffers()[frameIndex].get();
+
+                spriteBatch.getCamera().getProj().get(0, cameraData);
+
+
+                spriteBatch.getShaderProgram().updateBuffers(
+                        frameIndex,
+                        new ShaderUpdate<>("camera", 0, 0, spriteBatch.getCameraBuffers()[frameIndex])
+                );
+            }
+
+
+
+
+        }
+
 
 
 
@@ -365,10 +436,16 @@ public class RuntimeStage extends Stage {
     public boolean update(){
         scene.tick();
 
+        spriteBatch.start();
+        spriteBatch.drawRect(200, 200, 200, 200, Color.GRAY);
+        spriteBatch.drawRect(surface.getMousePos().x, surface.getMousePos().y, 200, 200, Color.RED);
+        spriteBatch.end();
 
 
 
-        renderer.dispatch(scene, surface.update());
+
+        renderer.dispatch(scene, spriteBatch, surface.update());
+
 
         Time.deltaTime = (float) (surface.getTime() - startTime);
         startTime = (float) surface.getTime();
@@ -378,12 +455,16 @@ public class RuntimeStage extends Stage {
 
     @Override
     public void closing() {
+
+
         scene.getEngine().findEntitiesWith(NVPhysXComponent.class).stream().forEach(components -> {
             NVPhysXComponent nvPhysXComponent = components.comp();
             nvPhysXComponent.release();
         });
 
         scene.close(renderer);
+
+
     }
 
 
