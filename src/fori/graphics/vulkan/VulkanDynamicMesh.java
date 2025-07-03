@@ -19,7 +19,7 @@ public class VulkanDynamicMesh extends DynamicMesh {
                              int maxVertexCount,
                              int maxIndexCount) {
 
-        super(maxIndexCount, maxVertexCount, shaderProgram);
+        super(maxVertexCount, maxIndexCount, shaderProgram);
         this.pipeline = pipeline;
         vertexBuffer = Buffer.newBuffer(
                 ref,
