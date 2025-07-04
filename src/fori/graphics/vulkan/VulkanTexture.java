@@ -28,20 +28,26 @@ public class VulkanTexture extends Texture {
     private VkCommandBuffer commandBuffer;
     private long fence;
     private long commandPool = 0;
+    private int imageFormat;
 
-    public VulkanTexture(Disposable parent, int width, int height, long imageHandle, int imageFormat) {
+    public VulkanTexture(Disposable parent, int width, int height, long imageHandle, int imageFormat, int aspectMask) {
         super(parent, width, height, null, Nearest, Nearest);
+        this.imageFormat = imageFormat;
         image = new VulkanImage(
                 this,
                 VulkanDeviceManager.getCurrentDevice(),
                 imageHandle,
                 imageFormat
         );
-        imageView = new VulkanImageView(image, VulkanDeviceManager.getCurrentDevice(), image, VK_IMAGE_ASPECT_COLOR_BIT);
+        imageView = new VulkanImageView(image, VulkanDeviceManager.getCurrentDevice(), image, aspectMask);
     }
 
     public VulkanTexture(Disposable parent, int width, int height, Asset<TextureData> textureData, Filter minFilter, Filter magFilter) {
+        this(parent, width, height, textureData, minFilter, magFilter, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT);
+    }
+    public VulkanTexture(Disposable parent, int width, int height, Asset<TextureData> textureData, Filter minFilter, Filter magFilter, int imageFormat, int usage, int tiling, int aspectMask) {
         super(parent, width, height, textureData, minFilter, magFilter);
+        this.imageFormat = imageFormat;
 
         image = new VulkanImage(
                 this,
@@ -49,12 +55,12 @@ public class VulkanTexture extends Texture {
                 VulkanDeviceManager.getCurrentDevice(),
                 getWidth(),
                 getHeight(),
-                VK_FORMAT_R8G8B8A8_SRGB ,
-                VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                VK_IMAGE_TILING_OPTIMAL
+                imageFormat,
+                usage,
+                tiling
         );
 
-        imageView = new VulkanImageView(image, VulkanDeviceManager.getCurrentDevice(), image, VK_IMAGE_ASPECT_COLOR_BIT);
+        imageView = new VulkanImageView(image, VulkanDeviceManager.getCurrentDevice(), image, aspectMask);
 
         if(textureData != null) {
 
@@ -232,12 +238,17 @@ public class VulkanTexture extends Texture {
 
 
 
-    public long getImageView() {
-        return imageView.getHandle();
+
+    public VulkanImageView getImageView() {
+        return imageView;
     }
 
     public long getSampler(){
         return sampler;
+    }
+
+    public int getImageFormat() {
+        return imageFormat;
     }
 
     @Override

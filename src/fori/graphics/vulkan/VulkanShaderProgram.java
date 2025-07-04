@@ -222,7 +222,7 @@ public class VulkanShaderProgram extends ShaderProgram {
 
                 VkDescriptorImageInfo.Buffer descriptorImageInfo = VkDescriptorImageInfo.calloc(1, stack);
                 descriptorImageInfo.imageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-                descriptorImageInfo.imageView(((VulkanTexture) textureUpdate.update).getImageView());
+                descriptorImageInfo.imageView(((VulkanTexture) textureUpdate.update).getImageView().getHandle());
                 descriptorImageInfo.sampler(((VulkanTexture) textureUpdate.update).getSampler());
 
 

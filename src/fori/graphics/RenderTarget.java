@@ -1,11 +1,9 @@
 package fori.graphics;
 
 public class RenderTarget {
-    private int textureCount;
     private Texture[] textures;
 
     public RenderTarget(int textureCount) {
-        this.textureCount = textureCount;
         this.textures = new Texture[textureCount];
     }
 
@@ -15,5 +13,9 @@ public class RenderTarget {
 
     public Texture getTexture(int index) {
         return textures[index];
+    }
+
+    public int getTextureCount() {
+        return textures.length;
     }
 }

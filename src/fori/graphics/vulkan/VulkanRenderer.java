@@ -52,10 +52,6 @@ public class VulkanRenderer extends Renderer {
     private VulkanFrame[] frames = new VulkanFrame[FRAMES_IN_FLIGHT];
     private int frameIndex;
     private long sharedCommandPool;
-
-
-    private VulkanImage depthImage;
-    private VulkanImageView depthImageView;
     private VulkanAllocator allocator;
 
     private VkRenderingInfoKHR renderingInfoKHR;
@@ -80,7 +76,8 @@ public class VulkanRenderer extends Renderer {
 
         VulkanDeviceManager.setCurrentDevice(device);
         VulkanDeviceManager.setCurrentPhysicalDevice(physicalDevice);
-
+        VulkanAllocator.init(instance, device, physicalDevice);
+        allocator = VulkanAllocator.getAllocator();
 
 
 
@@ -125,8 +122,8 @@ public class VulkanRenderer extends Renderer {
             }
         }
 
-        VulkanAllocator.init(instance, device, physicalDevice);
-        allocator = VulkanAllocator.getAllocator();
+
+
 
 
         sharedCommandPool = createCommandPool(device, physicalDeviceQueueFamilies.graphicsFamily);
@@ -155,21 +152,6 @@ public class VulkanRenderer extends Renderer {
 
 
         }
-
-
-
-        depthImage = new VulkanImage(
-                this,
-                allocator,
-                device,
-                swapchain.extent.width(),
-                swapchain.extent.height(),
-                VK_FORMAT_D32_SFLOAT ,
-                VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-                VK_IMAGE_TILING_OPTIMAL
-        );
-
-        depthImageView = new VulkanImageView(this, device, depthImage, VK_IMAGE_ASPECT_DEPTH_BIT);
 
 
 
@@ -270,42 +252,6 @@ public class VulkanRenderer extends Renderer {
                 swapchain.extent = VkExtent2D.create().set(extent);
             }
 
-
-            //TODO
-            /*
-            //Getting swapchain image views
-            {
-                LongBuffer pImageView = stack.mallocLong(1);
-
-                for(long swapChainImage : swapchain.images) {
-
-                    VkImageViewCreateInfo imageViewCreateInfo = VkImageViewCreateInfo.calloc(stack);
-
-                    imageViewCreateInfo.sType(VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO);
-                    imageViewCreateInfo.image(swapChainImage);
-                    imageViewCreateInfo.viewType(VK_IMAGE_VIEW_TYPE_2D);
-                    imageViewCreateInfo.format(swapchain.imageFormat);
-
-                    imageViewCreateInfo.components().r(VK_COMPONENT_SWIZZLE_IDENTITY);
-                    imageViewCreateInfo.components().g(VK_COMPONENT_SWIZZLE_IDENTITY);
-                    imageViewCreateInfo.components().b(VK_COMPONENT_SWIZZLE_IDENTITY);
-                    imageViewCreateInfo.components().a(VK_COMPONENT_SWIZZLE_IDENTITY);
-
-                    imageViewCreateInfo.subresourceRange().aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
-                    imageViewCreateInfo.subresourceRange().baseMipLevel(0);
-                    imageViewCreateInfo.subresourceRange().levelCount(1);
-                    imageViewCreateInfo.subresourceRange().baseArrayLayer(0);
-                    imageViewCreateInfo.subresourceRange().layerCount(1);
-
-                    if (vkCreateImageView(device, imageViewCreateInfo, null, pImageView) != VK_SUCCESS) {
-                        throw new RuntimeException("Failed to create image views");
-                    }
-
-                    swapchain.imageViews.add(pImageView.get(0));
-                }
-            }
-
-             */
         }
 
         for (int i = 0; i < swapchain.images.size(); i++) {
@@ -314,19 +260,28 @@ public class VulkanRenderer extends Renderer {
                     swapchain.extent.width(),
                     swapchain.extent.height(),
                     swapchain.images.get(i),
-                    swapchain.imageFormat
+                    swapchain.imageFormat,
+                    VK_IMAGE_ASPECT_COLOR_BIT
             ));
-
-
         }
 
 
 
-
-
-
-
-
+        swapchainRenderTarget.addTexture(
+                maxFramesInFlight,
+                new VulkanTexture(
+                        this,
+                        swapchain.extent.width(),
+                        swapchain.extent.height(),
+                        null,
+                        Texture.Filter.Nearest,
+                        Texture.Filter.Nearest,
+                        VK_FORMAT_D32_SFLOAT,
+                        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                        VK_IMAGE_TILING_OPTIMAL,
+                        VK_IMAGE_ASPECT_DEPTH_BIT
+                )
+        );
 
 
         return swapchainRenderTarget;
@@ -596,8 +551,6 @@ public class VulkanRenderer extends Renderer {
 
         return actualExtent;
     }
-
-
     private VulkanPipeline createPipeline(VkDevice device, VulkanSwapchain swapchain, VulkanShaderProgram vulkanShaderProgram) {
 
 
@@ -765,7 +718,10 @@ public class VulkanRenderer extends Renderer {
             pipelineRenderingCreateInfoKHR.colorAttachmentCount(1);
             pipelineRenderingCreateInfoKHR.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR);
             pipelineRenderingCreateInfoKHR.pColorAttachmentFormats(stack.ints(swapchain.imageFormat));
-            pipelineRenderingCreateInfoKHR.depthAttachmentFormat(depthImage.getFormat());
+
+            VulkanTexture depthImage = ((VulkanTexture) swapchainRenderTarget.getTexture(maxFramesInFlight));
+
+            pipelineRenderingCreateInfoKHR.depthAttachmentFormat(depthImage.getImageFormat());
 
 
 
@@ -850,47 +806,21 @@ public class VulkanRenderer extends Renderer {
         return commandPool;
     }
 
-    private void createSwapchainAndDepthResources(int width, int height) {
+    private void createSwapchainAndDepthResources() {
         swapchainRenderTarget = createSwapchainRenderTarget(settings);
-
-        depthImage = new VulkanImage(
-                this,
-                allocator,
-                device,
-                width,
-                height,
-                VK_FORMAT_D32_SFLOAT ,
-                VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-                VK_IMAGE_TILING_OPTIMAL
-        );
-
-        depthImageView = new VulkanImageView(this, device, depthImage, VK_IMAGE_ASPECT_DEPTH_BIT);
         frameIndex = 0;
     }
 
     private void disposeSwapchainAndDepthResources(){
         vkDeviceWaitIdle(device);
 
-        for (int frameIndex = 0; frameIndex < maxFramesInFlight; frameIndex++) {
+        for (int frameIndex = 0; frameIndex < swapchainRenderTarget.getTextureCount(); frameIndex++) {
             Texture texture = swapchainRenderTarget.getTexture(frameIndex);
             texture.dispose();
             this.remove(texture);
         }
 
-
-
         vkDestroySwapchainKHR(device, swapchain.swapchain, null);
-
-        depthImageView.dispose();
-        depthImage.dispose();
-
-        this.remove(depthImageView);
-        this.remove(depthImage);
-
-
-
-
-
     }
 
 
@@ -1017,7 +947,7 @@ public class VulkanRenderer extends Renderer {
                 disposeSwapchainAndDepthResources();
                 this.width = surface.getWidth();
                 this.height = surface.getHeight();
-                createSwapchainAndDepthResources(this.width, this.height);
+                createSwapchainAndDepthResources();
             }
 
 
@@ -1058,7 +988,7 @@ public class VulkanRenderer extends Renderer {
 
 
                     colorAttachment.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR);
-                    colorAttachment.imageView(swapchainTexture.getImageView());
+                    colorAttachment.imageView(swapchainTexture.getImageView().getHandle());
                     colorAttachment.imageLayout(VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR);
                     colorAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR);
                     colorAttachment.storeOp(VK_ATTACHMENT_STORE_OP_STORE);
@@ -1066,6 +996,9 @@ public class VulkanRenderer extends Renderer {
                 }
                 depthAttachment = VkRenderingAttachmentInfoKHR.calloc(stack);
                 {
+                    VulkanTexture depthImage = ((VulkanTexture) swapchainRenderTarget.getTexture(maxFramesInFlight));
+                    VulkanImageView depthImageView = depthImage.getImageView();
+
                     depthAttachment.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR);
                     depthAttachment.imageView(depthImageView.getHandle());
                     depthAttachment.imageLayout(VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR);
