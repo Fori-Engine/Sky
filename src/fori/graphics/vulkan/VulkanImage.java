@@ -31,6 +31,13 @@ public class VulkanImage extends Disposable {
     private int format;
     private VulkanAllocator allocator;
 
+    public VulkanImage(Disposable parent, VkDevice device, long imageHandle, int imageFormat) {
+        super(parent);
+        this.device = device;
+        this.handle = imageHandle;
+        this.format = imageFormat;
+    }
+
     public VulkanImage(Disposable parent, VulkanAllocator allocator, VkDevice device, int width, int height, int format, int usage, int tiling){
         super(parent);
 
@@ -84,7 +91,8 @@ public class VulkanImage extends Disposable {
     @Override
     public void dispose() {
         vkDeviceWaitIdle(VulkanDeviceManager.getCurrentDevice());
-        vmaDestroyImage(VulkanAllocator.getAllocator().getId(), handle, pAllocation.get(0));
+        if(pAllocation != null)
+            vmaDestroyImage(VulkanAllocator.getAllocator().getId(), handle, pAllocation.get(0));
     }
 
 }

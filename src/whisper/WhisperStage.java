@@ -35,8 +35,9 @@ public class WhisperStage extends Stage {
     Entity playerEntity;
     Entity levelEntity;
     SpriteBatch spriteBatch;
-
     private float startTime;
+
+    private RenderTarget swapchainRenderTarget;
 
 
 
@@ -95,6 +96,9 @@ public class WhisperStage extends Stage {
                         .validation(validation)
                         .vsync(vsync)
         );
+
+        swapchainRenderTarget = renderer.getSwapchainRenderTarget();
+
 
         scene = new Scene("Main_Scene");
 
@@ -204,6 +208,7 @@ public class WhisperStage extends Stage {
 
 
         }
+
 
         //Player
         {
@@ -428,6 +433,8 @@ public class WhisperStage extends Stage {
 
 
 
+
+
         startTime = (float) surface.getTime();
 
 
@@ -437,10 +444,13 @@ public class WhisperStage extends Stage {
     public boolean update(){
         scene.tick();
 
+        /*
         spriteBatch.start();
         spriteBatch.drawRect(200, 200, 200, 200, Color.GRAY);
         spriteBatch.drawRect(surface.getMousePos().x, surface.getMousePos().y, 200, 200, Color.RED);
         spriteBatch.end();
+
+         */
 
 
 

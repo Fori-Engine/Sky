@@ -14,6 +14,7 @@ import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 
 import static fori.graphics.Texture.Filter.Linear;
+import static fori.graphics.Texture.Filter.Nearest;
 import static fori.graphics.vulkan.VulkanRenderer.UINT64_MAX;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
@@ -28,6 +29,16 @@ public class VulkanTexture extends Texture {
     private long fence;
     private long commandPool = 0;
 
+    public VulkanTexture(Disposable parent, int width, int height, long imageHandle, int imageFormat) {
+        super(parent, width, height, null, Nearest, Nearest);
+        image = new VulkanImage(
+                this,
+                VulkanDeviceManager.getCurrentDevice(),
+                imageHandle,
+                imageFormat
+        );
+        imageView = new VulkanImageView(image, VulkanDeviceManager.getCurrentDevice(), image, VK_IMAGE_ASPECT_COLOR_BIT);
+    }
 
     public VulkanTexture(Disposable parent, int width, int height, Asset<TextureData> textureData, Filter minFilter, Filter magFilter) {
         super(parent, width, height, textureData, minFilter, magFilter);

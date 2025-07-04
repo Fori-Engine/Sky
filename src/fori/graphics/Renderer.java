@@ -27,6 +27,10 @@ public abstract class Renderer extends Disposable {
 
     }
 
+    public RendererSettings getSettings() {
+        return settings;
+    }
+
     public abstract StaticMeshBatch newStaticMeshBatch(int maxVertices, int maxIndices, int maxTransforms, ShaderProgram shaderProgram);
     public abstract void destroyStaticMeshBatch(StaticMeshBatch staticMeshBatch);
 
@@ -78,5 +82,5 @@ public abstract class Renderer extends Disposable {
     public static RenderAPI getRenderAPI() {
         return api;
     }
-
+    public abstract RenderTarget getSwapchainRenderTarget();
 }

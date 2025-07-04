@@ -2,20 +2,14 @@ package fori.graphics.vulkan;
 
 import org.lwjgl.vulkan.VkExtent2D;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class VulkanSwapchain {
-    public long swapChain;
-    public List<Long> swapChainImages;
-    public int swapChainImageFormat;
-    public VkExtent2D swapChainExtent;
-
-    public VulkanSwapchain(long swapChain, List<Long> swapChainImages, int swapChainImageFormat, VkExtent2D swapChainExtent) {
-        this.swapChain = swapChain;
-        this.swapChainImages = swapChainImages;
-        this.swapChainImageFormat = swapChainImageFormat;
-        this.swapChainExtent = swapChainExtent;
-    }
+    public long swapchain;
+    public List<Long> images = new ArrayList<>();
+    public int imageFormat;
+    public VkExtent2D extent;
 
     public VulkanSwapchain(){
 
