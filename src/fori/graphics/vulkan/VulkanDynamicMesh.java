@@ -2,9 +2,6 @@ package fori.graphics.vulkan;
 
 import fori.graphics.*;
 import fori.graphics.DynamicMesh;
-import org.lwjgl.vulkan.VkDevice;
-import org.lwjgl.vulkan.VkQueue;
-
 import java.nio.ByteBuffer;
 
 public class VulkanDynamicMesh extends DynamicMesh {
@@ -12,9 +9,6 @@ public class VulkanDynamicMesh extends DynamicMesh {
     public VulkanDynamicMesh(Disposable parent,
                              ShaderProgram shaderProgram,
                              int framesInFlight,
-                             long commandPool,
-                             VkQueue graphicsQueue,
-                             VkDevice device,
                              VulkanPipeline pipeline,
                              int maxVertexCount,
                              int maxIndexCount) {

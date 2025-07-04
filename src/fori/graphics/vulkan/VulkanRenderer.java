@@ -972,9 +972,6 @@ public class VulkanRenderer extends Renderer {
                 this,
                 shaderProgram,
                 getMaxFramesInFlight(),
-                sharedCommandPool,
-                graphicsQueue,
-                device,
                 pipeline,
                 maxVertexCount,
                 maxIndexCount
