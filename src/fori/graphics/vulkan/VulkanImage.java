@@ -1,7 +1,6 @@
 package fori.graphics.vulkan;
 
 import fori.graphics.Disposable;
-import fori.graphics.Ref;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.util.vma.VmaAllocationCreateInfo;
@@ -17,7 +16,7 @@ import static org.lwjgl.util.vma.Vma.vmaDestroyImage;
 import static org.lwjgl.vulkan.VK13.*;
 
 
-public class VulkanImage implements Disposable {
+public class VulkanImage extends Disposable {
 
     private long handle;
     private LongBuffer pImage;
@@ -31,11 +30,9 @@ public class VulkanImage implements Disposable {
     private VkDevice device;
     private int format;
     private VulkanAllocator allocator;
-    private Ref ref;
 
-    public VulkanImage(Ref parent, VulkanAllocator allocator, VkDevice device, int width, int height, int format, int usage, int tiling){
-        super();
-        ref = parent.add(this);
+    public VulkanImage(Disposable parent, VulkanAllocator allocator, VkDevice device, int width, int height, int format, int usage, int tiling){
+        super(parent);
 
         this.device = device;
         this.format = format;
@@ -89,11 +86,5 @@ public class VulkanImage implements Disposable {
         vkDeviceWaitIdle(VulkanDeviceManager.getCurrentDevice());
         vmaDestroyImage(VulkanAllocator.getAllocator().getId(), handle, pAllocation.get(0));
     }
-
-    @Override
-    public Ref getRef() {
-        return ref;
-    }
-
 
 }

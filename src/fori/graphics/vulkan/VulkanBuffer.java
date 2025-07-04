@@ -1,7 +1,7 @@
 package fori.graphics.vulkan;
 
 import fori.graphics.Buffer;
-import fori.graphics.Ref;
+import fori.graphics.Disposable;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
@@ -27,7 +27,7 @@ public class VulkanBuffer extends Buffer {
     private long memory;
     private PointerBuffer mappedMemory;
 
-    public VulkanBuffer(Ref parent, int sizeBytes, Usage usage, Type type, boolean staging){
+    public VulkanBuffer(Disposable parent, int sizeBytes, Usage usage, Type type, boolean staging){
         super(parent, sizeBytes, usage, type, staging);
 
 

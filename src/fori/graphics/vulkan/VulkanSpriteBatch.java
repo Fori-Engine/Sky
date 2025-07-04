@@ -7,7 +7,7 @@ import java.nio.ByteBuffer;
 public class VulkanSpriteBatch extends SpriteBatch {
 
     private VulkanPipeline pipeline;
-    public VulkanSpriteBatch(Ref parent, int framesInFlight, VulkanPipeline pipeline, int maxVertexCount, int maxIndexCount, Camera camera, ShaderProgram shaderProgram) {
+    public VulkanSpriteBatch(Disposable parent, int framesInFlight, VulkanPipeline pipeline, int maxVertexCount, int maxIndexCount, Camera camera, ShaderProgram shaderProgram) {
         super(parent, maxVertexCount, maxIndexCount, shaderProgram, camera);
         this.pipeline = pipeline;
 

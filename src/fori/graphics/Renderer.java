@@ -7,19 +7,18 @@ import fori.graphics.vulkan.VulkanRenderContext;
 import fori.graphics.vulkan.VulkanRenderer;
 import org.lwjgl.vulkan.VkInstance;
 
-public abstract class Renderer implements Disposable {
+public abstract class Renderer extends Disposable {
 
     protected int width;
     protected int height;
     private static RenderAPI api;
     protected RendererSettings settings;
-    protected Ref ref;
     protected int maxFramesInFlight;
     protected Surface surface;
 
 
-    public Renderer(Ref parent, int width, int height, int maxFramesInFlight, RendererSettings settings, Surface surface){
-        this.ref = parent.add(this);
+    public Renderer(Disposable parent, int width, int height, int maxFramesInFlight, RendererSettings settings, Surface surface){
+        super(parent);
         this.width = width;
         this.height = height;
         this.settings = settings;
@@ -51,7 +50,7 @@ public abstract class Renderer implements Disposable {
     }
     public abstract void waitForDevice();
     public abstract int getMaxStaticMeshBatchCount();
-    public static Renderer newRenderer(Ref parent, Surface surface, int width, int height, RendererSettings settings){
+    public static Renderer newRenderer(Surface surface, int width, int height, RendererSettings settings){
         api = settings.backend;
 
 
@@ -62,7 +61,7 @@ public abstract class Renderer implements Disposable {
             long vkSurface = vkContext.getVkSurface();
             VkInstance instance = vkContext.getInstance();
 
-            return new VulkanRenderer(parent, instance, vkSurface, width, height, settings, vkContext.getDebugMessenger(), surface);
+            return new VulkanRenderer(surface, instance, vkSurface, width, height, settings, vkContext.getDebugMessenger(), surface);
         }
         else if(settings.backend == null){
             Logger.meltdown(Renderer.class, "The target graphics API was not specified in RenderSettings!");
@@ -75,8 +74,6 @@ public abstract class Renderer implements Disposable {
 
         return null;
     }
-
-    public Ref getRef() { return ref; }
 
     public static RenderAPI getRenderAPI() {
         return api;

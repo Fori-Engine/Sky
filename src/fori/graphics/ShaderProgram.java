@@ -4,16 +4,15 @@ import fori.Logger;
 import fori.graphics.vulkan.VulkanShaderProgram;
 
 
-public abstract class ShaderProgram implements Disposable {
+public abstract class ShaderProgram extends Disposable {
 
     protected Shader[] shaders;
     protected ShaderResSet[] resourcesSets;
     protected VertexAttributes.Type[] attributes;
-    protected Ref ref;
 
+    public ShaderProgram(Disposable parent){
+        super(parent);
 
-    public ShaderProgram(Ref parent){
-        ref = parent.add(this);
     }
 
     public abstract void setShaders(Shader... shaders);
@@ -45,8 +44,7 @@ public abstract class ShaderProgram implements Disposable {
         return attributes;
     }
 
-    public abstract void dispose();
-    public static ShaderProgram newShaderProgram(Ref parent){
+    public static ShaderProgram newShaderProgram(Disposable parent){
         if(Renderer.getRenderAPI() == RenderAPI.Vulkan){
             return new VulkanShaderProgram(parent);
         }
@@ -54,8 +52,4 @@ public abstract class ShaderProgram implements Disposable {
         return null;
     }
 
-    @Override
-    public Ref getRef() {
-        return ref;
-    }
 }

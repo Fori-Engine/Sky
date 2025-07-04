@@ -2,7 +2,6 @@ package fori.graphics;
 
 import fori.Logger;
 import fori.asset.Asset;
-import fori.asset.AssetPacks;
 import fori.asset.TextureData;
 
 import java.util.HashMap;
@@ -11,21 +10,20 @@ import java.util.Map;
 /***
  * Represents a Font that can be rendered to the screen. This class can also interoperate with AWT Fonts, as well as load TrueType (.ttf) fonts from disk.
  */
-public class Font implements Disposable {
+public class Font extends Disposable {
     private Asset<TextureData> textureAsset;
     private Asset<String> fnt;
     private Texture texture;
     private Glyph[] glyphs = new Glyph[1024];
     private float defaultLineHeight;
-    private Ref ref;
 
 
-    public Font(Ref parent, Asset<TextureData> textureAsset, Asset<String> fnt) {
-        ref = parent.add(this);
+    public Font(Disposable parent, Asset<TextureData> textureAsset, Asset<String> fnt) {
+        super(parent);
         this.textureAsset = textureAsset;
         this.fnt = fnt;
 
-        texture = Texture.newTexture(ref, textureAsset, Texture.Filter.Nearest, Texture.Filter.Nearest);
+        texture = Texture.newTexture(this, textureAsset, Texture.Filter.Nearest, Texture.Filter.Nearest);
         createGlyphs();
 
     }
@@ -188,8 +186,4 @@ public class Font implements Disposable {
 
     }
 
-    @Override
-    public Ref getRef() {
-        return null;
-    }
 }

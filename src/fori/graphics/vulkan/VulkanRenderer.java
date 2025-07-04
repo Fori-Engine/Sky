@@ -10,7 +10,6 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
-import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.*;
@@ -65,7 +64,7 @@ public class VulkanRenderer extends Renderer {
     private VkRenderingAttachmentInfoKHR depthAttachment;
 
 
-    public VulkanRenderer(Ref parent, VkInstance instance, long vkSurface, int width, int height, RendererSettings rendererSettings, long debugMessenger, Surface surface) {
+    public VulkanRenderer(Disposable parent, VkInstance instance, long vkSurface, int width, int height, RendererSettings rendererSettings, long debugMessenger, Surface surface) {
         super(parent, width, height, FRAMES_IN_FLIGHT, rendererSettings, surface);
         this.instance = instance;
         this.vkSurface = vkSurface;
@@ -160,7 +159,7 @@ public class VulkanRenderer extends Renderer {
 
 
         depthImage = new VulkanImage(
-                ref,
+                this,
                 allocator,
                 device,
                 swapchain.swapChainExtent.width(),
@@ -170,7 +169,7 @@ public class VulkanRenderer extends Renderer {
                 VK_IMAGE_TILING_OPTIMAL
         );
 
-        depthImageView = new VulkanImageView(ref, device, depthImage, VK_IMAGE_ASPECT_DEPTH_BIT);
+        depthImageView = new VulkanImageView(this, device, depthImage, VK_IMAGE_ASPECT_DEPTH_BIT);
 
 
 
@@ -835,7 +834,7 @@ public class VulkanRenderer extends Renderer {
 
 
         depthImage = new VulkanImage(
-                ref,
+                this,
                 allocator,
                 device,
                 width,
@@ -845,7 +844,7 @@ public class VulkanRenderer extends Renderer {
                 VK_IMAGE_TILING_OPTIMAL
         );
 
-        depthImageView = new VulkanImageView(ref, device, depthImage, VK_IMAGE_ASPECT_DEPTH_BIT);
+        depthImageView = new VulkanImageView(this, device, depthImage, VK_IMAGE_ASPECT_DEPTH_BIT);
         frameIndex = 0;
     }
 
@@ -860,8 +859,8 @@ public class VulkanRenderer extends Renderer {
         depthImageView.dispose();
         depthImage.dispose();
 
-        ref.remove(depthImageView);
-        ref.remove(depthImage);
+        this.remove(depthImageView);
+        this.remove(depthImage);
 
 
 
@@ -885,7 +884,7 @@ public class VulkanRenderer extends Renderer {
         );
 
         VulkanPipeline pipeline = createPipeline(device, swapchain, (VulkanShaderProgram) shaderProgram);
-        VulkanStaticMeshBatch vulkanStaticMeshBatch = new VulkanStaticMeshBatch(getRef(), shaderProgram, getMaxFramesInFlight(), sharedCommandPool, graphicsQueue, device, pipeline, maxVertexCount, maxIndexCount, maxTransformCount);
+        VulkanStaticMeshBatch vulkanStaticMeshBatch = new VulkanStaticMeshBatch(this, shaderProgram, getMaxFramesInFlight(), sharedCommandPool, graphicsQueue, device, pipeline, maxVertexCount, maxIndexCount, maxTransformCount);
 
         return vulkanStaticMeshBatch;
     }
@@ -903,8 +902,8 @@ public class VulkanRenderer extends Renderer {
             transformsBuffer.dispose();
             cameraBuffer.dispose();
 
-            ref.remove(transformsBuffer);
-            ref.remove(cameraBuffer);
+            this.remove(transformsBuffer);
+            this.remove(cameraBuffer);
 
         }
 
@@ -916,8 +915,8 @@ public class VulkanRenderer extends Renderer {
         vulkanStaticMeshBatch.getVertexBuffer().dispose();
         vulkanStaticMeshBatch.getIndexBuffer().dispose();
 
-        ref.remove(vulkanStaticMeshBatch.getVertexBuffer());
-        ref.remove(vulkanStaticMeshBatch.getIndexBuffer());
+        this.remove(vulkanStaticMeshBatch.getVertexBuffer());
+        this.remove(vulkanStaticMeshBatch.getIndexBuffer());
     }
 
     @Override
@@ -931,8 +930,8 @@ public class VulkanRenderer extends Renderer {
             transformsBuffer.dispose();
             cameraBuffer.dispose();
 
-            ref.remove(transformsBuffer);
-            ref.remove(cameraBuffer);
+            this.remove(transformsBuffer);
+            this.remove(cameraBuffer);
 
         }
 
@@ -944,15 +943,15 @@ public class VulkanRenderer extends Renderer {
         vulkanDynamicMesh.getVertexBuffer().dispose();
         vulkanDynamicMesh.getIndexBuffer().dispose();
 
-        ref.remove(vulkanDynamicMesh.getVertexBuffer());
-        ref.remove(vulkanDynamicMesh.getIndexBuffer());
+        this.remove(vulkanDynamicMesh.getVertexBuffer());
+        this.remove(vulkanDynamicMesh.getIndexBuffer());
     }
 
     @Override
     public SpriteBatch newSpriteBatch(int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram, Camera camera) {
         VulkanPipeline pipeline = createPipeline(device, swapchain, (VulkanShaderProgram) shaderProgram);
         VulkanSpriteBatch vulkanSpriteBatch = new VulkanSpriteBatch(
-                getRef(),
+                this,
                 getMaxFramesInFlight(),
                 pipeline,
                 maxVertexCount,
@@ -970,7 +969,7 @@ public class VulkanRenderer extends Renderer {
 
         VulkanPipeline pipeline = createPipeline(device, swapchain, (VulkanShaderProgram) shaderProgram);
         VulkanDynamicMesh vulkanDynamicMesh = new VulkanDynamicMesh(
-                getRef(),
+                this,
                 shaderProgram,
                 getMaxFramesInFlight(),
                 sharedCommandPool,

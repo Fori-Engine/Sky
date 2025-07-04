@@ -10,14 +10,13 @@ import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
 import static org.lwjgl.vulkan.VK13.VK_API_VERSION_1_3;
 
-import fori.graphics.Ref;
+import fori.graphics.Disposable;
 import fori.graphics.RenderAPI;
 import fori.graphics.vulkan.VulkanRenderer;
 import org.joml.Vector2f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
 
 import java.nio.IntBuffer;
@@ -45,7 +44,7 @@ public class GLFWSurface extends Surface {
         }
     }
 
-    public GLFWSurface(Ref parent, String title, int width, int height, boolean resizable) {
+    public GLFWSurface(Disposable parent, String title, int width, int height, boolean resizable) {
         super(parent, title, width, height, resizable);
 
 

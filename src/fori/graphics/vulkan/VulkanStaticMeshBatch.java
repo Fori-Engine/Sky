@@ -20,9 +20,9 @@ public class VulkanStaticMeshBatch extends StaticMeshBatch {
     private VkQueue graphicsQueue;
     private VkDevice device;
     private Buffer stagingVertexBuffer, stagingIndexBuffer;
-    private Ref ref;
+    private Disposable ref;
 
-    public VulkanStaticMeshBatch(Ref ref,
+    public VulkanStaticMeshBatch(Disposable ref,
                                  ShaderProgram shaderProgram,
                                  int framesInFlight,
                                  long commandPool,

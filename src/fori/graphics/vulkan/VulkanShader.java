@@ -1,7 +1,7 @@
 package fori.graphics.vulkan;
 
 import fori.Logger;
-import fori.graphics.Ref;
+import fori.graphics.Disposable;
 import fori.graphics.Shader;
 import fori.graphics.ShaderBinary;
 import fori.graphics.ShaderType;
@@ -19,7 +19,7 @@ public class VulkanShader extends Shader {
     private long module;
 
 
-    public VulkanShader(Ref parent, ShaderType shaderType, ShaderBinary bytecode) {
+    public VulkanShader(Disposable parent, ShaderType shaderType, ShaderBinary bytecode) {
         super(parent, shaderType, bytecode);
 
 

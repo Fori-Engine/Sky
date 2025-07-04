@@ -26,7 +26,7 @@ import static fori.graphics.ShaderRes.ShaderStage.FragmentStage;
 import static fori.graphics.ShaderRes.ShaderStage.VertexStage;
 import static fori.graphics.ShaderRes.Type.*;
 
-public class RuntimeStage extends Stage {
+public class WhisperStage extends Stage {
     private Renderer renderer;
     private Scene scene;
 
@@ -88,7 +88,6 @@ public class RuntimeStage extends Stage {
         surface.display();
 
         renderer = Renderer.newRenderer(
-                surface.getRef(),
                 surface,
                 surface.getWidth(),
                 surface.getHeight(),
@@ -98,6 +97,7 @@ public class RuntimeStage extends Stage {
         );
 
         scene = new Scene("Main_Scene");
+
 
         scene.addSystem(new RenderSystem(renderer, scene, surface));
         scene.addSystem(new NVPhysXSystem(scene, 4, 1f/60f));
@@ -136,10 +136,10 @@ public class RuntimeStage extends Stage {
             );
 
 
-            shaderProgram = ShaderProgram.newShaderProgram(renderer.getRef());
+            shaderProgram = ShaderProgram.newShaderProgram(renderer);
             shaderProgram.setShaders(
-                    Shader.newShader(shaderProgram.getRef(), ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex)),
-                    Shader.newShader(shaderProgram.getRef(), ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
+                    Shader.newShader(shaderProgram, ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex)),
+                    Shader.newShader(shaderProgram, ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
             );
 
             shaderProgram.bind(
@@ -181,7 +181,7 @@ public class RuntimeStage extends Stage {
 
             scene.registerStaticMeshBatch("Shops", shopStaticMeshBatch);
 
-            Texture texture = Texture.newTexture(renderer.getRef(), AssetPacks.getAsset("core:assets/textures/viking_room.png"), Texture.Filter.Linear, Texture.Filter.Linear);
+            Texture texture = Texture.newTexture(renderer, AssetPacks.getAsset("core:assets/textures/viking_room.png"), Texture.Filter.Linear, Texture.Filter.Linear);
 
 
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
@@ -216,10 +216,10 @@ public class RuntimeStage extends Stage {
                 );
 
 
-                shaderProgram = ShaderProgram.newShaderProgram(renderer.getRef());
+                shaderProgram = ShaderProgram.newShaderProgram(renderer);
                 shaderProgram.setShaders(
-                        Shader.newShader(shaderProgram.getRef(), ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex)),
-                        Shader.newShader(shaderProgram.getRef(), ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
+                        Shader.newShader(shaderProgram, ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex)),
+                        Shader.newShader(shaderProgram, ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
                 );
 
                 shaderProgram.bind(
@@ -293,10 +293,10 @@ public class RuntimeStage extends Stage {
                 );
 
 
-                shaderProgram = ShaderProgram.newShaderProgram(renderer.getRef());
+                shaderProgram = ShaderProgram.newShaderProgram(renderer);
                 shaderProgram.setShaders(
-                        Shader.newShader(shaderProgram.getRef(), ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex)),
-                        Shader.newShader(shaderProgram.getRef(), ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
+                        Shader.newShader(shaderProgram, ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex)),
+                        Shader.newShader(shaderProgram, ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
                 );
 
 
@@ -348,6 +348,7 @@ public class RuntimeStage extends Stage {
             );
         }
 
+
         //Text
         {
 
@@ -359,10 +360,10 @@ public class RuntimeStage extends Stage {
                 );
 
 
-                shaderProgram = ShaderProgram.newShaderProgram(renderer.getRef());
+                shaderProgram = ShaderProgram.newShaderProgram(renderer);
                 shaderProgram.setShaders(
-                        Shader.newShader(shaderProgram.getRef(), ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex)),
-                        Shader.newShader(shaderProgram.getRef(), ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
+                        Shader.newShader(shaderProgram, ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex)),
+                        Shader.newShader(shaderProgram, ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
                 );
 
 

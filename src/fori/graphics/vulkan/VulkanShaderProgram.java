@@ -11,8 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.util.shaderc.Shaderc.shaderc_glsl_fragment_shader;
-import static org.lwjgl.util.shaderc.Shaderc.shaderc_glsl_vertex_shader;
 import static org.lwjgl.vulkan.VK10.*;
 
 public class VulkanShaderProgram extends ShaderProgram {
@@ -25,7 +23,7 @@ public class VulkanShaderProgram extends ShaderProgram {
     private ByteBuffer entryPoint;
 
 
-    public VulkanShaderProgram(Ref parent) {
+    public VulkanShaderProgram(Disposable parent) {
         super(parent);
         entryPoint = MemoryUtil.memUTF8("main");
     }

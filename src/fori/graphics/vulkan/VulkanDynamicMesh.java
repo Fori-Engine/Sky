@@ -9,7 +9,7 @@ import java.nio.ByteBuffer;
 
 public class VulkanDynamicMesh extends DynamicMesh {
     private VulkanPipeline pipeline;
-    public VulkanDynamicMesh(Ref parent,
+    public VulkanDynamicMesh(Disposable parent,
                              ShaderProgram shaderProgram,
                              int framesInFlight,
                              long commandPool,

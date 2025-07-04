@@ -11,7 +11,7 @@ public abstract class SpriteBatch {
     protected Buffer vertexBuffer;
     protected Buffer indexBuffer;
 
-    public SpriteBatch(Ref parent, int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram, Camera camera) {
+    public SpriteBatch(Disposable parent, int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram, Camera camera) {
         this.maxVertexCount = maxVertexCount;
         this.maxIndexCount = maxIndexCount;
         this.shaderProgram = shaderProgram;

@@ -10,8 +10,8 @@ public class Launcher {
         Configuration.DEBUG.set(true);
         Configuration.DEBUG_MEMORY_ALLOCATOR.set(true);
 
-        Stage stage = new RuntimeStage();
-        Surface surface = Surface.newSurface(stage.getStageRef(), "Runtime", 1920, 1080);
+        Stage stage = new WhisperStage();
+        Surface surface = Surface.newSurface(stage, "Whisper Island", 1920, 1080);
 
         stage.launch(args, surface);
 

@@ -4,7 +4,7 @@ import fori.Logger;
 import fori.asset.Asset;
 import fori.asset.TextureData;
 import fori.graphics.Buffer;
-import fori.graphics.Ref;
+import fori.graphics.Disposable;
 import fori.graphics.Texture;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
@@ -29,11 +29,11 @@ public class VulkanTexture extends Texture {
     private long commandPool = 0;
 
 
-    public VulkanTexture(Ref parent, int width, int height, Asset<TextureData> textureData, Filter minFilter, Filter magFilter) {
+    public VulkanTexture(Disposable parent, int width, int height, Asset<TextureData> textureData, Filter minFilter, Filter magFilter) {
         super(parent, width, height, textureData, minFilter, magFilter);
 
         image = new VulkanImage(
-                ref,
+                this,
                 VulkanAllocator.getAllocator(),
                 VulkanDeviceManager.getCurrentDevice(),
                 getWidth(),
@@ -43,12 +43,12 @@ public class VulkanTexture extends Texture {
                 VK_IMAGE_TILING_OPTIMAL
         );
 
-        imageView = new VulkanImageView(image.getRef(), VulkanDeviceManager.getCurrentDevice(), image, VK_IMAGE_ASPECT_COLOR_BIT);
+        imageView = new VulkanImageView(image, VulkanDeviceManager.getCurrentDevice(), image, VK_IMAGE_ASPECT_COLOR_BIT);
 
         if(textureData != null) {
 
 
-            imageData = Buffer.newBuffer(ref, getWidth() * getHeight() * 4, Buffer.Usage.ImageBackingBuffer, Buffer.Type.CPUGPUShared, false);
+            imageData = Buffer.newBuffer(this, getWidth() * getHeight() * 4, Buffer.Usage.ImageBackingBuffer, Buffer.Type.CPUGPUShared, false);
             ByteBuffer bytes = imageData.map();
             bytes.put(getTextureData());
             imageData.unmap();
