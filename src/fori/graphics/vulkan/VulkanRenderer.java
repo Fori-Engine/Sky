@@ -178,8 +178,8 @@ public class VulkanRenderer extends Renderer {
     }
 
     private RenderTarget createSwapchainRenderTarget(RendererSettings rendererSettings) {
-        swapchainRenderTarget = new RenderTarget(maxFramesInFlight + 1);
-        swapchain = new VulkanSwapchain();
+        RenderTarget swapchainRenderTarget = new RenderTarget(maxFramesInFlight + 1);
+
 
         try(MemoryStack stack = stackPush()) {
 
@@ -193,7 +193,7 @@ public class VulkanRenderer extends Renderer {
 
                 VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapchainSupportDetails.formats);
                 int presentMode = chooseSwapPresentMode(swapchainSupportDetails.presentModes, rendererSettings.vsync);
-                VkExtent2D extent = chooseSwapExtent(stack, swapchainSupportDetails.capabilities, width, height);
+                VkExtent2D extent = chooseSwapExtent(swapchainSupportDetails.capabilities, width, height);
 
 
                 IntBuffer imageCount = stack.ints(swapchainSupportDetails.capabilities.minImageCount());
@@ -203,53 +203,33 @@ public class VulkanRenderer extends Renderer {
                     imageCount.put(0, swapchainSupportDetails.capabilities.maxImageCount());
                 }
 
-                VkSwapchainCreateInfoKHR swapchainCreateInfo = VkSwapchainCreateInfoKHR.calloc(stack);
 
-                swapchainCreateInfo.sType(VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR);
-                swapchainCreateInfo.surface(vkSurface);
-                swapchainCreateInfo.minImageCount(imageCount.get(0));
-                swapchainCreateInfo.imageFormat(surfaceFormat.format());
-                swapchainCreateInfo.imageColorSpace(surfaceFormat.colorSpace());
-                swapchainCreateInfo.imageExtent(extent);
-                swapchainCreateInfo.imageArrayLayers(1);
-                swapchainCreateInfo.imageUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+                swapchain = new VulkanSwapchain(
+                        this,
+                        vkSurface,
+                        imageCount.get(0),
+                        surfaceFormat.format(),
+                        surfaceFormat.colorSpace(),
+                        presentMode,
+                        physicalDeviceQueueFamilies,
+                        swapchainSupportDetails,
+                        extent
+                );
 
-                if (!physicalDeviceQueueFamilies.graphicsFamily.equals(physicalDeviceQueueFamilies.presentFamily)) {
-                    swapchainCreateInfo.imageSharingMode(VK_SHARING_MODE_CONCURRENT);
-                    swapchainCreateInfo.pQueueFamilyIndices(stack.ints(physicalDeviceQueueFamilies.graphicsFamily, physicalDeviceQueueFamilies.presentFamily));
-                } else {
-                    swapchainCreateInfo.imageSharingMode(VK_SHARING_MODE_EXCLUSIVE);
-                }
 
-                swapchainCreateInfo.preTransform(swapchainSupportDetails.capabilities.currentTransform());
-                swapchainCreateInfo.compositeAlpha(VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR);
-                swapchainCreateInfo.presentMode(presentMode);
-                swapchainCreateInfo.clipped(true);
 
-                swapchainCreateInfo.oldSwapchain(VK_NULL_HANDLE);
 
-                LongBuffer pSwapChain = stack.longs(VK_NULL_HANDLE);
-
-                if (vkCreateSwapchainKHR(device, swapchainCreateInfo, null, pSwapChain) != VK_SUCCESS) {
-                    throw new RuntimeException("Failed to create swap chain");
-                }
-
-                swapchain.swapchain = pSwapChain.get(0);
-
-                vkGetSwapchainImagesKHR(device, swapchain.swapchain, imageCount, null);
+                vkGetSwapchainImagesKHR(device, swapchain.handle, imageCount, null);
 
                 LongBuffer pSwapchainImages = stack.mallocLong(imageCount.get(0));
 
-                vkGetSwapchainImagesKHR(device, swapchain.swapchain, imageCount, pSwapchainImages);
+                vkGetSwapchainImagesKHR(device, swapchain.handle, imageCount, pSwapchainImages);
 
                 swapchain.images = new ArrayList<>(imageCount.get(0));
 
                 for (int i = 0; i < pSwapchainImages.capacity(); i++) {
                     swapchain.images.add(pSwapchainImages.get(i));
                 }
-
-                swapchain.imageFormat = surfaceFormat.format();
-                swapchain.extent = VkExtent2D.create().set(extent);
             }
 
         }
@@ -531,25 +511,22 @@ public class VulkanRenderer extends Renderer {
         }
 
     }
-    private VkExtent2D chooseSwapExtent(MemoryStack stack, VkSurfaceCapabilitiesKHR capabilities, int width, int height) {
-
+    private VkExtent2D chooseSwapExtent(VkSurfaceCapabilitiesKHR capabilities, int width, int height) {
+        VkExtent2D extent = VkExtent2D.calloc().set(width, height);
 
         if(capabilities.currentExtent().width() != UINT64_MAX) {
-            VkExtent2D extent = VkExtent2D.malloc(stack).set(width, height);
             return extent;
         }
-
-        VkExtent2D actualExtent = VkExtent2D.malloc(stack).set(width, height);
 
         VkExtent2D minExtent = capabilities.minImageExtent();
         VkExtent2D maxExtent = capabilities.maxImageExtent();
 
-        actualExtent.width(clamp(actualExtent.width(), minExtent.width(), maxExtent.width()));
-        actualExtent.height(clamp(actualExtent.height(), minExtent.height(), maxExtent.height()));
+        extent.width(clamp(extent.width(), minExtent.width(), maxExtent.width()));
+        extent.height(clamp(extent.height(), minExtent.height(), maxExtent.height()));
 
 
 
-        return actualExtent;
+        return extent;
     }
     private VulkanPipeline createPipeline(VkDevice device, VulkanSwapchain swapchain, VulkanShaderProgram vulkanShaderProgram) {
 
@@ -819,8 +796,8 @@ public class VulkanRenderer extends Renderer {
             texture.dispose();
             this.remove(texture);
         }
-
-        vkDestroySwapchainKHR(device, swapchain.swapchain, null);
+        swapchain.dispose();
+        this.remove(swapchain);
     }
 
 
@@ -960,7 +937,7 @@ public class VulkanRenderer extends Renderer {
             IntBuffer pImageIndex = stack.ints(0);
 
             vkWaitForFences(device, frame.inFlightFence, true, UINT64_MAX);
-            vkAcquireNextImageKHR(device, swapchain.swapchain, UINT64_MAX, frame.imageAcquiredSemaphore, VK_NULL_HANDLE, pImageIndex);
+            vkAcquireNextImageKHR(device, swapchain.handle, UINT64_MAX, frame.imageAcquiredSemaphore, VK_NULL_HANDLE, pImageIndex);
 
 
             int imageIndex = pImageIndex.get(0);
@@ -1178,7 +1155,7 @@ public class VulkanRenderer extends Renderer {
             presentInfo.sType(VK_STRUCTURE_TYPE_PRESENT_INFO_KHR);
             presentInfo.pWaitSemaphores(stack.longs(frame.renderFinishedSemaphore));
             presentInfo.swapchainCount(1);
-            presentInfo.pSwapchains(stack.longs(swapchain.swapchain));
+            presentInfo.pSwapchains(stack.longs(swapchain.handle));
 
             presentInfo.pImageIndices(pImageIndex);
 
@@ -1220,8 +1197,6 @@ public class VulkanRenderer extends Renderer {
     @Override
     public void dispose() {
         vkDeviceWaitIdle(device);
-
-        vkDestroySwapchainKHR(device, swapchain.swapchain, null);
 
 
         for(VulkanFrame frame : frames){
