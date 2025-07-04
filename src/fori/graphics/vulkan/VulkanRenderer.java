@@ -58,7 +58,6 @@ public class VulkanRenderer extends Renderer {
     private VkRenderingAttachmentInfo.Buffer colorAttachment;
     private VkRenderingAttachmentInfoKHR depthAttachment;
 
-    private RenderTarget swapchainRenderTarget;
 
 
     public VulkanRenderer(Disposable parent, VkInstance instance, long vkSurface, int width, int height, RendererSettings rendererSettings, long debugMessenger, Surface surface) {
@@ -72,7 +71,7 @@ public class VulkanRenderer extends Renderer {
         physicalDeviceProperties = getPhysicalDeviceProperties(physicalDevice);
         VulkanDeviceManager.setPhysicalDeviceProperties(physicalDeviceProperties);
         Logger.info(VulkanRenderer.class, "Selected Physical Device " + physicalDeviceProperties.deviceNameString());
-        device = createDevice(physicalDevice, rendererSettings.validation);
+        device = createDevice(physicalDevice);
 
         VulkanDeviceManager.setCurrentDevice(device);
         VulkanDeviceManager.setCurrentPhysicalDevice(physicalDevice);
@@ -88,9 +87,6 @@ public class VulkanRenderer extends Renderer {
         presentQueue = getPresentQueue(device);
         VulkanDeviceManager.setGraphicsFamilyIndex(physicalDeviceQueueFamilies.graphicsFamily);
         swapchainRenderTarget = createSwapchainRenderTarget(rendererSettings);
-
-        Logger.info(VulkanRenderer.class, "Max Allowed Allocations: " + physicalDeviceProperties.limits().maxMemoryAllocationCount());
-
 
         //Sync Objects
         for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
@@ -224,8 +220,6 @@ public class VulkanRenderer extends Renderer {
                 LongBuffer pSwapchainImages = stack.mallocLong(imageCount.get(0));
 
                 vkGetSwapchainImagesKHR(device, swapchain.handle, imageCount, pSwapchainImages);
-
-                swapchain.images = new ArrayList<>(imageCount.get(0));
 
                 for (int i = 0; i < pSwapchainImages.capacity(); i++) {
                     swapchain.images.add(pSwapchainImages.get(i));
@@ -381,7 +375,7 @@ public class VulkanRenderer extends Renderer {
 
         return buffer.rewind();
     }
-    private VkDevice createDevice(VkPhysicalDevice physicalDevice, boolean validation) {
+    private VkDevice createDevice(VkPhysicalDevice physicalDevice) {
 
         VkDevice device;
 
@@ -948,7 +942,7 @@ public class VulkanRenderer extends Renderer {
                 VkCommandBuffer commandBuffer = frame.renderCommandBuffer;
 
                 VkClearValue colorClearValue = VkClearValue.calloc(stack);
-                colorClearValue.color().float32(stack.floats(0, 0, 0, 1.0f));
+                colorClearValue.color().float32(stack.floats(0.5f, 0.5f, 0.5f, 1.0f));
 
                 VkClearValue depthClearValue = VkClearValue.calloc(stack);
                 depthClearValue.depthStencil().set(1.0f, 0);
@@ -1183,15 +1177,6 @@ public class VulkanRenderer extends Renderer {
         vkDeviceWaitIdle(device);
     }
 
-    @Override
-    public int getMaxStaticMeshBatchCount() {
-        return 10;
-    }
-
-    @Override
-    public RenderTarget getSwapchainRenderTarget() {
-        return swapchainRenderTarget;
-    }
 
 
     @Override

@@ -15,6 +15,8 @@ public abstract class Renderer extends Disposable {
     protected RendererSettings settings;
     protected int maxFramesInFlight;
     protected Surface surface;
+    protected RenderTarget swapchainRenderTarget;
+
 
 
     public Renderer(Disposable parent, int width, int height, int maxFramesInFlight, RendererSettings settings, Surface surface){
@@ -53,7 +55,6 @@ public abstract class Renderer extends Disposable {
         return height;
     }
     public abstract void waitForDevice();
-    public abstract int getMaxStaticMeshBatchCount();
     public static Renderer newRenderer(Surface surface, int width, int height, RendererSettings settings){
         api = settings.backend;
 
@@ -82,5 +83,5 @@ public abstract class Renderer extends Disposable {
     public static RenderAPI getRenderAPI() {
         return api;
     }
-    public abstract RenderTarget getSwapchainRenderTarget();
+    public RenderTarget getSwapchainRenderTarget() { return swapchainRenderTarget; }
 }
