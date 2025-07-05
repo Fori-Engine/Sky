@@ -149,28 +149,6 @@ public class VulkanRenderer extends Renderer {
 
         }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     }
 
     private RenderTarget createSwapchainRenderTarget(RendererSettings rendererSettings) {
@@ -787,10 +765,10 @@ public class VulkanRenderer extends Renderer {
 
         for (int frameIndex = 0; frameIndex < swapchainRenderTarget.getTextureCount(); frameIndex++) {
             Texture texture = swapchainRenderTarget.getTexture(frameIndex);
-            texture.dispose();
+            texture.disposeAll();
             this.remove(texture);
         }
-        swapchain.dispose();
+        swapchain.disposeAll();
         this.remove(swapchain);
     }
 
@@ -1182,7 +1160,6 @@ public class VulkanRenderer extends Renderer {
     @Override
     public void dispose() {
         vkDeviceWaitIdle(device);
-
 
         for(VulkanFrame frame : frames){
             vkDestroySemaphore(device, frame.imageAcquiredSemaphore, null);

@@ -19,7 +19,7 @@ public abstract class Stage extends Disposable {
     public abstract void closing();
 
     public void close(){
-        destroy();
+        disposeAll();
     }
 
     public void init(String[] args, Surface surface) {

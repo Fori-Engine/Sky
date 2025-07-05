@@ -34,7 +34,11 @@ public abstract class Disposable {
 
     }
 
-    public void destroy(){
+    public List<Disposable> getChildren() {
+        return children;
+    }
+
+    public void disposeAll(){
         disposeRecursive(this);
     }
 
