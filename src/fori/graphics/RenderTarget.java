@@ -1,9 +1,10 @@
 package fori.graphics;
 
-public class RenderTarget {
+public class RenderTarget extends Disposable {
     private Texture[] textures;
 
-    public RenderTarget(int textureCount) {
+    public RenderTarget(Disposable parent, int textureCount) {
+        super(parent);
         this.textures = new Texture[textureCount];
     }
 
@@ -17,5 +18,10 @@ public class RenderTarget {
 
     public int getTextureCount() {
         return textures.length;
+    }
+
+    @Override
+    public void dispose() {
+
     }
 }

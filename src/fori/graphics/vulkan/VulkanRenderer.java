@@ -152,7 +152,7 @@ public class VulkanRenderer extends Renderer {
     }
 
     private RenderTarget createSwapchainRenderTarget(RendererSettings rendererSettings) {
-        RenderTarget swapchainRenderTarget = new RenderTarget(maxFramesInFlight + 1);
+        RenderTarget swapchainRenderTarget = new RenderTarget(this, maxFramesInFlight + 1);
 
 
         try(MemoryStack stack = stackPush()) {
@@ -208,7 +208,7 @@ public class VulkanRenderer extends Renderer {
 
         for (int i = 0; i < swapchain.images.size(); i++) {
             swapchainRenderTarget.addTexture(i, new VulkanTexture(
-                    this,
+                    swapchainRenderTarget,
                     swapchain.extent.width(),
                     swapchain.extent.height(),
                     swapchain.images.get(i),
@@ -222,7 +222,7 @@ public class VulkanRenderer extends Renderer {
         swapchainRenderTarget.addTexture(
                 maxFramesInFlight,
                 new VulkanTexture(
-                        this,
+                        swapchainRenderTarget,
                         swapchain.extent.width(),
                         swapchain.extent.height(),
                         null,
@@ -755,21 +755,17 @@ public class VulkanRenderer extends Renderer {
         return commandPool;
     }
 
-    private void createSwapchainAndDepthResources() {
+    private void createSwapchainRenderTarget() {
         swapchainRenderTarget = createSwapchainRenderTarget(settings);
         frameIndex = 0;
     }
 
-    private void disposeSwapchainAndDepthResources(){
-        vkDeviceWaitIdle(device);
-
-        for (int frameIndex = 0; frameIndex < swapchainRenderTarget.getTextureCount(); frameIndex++) {
-            Texture texture = swapchainRenderTarget.getTexture(frameIndex);
-            texture.disposeAll();
-            this.remove(texture);
-        }
+    private void disposeSwapchainRenderTarget(){
         swapchain.disposeAll();
         this.remove(swapchain);
+
+        swapchainRenderTarget.disposeAll();
+        this.remove(swapchainRenderTarget);
     }
 
 
@@ -893,10 +889,10 @@ public class VulkanRenderer extends Renderer {
         try(MemoryStack stack = stackPush()) {
 
             if(recreateRenderer) {
-                disposeSwapchainAndDepthResources();
+                disposeSwapchainRenderTarget();
                 this.width = surface.getWidth();
                 this.height = surface.getHeight();
-                createSwapchainAndDepthResources();
+                createSwapchainRenderTarget();
             }
 
 
