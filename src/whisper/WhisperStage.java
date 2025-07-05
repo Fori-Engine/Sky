@@ -129,7 +129,7 @@ public class WhisperStage extends Stage {
         //Camera
         cameraEntity = scene.createEntity(new CameraComponent(camera));
 
-        /*
+
 
         //Shop
         {
@@ -210,7 +210,7 @@ public class WhisperStage extends Stage {
 
         }
 
-        */
+
 
         //Player
         {
@@ -289,7 +289,7 @@ public class WhisperStage extends Stage {
             );
         }
 
-        /*
+
         //Level
         {
 
@@ -357,6 +357,7 @@ public class WhisperStage extends Stage {
         }
 
 
+        /*
 
         //Text
         {

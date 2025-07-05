@@ -23,8 +23,8 @@ public class VulkanTexture extends Texture {
 
     private VulkanImage image;
     private VulkanImageView imageView;
+    private VulkanSampler sampler;
     private Buffer imageData;
-    private long sampler;
     private VkCommandBuffer commandBuffer;
     private long fence;
     private long commandPool = 0;
@@ -71,31 +71,7 @@ public class VulkanTexture extends Texture {
             imageData.unmap();
 
 
-            try (MemoryStack stack = stackPush()) {
-                VkSamplerCreateInfo samplerCreateInfo = VkSamplerCreateInfo.calloc(stack);
-                samplerCreateInfo.sType(VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO);
-                samplerCreateInfo.minFilter(minFilter == Linear ? VK_FILTER_LINEAR : VK_FILTER_NEAREST);
-                samplerCreateInfo.magFilter(magFilter == Linear ? VK_FILTER_LINEAR : VK_FILTER_NEAREST);
-                samplerCreateInfo.addressModeU(VK_SAMPLER_ADDRESS_MODE_REPEAT);
-                samplerCreateInfo.addressModeV(VK_SAMPLER_ADDRESS_MODE_REPEAT);
-                samplerCreateInfo.addressModeW(VK_SAMPLER_ADDRESS_MODE_REPEAT);
-                samplerCreateInfo.anisotropyEnable(true);
-                samplerCreateInfo.maxAnisotropy(VulkanDeviceManager.getPhysicalDeviceProperties().limits().maxSamplerAnisotropy());
-                samplerCreateInfo.borderColor(VK_BORDER_COLOR_INT_OPAQUE_BLACK);
-                samplerCreateInfo.unnormalizedCoordinates(false);
-                samplerCreateInfo.compareEnable(false);
-                samplerCreateInfo.compareOp(VK_COMPARE_OP_ALWAYS);
-
-                samplerCreateInfo.mipmapMode(VK_SAMPLER_MIPMAP_MODE_LINEAR);
-
-                LongBuffer pSampler = stack.callocLong(1);
-                if (vkCreateSampler(VulkanDeviceManager.getCurrentDevice(), samplerCreateInfo, null, pSampler) != VK_SUCCESS) {
-                    throw new RuntimeException(Logger.error(VulkanTexture.class, "Failed to create sampler!"));
-                }
-
-                sampler = pSampler.get(0);
-
-            }
+            sampler = new VulkanSampler(this, minFilter, magFilter, false);
 
 
             try (MemoryStack stack = stackPush()) {
@@ -243,7 +219,7 @@ public class VulkanTexture extends Texture {
         return imageView;
     }
 
-    public long getSampler(){
+    public VulkanSampler getSampler(){
         return sampler;
     }
 
@@ -254,11 +230,8 @@ public class VulkanTexture extends Texture {
     @Override
     public void dispose() {
         vkDeviceWaitIdle(VulkanDeviceManager.getCurrentDevice());
-
-
         vkDestroyCommandPool(VulkanDeviceManager.getCurrentDevice(), commandPool, null);
         vkDestroyFence(VulkanDeviceManager.getCurrentDevice(), fence, null);
-        vkDestroySampler(VulkanDeviceManager.getCurrentDevice(), sampler, null);
 
 
 
