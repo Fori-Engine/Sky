@@ -26,17 +26,14 @@ import static fori.graphics.ShaderRes.ShaderStage.VertexStage;
 import static fori.graphics.ShaderRes.Type.*;
 
 public class WhisperStage extends Stage {
-    private Renderer renderer;
-    private Scene scene;
 
-    Entity shopEntity;
-    Entity cameraEntity;
-    Entity playerEntity;
-    Entity levelEntity;
-    SpriteBatch spriteBatch;
     private float startTime;
-
-    private RenderTarget swapchainRenderTarget;
+    private Scene scene;
+    private Entity shopEntity;
+    private Entity cameraEntity;
+    private Entity playerEntity;
+    private Entity levelEntity;
+    private Renderer renderer;
 
 
 
@@ -96,13 +93,8 @@ public class WhisperStage extends Stage {
                         .vsync(vsync)
         );
 
-        swapchainRenderTarget = renderer.getSwapchainRenderTarget();
-
-
         scene = new Scene("Main_Scene");
-
-
-        scene.addSystem(new RenderSystem(renderer, scene, surface));
+        scene.addSystem(new RenderSystem(renderer, scene));
         scene.addSystem(new NVPhysXSystem(scene, 4, 1f/60f));
         scene.addSystem(new ScriptSystem(scene));
 
@@ -357,79 +349,6 @@ public class WhisperStage extends Stage {
         }
 
 
-        /*
-
-        //Text
-        {
-
-
-            ShaderProgram shaderProgram;
-            {
-                ShaderReader.ShaderSources shaderSources = ShaderReader.read(
-                        AssetPacks.<String>getAsset("core:assets/shaders/vulkan/SpriteBatch.glsl").asset
-                );
-
-
-                shaderProgram = ShaderProgram.newShaderProgram(renderer);
-                shaderProgram.setShaders(
-                        Shader.newShader(shaderProgram, ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex)),
-                        Shader.newShader(shaderProgram, ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
-                );
-
-
-                shaderProgram.bind(
-                        new VertexAttributes.Type[]{
-                                PositionFloat2,
-                                ColorFloat4
-                        },
-                        new ShaderResSet(
-                                0,
-                                new ShaderRes(
-                                        "camera",
-                                        0,
-                                        UniformBuffer,
-                                        VertexStage
-                                ).sizeBytes(SizeUtil.MATRIX_SIZE_BYTES)
-                        )
-                );
-
-            }
-
-
-
-            spriteBatch = renderer.newSpriteBatch(
-                    8,
-                    12,
-                    shaderProgram,
-                    new Camera(
-                            new Matrix4f().identity(),
-                            new Matrix4f().ortho(0, 1920, 0, 1080, 0, 1, true),
-                            false
-                    )
-            );
-
-
-
-            for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-
-                ByteBuffer cameraData = spriteBatch.getCameraBuffers()[frameIndex].get();
-
-                spriteBatch.getCamera().getProj().get(0, cameraData);
-
-
-                spriteBatch.getShaderProgram().updateBuffers(
-                        frameIndex,
-                        new ShaderUpdate<>("camera", 0, 0, spriteBatch.getCameraBuffers()[frameIndex])
-                );
-            }
-
-
-
-
-        }
-
-         */
-
 
 
 
@@ -439,6 +358,7 @@ public class WhisperStage extends Stage {
 
     public boolean update(){
         scene.tick();
+
         renderer.update(surface.update());
 
 
@@ -450,16 +370,12 @@ public class WhisperStage extends Stage {
 
     @Override
     public void closing() {
-
-
         scene.getEngine().findEntitiesWith(NVPhysXComponent.class).stream().forEach(components -> {
             NVPhysXComponent nvPhysXComponent = components.comp();
             nvPhysXComponent.release();
         });
 
         scene.close(renderer);
-
-
     }
 
 

@@ -45,8 +45,6 @@ public abstract class Renderer extends Disposable {
     public abstract DynamicMesh newDynamicMesh(int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram);
     public abstract void destroyDynamicMesh(DynamicMesh dynamicMesh);
 
-    public abstract SpriteBatch newSpriteBatch(int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram, Camera camera);
-
     public void addCommandList(CommandList commandList) {
         commandLists.add(commandList);
     }

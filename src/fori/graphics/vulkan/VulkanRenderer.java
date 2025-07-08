@@ -517,27 +517,6 @@ public class VulkanRenderer extends Renderer {
         this.remove(vulkanDynamicMesh.getIndexBuffer());
     }
 
-    @Override
-    public SpriteBatch newSpriteBatch(int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram, Camera camera) {
-        /*
-        VulkanPipeline pipeline = createPipeline(device, swapchain, (VulkanShaderProgram) shaderProgram);
-        VulkanSpriteBatch vulkanSpriteBatch = new VulkanSpriteBatch(
-                this,
-                getMaxFramesInFlight(),
-                pipeline,
-                maxVertexCount,
-                maxIndexCount,
-                camera,
-                shaderProgram
-        );
-
-         */
-
-        return null;
-    }
-
-
-
 
     @Override
     public DynamicMesh newDynamicMesh(int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram) {

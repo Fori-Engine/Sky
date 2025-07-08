@@ -1,24 +1,157 @@
 package fori.ecs;
 
 import fori.Surface;
+import fori.asset.AssetPacks;
 import fori.graphics.*;
+import org.joml.Matrix4f;
 
 import java.nio.ByteBuffer;
 
+import static fori.graphics.ShaderRes.ShaderStage.*;
+import static fori.graphics.ShaderRes.Type.*;
+import static fori.graphics.VertexAttributes.Type.*;
+
 public class RenderSystem extends EcsSystem {
     private Renderer renderer;
-    private Surface surface;
     private Scene scene;
     private Camera sceneCamera;
+
+    private Camera uiCamera;
+    private ShaderProgram uiShaderProgram;
+    private Buffer uiVertexBuffer, uiIndexBuffer;
+    private Buffer[] uiCameraBuffers;
+
+
+
     private RenderTarget swapchainRenderTarget;
     private GraphicsCommandList graphicsCommands;
 
-    public RenderSystem(Renderer renderer, Scene scene, Surface surface) {
+    public RenderSystem(Renderer renderer, Scene scene) {
         this.renderer = renderer;
         this.scene = scene;
-        this.surface = surface;
         swapchainRenderTarget = renderer.getSwapchainRenderTarget();
         graphicsCommands = CommandList.newGraphicsCommandList(renderer, renderer.getMaxFramesInFlight());
+
+        {
+            uiCamera = new Camera(
+                    new Matrix4f().identity(),
+                    new Matrix4f().ortho(0, renderer.getWidth(), 0, renderer.getHeight(), 0, 1, true),
+                    false
+            );
+
+            ShaderReader.ShaderSources shaderSources = ShaderReader.read(
+                    AssetPacks.<String>getAsset("core:assets/shaders/vulkan/SpriteBatch.glsl").asset
+            );
+
+
+            uiShaderProgram = ShaderProgram.newShaderProgram(renderer, renderer.getSwapchainRenderTarget());
+            uiShaderProgram.setShaders(
+                    Shader.newShader(uiShaderProgram, ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex)),
+                    Shader.newShader(uiShaderProgram, ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
+            );
+
+
+            uiShaderProgram.bind(
+                    new VertexAttributes.Type[]{
+                            PositionFloat2,
+                            ColorFloat4
+                    },
+                    new ShaderResSet(
+                            0,
+                            new ShaderRes(
+                                    "camera",
+                                    0,
+                                    UniformBuffer,
+                                    VertexStage
+                            ).sizeBytes(SizeUtil.MATRIX_SIZE_BYTES)
+                    )
+            );
+
+            uiVertexBuffer = Buffer.newBuffer(
+                    renderer,
+                    VertexAttributes.getSize(uiShaderProgram.getAttributes()) * Float.BYTES * 4,
+                    Buffer.Usage.VertexBuffer,
+                    Buffer.Type.CPUGPUShared,
+                    false
+            );
+            uiIndexBuffer = Buffer.newBuffer(
+                    renderer,
+                    6 * Integer.BYTES,
+                    Buffer.Usage.IndexBuffer,
+                    Buffer.Type.CPUGPUShared,
+                    false
+            );
+
+            uiCameraBuffers = new Buffer[renderer.getMaxFramesInFlight()];
+            for (int i = 0; i < renderer.getMaxFramesInFlight(); i++) {
+                uiCameraBuffers[i] = Buffer.newBuffer(
+                        renderer,
+                        Camera.SIZE,
+                        Buffer.Usage.UniformBuffer,
+                        Buffer.Type.CPUGPUShared,
+                        false
+                );
+            }
+
+            for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
+
+                ByteBuffer uiCameraData = uiCameraBuffers[frameIndex].get();
+
+                uiCamera.getProj().get(0, uiCameraData);
+
+
+                uiShaderProgram.updateBuffers(
+                        frameIndex,
+                        new ShaderUpdate<>("camera", 0, 0, uiCameraBuffers[frameIndex])
+                );
+            }
+
+            uiVertexBuffer.get().clear();
+            uiIndexBuffer.get().clear();
+
+
+            float x = 100, y = 100, w = 300, h = 300;
+            Color color = Color.RED;
+
+            ByteBuffer uiVertexBufferData = uiVertexBuffer.get();
+            ByteBuffer uiIndexBufferData = uiIndexBuffer.get();
+
+
+            uiVertexBufferData.putFloat(x);
+            uiVertexBufferData.putFloat(y);
+            uiVertexBufferData.putFloat(color.r);
+            uiVertexBufferData.putFloat(color.g);
+            uiVertexBufferData.putFloat(color.b);
+            uiVertexBufferData.putFloat(color.a);
+
+            uiVertexBufferData.putFloat(x);
+            uiVertexBufferData.putFloat(y + h);
+            uiVertexBufferData.putFloat(color.r);
+            uiVertexBufferData.putFloat(color.g);
+            uiVertexBufferData.putFloat(color.b);
+            uiVertexBufferData.putFloat(color.a);
+
+            uiVertexBufferData.putFloat(x + w);
+            uiVertexBufferData.putFloat(y + h);
+            uiVertexBufferData.putFloat(color.r);
+            uiVertexBufferData.putFloat(color.g);
+            uiVertexBufferData.putFloat(color.b);
+            uiVertexBufferData.putFloat(color.a);
+
+            uiVertexBufferData.putFloat(x + w);
+            uiVertexBufferData.putFloat(y);
+            uiVertexBufferData.putFloat(color.r);
+            uiVertexBufferData.putFloat(color.g);
+            uiVertexBufferData.putFloat(color.b);
+            uiVertexBufferData.putFloat(color.a);
+
+            uiIndexBufferData.putInt(0);
+            uiIndexBufferData.putInt(1);
+            uiIndexBufferData.putInt(2);
+            uiIndexBufferData.putInt(2);
+            uiIndexBufferData.putInt(3);
+            uiIndexBufferData.putInt(0);
+        }
     }
 
     @Override
@@ -82,6 +215,11 @@ public class RenderSystem extends EcsSystem {
             );
             graphicsCommands.drawIndexed(dynamicMeshComponent.dynamicMesh().getIndexCount());
         });
+
+        graphicsCommands.setDrawBuffers(uiVertexBuffer, uiIndexBuffer);
+        graphicsCommands.setShaderProgram(uiShaderProgram);
+        graphicsCommands.drawIndexed(6);
+
 
         graphicsCommands.endRecording();
         renderer.addCommandList(graphicsCommands);
