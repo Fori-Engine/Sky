@@ -1,9 +1,7 @@
 package fori.ecs;
 
 import fori.Surface;
-import fori.graphics.Camera;
-import fori.graphics.Renderer;
-import fori.graphics.SizeUtil;
+import fori.graphics.*;
 
 import java.nio.ByteBuffer;
 
@@ -12,23 +10,32 @@ public class RenderSystem extends EcsSystem {
     private Surface surface;
     private Scene scene;
     private Camera sceneCamera;
+    private RenderTarget swapchainRenderTarget;
+    private GraphicsCommandList graphicsCommands;
 
     public RenderSystem(Renderer renderer, Scene scene, Surface surface) {
         this.renderer = renderer;
         this.scene = scene;
         this.surface = surface;
+        swapchainRenderTarget = renderer.getSwapchainRenderTarget();
+        graphicsCommands = CommandList.newGraphicsCommandList(renderer, renderer.getMaxFramesInFlight());
     }
 
     @Override
     public void run() {
-
-
         scene.getEngine().findEntitiesWith(CameraComponent.class).stream().forEach(components1 -> {
             CameraComponent cameraComponent = components1.comp();
             sceneCamera = cameraComponent.camera();
         });
 
 
+        graphicsCommands.startRecording(
+                renderer.getFrameStartSync(),
+                swapchainRenderTarget,
+                renderer.getFrameIndex()
+        );
+
+        /*
         scene.getEngine().findEntitiesWith(TransformComponent.class, StaticMeshComponent.class).stream().forEach(components -> {
 
 
@@ -42,8 +49,8 @@ public class RenderSystem extends EcsSystem {
             sceneCamera.getView().get(0, cameraData);
             sceneCamera.getProj().get(SizeUtil.MATRIX_SIZE_BYTES, cameraData);
 
-
         });
+        */
 
         scene.getEngine().findEntitiesWith(TransformComponent.class, DynamicMeshComponent.class).stream().forEach(components -> {
 
@@ -58,11 +65,18 @@ public class RenderSystem extends EcsSystem {
             sceneCamera.getView().get(0, cameraData);
             sceneCamera.getProj().get(SizeUtil.MATRIX_SIZE_BYTES, cameraData);
 
+            graphicsCommands.setDrawBuffers(
+                    dynamicMeshComponent.dynamicMesh().getVertexBuffer(),
+                    dynamicMeshComponent.dynamicMesh().getIndexBuffer()
+            );
+            graphicsCommands.setShaderProgram(
+                    dynamicMeshComponent.dynamicMesh().getShaderProgram()
+            );
+            graphicsCommands.drawIndexed(dynamicMeshComponent.dynamicMesh());
         });
 
-
-
-
+        graphicsCommands.endRecording();
+        renderer.addCommandList(graphicsCommands);
     }
 
     @Override

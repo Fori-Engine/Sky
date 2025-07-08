@@ -18,7 +18,6 @@ import org.joml.Vector3f;
 
 import java.io.File;
 import java.lang.Math;
-import java.nio.ByteBuffer;
 import java.util.*;
 
 import static fori.graphics.VertexAttributes.Type.*;
@@ -130,6 +129,7 @@ public class WhisperStage extends Stage {
         cameraEntity = scene.createEntity(new CameraComponent(camera));
 
 
+        /*
 
         //Shop
         {
@@ -210,8 +210,7 @@ public class WhisperStage extends Stage {
 
         }
 
-
-
+         */
         //Player
         {
 
@@ -223,7 +222,7 @@ public class WhisperStage extends Stage {
                 );
 
 
-                shaderProgram = ShaderProgram.newShaderProgram(renderer);
+                shaderProgram = ShaderProgram.newShaderProgram(renderer, renderer.getSwapchainRenderTarget());
                 shaderProgram.setShaders(
                         Shader.newShader(shaderProgram, ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex)),
                         Shader.newShader(shaderProgram, ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
@@ -289,6 +288,7 @@ public class WhisperStage extends Stage {
             );
         }
 
+        /*
 
         //Level
         {
@@ -301,7 +301,7 @@ public class WhisperStage extends Stage {
                 );
 
 
-                shaderProgram = ShaderProgram.newShaderProgram(renderer);
+                shaderProgram = ShaderProgram.newShaderProgram(renderer, renderer.getSwapchainRenderTarget());
                 shaderProgram.setShaders(
                         Shader.newShader(shaderProgram, ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex)),
                         Shader.newShader(shaderProgram, ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
@@ -356,7 +356,7 @@ public class WhisperStage extends Stage {
             );
         }
 
-
+         */
         /*
 
         //Text
@@ -433,36 +433,13 @@ public class WhisperStage extends Stage {
 
 
 
-
-
-
-
-
-
-
-
-
         startTime = (float) surface.getTime();
-
-
     }
 
 
     public boolean update(){
         scene.tick();
-
-        /*
-        spriteBatch.start();
-        spriteBatch.drawRect(200, 200, 200, 200, Color.GRAY);
-        spriteBatch.drawRect(surface.getMousePos().x, surface.getMousePos().y, 200, 200, Color.RED);
-        spriteBatch.end();
-
-         */
-
-
-
-
-        renderer.dispatch(scene, spriteBatch, surface.update());
+        renderer.update(surface.update());
 
 
         Time.deltaTime = (float) (surface.getTime() - startTime);

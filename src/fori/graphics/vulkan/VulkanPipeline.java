@@ -1,11 +1,31 @@
 package fori.graphics.vulkan;
 
-public class VulkanPipeline {
-    public long pipelineLayout;
-    public long pipeline;
+import fori.graphics.Disposable;
 
-    public VulkanPipeline(long pipelineLayout, long pipeline) {
+import static org.lwjgl.vulkan.VK10.*;
+
+public class VulkanPipeline extends Disposable {
+    private long pipelineLayout;
+    private long pipeline;
+
+    public VulkanPipeline(Disposable parent, long pipelineLayout, long pipeline) {
+        super(parent);
         this.pipelineLayout = pipelineLayout;
         this.pipeline = pipeline;
+    }
+
+    public long getLayout() {
+        return pipelineLayout;
+    }
+
+    public long getHandle() {
+        return pipeline;
+    }
+
+    @Override
+    public void dispose() {
+        vkDeviceWaitIdle(VulkanDeviceManager.getCurrentDevice());
+        vkDestroyPipeline(VulkanDeviceManager.getCurrentDevice(), pipeline, null);
+        vkDestroyPipelineLayout(VulkanDeviceManager.getCurrentDevice(), pipelineLayout, null);
     }
 }

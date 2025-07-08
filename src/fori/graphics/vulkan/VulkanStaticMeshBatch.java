@@ -8,7 +8,6 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 import java.nio.LongBuffer;
 
-import static fori.graphics.vulkan.VulkanRenderer.UINT64_MAX;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
@@ -215,7 +214,7 @@ public class VulkanStaticMeshBatch extends StaticMeshBatch {
                 throw new RuntimeException(Logger.error(VulkanStaticMeshBatch.class, "Failed to submit command buffer"));
             }
 
-            vkWaitForFences(device, stagingTransferFence, true, UINT64_MAX);
+            vkWaitForFences(device, stagingTransferFence, true, VulkanUtil.UINT64_MAX);
 
 
         }

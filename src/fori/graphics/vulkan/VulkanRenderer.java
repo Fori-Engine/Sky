@@ -2,7 +2,6 @@ package fori.graphics.vulkan;
 
 import fori.Logger;
 import fori.Surface;
-import fori.ecs.Scene;
 import fori.graphics.*;
 import fori.graphics.DynamicMesh;
 import fori.graphics.StaticMeshBatch;
@@ -17,6 +16,7 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static fori.graphics.vulkan.VulkanUtil.UINT64_MAX;
 import static java.lang.Math.clamp;
 import static java.util.stream.Collectors.toSet;
 import static org.lwjgl.system.MemoryStack.stackPush;
@@ -25,7 +25,6 @@ import static org.lwjgl.vulkan.KHRSurface.*;
 import static org.lwjgl.vulkan.KHRSurface.vkGetPhysicalDeviceSurfacePresentModesKHR;
 import static org.lwjgl.vulkan.KHRSwapchain.*;
 import static org.lwjgl.vulkan.KHRSwapchain.vkGetSwapchainImagesKHR;
-import static org.lwjgl.vulkan.KHRSynchronization2.VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR;
 import static org.lwjgl.vulkan.VK13.*;
 
 
@@ -33,7 +32,6 @@ public class VulkanRenderer extends Renderer {
 
     public static final int FRAMES_IN_FLIGHT = 2;
 
-    public static final int UINT64_MAX = 0xFFFFFFFF;
     private long debugMessenger;
     private VkPhysicalDevice physicalDevice;
     private VkPhysicalDeviceProperties physicalDeviceProperties;
@@ -46,18 +44,12 @@ public class VulkanRenderer extends Renderer {
     private VulkanSwapchain swapchain;
     private VulkanSwapchainSupportInfo swapchainSupportDetails;
 
+    private long sharedCommandPool;
     private long vkSurface;
     private VkInstance instance;
 
-    private VulkanFrame[] frames = new VulkanFrame[FRAMES_IN_FLIGHT];
-    private int frameIndex;
-    private long sharedCommandPool;
     private VulkanAllocator allocator;
-
-    private VkRenderingInfoKHR renderingInfoKHR;
-    private VkRenderingAttachmentInfo.Buffer colorAttachment;
-    private VkRenderingAttachmentInfoKHR depthAttachment;
-
+    private int acquiredImageIndex;
 
 
     public VulkanRenderer(Disposable parent, VkInstance instance, long vkSurface, int width, int height, RendererSettings rendererSettings, long debugMessenger, Surface surface) {
@@ -78,78 +70,23 @@ public class VulkanRenderer extends Renderer {
         VulkanAllocator.init(instance, device, physicalDevice);
         allocator = VulkanAllocator.getAllocator();
 
-
-
-
-
         graphicsQueue = getGraphicsQueue(device);
         VulkanDeviceManager.setGraphicsQueue(graphicsQueue);
         presentQueue = getPresentQueue(device);
         VulkanDeviceManager.setGraphicsFamilyIndex(physicalDeviceQueueFamilies.graphicsFamily);
+
+        sharedCommandPool = VulkanUtil.createCommandPool(device, VulkanDeviceManager.getGraphicsFamilyIndex());
         swapchainRenderTarget = createSwapchainRenderTarget(rendererSettings);
 
-        //Sync Objects
-        for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
-
-
-            try(MemoryStack stack = stackPush()) {
-
-                LongBuffer pImageAcquiredSemaphore = stack.mallocLong(1);
-                LongBuffer pRenderFinishedSemaphore = stack.mallocLong(1);
-                LongBuffer pInFlightFence = stack.mallocLong(1);
-
-
-
-                VkSemaphoreCreateInfo imageAcquiredSemaphoreInfo = VkSemaphoreCreateInfo.calloc(stack);
-                imageAcquiredSemaphoreInfo.sType(VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO);
-
-                VkSemaphoreCreateInfo renderFinishedSemaphoreInfo = VkSemaphoreCreateInfo.calloc(stack);
-                renderFinishedSemaphoreInfo.sType(VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO);
-
-                VkFenceCreateInfo inFlightFenceCreateInfo = VkFenceCreateInfo.calloc(stack);
-                inFlightFenceCreateInfo.sType(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
-                inFlightFenceCreateInfo.flags(VK_FENCE_CREATE_SIGNALED_BIT);
-
-                vkCreateSemaphore(device, imageAcquiredSemaphoreInfo, null, pImageAcquiredSemaphore);
-                vkCreateSemaphore(device, renderFinishedSemaphoreInfo, null, pRenderFinishedSemaphore);
-                vkCreateFence(device, inFlightFenceCreateInfo, null, pInFlightFence);
-
-                frames[i] = new VulkanFrame(pImageAcquiredSemaphore.get(0), pRenderFinishedSemaphore.get(0), pInFlightFence.get(0));
-            }
+        frameStartSemaphores = new VulkanSemaphore[maxFramesInFlight];
+        for (int i = 0; i < maxFramesInFlight; i++) {
+            frameStartSemaphores[i] = new VulkanSemaphore(this, device);
         }
 
-
-
-
-
-        sharedCommandPool = createCommandPool(device, physicalDeviceQueueFamilies.graphicsFamily);
-        for(int i = 0; i < FRAMES_IN_FLIGHT; i++) {
-            VulkanFrame frame = frames[i];
-
-
-            try(MemoryStack stack = stackPush()) {
-
-                VkCommandBufferAllocateInfo allocInfo = VkCommandBufferAllocateInfo.calloc(stack);
-                allocInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
-                allocInfo.commandPool(sharedCommandPool);
-                allocInfo.level(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
-                allocInfo.commandBufferCount(FRAMES_IN_FLIGHT);
-
-                PointerBuffer pCommandBuffers = stack.mallocPointer(FRAMES_IN_FLIGHT);
-
-                if(vkAllocateCommandBuffers(device, allocInfo, pCommandBuffers) != VK_SUCCESS) {
-                    throw new RuntimeException("Failed to allocate command buffers");
-                }
-
-                frame.renderCommandBuffer = new VkCommandBuffer(pCommandBuffers.get(i), device);
-
-            }
-
-
-
-        }
 
     }
+
+
 
     private RenderTarget createSwapchainRenderTarget(RendererSettings rendererSettings) {
         RenderTarget swapchainRenderTarget = new RenderTarget(this, maxFramesInFlight + 1);
@@ -500,260 +437,9 @@ public class VulkanRenderer extends Renderer {
 
         return extent;
     }
-    private VulkanPipeline createPipeline(VkDevice device, VulkanSwapchain swapchain, VulkanShaderProgram vulkanShaderProgram) {
 
 
 
-        VertexAttributes.Type[] attributes = vulkanShaderProgram.getAttributes();
-        long pipelineLayout;
-        long graphicsPipeline = 0;
-
-        try(MemoryStack stack = stackPush()) {
-
-            VkPipelineVertexInputStateCreateInfo vertexInputInfo = VkPipelineVertexInputStateCreateInfo.calloc(stack);
-            vertexInputInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO);
-            {
-
-                Function<Integer, Integer> attributeSizeToVulkanParam = attributeSize -> {
-                    switch(attributeSize){
-                        case 1: return VK_FORMAT_R32_SFLOAT;
-                        case 2: return VK_FORMAT_R32G32_SFLOAT;
-                        case 3: return VK_FORMAT_R32G32B32_SFLOAT;
-                        case 4: return VK_FORMAT_R32G32B32A32_SFLOAT;
-                    }
-                    return 0;
-                };
-
-                int vertexSize = 0;
-                for(VertexAttributes.Type attribute : attributes){
-                    vertexSize += attribute.size;
-                }
-
-
-                VkVertexInputBindingDescription.Buffer bindingDescription =
-                        VkVertexInputBindingDescription.calloc(1, stack);
-
-
-                bindingDescription.binding(0);
-                bindingDescription.stride(vertexSize * Float.BYTES);
-                bindingDescription.inputRate(VK_VERTEX_INPUT_RATE_VERTEX);
-                vertexInputInfo.pVertexBindingDescriptions(bindingDescription);
-
-
-
-                VkVertexInputAttributeDescription.Buffer attributeDescriptions =
-                        VkVertexInputAttributeDescription.calloc(attributes.length, stack);
-
-                int offset = 0;
-
-                for (int i = 0; i < attributes.length; i++) {
-                    VkVertexInputAttributeDescription attribute = attributeDescriptions.get(i);
-                    attribute.binding(0);
-                    attribute.location(i);
-                    attribute.format(attributeSizeToVulkanParam.apply(attributes[i].size));
-                    attribute.offset(offset);
-
-                    offset += attributes[i].size * Float.BYTES;
-                }
-
-
-
-
-                vertexInputInfo.pVertexAttributeDescriptions(attributeDescriptions.rewind());
-
-
-
-            }
-
-            VkPipelineInputAssemblyStateCreateInfo inputAssembly = VkPipelineInputAssemblyStateCreateInfo.calloc(stack);
-            {
-                inputAssembly.sType(VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO);
-                inputAssembly.topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-                inputAssembly.primitiveRestartEnable(false);
-            }
-
-            VkPipelineViewportStateCreateInfo viewportState = VkPipelineViewportStateCreateInfo.calloc(stack);
-            {
-                viewportState.sType(VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO);
-                viewportState.viewportCount(1);
-                viewportState.scissorCount(1);
-            }
-
-            VkPipelineDynamicStateCreateInfo dynamicState = VkPipelineDynamicStateCreateInfo.calloc(stack);
-            {
-                dynamicState.sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
-                dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR));
-            }
-
-            VkPipelineRasterizationStateCreateInfo rasterizer = VkPipelineRasterizationStateCreateInfo.calloc(stack);
-            {
-                rasterizer.sType(VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO);
-                rasterizer.depthClampEnable(false);
-                rasterizer.rasterizerDiscardEnable(false);
-
-                rasterizer.lineWidth(1);
-                rasterizer.polygonMode(VK_POLYGON_MODE_FILL);
-                rasterizer.cullMode(VK_CULL_MODE_BACK_BIT);
-                rasterizer.frontFace(VK_FRONT_FACE_COUNTER_CLOCKWISE);
-                rasterizer.depthBiasEnable(false);
-            }
-
-            VkPipelineMultisampleStateCreateInfo multisampling = VkPipelineMultisampleStateCreateInfo.calloc(stack);
-            {
-                multisampling.sType(VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO);
-                multisampling.sampleShadingEnable(false);
-                multisampling.rasterizationSamples(VK_SAMPLE_COUNT_1_BIT);
-            }
-
-            VkPipelineColorBlendAttachmentState.Buffer colorBlendAttachment = VkPipelineColorBlendAttachmentState.calloc(1, stack);
-            {
-                colorBlendAttachment.colorWriteMask(VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT);
-                colorBlendAttachment.blendEnable(false);
-                colorBlendAttachment.colorWriteMask(VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT);
-                colorBlendAttachment.blendEnable(true);
-                colorBlendAttachment.srcColorBlendFactor(VK_BLEND_FACTOR_SRC_ALPHA);
-                colorBlendAttachment.dstColorBlendFactor(VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA);
-                colorBlendAttachment.colorBlendOp(VK_BLEND_OP_ADD);
-                colorBlendAttachment.srcAlphaBlendFactor(VK_BLEND_FACTOR_ONE);
-                colorBlendAttachment.dstAlphaBlendFactor(VK_BLEND_FACTOR_ZERO);
-                colorBlendAttachment.alphaBlendOp(VK_BLEND_OP_ADD);
-
-            }
-
-
-            VkPipelineColorBlendStateCreateInfo colorBlending = VkPipelineColorBlendStateCreateInfo.calloc(stack);
-            {
-                colorBlending.sType(VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO);
-                colorBlending.logicOpEnable(false);
-                colorBlending.logicOp(VK_LOGIC_OP_COPY);
-                colorBlending.pAttachments(colorBlendAttachment);
-                colorBlending.blendConstants(stack.floats(0.0f, 0.0f, 0.0f, 0.0f));
-            }
-
-            VkPipelineDepthStencilStateCreateInfo depthStencil = VkPipelineDepthStencilStateCreateInfo.calloc(stack);
-            {
-                depthStencil.sType(VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO);
-                depthStencil.depthTestEnable(true);
-                depthStencil.depthWriteEnable(true);
-                depthStencil.depthCompareOp(toVkDepthCompareOpEnum(DepthTestType.LessThan));
-                depthStencil.minDepthBounds(0f);
-                depthStencil.maxDepthBounds(1f);
-
-
-                depthStencil.stencilTestEnable(false);
-
-
-            }
-
-
-
-            VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.calloc(stack);
-            {
-                pipelineLayoutInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
-                pipelineLayoutInfo.setLayoutCount(vulkanShaderProgram.getShaderResSets().length);
-                pipelineLayoutInfo.pSetLayouts(stack.longs(vulkanShaderProgram.getAllDescriptorSetLayouts()));
-
-
-            }
-            LongBuffer pPipelineLayout = stack.longs(VK_NULL_HANDLE);
-
-            if(vkCreatePipelineLayout(device, pipelineLayoutInfo, null, pPipelineLayout) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create pipeline layout");
-            }
-
-            pipelineLayout = pPipelineLayout.get(0);
-
-            VkPipelineRenderingCreateInfoKHR pipelineRenderingCreateInfoKHR = VkPipelineRenderingCreateInfoKHR.calloc(stack);
-            pipelineRenderingCreateInfoKHR.colorAttachmentCount(1);
-            pipelineRenderingCreateInfoKHR.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR);
-            pipelineRenderingCreateInfoKHR.pColorAttachmentFormats(stack.ints(swapchain.imageFormat));
-
-            VulkanTexture depthImage = ((VulkanTexture) swapchainRenderTarget.getTexture(maxFramesInFlight));
-
-            pipelineRenderingCreateInfoKHR.depthAttachmentFormat(depthImage.getImageFormat());
-
-
-
-            VkGraphicsPipelineCreateInfo.Buffer pipelineInfo = VkGraphicsPipelineCreateInfo.calloc(1, stack);
-            {
-                pipelineInfo.sType(VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO);
-                pipelineInfo.layout(pipelineLayout);
-                pipelineInfo.pInputAssemblyState(inputAssembly);
-                pipelineInfo.pRasterizationState(rasterizer);
-                pipelineInfo.pColorBlendState(colorBlending);
-                pipelineInfo.pMultisampleState(multisampling);
-                pipelineInfo.pViewportState(viewportState);
-                pipelineInfo.pDepthStencilState(depthStencil);
-                pipelineInfo.pDynamicState(dynamicState);
-                pipelineInfo.stageCount(vulkanShaderProgram.getShaderStages().capacity());
-                pipelineInfo.pStages(vulkanShaderProgram.getShaderStages());
-                pipelineInfo.pVertexInputState(vertexInputInfo);
-                pipelineInfo.pNext(pipelineRenderingCreateInfoKHR);
-            }
-
-
-            LongBuffer pGraphicsPipeline = stack.mallocLong(1);
-
-
-            if(vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, pipelineInfo, null, pGraphicsPipeline) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create graphics pipeline");
-            }
-
-
-            graphicsPipeline = pGraphicsPipeline.get(0);
-
-
-        }
-
-        return new VulkanPipeline(pipelineLayout, graphicsPipeline);
-    }
-
-    private int toVkDepthCompareOpEnum(DepthTestType depthTestType) {
-        if(depthTestType == null) return -1;
-        switch(depthTestType) {
-            case LessThan -> {
-                return VK_COMPARE_OP_LESS;
-            }
-            case GreaterThan -> {
-                return VK_COMPARE_OP_GREATER;
-            }
-            case LessOrEqualTo -> {
-                return VK_COMPARE_OP_LESS_OR_EQUAL;
-            }
-            case GreaterOrEqualTo -> {
-                return VK_COMPARE_OP_GREATER_OR_EQUAL;
-            }
-            case Always -> {
-                return VK_COMPARE_OP_ALWAYS;
-            }
-            case Never -> {
-                return VK_COMPARE_OP_NEVER;
-            }
-        }
-
-        throw new RuntimeException(Logger.error(VulkanRenderer.class, "The depth operation for this pipeline is an invalid value [" + depthTestType + "]"));
-    }
-
-    private long createCommandPool(VkDevice device, int queueFamily) {
-
-        long commandPool = 0;
-
-        try(MemoryStack stack = stackPush()) {
-            VkCommandPoolCreateInfo commandPoolCreateInfo = VkCommandPoolCreateInfo.calloc(stack);
-            commandPoolCreateInfo.sType(VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO);
-            commandPoolCreateInfo.flags(VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
-            commandPoolCreateInfo.queueFamilyIndex(queueFamily);
-
-            LongBuffer pCommandPool = stack.mallocLong(1);
-
-            if(vkCreateCommandPool(device, commandPoolCreateInfo, null, pCommandPool) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create command pool");
-            }
-            commandPool = pCommandPool.get(0);
-        }
-
-        return commandPool;
-    }
 
     private void createSwapchainRenderTarget() {
         swapchainRenderTarget = createSwapchainRenderTarget(settings);
@@ -785,10 +471,10 @@ public class VulkanRenderer extends Renderer {
                         "\t " + maxTransformCount + " max transforms\n"
         );
 
-        VulkanPipeline pipeline = createPipeline(device, swapchain, (VulkanShaderProgram) shaderProgram);
-        VulkanStaticMeshBatch vulkanStaticMeshBatch = new VulkanStaticMeshBatch(this, shaderProgram, getMaxFramesInFlight(), sharedCommandPool, graphicsQueue, device, pipeline, maxVertexCount, maxIndexCount, maxTransformCount);
+        //VulkanPipeline pipeline = createPipeline(device, swapchain, (VulkanShaderProgram) shaderProgram);
+        //VulkanStaticMeshBatch vulkanStaticMeshBatch = new VulkanStaticMeshBatch(this, shaderProgram, getMaxFramesInFlight(), sharedCommandPool, graphicsQueue, device, pipeline, maxVertexCount, maxIndexCount, maxTransformCount);
 
-        return vulkanStaticMeshBatch;
+        return null;
     }
 
 
@@ -837,10 +523,6 @@ public class VulkanRenderer extends Renderer {
 
         }
 
-        VulkanPipeline vulkanPipeline = vulkanDynamicMesh.getPipeline();
-
-        vkDestroyPipeline(device, vulkanPipeline.pipeline, null);
-        vkDestroyPipelineLayout(device, vulkanPipeline.pipelineLayout, null);
 
         vulkanDynamicMesh.getVertexBuffer().dispose();
         vulkanDynamicMesh.getIndexBuffer().dispose();
@@ -851,6 +533,7 @@ public class VulkanRenderer extends Renderer {
 
     @Override
     public SpriteBatch newSpriteBatch(int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram, Camera camera) {
+        /*
         VulkanPipeline pipeline = createPipeline(device, swapchain, (VulkanShaderProgram) shaderProgram);
         VulkanSpriteBatch vulkanSpriteBatch = new VulkanSpriteBatch(
                 this,
@@ -862,19 +545,21 @@ public class VulkanRenderer extends Renderer {
                 shaderProgram
         );
 
-        return vulkanSpriteBatch;
+         */
+
+        return null;
     }
+
+
 
 
     @Override
     public DynamicMesh newDynamicMesh(int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram) {
 
-        VulkanPipeline pipeline = createPipeline(device, swapchain, (VulkanShaderProgram) shaderProgram);
         VulkanDynamicMesh vulkanDynamicMesh = new VulkanDynamicMesh(
                 this,
                 shaderProgram,
                 getMaxFramesInFlight(),
-                pipeline,
                 maxVertexCount,
                 maxIndexCount
         );
@@ -883,263 +568,60 @@ public class VulkanRenderer extends Renderer {
         return vulkanDynamicMesh;
     }
 
+
     @Override
-    public void dispatch(Scene scene, SpriteBatch spriteBatch, boolean recreateRenderer) {
+    public void update(boolean surfaceInvalidated) {
+
+        if (surfaceInvalidated) {
+            disposeSwapchainRenderTarget();
+            this.width = surface.getWidth();
+            this.height = surface.getHeight();
+            createSwapchainRenderTarget();
+        }
 
         try(MemoryStack stack = stackPush()) {
 
-            if(recreateRenderer) {
-                disposeSwapchainRenderTarget();
-                this.width = surface.getWidth();
-                this.height = surface.getHeight();
-                createSwapchainRenderTarget();
-            }
+            IntBuffer pImageIndex = stack.callocInt(1);
 
+            vkAcquireNextImageKHR(
+                    device,
+                    swapchain.handle,
+                    VulkanUtil.UINT64_MAX,
+                    ((VulkanSemaphore[]) frameStartSemaphores)[frameIndex].getHandle(),
+                    VK_NULL_HANDLE,
+                    pImageIndex
+            );
 
+            acquiredImageIndex = pImageIndex.get(0);
+        }
 
 
+        for(CommandList commandList : commandLists) {
+            commandList.run();
+        }
+        Semaphore[] finishedSemaphores = commandLists.getLast().getFinishedSemaphores();
 
 
 
-            VulkanFrame frame = frames[frameIndex];
-            IntBuffer pImageIndex = stack.ints(0);
-
-            vkWaitForFences(device, frame.inFlightFence, true, UINT64_MAX);
-            vkAcquireNextImageKHR(device, swapchain.handle, UINT64_MAX, frame.imageAcquiredSemaphore, VK_NULL_HANDLE, pImageIndex);
-
-
-            int imageIndex = pImageIndex.get(0);
-            vkResetFences(device, frame.inFlightFence);
-            vkResetCommandBuffer(frame.renderCommandBuffer, 0);
-            {
-
-                VkCommandBuffer commandBuffer = frame.renderCommandBuffer;
-
-                VkClearValue colorClearValue = VkClearValue.calloc(stack);
-                colorClearValue.color().float32(stack.floats(0.5f, 0.5f, 0.5f, 1.0f));
-
-                VkClearValue depthClearValue = VkClearValue.calloc(stack);
-                depthClearValue.depthStencil().set(1.0f, 0);
-
-
-                VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
-                beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
-
-
-                colorAttachment = VkRenderingAttachmentInfoKHR.calloc(1, stack);
-                {
-
-                    VulkanTexture swapchainTexture = (VulkanTexture) swapchainRenderTarget.getTexture(frameIndex);
-
-
-                    colorAttachment.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR);
-                    colorAttachment.imageView(swapchainTexture.getImageView().getHandle());
-                    colorAttachment.imageLayout(VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR);
-                    colorAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR);
-                    colorAttachment.storeOp(VK_ATTACHMENT_STORE_OP_STORE);
-                    colorAttachment.clearValue(colorClearValue);
-                }
-                depthAttachment = VkRenderingAttachmentInfoKHR.calloc(stack);
-                {
-                    VulkanTexture depthImage = ((VulkanTexture) swapchainRenderTarget.getTexture(maxFramesInFlight));
-                    VulkanImageView depthImageView = depthImage.getImageView();
-
-                    depthAttachment.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR);
-                    depthAttachment.imageView(depthImageView.getHandle());
-                    depthAttachment.imageLayout(VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR);
-                    depthAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR);
-                    depthAttachment.storeOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
-                    depthAttachment.clearValue(depthClearValue);
-                }
-
-                renderingInfoKHR = VkRenderingInfoKHR.calloc(stack);
-                renderingInfoKHR.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_RENDERING_INFO_KHR);
-                VkRect2D renderArea = VkRect2D.calloc(stack);
-                renderArea.offset(VkOffset2D.calloc(stack).set(0, 0));
-                renderArea.extent(swapchain.extent);
-                renderingInfoKHR.renderArea(renderArea);
-                renderingInfoKHR.layerCount(1);
-                renderingInfoKHR.pColorAttachments(colorAttachment);
-                renderingInfoKHR.pDepthAttachment(depthAttachment);
-
-
-                if(vkBeginCommandBuffer(commandBuffer, beginInfo) != VK_SUCCESS) {
-                    throw new RuntimeException("Failed to begin recording command buffer");
-                }
-
-                VkImageMemoryBarrier.Buffer startBarrier = VkImageMemoryBarrier.calloc(1, stack);
-                {
-                    startBarrier.sType(VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER);
-                    startBarrier.oldLayout(VK_IMAGE_LAYOUT_UNDEFINED);
-                    startBarrier.newLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-                    startBarrier.srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
-                    startBarrier.dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
-                    startBarrier.dstAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
-                    startBarrier.image(swapchain.images.get(frameIndex));
-                    startBarrier.subresourceRange().aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
-                    startBarrier.subresourceRange().baseMipLevel(0);
-                    startBarrier.subresourceRange().levelCount(1);
-                    startBarrier.subresourceRange().baseArrayLayer(0);
-                    startBarrier.subresourceRange().layerCount(1);
-                }
-
-                vkCmdPipelineBarrier(
-                        commandBuffer,
-                        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-                        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                        0,
-                        null,
-                        null,
-                        startBarrier
-                );
-
-
-
-                KHRDynamicRendering.vkCmdBeginRenderingKHR(commandBuffer, renderingInfoKHR);
-                {
-                    VkViewport.Buffer viewport = VkViewport.calloc(1, stack);
-                    viewport.x(0.0f);
-                    viewport.y(0.0f);
-                    viewport.width(swapchain.extent.width());
-                    viewport.height(swapchain.extent.height());
-
-
-                    viewport.minDepth(0.0f);
-                    viewport.maxDepth(1.0f);
-
-
-                    vkCmdSetViewport(commandBuffer, 0, viewport);
-
-                    VkRect2D.Buffer scissor = VkRect2D.calloc(1, stack);
-                    {
-                        scissor.offset(VkOffset2D.calloc(stack).set(0, 0));
-                        scissor.extent(swapchain.extent);
-                    }
-
-                    vkCmdSetScissor(commandBuffer, 0, scissor);
-
-
-                    for(StaticMeshBatch staticMeshBatch : scene.getStaticMeshBatches().values()) {
-                        VulkanStaticMeshBatch vulkanStaticMeshBatch = (VulkanStaticMeshBatch) staticMeshBatch;
-
-                        VulkanBuffer vertexBuffer = (VulkanBuffer) vulkanStaticMeshBatch.getVertexBuffer();
-                        VulkanBuffer indexBuffer = (VulkanBuffer) vulkanStaticMeshBatch.getIndexBuffer();
-
-
-
-
-                        VulkanPipeline pipeline = vulkanStaticMeshBatch.getPipeline();
-                        VulkanShaderProgram shaderProgram = (VulkanShaderProgram) vulkanStaticMeshBatch.shaderProgram;
-                        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
-
-                        LongBuffer vertexBuffers = stack.longs(vertexBuffer.getHandle());
-                        LongBuffer offsets = stack.longs(0);
-
-                        vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
-
-                        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                pipeline.pipelineLayout, 0, stack.longs(shaderProgram.getDescriptorSets(frameIndex)), null);
-
-                        vkCmdBindIndexBuffer(commandBuffer, indexBuffer.getHandle(), 0, VK_INDEX_TYPE_UINT32);
-                        vkCmdDrawIndexed(commandBuffer, vulkanStaticMeshBatch.indexCount, 1, 0, 0, 0);
-
-                    }
-
-                    for(DynamicMesh dynamicMesh : scene.getDynamicMeshes()) {
-                        VulkanDynamicMesh vulkanDynamicMesh = (VulkanDynamicMesh) dynamicMesh;
-
-                        VulkanBuffer vertexBuffer = (VulkanBuffer) vulkanDynamicMesh.getVertexBuffer();
-                        VulkanBuffer indexBuffer = (VulkanBuffer) vulkanDynamicMesh.getIndexBuffer();
-
-
-
-
-                        VulkanPipeline pipeline = vulkanDynamicMesh.getPipeline();
-                        VulkanShaderProgram shaderProgram = (VulkanShaderProgram) vulkanDynamicMesh.getShaderProgram();
-                        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
-
-                        LongBuffer vertexBuffers = stack.longs(vertexBuffer.getHandle());
-                        LongBuffer offsets = stack.longs(0);
-
-                        vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffers, offsets);
-
-                        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                pipeline.pipelineLayout, 0, stack.longs(shaderProgram.getDescriptorSets(frameIndex)), null);
-
-                        vkCmdBindIndexBuffer(commandBuffer, indexBuffer.getHandle(), 0, VK_INDEX_TYPE_UINT32);
-                        vkCmdDrawIndexed(commandBuffer, vulkanDynamicMesh.getIndexCount(), 1, 0, 0, 0);
-
-                    }
-
-
-                }
-                KHRDynamicRendering.vkCmdEndRenderingKHR(commandBuffer);
-
-                VkImageMemoryBarrier.Buffer endBarrier = VkImageMemoryBarrier.calloc(1, stack);
-                {
-                    endBarrier.sType(VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER);
-                    endBarrier.oldLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-                    endBarrier.newLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
-                    endBarrier.srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
-                    endBarrier.dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
-                    endBarrier.srcAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
-                    endBarrier.image(swapchain.images.get(frameIndex));
-                    endBarrier.subresourceRange().aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
-                    endBarrier.subresourceRange().baseMipLevel(0);
-                    endBarrier.subresourceRange().levelCount(1);
-                    endBarrier.subresourceRange().baseArrayLayer(0);
-                    endBarrier.subresourceRange().layerCount(1);
-                }
-
-                vkCmdPipelineBarrier(
-                        commandBuffer,
-                        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                        VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-                        0,
-                        null,
-                        null,
-                        endBarrier
-                );
-
-                if(vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-                    throw new RuntimeException("Failed to record command buffer");
-                }
-            }
-
-            VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
-            submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
-            submitInfo.waitSemaphoreCount(1);
-            submitInfo.pWaitSemaphores(stack.longs(frame.imageAcquiredSemaphore));
-            submitInfo.pWaitDstStageMask(stack.ints(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT));
-            submitInfo.pCommandBuffers(stack.pointers(frame.renderCommandBuffer));
-            submitInfo.pSignalSemaphores(stack.longs(frame.renderFinishedSemaphore));
-
-            vkQueueSubmit(graphicsQueue, submitInfo, frame.inFlightFence);
-
-
-
-
+        try(MemoryStack stack = stackPush()) {
             VkPresentInfoKHR presentInfo = VkPresentInfoKHR.calloc(stack);
             presentInfo.sType(VK_STRUCTURE_TYPE_PRESENT_INFO_KHR);
-            presentInfo.pWaitSemaphores(stack.longs(frame.renderFinishedSemaphore));
+            presentInfo.pWaitSemaphores(stack.longs(
+                    ((VulkanSemaphore[]) finishedSemaphores)[frameIndex].getHandle()
+            ));
             presentInfo.swapchainCount(1);
             presentInfo.pSwapchains(stack.longs(swapchain.handle));
-
-            presentInfo.pImageIndices(pImageIndex);
+            presentInfo.pImageIndices(stack.ints(acquiredImageIndex));
 
             vkQueuePresentKHR(presentQueue, presentInfo);
 
             frameIndex = (frameIndex + 1) % FRAMES_IN_FLIGHT;
-
         }
 
-
+        commandLists.clear();
     }
 
-    @Override
-    public int getFrameIndex() {
-        return frameIndex;
-    }
+
 
     @Override
     public String getDeviceName() {
@@ -1157,18 +639,8 @@ public class VulkanRenderer extends Renderer {
     public void dispose() {
         vkDeviceWaitIdle(device);
 
-        for(VulkanFrame frame : frames){
-            vkDestroySemaphore(device, frame.imageAcquiredSemaphore, null);
-            vkDestroySemaphore(device, frame.renderFinishedSemaphore, null);
-            vkDestroyFence(device, frame.inFlightFence, null);
-        }
-
-
-
-
 
         vkDestroyCommandPool(device, sharedCommandPool, null);
-
         vmaDestroyAllocator(allocator.getId());
         vkDestroySurfaceKHR(instance, vkSurface, null);
         EXTDebugUtils.vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, null);

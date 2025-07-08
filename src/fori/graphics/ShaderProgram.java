@@ -1,6 +1,7 @@
 package fori.graphics;
 
 import fori.Logger;
+import fori.graphics.vulkan.VulkanPipeline;
 import fori.graphics.vulkan.VulkanShaderProgram;
 
 
@@ -9,10 +10,11 @@ public abstract class ShaderProgram extends Disposable {
     protected Shader[] shaders;
     protected ShaderResSet[] resourcesSets;
     protected VertexAttributes.Type[] attributes;
+    protected RenderTarget renderTarget;
 
-    public ShaderProgram(Disposable parent){
+    public ShaderProgram(Disposable parent, RenderTarget renderTarget){
         super(parent);
-
+        this.renderTarget = renderTarget;
     }
 
     public abstract void setShaders(Shader... shaders);
@@ -44,9 +46,9 @@ public abstract class ShaderProgram extends Disposable {
         return attributes;
     }
 
-    public static ShaderProgram newShaderProgram(Disposable parent){
+    public static ShaderProgram newShaderProgram(Disposable parent, RenderTarget renderTarget){
         if(Renderer.getRenderAPI() == RenderAPI.Vulkan){
-            return new VulkanShaderProgram(parent);
+            return new VulkanShaderProgram(parent, renderTarget);
         }
 
         return null;

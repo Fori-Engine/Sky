@@ -12,10 +12,7 @@ import org.lwjgl.vulkan.*;
 
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
-
-import static fori.graphics.Texture.Filter.Linear;
 import static fori.graphics.Texture.Filter.Nearest;
-import static fori.graphics.vulkan.VulkanRenderer.UINT64_MAX;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
@@ -40,6 +37,7 @@ public class VulkanTexture extends Texture {
                 imageFormat
         );
         imageView = new VulkanImageView(image, VulkanDeviceManager.getCurrentDevice(), image, aspectMask);
+        sampler = new VulkanSampler(this, minFilter, magFilter, false);
     }
 
     public VulkanTexture(Disposable parent, int width, int height, Asset<TextureData> textureData, Filter minFilter, Filter magFilter) {
@@ -61,6 +59,7 @@ public class VulkanTexture extends Texture {
         );
 
         imageView = new VulkanImageView(image, VulkanDeviceManager.getCurrentDevice(), image, aspectMask);
+        sampler = new VulkanSampler(this, minFilter, magFilter, false);
 
         if(textureData != null) {
 
@@ -71,7 +70,6 @@ public class VulkanTexture extends Texture {
             imageData.unmap();
 
 
-            sampler = new VulkanSampler(this, minFilter, magFilter, false);
 
 
             try (MemoryStack stack = stackPush()) {
@@ -153,7 +151,7 @@ public class VulkanTexture extends Texture {
                     throw new RuntimeException(Logger.error(VulkanTexture.class, "Failed to submit per-RenderCommand command buffer"));
                 }
 
-                vkWaitForFences(VulkanDeviceManager.getCurrentDevice(), fence, true, UINT64_MAX);
+                vkWaitForFences(VulkanDeviceManager.getCurrentDevice(), fence, true, VulkanUtil.UINT64_MAX);
             }
         }
 
@@ -212,8 +210,9 @@ public class VulkanTexture extends Texture {
     }
 
 
-
-
+    public VulkanImage getImage() {
+        return image;
+    }
 
     public VulkanImageView getImageView() {
         return imageView;

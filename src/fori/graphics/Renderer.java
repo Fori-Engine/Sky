@@ -2,10 +2,13 @@ package fori.graphics;
 
 import fori.Logger;
 import fori.Surface;
-import fori.ecs.Scene;
 import fori.graphics.vulkan.VulkanRenderContext;
 import fori.graphics.vulkan.VulkanRenderer;
+import fori.graphics.vulkan.VulkanSemaphore;
 import org.lwjgl.vulkan.VkInstance;
+
+import java.util.LinkedList;
+import java.util.List;
 
 public abstract class Renderer extends Disposable {
 
@@ -16,6 +19,9 @@ public abstract class Renderer extends Disposable {
     protected int maxFramesInFlight;
     protected Surface surface;
     protected RenderTarget swapchainRenderTarget;
+    protected List<CommandList> commandLists = new LinkedList<>();
+    protected VulkanSemaphore[] frameStartSemaphores;
+    protected int frameIndex;
 
 
 
@@ -41,9 +47,18 @@ public abstract class Renderer extends Disposable {
 
     public abstract SpriteBatch newSpriteBatch(int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram, Camera camera);
 
+    public void addCommandList(CommandList commandList) {
+        commandLists.add(commandList);
+    }
 
-    public abstract void dispatch(Scene scene, SpriteBatch spriteBatche, boolean recreateRenderer);
-    public abstract int getFrameIndex();
+    public abstract void update(boolean surfaceInvalidated);
+    public Semaphore[] getFrameStartSync() {
+        return frameStartSemaphores;
+    }
+
+
+
+    public int getFrameIndex() { return frameIndex; }
     public int getMaxFramesInFlight() { return maxFramesInFlight; }
     public abstract String getDeviceName();
 
@@ -84,4 +99,8 @@ public abstract class Renderer extends Disposable {
         return api;
     }
     public RenderTarget getSwapchainRenderTarget() { return swapchainRenderTarget; }
+
+    public List<CommandList> getCommandLists() {
+        return commandLists;
+    }
 }

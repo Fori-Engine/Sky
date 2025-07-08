@@ -5,16 +5,13 @@ import fori.graphics.DynamicMesh;
 import java.nio.ByteBuffer;
 
 public class VulkanDynamicMesh extends DynamicMesh {
-    private VulkanPipeline pipeline;
     public VulkanDynamicMesh(Disposable parent,
                              ShaderProgram shaderProgram,
                              int framesInFlight,
-                             VulkanPipeline pipeline,
                              int maxVertexCount,
                              int maxIndexCount) {
 
         super(maxVertexCount, maxIndexCount, shaderProgram);
-        this.pipeline = pipeline;
         vertexBuffer = Buffer.newBuffer(
                 parent,
                 VertexAttributes.getSize(shaderProgram.getAttributes()) * Float.BYTES * this.maxVertexCount,
@@ -54,9 +51,6 @@ public class VulkanDynamicMesh extends DynamicMesh {
 
     }
 
-    public VulkanPipeline getPipeline() {
-        return pipeline;
-    }
 
     @Override
     public void submit(Mesh mesh, MeshUploader meshUploader) {

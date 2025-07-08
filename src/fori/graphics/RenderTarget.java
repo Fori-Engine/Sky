@@ -1,6 +1,9 @@
 package fori.graphics;
 
 public class RenderTarget extends Disposable {
+
+    //TODO(Shayan) using indices is a bad idea and it causes assumptions about which texture does what
+    //See VulkanGraphicsCommandList.start()
     private Texture[] textures;
 
     public RenderTarget(Disposable parent, int textureCount) {
