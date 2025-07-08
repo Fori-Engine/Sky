@@ -40,7 +40,7 @@ public class RenderSystem extends EcsSystem {
             );
 
             ShaderReader.ShaderSources shaderSources = ShaderReader.read(
-                    AssetPacks.<String>getAsset("core:assets/shaders/vulkan/SpriteBatch.glsl").asset
+                    AssetPacks.<String>getAsset("core:assets/shaders/vulkan/UI.glsl").asset
             );
 
 
