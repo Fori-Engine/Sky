@@ -464,17 +464,8 @@ public class VulkanRenderer extends Renderer {
 
     @Override
     public StaticMeshBatch newStaticMeshBatch(int maxVertexCount, int maxIndexCount, int maxTransformCount, ShaderProgram shaderProgram) {
-        Logger.info(VulkanRenderer.class,
-                "Creating new StaticMeshBatch with:\n" +
-                        "\t " + maxVertexCount + " max vertices\n" +
-                        "\t " + maxIndexCount + " max indices\n" +
-                        "\t " + maxTransformCount + " max transforms\n"
-        );
 
-        //VulkanPipeline pipeline = createPipeline(device, swapchain, (VulkanShaderProgram) shaderProgram);
-        //VulkanStaticMeshBatch vulkanStaticMeshBatch = new VulkanStaticMeshBatch(this, shaderProgram, getMaxFramesInFlight(), sharedCommandPool, graphicsQueue, device, pipeline, maxVertexCount, maxIndexCount, maxTransformCount);
-
-        return null;
+        return new VulkanStaticMeshBatch(this, shaderProgram, getMaxFramesInFlight(), sharedCommandPool, graphicsQueue, device, maxVertexCount, maxIndexCount, maxTransformCount);
     }
 
 
@@ -494,11 +485,6 @@ public class VulkanRenderer extends Renderer {
             this.remove(cameraBuffer);
 
         }
-
-        VulkanPipeline vulkanPipeline = vulkanStaticMeshBatch.getPipeline();
-
-        vkDestroyPipeline(device, vulkanPipeline.pipeline, null);
-        vkDestroyPipelineLayout(device, vulkanPipeline.pipelineLayout, null);
 
         vulkanStaticMeshBatch.getVertexBuffer().dispose();
         vulkanStaticMeshBatch.getIndexBuffer().dispose();

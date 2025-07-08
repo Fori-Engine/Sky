@@ -35,7 +35,7 @@ public class RenderSystem extends EcsSystem {
                 renderer.getFrameIndex()
         );
 
-        /*
+
         scene.getEngine().findEntitiesWith(TransformComponent.class, StaticMeshComponent.class).stream().forEach(components -> {
 
 
@@ -49,8 +49,16 @@ public class RenderSystem extends EcsSystem {
             sceneCamera.getView().get(0, cameraData);
             sceneCamera.getProj().get(SizeUtil.MATRIX_SIZE_BYTES, cameraData);
 
+            graphicsCommands.setDrawBuffers(
+                    staticMeshComponent.staticMeshBatch().getVertexBuffer(),
+                    staticMeshComponent.staticMeshBatch().getIndexBuffer()
+            );
+            graphicsCommands.setShaderProgram(
+                    staticMeshComponent.staticMeshBatch().getShaderProgram()
+            );
+            graphicsCommands.drawIndexed(staticMeshComponent.staticMeshBatch().getIndexCount());
         });
-        */
+
 
         scene.getEngine().findEntitiesWith(TransformComponent.class, DynamicMeshComponent.class).stream().forEach(components -> {
 
@@ -72,7 +80,7 @@ public class RenderSystem extends EcsSystem {
             graphicsCommands.setShaderProgram(
                     dynamicMeshComponent.dynamicMesh().getShaderProgram()
             );
-            graphicsCommands.drawIndexed(dynamicMeshComponent.dynamicMesh());
+            graphicsCommands.drawIndexed(dynamicMeshComponent.dynamicMesh().getIndexCount());
         });
 
         graphicsCommands.endRecording();

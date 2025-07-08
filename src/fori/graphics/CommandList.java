@@ -19,18 +19,6 @@ public abstract class CommandList extends Disposable {
         return null;
     }
 
-    public int getFrameIndex() {
-        return frameIndex;
-    }
-
-    public void setFrameIndex(int frameIndex) {
-        this.frameIndex = frameIndex;
-    }
-
-    @Override
-    public void dispose() {
-
-    }
 
     public void startRecording(Semaphore[] waitSemaphores, RenderTarget renderTarget, int frameIndex) {
         this.waitSemaphores = waitSemaphores;

@@ -90,15 +90,17 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
     }
 
     @Override
-    public void drawIndexed(DynamicMesh dynamicMesh) {
-        VulkanDynamicMesh vulkanDynamicMesh = (VulkanDynamicMesh) dynamicMesh;
-        vkCmdDrawIndexed(commandBuffers[frameIndex], vulkanDynamicMesh.getIndexCount(), 1, 0, 0, 0);
+    public void drawIndexed(int indexCount) {
+        vkCmdDrawIndexed(
+                commandBuffers[frameIndex],
+                indexCount,
+                1,
+                0,
+                0,
+                0
+        );
     }
 
-    @Override
-    public void drawIndexed(StaticMeshBatch staticMeshBatch) {
-
-    }
 
     @Override
     public void startRecording(Semaphore[] waitSemaphores, RenderTarget renderTarget, int frameIndex) {
@@ -280,4 +282,9 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
     }
 
 
+    @Override
+    public void dispose() {
+        vkDeviceWaitIdle(VulkanDeviceManager.getCurrentDevice());
+        vkDestroyCommandPool(device, commandPool, null);
+    }
 }

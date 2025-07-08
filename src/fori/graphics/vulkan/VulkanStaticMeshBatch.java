@@ -13,7 +13,6 @@ import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
 
 public class VulkanStaticMeshBatch extends StaticMeshBatch {
-    private VulkanPipeline pipeline;
     private VkCommandBuffer commandBuffer;
     private long stagingTransferFence;
     private VkQueue graphicsQueue;
@@ -27,7 +26,6 @@ public class VulkanStaticMeshBatch extends StaticMeshBatch {
                                  long commandPool,
                                  VkQueue graphicsQueue,
                                  VkDevice device,
-                                 VulkanPipeline pipeline,
                                  int maxVertexCount,
                                  int maxIndexCount,
                                  int maxTransformCount) {
@@ -35,7 +33,6 @@ public class VulkanStaticMeshBatch extends StaticMeshBatch {
         this.ref = ref;
         this.graphicsQueue = graphicsQueue;
         this.device = device;
-        this.pipeline = pipeline;
 
         try(MemoryStack stack = stackPush()) {
 
@@ -161,10 +158,6 @@ public class VulkanStaticMeshBatch extends StaticMeshBatch {
         vkDestroyFence(device, stagingTransferFence, null);
     }
 
-
-    public VulkanPipeline getPipeline() {
-        return pipeline;
-    }
 
     public long getStagingTransferFence() {
         return stagingTransferFence;
