@@ -23,14 +23,13 @@ public class RenderSystem extends EcsSystem {
 
 
 
-    private RenderTarget swapchainRenderTarget;
     private GraphicsCommandList graphicsCommands;
 
     public RenderSystem(Renderer renderer, Scene scene) {
         this.renderer = renderer;
         this.scene = scene;
-        swapchainRenderTarget = renderer.getSwapchainRenderTarget();
         graphicsCommands = CommandList.newGraphicsCommandList(renderer, renderer.getMaxFramesInFlight());
+
 
         {
             uiCamera = new Camera(
@@ -161,10 +160,9 @@ public class RenderSystem extends EcsSystem {
             sceneCamera = cameraComponent.camera();
         });
 
-
         graphicsCommands.startRecording(
                 renderer.getFrameStartSync(),
-                swapchainRenderTarget,
+                renderer.getSwapchainRenderTarget(),
                 renderer.getFrameIndex()
         );
 
