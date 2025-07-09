@@ -6,6 +6,7 @@ import fori.asset.TextureData;
 import fori.graphics.Buffer;
 import fori.graphics.Disposable;
 import fori.graphics.Texture;
+import fori.graphics.TextureFormatType;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
@@ -25,11 +26,10 @@ public class VulkanTexture extends Texture {
     private VkCommandBuffer commandBuffer;
     private long fence;
     private long commandPool = 0;
-    private int imageFormat;
+
 
     public VulkanTexture(Disposable parent, int width, int height, long imageHandle, int imageFormat, int aspectMask) {
-        super(parent, width, height, null, Nearest, Nearest);
-        this.imageFormat = imageFormat;
+        super(parent, width, height, null, toTextureFormatType(imageFormat), Nearest, Nearest);
         image = new VulkanImage(
                 this,
                 VulkanDeviceManager.getCurrentDevice(),
@@ -40,12 +40,25 @@ public class VulkanTexture extends Texture {
         sampler = new VulkanSampler(this, minFilter, magFilter, false);
     }
 
+    private static TextureFormatType toTextureFormatType(int vulkanImageFormatEnum) {
+        switch (vulkanImageFormatEnum) {
+            case VK_FORMAT_R8G8B8A8_SRGB -> {
+                return TextureFormatType.ColorR8G8B8A8StandardRGB;
+            }
+            case VK_FORMAT_D32_SFLOAT -> {
+                return TextureFormatType.Depth32Float;
+            }
+        }
+
+        return null;
+    }
+
     public VulkanTexture(Disposable parent, int width, int height, Asset<TextureData> textureData, Filter minFilter, Filter magFilter) {
         this(parent, width, height, textureData, minFilter, magFilter, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT);
     }
     public VulkanTexture(Disposable parent, int width, int height, Asset<TextureData> textureData, Filter minFilter, Filter magFilter, int imageFormat, int usage, int tiling, int aspectMask) {
-        super(parent, width, height, textureData, minFilter, magFilter);
-        this.imageFormat = imageFormat;
+        super(parent, width, height, textureData, toTextureFormatType(imageFormat), minFilter, magFilter);
+        formatType = toTextureFormatType(imageFormat);
 
         image = new VulkanImage(
                 this,
@@ -222,9 +235,7 @@ public class VulkanTexture extends Texture {
         return sampler;
     }
 
-    public int getImageFormat() {
-        return imageFormat;
-    }
+
 
     @Override
     public void dispose() {

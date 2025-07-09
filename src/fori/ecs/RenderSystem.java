@@ -1,6 +1,5 @@
 package fori.ecs;
 
-import fori.Surface;
 import fori.asset.AssetPacks;
 import fori.graphics.*;
 import org.joml.Matrix4f;
@@ -43,7 +42,7 @@ public class RenderSystem extends EcsSystem {
             );
 
 
-            uiShaderProgram = ShaderProgram.newShaderProgram(renderer, renderer.getSwapchainRenderTarget());
+            uiShaderProgram = ShaderProgram.newGraphicsShaderProgram(renderer, TextureFormatType.ColorR8G8B8A8StandardRGB, TextureFormatType.Depth32Float);
             uiShaderProgram.setShaders(
                     Shader.newShader(uiShaderProgram, ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex)),
                     Shader.newShader(uiShaderProgram, ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))

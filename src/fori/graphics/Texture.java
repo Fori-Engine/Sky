@@ -8,6 +8,7 @@ public abstract class Texture extends Disposable {
     protected int width, height;
     protected Filter minFilter, magFilter;
     protected byte[] textureData;
+    protected TextureFormatType formatType;
 
     public enum Filter {
         Linear,
@@ -18,7 +19,7 @@ public abstract class Texture extends Disposable {
         return textureData;
     }
 
-    public Texture(Disposable parent, int width, int height, Asset<TextureData> textureData, Filter minFilter, Filter magFilter){
+    public Texture(Disposable parent, int width, int height, Asset<TextureData> textureData, TextureFormatType formatType, Filter minFilter, Filter magFilter){
         super(parent);
         if(textureData != null) {
             this.textureData = textureData.asset.data;
@@ -27,10 +28,13 @@ public abstract class Texture extends Disposable {
         this.height = height;
         this.minFilter = minFilter;
         this.magFilter = magFilter;
+        this.formatType = formatType;
 
     }
 
-
+    public TextureFormatType getFormatType() {
+        return formatType;
+    }
 
     public int getWidth() {
         return width;
@@ -47,6 +51,7 @@ public abstract class Texture extends Disposable {
     public void setHeight(int height) {
         this.height = height;
     }
+
 
     public static Texture newTexture(Disposable parent, Asset<TextureData> textureData, Filter minFilter, Filter magFilter){
         if(Renderer.getRenderAPI() == RenderAPI.Vulkan) return new VulkanTexture(parent, textureData.asset.width, textureData.asset.height, textureData, minFilter, magFilter);

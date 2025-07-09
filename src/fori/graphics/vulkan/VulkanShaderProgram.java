@@ -26,8 +26,13 @@ public class VulkanShaderProgram extends ShaderProgram {
     private VulkanPipeline pipeline;
 
 
-    public VulkanShaderProgram(Disposable parent, RenderTarget renderTarget) {
-        super(parent, renderTarget);
+    public VulkanShaderProgram(Disposable parent, TextureFormatType colorTextureFormat, TextureFormatType depthTextureFormat) {
+        super(parent, colorTextureFormat, depthTextureFormat);
+        entryPoint = MemoryUtil.memUTF8("main");
+    }
+
+    public VulkanShaderProgram(Disposable parent) {
+        super(parent);
         entryPoint = MemoryUtil.memUTF8("main");
     }
 
@@ -46,6 +51,18 @@ public class VulkanShaderProgram extends ShaderProgram {
             vertexShaderStageInfo.pName(entryPoint);
         }
 
+    }
+
+    private int toVkTextureFormatEnum(TextureFormatType textureFormatType) {
+        switch (textureFormatType) {
+            case ColorR8G8B8A8StandardRGB -> {
+                return VK_FORMAT_R8G8B8A8_SRGB;
+            }
+            case Depth32Float -> {
+                return VK_FORMAT_D32_SFLOAT;
+            }
+        }
+        return -1;
     }
 
     private VulkanPipeline createGraphicsPipeline(VkDevice device) {
@@ -212,12 +229,8 @@ public class VulkanShaderProgram extends ShaderProgram {
             VkPipelineRenderingCreateInfoKHR pipelineRenderingCreateInfoKHR = VkPipelineRenderingCreateInfoKHR.calloc(stack);
             pipelineRenderingCreateInfoKHR.colorAttachmentCount(1);
             pipelineRenderingCreateInfoKHR.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR);
-            pipelineRenderingCreateInfoKHR.pColorAttachmentFormats(stack.ints(((VulkanTexture) renderTarget.getTexture(0)).getImageFormat()));
-
-            //TODO: KMS
-            VulkanTexture depthImage = ((VulkanTexture) renderTarget.getTexture(2));
-
-            pipelineRenderingCreateInfoKHR.depthAttachmentFormat(depthImage.getImageFormat());
+            pipelineRenderingCreateInfoKHR.pColorAttachmentFormats(stack.ints(toVkTextureFormatEnum(colorTextureFormat)));
+            pipelineRenderingCreateInfoKHR.depthAttachmentFormat(toVkTextureFormatEnum(depthTextureFormat));
 
 
 

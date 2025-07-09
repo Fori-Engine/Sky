@@ -133,7 +133,7 @@ public class WhisperStage extends Stage {
             );
 
 
-            shaderProgram = ShaderProgram.newShaderProgram(renderer, renderer.getSwapchainRenderTarget());
+            shaderProgram = ShaderProgram.newGraphicsShaderProgram(renderer, TextureFormatType.ColorR8G8B8A8StandardRGB, TextureFormatType.Depth32Float);
             shaderProgram.setShaders(
                     Shader.newShader(shaderProgram, ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex)),
                     Shader.newShader(shaderProgram, ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
@@ -214,7 +214,7 @@ public class WhisperStage extends Stage {
                 );
 
 
-                shaderProgram = ShaderProgram.newShaderProgram(renderer, renderer.getSwapchainRenderTarget());
+                shaderProgram = ShaderProgram.newGraphicsShaderProgram(renderer, TextureFormatType.ColorR8G8B8A8StandardRGB, TextureFormatType.Depth32Float);
                 shaderProgram.setShaders(
                         Shader.newShader(shaderProgram, ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex)),
                         Shader.newShader(shaderProgram, ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
@@ -293,7 +293,7 @@ public class WhisperStage extends Stage {
                 );
 
 
-                shaderProgram = ShaderProgram.newShaderProgram(renderer, renderer.getSwapchainRenderTarget());
+                shaderProgram = ShaderProgram.newGraphicsShaderProgram(renderer, TextureFormatType.ColorR8G8B8A8StandardRGB, TextureFormatType.Depth32Float);
                 shaderProgram.setShaders(
                         Shader.newShader(shaderProgram, ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex)),
                         Shader.newShader(shaderProgram, ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))

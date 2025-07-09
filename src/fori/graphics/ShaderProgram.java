@@ -1,7 +1,6 @@
 package fori.graphics;
 
 import fori.Logger;
-import fori.graphics.vulkan.VulkanPipeline;
 import fori.graphics.vulkan.VulkanShaderProgram;
 
 
@@ -10,11 +9,18 @@ public abstract class ShaderProgram extends Disposable {
     protected Shader[] shaders;
     protected ShaderResSet[] resourcesSets;
     protected VertexAttributes.Type[] attributes;
-    protected RenderTarget renderTarget;
+    protected TextureFormatType colorTextureFormat;
+    protected TextureFormatType depthTextureFormat;
 
-    public ShaderProgram(Disposable parent, RenderTarget renderTarget){
+
+    public ShaderProgram(Disposable parent, TextureFormatType colorTextureFormat, TextureFormatType depthTextureFormat){
         super(parent);
-        this.renderTarget = renderTarget;
+        this.colorTextureFormat = colorTextureFormat;
+        this.depthTextureFormat = depthTextureFormat;
+    }
+
+    public ShaderProgram(Disposable parent){
+        super(parent);
     }
 
     public abstract void setShaders(Shader... shaders);
@@ -46,11 +52,10 @@ public abstract class ShaderProgram extends Disposable {
         return attributes;
     }
 
-    public static ShaderProgram newShaderProgram(Disposable parent, RenderTarget renderTarget){
+    public static ShaderProgram newGraphicsShaderProgram(Disposable parent, TextureFormatType colorTextureFormat, TextureFormatType depthTextureFormat){
         if(Renderer.getRenderAPI() == RenderAPI.Vulkan){
-            return new VulkanShaderProgram(parent, renderTarget);
+            return new VulkanShaderProgram(parent, colorTextureFormat, depthTextureFormat);
         }
-
         return null;
     }
 
