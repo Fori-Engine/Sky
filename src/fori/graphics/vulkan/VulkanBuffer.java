@@ -101,7 +101,7 @@ public class VulkanBuffer extends Buffer {
 
     public ByteBuffer map(){
         super.map();
-        mappedMemory = MemoryUtil.memAllocPointer(1);
+        mappedMemory = MemoryUtil.memCallocPointer(1);
         vmaMapMemory(VulkanAllocator.getAllocator().getId(), allocation, mappedMemory);
         return mappedMemory.getByteBuffer(getSizeBytes());
     }
