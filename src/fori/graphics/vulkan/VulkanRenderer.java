@@ -61,6 +61,8 @@ public class VulkanRenderer extends Renderer {
 
         physicalDevice = selectPhysicalDevice(instance, vkSurface);
         physicalDeviceProperties = getPhysicalDeviceProperties(physicalDevice);
+
+
         VulkanDeviceManager.setPhysicalDeviceProperties(physicalDeviceProperties);
         Logger.info(VulkanRenderer.class, "Selected Physical Device " + physicalDeviceProperties.deviceNameString());
         device = createDevice(physicalDevice);
@@ -443,13 +445,6 @@ public class VulkanRenderer extends Renderer {
 
 
 
-    private void disposeSwapchainRenderTarget(){
-        swapchain.disposeAll();
-        this.remove(swapchain);
-        swapchainRenderTarget.disposeAll();
-        this.remove(swapchainRenderTarget);
-    }
-
 
 
 
@@ -513,7 +508,6 @@ public class VulkanRenderer extends Renderer {
         this.remove(vulkanDynamicMesh.getIndexBuffer());
     }
 
-
     @Override
     public DynamicMesh newDynamicMesh(int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram) {
 
@@ -529,17 +523,27 @@ public class VulkanRenderer extends Renderer {
         return vulkanDynamicMesh;
     }
 
-
     @Override
-    public void update(boolean surfaceInvalidated) {
-
+    public void startFrame(boolean surfaceInvalidated) {
         if (surfaceInvalidated) {
-            disposeSwapchainRenderTarget();
+            swapchain.disposeAll();
+            this.remove(swapchain);
+            swapchainRenderTarget.disposeAll();
+            this.remove(swapchainRenderTarget);
+
             this.width = surface.getWidth();
             this.height = surface.getHeight();
+
             swapchainRenderTarget = createSwapchainRenderTarget(settings);
             frameIndex = 0;
         }
+    }
+
+
+
+    @Override
+    public void endFrame() {
+
 
         try(MemoryStack stack = stackPush()) {
 

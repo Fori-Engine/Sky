@@ -357,9 +357,10 @@ public class WhisperStage extends Stage {
 
 
     public boolean update(){
-        scene.tick();
 
-        renderer.update(surface.update());
+        renderer.startFrame(surface.update());
+        scene.tick();
+        renderer.endFrame();
 
 
         Time.deltaTime = (float) (surface.getTime() - startTime);

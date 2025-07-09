@@ -3,6 +3,7 @@ package fori.graphics.vulkan;
 import fori.graphics.Disposable;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.util.vma.VmaAllocationCreateInfo;
 import org.lwjgl.util.vma.VmaAllocationInfo;
 import org.lwjgl.vulkan.VkDevice;
@@ -68,14 +69,13 @@ public class VulkanImage extends Disposable {
 
 
             pImage = stack.callocLong(1);
-            pAllocation = stack.callocPointer(1);
+            pAllocation = MemoryUtil.memCallocPointer(1);
 
 
             allocationInfo = VmaAllocationInfo.calloc(stack);
             vmaCreateImage(allocator.getId(), imageCreateInfo, allocationCreateInfo, pImage, pAllocation, allocationInfo);
 
             memory = allocationInfo.deviceMemory();
-
             handle = pImage.get(0);
         }
     }
@@ -91,8 +91,10 @@ public class VulkanImage extends Disposable {
     @Override
     public void dispose() {
         vkDeviceWaitIdle(VulkanDeviceManager.getCurrentDevice());
-        if(pAllocation != null)
+        if(memory != MemoryUtil.NULL) {
             vmaDestroyImage(VulkanAllocator.getAllocator().getId(), handle, pAllocation.get(0));
+            pAllocation.free();
+        }
     }
 
 }

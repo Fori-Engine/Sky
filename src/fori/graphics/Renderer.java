@@ -49,7 +49,8 @@ public abstract class Renderer extends Disposable {
         commandLists.add(commandList);
     }
 
-    public abstract void update(boolean surfaceInvalidated);
+    public abstract void startFrame(boolean surfaceInvalidated);
+    public abstract void endFrame();
     public Semaphore[] getFrameStartSync() {
         return frameStartSemaphores;
     }
