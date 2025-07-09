@@ -48,7 +48,7 @@ public class VulkanShaderProgram extends ShaderProgram {
 
     }
 
-    private VulkanPipeline createPipeline(VkDevice device) {
+    private VulkanPipeline createGraphicsPipeline(VkDevice device) {
 
 
         long pipelineLayout;
@@ -396,7 +396,7 @@ public class VulkanShaderProgram extends ShaderProgram {
             }
         }
 
-        pipeline = createPipeline(VulkanDeviceManager.getCurrentDevice());
+        pipeline = createGraphicsPipeline(VulkanDeviceManager.getCurrentDevice());
 
 
 

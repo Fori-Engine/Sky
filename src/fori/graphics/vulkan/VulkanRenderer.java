@@ -130,26 +130,26 @@ public class VulkanRenderer extends Renderer {
 
 
 
-                vkGetSwapchainImagesKHR(device, swapchain.handle, imageCount, null);
+                vkGetSwapchainImagesKHR(device, swapchain.getHandle(), imageCount, null);
 
                 LongBuffer pSwapchainImages = stack.mallocLong(imageCount.get(0));
 
-                vkGetSwapchainImagesKHR(device, swapchain.handle, imageCount, pSwapchainImages);
+                vkGetSwapchainImagesKHR(device, swapchain.getHandle(), imageCount, pSwapchainImages);
 
                 for (int i = 0; i < pSwapchainImages.capacity(); i++) {
-                    swapchain.images.add(pSwapchainImages.get(i));
+                    swapchain.getImages().add(pSwapchainImages.get(i));
                 }
             }
 
         }
 
-        for (int i = 0; i < swapchain.images.size(); i++) {
+        for (int i = 0; i < swapchain.getImages().size(); i++) {
             swapchainRenderTarget.addTexture(i, new VulkanTexture(
                     swapchainRenderTarget,
-                    swapchain.extent.width(),
-                    swapchain.extent.height(),
-                    swapchain.images.get(i),
-                    swapchain.imageFormat,
+                    swapchain.getExtent().width(),
+                    swapchain.getExtent().height(),
+                    swapchain.getImages().get(i),
+                    swapchain.getImageFormat(),
                     VK_IMAGE_ASPECT_COLOR_BIT
             ));
         }
@@ -160,8 +160,8 @@ public class VulkanRenderer extends Renderer {
                 maxFramesInFlight,
                 new VulkanTexture(
                         swapchainRenderTarget,
-                        swapchain.extent.width(),
-                        swapchain.extent.height(),
+                        swapchain.getExtent().width(),
+                        swapchain.getExtent().height(),
                         null,
                         Texture.Filter.Nearest,
                         Texture.Filter.Nearest,
@@ -441,15 +441,11 @@ public class VulkanRenderer extends Renderer {
 
 
 
-    private void createSwapchainRenderTarget() {
-        swapchainRenderTarget = createSwapchainRenderTarget(settings);
-        frameIndex = 0;
-    }
+
 
     private void disposeSwapchainRenderTarget(){
         swapchain.disposeAll();
         this.remove(swapchain);
-
         swapchainRenderTarget.disposeAll();
         this.remove(swapchainRenderTarget);
     }
@@ -541,7 +537,8 @@ public class VulkanRenderer extends Renderer {
             disposeSwapchainRenderTarget();
             this.width = surface.getWidth();
             this.height = surface.getHeight();
-            createSwapchainRenderTarget();
+            swapchainRenderTarget = createSwapchainRenderTarget(settings);
+            frameIndex = 0;
         }
 
         try(MemoryStack stack = stackPush()) {
@@ -550,7 +547,7 @@ public class VulkanRenderer extends Renderer {
 
             vkAcquireNextImageKHR(
                     device,
-                    swapchain.handle,
+                    swapchain.getHandle(),
                     VulkanUtil.UINT64_MAX,
                     ((VulkanSemaphore[]) frameStartSemaphores)[frameIndex].getHandle(),
                     VK_NULL_HANDLE,
@@ -575,7 +572,7 @@ public class VulkanRenderer extends Renderer {
                     ((VulkanSemaphore[]) finishedSemaphores)[frameIndex].getHandle()
             ));
             presentInfo.swapchainCount(1);
-            presentInfo.pSwapchains(stack.longs(swapchain.handle));
+            presentInfo.pSwapchains(stack.longs(swapchain.getHandle()));
             presentInfo.pImageIndices(stack.ints(acquiredImageIndex));
 
             vkQueuePresentKHR(presentQueue, presentInfo);

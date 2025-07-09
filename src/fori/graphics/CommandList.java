@@ -27,11 +27,7 @@ public abstract class CommandList extends Disposable {
     }
     public abstract void endRecording();
     public abstract void run();
-
-    public void setWaitOn(Semaphore... waitSemaphores) {
-        this.waitSemaphores = waitSemaphores;
-    }
-
+    public abstract void waitForFinish();
 
     public Semaphore[] getWaitSemaphores() {
         return waitSemaphores;

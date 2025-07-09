@@ -14,10 +14,10 @@ import static org.lwjgl.vulkan.KHRSwapchain.*;
 import static org.lwjgl.vulkan.VK10.*;
 
 public class VulkanSwapchain extends Disposable {
-    public long handle;
-    public List<Long> images = new ArrayList<>();
-    public int imageFormat;
-    public VkExtent2D extent;
+    private long handle;
+    private List<Long> images = new ArrayList<>();
+    private int imageFormat;
+    private VkExtent2D extent;
 
     public VulkanSwapchain(Disposable parent, long surface, int minImageCount, int imageFormat, int imageColorSpace, int presentMode, VulkanPhysicalDeviceQueueFamilies physicalDeviceQueueFamilies, VulkanSwapchainSupportInfo swapchainSupportDetails, VkExtent2D extent){
         super(parent);
@@ -61,6 +61,22 @@ public class VulkanSwapchain extends Disposable {
             handle = pSwapChain.get(0);
         }
 
+    }
+
+    public long getHandle() {
+        return handle;
+    }
+
+    public List<Long> getImages() {
+        return images;
+    }
+
+    public int getImageFormat() {
+        return imageFormat;
+    }
+
+    public VkExtent2D getExtent() {
+        return extent;
     }
 
     @Override

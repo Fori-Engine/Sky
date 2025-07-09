@@ -15,7 +15,7 @@ import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
 
 public class VulkanGraphicsCommandList extends GraphicsCommandList {
 
-    private VkQueue submitQueue;
+    private VkQueue graphicsQueue;
     private long commandPool;
     private VkCommandBuffer[] commandBuffers;
     private VkDevice device;
@@ -28,7 +28,7 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
     public VulkanGraphicsCommandList(Disposable parent, int framesInFlight) {
         super(parent, framesInFlight);
 
-        submitQueue = VulkanDeviceManager.getGraphicsQueue();
+        graphicsQueue = VulkanDeviceManager.getGraphicsQueue();
         device = VulkanDeviceManager.getCurrentDevice();
         commandPool = VulkanUtil.createCommandPool(device, VulkanDeviceManager.getGraphicsFamilyIndex());
 
@@ -275,10 +275,15 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
             submitInfo.pCommandBuffers(stack.pointers(commandBuffers[frameIndex]));
             submitInfo.pSignalSemaphores(stack.longs(((VulkanSemaphore) finishedSemaphores[frameIndex]).getHandle()));
 
-            vkQueueSubmit(submitQueue, submitInfo, ((VulkanFence) submissionFences[frameIndex]).getHandle());
+            vkQueueSubmit(graphicsQueue, submitInfo, ((VulkanFence) submissionFences[frameIndex]).getHandle());
         }
 
 
+    }
+
+    @Override
+    public void waitForFinish() {
+        vkQueueWaitIdle(graphicsQueue);
     }
 
 
