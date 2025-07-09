@@ -32,7 +32,6 @@ public class VulkanTexture extends Texture {
         super(parent, width, height, null, toTextureFormatType(imageFormat), Nearest, Nearest);
         image = new VulkanImage(
                 this,
-                VulkanDeviceManager.getCurrentDevice(),
                 imageHandle,
                 imageFormat
         );
@@ -50,7 +49,6 @@ public class VulkanTexture extends Texture {
         image = new VulkanImage(
                 this,
                 VulkanAllocator.getAllocator(),
-                VulkanDeviceManager.getCurrentDevice(),
                 getWidth(),
                 getHeight(),
                 imageFormat,

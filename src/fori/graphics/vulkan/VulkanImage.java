@@ -28,21 +28,17 @@ public class VulkanImage extends Disposable {
     private PointerBuffer pAllocation;
     private VmaAllocationInfo allocationInfo;
     private VmaAllocationCreateInfo allocationCreateInfo;
-    private VkDevice device;
     private int format;
     private VulkanAllocator allocator;
 
-    public VulkanImage(Disposable parent, VkDevice device, long imageHandle, int imageFormat) {
+    public VulkanImage(Disposable parent, long imageHandle, int imageFormat) {
         super(parent);
-        this.device = device;
         this.handle = imageHandle;
         this.format = imageFormat;
     }
 
-    public VulkanImage(Disposable parent, VulkanAllocator allocator, VkDevice device, int width, int height, int format, int usage, int tiling){
+    public VulkanImage(Disposable parent, VulkanAllocator allocator, int width, int height, int format, int usage, int tiling){
         super(parent);
-
-        this.device = device;
         this.format = format;
         this.allocator = allocator;
 
