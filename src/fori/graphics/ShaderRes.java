@@ -13,7 +13,8 @@ public class ShaderRes {
     public enum Type {
         ShaderStorageBuffer,
         UniformBuffer,
-        CombinedSampler
+        CombinedSampler,
+        StorageImage
     }
 
     public enum ShaderStage {

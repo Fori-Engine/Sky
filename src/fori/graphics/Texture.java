@@ -53,13 +53,13 @@ public abstract class Texture extends Disposable {
     }
 
 
-    public static Texture newTexture(Disposable parent, Asset<TextureData> textureData, Filter minFilter, Filter magFilter){
-        if(Renderer.getRenderAPI() == RenderAPI.Vulkan) return new VulkanTexture(parent, textureData.asset.width, textureData.asset.height, textureData, minFilter, magFilter);
+    public static Texture newTexture(Disposable parent, Asset<TextureData> textureData, TextureFormatType textureFormatType, Filter minFilter, Filter magFilter){
+        if(Renderer.getRenderAPI() == RenderAPI.Vulkan) return new VulkanTexture(parent, textureData.asset.width, textureData.asset.height, textureData, textureFormatType, minFilter, magFilter);
         return null;
     }
 
-    public static Texture newTexture(Disposable parent, int width, int height, Filter minFilter, Filter magFilter){
-        if(Renderer.getRenderAPI() == RenderAPI.Vulkan) return new VulkanTexture(parent, width, height, null, minFilter, magFilter);
+    public static Texture newTexture(Disposable parent, int width, int height, TextureFormatType textureFormatType, Filter minFilter, Filter magFilter){
+        if(Renderer.getRenderAPI() == RenderAPI.Vulkan) return new VulkanTexture(parent, width, height, null, textureFormatType, minFilter, magFilter);
         return null;
     }
 

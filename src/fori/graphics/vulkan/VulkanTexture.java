@@ -39,8 +39,8 @@ public class VulkanTexture extends Texture {
         sampler = new VulkanSampler(this, minFilter, magFilter, false);
     }
 
-    public VulkanTexture(Disposable parent, int width, int height, Asset<TextureData> textureData, Filter minFilter, Filter magFilter) {
-        this(parent, width, height, textureData, minFilter, magFilter, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT);
+    public VulkanTexture(Disposable parent, int width, int height, Asset<TextureData> textureData, TextureFormatType textureFormatType, Filter minFilter, Filter magFilter) {
+        this(parent, width, height, textureData, minFilter, magFilter, VulkanUtil.toVkTextureFormatEnum(textureFormatType), VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT);
     }
     public VulkanTexture(Disposable parent, int width, int height, Asset<TextureData> textureData, Filter minFilter, Filter magFilter, int imageFormat, int usage, int tiling, int aspectMask) {
         super(parent, width, height, textureData, toTextureFormatType(imageFormat), minFilter, magFilter);

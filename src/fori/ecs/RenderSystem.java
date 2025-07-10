@@ -3,9 +3,7 @@ package fori.ecs;
 import fori.asset.AssetPacks;
 import fori.graphics.*;
 import org.joml.Matrix4f;
-
 import java.nio.ByteBuffer;
-
 import static fori.graphics.ShaderRes.ShaderStage.*;
 import static fori.graphics.ShaderRes.Type.*;
 import static fori.graphics.VertexAttributes.Type.*;
@@ -27,6 +25,7 @@ public class RenderSystem extends EcsSystem {
 
     private GraphicsCommandList graphicsCommands;
     private ComputeCommandList computeCommands;
+    private RenderTarget targetA;
 
     public RenderSystem(Renderer renderer, Scene scene) {
         this.renderer = renderer;
@@ -57,6 +56,15 @@ public class RenderSystem extends EcsSystem {
                     ).sizeBytes(SizeUtil.MATRIX_SIZE_BYTES)
             ));
 
+            /*
+            targetA = new RenderTarget(renderer, 3);
+            for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
+                targetA.addTexture(frameIndex, Texture.newTexture(targetA, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8StandardRGB, Texture.Filter.Nearest, Texture.Filter.Nearest));
+            }
+            targetA.addTexture(2, Texture.newTexture(targetA, renderer.getWidth(), renderer.getHeight(), TextureFormatType.Depth32Float, Texture.Filter.Nearest, Texture.Filter.Nearest));
+
+
+             */
 
         }
 
@@ -192,7 +200,7 @@ public class RenderSystem extends EcsSystem {
 
         graphicsCommands.startRecording(
                 renderer.getFrameStartSync(),
-                renderer.getSwapchainRenderTarget(),
+                renderer.getSwapchainRenderTarget(), //targetA
                 renderer.getFrameIndex()
         );
         {
@@ -258,6 +266,16 @@ public class RenderSystem extends EcsSystem {
                 renderer.getFrameIndex()
         );
         {
+            /*
+            RenderTarget swapchainRT = renderer.getSwapchainRenderTarget();
+            computeCommands.copyTextures(targetA.getTexture(0), swapchainRT.getTexture(0));
+            computeCommands.copyTextures(targetA.getTexture(1), swapchainRT.getTexture(1));
+            computeCommands.copyTextures(targetA.getTexture(2), swapchainRT.getTexture(2));
+
+             */
+
+
+
             computeCommands.setShaderProgram(computeShaderProgram);
             computeCommands.dispatch(10, 10, 10);
         }

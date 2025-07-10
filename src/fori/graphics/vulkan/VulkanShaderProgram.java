@@ -53,17 +53,6 @@ public class VulkanShaderProgram extends ShaderProgram {
 
     }
 
-    private int toVkTextureFormatEnum(TextureFormatType textureFormatType) {
-        switch (textureFormatType) {
-            case ColorR8G8B8A8StandardRGB -> {
-                return VK_FORMAT_R8G8B8A8_SRGB;
-            }
-            case Depth32Float -> {
-                return VK_FORMAT_D32_SFLOAT;
-            }
-        }
-        return -1;
-    }
 
     private VulkanPipeline createComputePipeline(VkDevice device) {
 
@@ -278,8 +267,8 @@ public class VulkanShaderProgram extends ShaderProgram {
             VkPipelineRenderingCreateInfoKHR pipelineRenderingCreateInfoKHR = VkPipelineRenderingCreateInfoKHR.calloc(stack);
             pipelineRenderingCreateInfoKHR.colorAttachmentCount(1);
             pipelineRenderingCreateInfoKHR.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR);
-            pipelineRenderingCreateInfoKHR.pColorAttachmentFormats(stack.ints(toVkTextureFormatEnum(colorTextureFormat)));
-            pipelineRenderingCreateInfoKHR.depthAttachmentFormat(toVkTextureFormatEnum(depthTextureFormat));
+            pipelineRenderingCreateInfoKHR.pColorAttachmentFormats(stack.ints(VulkanUtil.toVkTextureFormatEnum(colorTextureFormat)));
+            pipelineRenderingCreateInfoKHR.depthAttachmentFormat(VulkanUtil.toVkTextureFormatEnum(depthTextureFormat));
 
 
 
@@ -570,6 +559,9 @@ public class VulkanShaderProgram extends ShaderProgram {
             }
             case CombinedSampler -> {
                 return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            }
+            case StorageImage -> {
+                return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
             }
         }
 

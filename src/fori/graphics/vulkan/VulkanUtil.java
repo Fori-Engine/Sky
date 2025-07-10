@@ -1,5 +1,6 @@
 package fori.graphics.vulkan;
 
+import fori.graphics.TextureFormatType;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkCommandPoolCreateInfo;
 import org.lwjgl.vulkan.VkDevice;
@@ -32,6 +33,18 @@ public class VulkanUtil {
         }
 
         return commandPool;
+    }
+
+    public static int toVkTextureFormatEnum(TextureFormatType textureFormatType) {
+        switch (textureFormatType) {
+            case ColorR8G8B8A8StandardRGB -> {
+                return VK_FORMAT_R8G8B8A8_SRGB;
+            }
+            case Depth32Float -> {
+                return VK_FORMAT_D32_SFLOAT;
+            }
+        }
+        return -1;
     }
 
 }

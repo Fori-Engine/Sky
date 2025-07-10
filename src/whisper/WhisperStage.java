@@ -178,7 +178,7 @@ public class WhisperStage extends Stage {
 
             scene.registerStaticMeshBatch("Shops", shopStaticMeshBatch);
 
-            Texture texture = Texture.newTexture(renderer, AssetPacks.getAsset("core:assets/textures/viking_room.png"), Texture.Filter.Linear, Texture.Filter.Linear);
+            Texture texture = Texture.newTexture(renderer, AssetPacks.getAsset("core:assets/textures/viking_room.png"), TextureFormatType.ColorR8G8B8A8StandardRGB, Texture.Filter.Linear, Texture.Filter.Linear);
 
 
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
