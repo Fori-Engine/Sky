@@ -24,7 +24,7 @@ public class VulkanTexture extends Texture {
     private VulkanSampler sampler;
     private Buffer imageData;
     private VkCommandBuffer commandBuffer;
-    private long fence;
+    private VulkanFence fence;
     private long commandPool = 0;
 
 
@@ -94,27 +94,21 @@ public class VulkanTexture extends Texture {
                 PointerBuffer pCommandBuffers = stack.mallocPointer(1);
 
                 if (vkAllocateCommandBuffers(VulkanRuntime.getCurrentDevice(), allocInfo, pCommandBuffers) != VK_SUCCESS) {
-                    throw new RuntimeException(Logger.error(VulkanStaticMeshBatch.class, "Failed to create per-RenderCommand command buffer"));
+                    throw new RuntimeException(Logger.error(VulkanStaticMeshBatch.class, "Failed to create command buffer"));
                 }
 
                 commandBuffer = new VkCommandBuffer(pCommandBuffers.get(0), VulkanRuntime.getCurrentDevice());
 
-                LongBuffer pFence = stack.mallocLong(1);
-
-                VkFenceCreateInfo transferFenceCreateInfo = VkFenceCreateInfo.calloc(stack);
-                transferFenceCreateInfo.sType(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
-                vkCreateFence(VulkanRuntime.getCurrentDevice(), transferFenceCreateInfo, null, pFence);
-
-                fence = pFence.get(0);
+                fence = new VulkanFence(this, VulkanRuntime.getCurrentDevice(), 0);
 
 
-                vkResetFences(VulkanRuntime.getCurrentDevice(), fence);
+                vkResetFences(VulkanRuntime.getCurrentDevice(), fence.getHandle());
 
                 VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
                 beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
 
                 if (vkBeginCommandBuffer(commandBuffer, beginInfo) != VK_SUCCESS) {
-                    throw new RuntimeException(Logger.error(VulkanStaticMeshBatch.class, "Failed to start recording per-RenderCommand command buffer"));
+                    throw new RuntimeException(Logger.error(VulkanStaticMeshBatch.class, "Failed to start recording command buffer"));
                 }
 
                 transitionImageLayout(
@@ -145,11 +139,11 @@ public class VulkanTexture extends Texture {
                 submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
                 submitInfo.pCommandBuffers(stack.pointers(commandBuffer));
 
-                if (vkQueueSubmit(VulkanRuntime.getGraphicsQueue(), submitInfo, fence) != VK_SUCCESS) {
+                if (vkQueueSubmit(VulkanRuntime.getGraphicsQueue(), submitInfo, fence.getHandle()) != VK_SUCCESS) {
                     throw new RuntimeException(Logger.error(VulkanTexture.class, "Failed to submit per-RenderCommand command buffer"));
                 }
 
-                vkWaitForFences(VulkanRuntime.getCurrentDevice(), fence, true, VulkanUtil.UINT64_MAX);
+                vkWaitForFences(VulkanRuntime.getCurrentDevice(), fence.getHandle(), true, VulkanUtil.UINT64_MAX);
             }
         }
 
@@ -239,9 +233,6 @@ public class VulkanTexture extends Texture {
     public void dispose() {
         vkDeviceWaitIdle(VulkanRuntime.getCurrentDevice());
         vkDestroyCommandPool(VulkanRuntime.getCurrentDevice(), commandPool, null);
-        vkDestroyFence(VulkanRuntime.getCurrentDevice(), fence, null);
-
-
 
     }
 

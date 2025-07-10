@@ -14,13 +14,13 @@ import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
 
 public class VulkanStaticMeshBatch extends StaticMeshBatch {
     private VkCommandBuffer commandBuffer;
-    private long stagingTransferFence;
+    private VulkanFence stagingTransferFence;
     private VkQueue graphicsQueue;
     private VkDevice device;
     private Buffer stagingVertexBuffer, stagingIndexBuffer;
-    private Disposable ref;
+    private Disposable parent;
 
-    public VulkanStaticMeshBatch(Disposable ref,
+    public VulkanStaticMeshBatch(Disposable parent,
                                  ShaderProgram shaderProgram,
                                  int framesInFlight,
                                  long commandPool,
@@ -30,7 +30,7 @@ public class VulkanStaticMeshBatch extends StaticMeshBatch {
                                  int maxIndexCount,
                                  int maxTransformCount) {
         super(maxVertexCount, maxIndexCount, maxTransformCount, shaderProgram);
-        this.ref = ref;
+        this.parent = parent;
         this.graphicsQueue = graphicsQueue;
         this.device = device;
 
@@ -50,40 +50,34 @@ public class VulkanStaticMeshBatch extends StaticMeshBatch {
 
             commandBuffer = new VkCommandBuffer(pCommandBuffers.get(0), device);
 
-            LongBuffer pFence = stack.mallocLong(1);
-
-            VkFenceCreateInfo transferFenceCreateInfo = VkFenceCreateInfo.calloc(stack);
-            transferFenceCreateInfo.sType(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
-            vkCreateFence(device, transferFenceCreateInfo, null, pFence);
-
-            stagingTransferFence = pFence.get(0);
+            stagingTransferFence = new VulkanFence(parent, VulkanRuntime.getCurrentDevice(), 0);
         }
 
 
 
         stagingVertexBuffer = Buffer.newBuffer(
-                ref,
+                parent,
                 VertexAttributes.getSize(this.shaderProgram.getAttributes()) * Float.BYTES * this.maxVertexCount,
                 Buffer.Usage.VertexBuffer,
                 Buffer.Type.CPUGPUShared,
                 true
         );
         stagingIndexBuffer = Buffer.newBuffer(
-                ref,
+                parent,
                 this.maxIndexCount * Integer.BYTES,
                 Buffer.Usage.IndexBuffer,
                 Buffer.Type.CPUGPUShared,
                 true
         );
         vertexBuffer = Buffer.newBuffer(
-                ref,
+                parent,
                 VertexAttributes.getSize(this.shaderProgram.getAttributes()) * Float.BYTES * this.maxVertexCount,
                 Buffer.Usage.VertexBuffer,
                 Buffer.Type.GPULocal,
                 false
         );
         indexBuffer = Buffer.newBuffer(
-                ref,
+                parent,
                 this.maxIndexCount * Integer.BYTES,
                 Buffer.Usage.IndexBuffer,
                 Buffer.Type.GPULocal,
@@ -95,7 +89,7 @@ public class VulkanStaticMeshBatch extends StaticMeshBatch {
 
         for (int i = 0; i < framesInFlight; i++) {
             transformsBuffers[i] = Buffer.newBuffer(
-                    ref,
+                    parent,
                     SizeUtil.MATRIX_SIZE_BYTES * maxTransformCount,
                     Buffer.Usage.ShaderStorageBuffer,
                     Buffer.Type.CPUGPUShared,
@@ -103,7 +97,7 @@ public class VulkanStaticMeshBatch extends StaticMeshBatch {
             );
 
             cameraBuffers[i] = Buffer.newBuffer(
-                    ref,
+                    parent,
                     Camera.SIZE,
                     Buffer.Usage.UniformBuffer,
                     Buffer.Type.CPUGPUShared,
@@ -152,20 +146,16 @@ public class VulkanStaticMeshBatch extends StaticMeshBatch {
         stagingVertexBuffer.dispose();
         stagingIndexBuffer.dispose();
 
-        ref.remove(stagingVertexBuffer);
-        ref.remove(stagingIndexBuffer);
-
-        vkDestroyFence(device, stagingTransferFence, null);
+        parent.remove(stagingVertexBuffer);
+        parent.remove(stagingIndexBuffer);
+        parent.remove(stagingTransferFence);
     }
 
 
-    public long getStagingTransferFence() {
-        return stagingTransferFence;
-    }
 
     @Override
     public void updateMeshBatch(int vertexCount, int indexCount) {
-        vkResetFences(device, stagingTransferFence);
+        vkResetFences(device, stagingTransferFence.getHandle());
 
         try(MemoryStack stack = stackPush()) {
             VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
@@ -203,11 +193,11 @@ public class VulkanStaticMeshBatch extends StaticMeshBatch {
             submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
             submitInfo.pCommandBuffers(stack.pointers(commandBuffer));
 
-            if(vkQueueSubmit(graphicsQueue, submitInfo, stagingTransferFence) != VK_SUCCESS) {
+            if(vkQueueSubmit(graphicsQueue, submitInfo, stagingTransferFence.getHandle()) != VK_SUCCESS) {
                 throw new RuntimeException(Logger.error(VulkanStaticMeshBatch.class, "Failed to submit command buffer"));
             }
 
-            vkWaitForFences(device, stagingTransferFence, true, VulkanUtil.UINT64_MAX);
+            vkWaitForFences(device, stagingTransferFence.getHandle(), true, VulkanUtil.UINT64_MAX);
 
 
         }
