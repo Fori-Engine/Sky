@@ -14,6 +14,9 @@ public class RenderSystem extends EcsSystem {
     private Renderer renderer;
     private Scene scene;
     private Camera sceneCamera;
+    private ShaderProgram computeShaderProgram;
+
+
 
     private Camera uiCamera;
     private ShaderProgram uiShaderProgram;
@@ -23,13 +26,41 @@ public class RenderSystem extends EcsSystem {
 
 
     private GraphicsCommandList graphicsCommands;
+    private ComputeCommandList computeCommands;
 
     public RenderSystem(Renderer renderer, Scene scene) {
         this.renderer = renderer;
         this.scene = scene;
         graphicsCommands = CommandList.newGraphicsCommandList(renderer, renderer.getMaxFramesInFlight());
+        computeCommands = CommandList.newComputeCommandList(renderer, renderer.getMaxFramesInFlight());
+
+        //Compute Shader
+        {
+            ShaderReader.ShaderSources shaderSources = ShaderReader.read(
+                    AssetPacks.<String>getAsset("core:assets/shaders/vulkan/Compute.glsl").asset
+            );
 
 
+            computeShaderProgram = ShaderProgram.newComputeShaderProgram(renderer);
+            computeShaderProgram.setShaders(
+                    Shader.newShader(computeShaderProgram, ShaderType.Compute, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Compute), ShaderType.Compute))
+            );
+
+            computeShaderProgram.bind(null,
+                    new ShaderResSet(
+                    0,
+                    new ShaderRes(
+                            "test",
+                            0,
+                            UniformBuffer,
+                            VertexStage
+                    ).sizeBytes(SizeUtil.MATRIX_SIZE_BYTES)
+            ));
+
+
+        }
+
+        //UI
         {
             uiCamera = new Camera(
                     new Matrix4f().identity(),
@@ -164,62 +195,81 @@ public class RenderSystem extends EcsSystem {
                 renderer.getSwapchainRenderTarget(),
                 renderer.getFrameIndex()
         );
+        {
 
 
-        scene.getEngine().findEntitiesWith(TransformComponent.class, StaticMeshComponent.class).stream().forEach(components -> {
+            scene.getEngine().findEntitiesWith(TransformComponent.class, StaticMeshComponent.class).stream().forEach(components -> {
 
 
-            TransformComponent transformComponent = components.comp1();
-            StaticMeshComponent staticMeshComponent = components.comp2();
+                TransformComponent transformComponent = components.comp1();
+                StaticMeshComponent staticMeshComponent = components.comp2();
 
-            ByteBuffer transformsData = staticMeshComponent.staticMeshBatch().getTransformsBuffers()[renderer.getFrameIndex()].get();
-            transformComponent.transform().get(transformComponent.transformIndex() * SizeUtil.MATRIX_SIZE_BYTES, transformsData);
-            ByteBuffer cameraData = staticMeshComponent.staticMeshBatch().getCameraBuffers()[renderer.getFrameIndex()].get();
+                ByteBuffer transformsData = staticMeshComponent.staticMeshBatch().getTransformsBuffers()[renderer.getFrameIndex()].get();
+                transformComponent.transform().get(transformComponent.transformIndex() * SizeUtil.MATRIX_SIZE_BYTES, transformsData);
+                ByteBuffer cameraData = staticMeshComponent.staticMeshBatch().getCameraBuffers()[renderer.getFrameIndex()].get();
 
-            sceneCamera.getView().get(0, cameraData);
-            sceneCamera.getProj().get(SizeUtil.MATRIX_SIZE_BYTES, cameraData);
+                sceneCamera.getView().get(0, cameraData);
+                sceneCamera.getProj().get(SizeUtil.MATRIX_SIZE_BYTES, cameraData);
 
-            graphicsCommands.setDrawBuffers(
-                    staticMeshComponent.staticMeshBatch().getVertexBuffer(),
-                    staticMeshComponent.staticMeshBatch().getIndexBuffer()
-            );
-            graphicsCommands.setShaderProgram(
-                    staticMeshComponent.staticMeshBatch().getShaderProgram()
-            );
-            graphicsCommands.drawIndexed(staticMeshComponent.staticMeshBatch().getIndexCount());
-        });
-
-
-        scene.getEngine().findEntitiesWith(TransformComponent.class, DynamicMeshComponent.class).stream().forEach(components -> {
+                graphicsCommands.setDrawBuffers(
+                        staticMeshComponent.staticMeshBatch().getVertexBuffer(),
+                        staticMeshComponent.staticMeshBatch().getIndexBuffer()
+                );
+                graphicsCommands.setShaderProgram(
+                        staticMeshComponent.staticMeshBatch().getShaderProgram()
+                );
+                graphicsCommands.drawIndexed(staticMeshComponent.staticMeshBatch().getIndexCount());
+            });
 
 
-            TransformComponent transformComponent = components.comp1();
-            DynamicMeshComponent dynamicMeshComponent = components.comp2();
-
-            ByteBuffer transformsData = dynamicMeshComponent.dynamicMesh().getTransformsBuffers()[renderer.getFrameIndex()].get();
-            transformComponent.transform().get(0, transformsData);
-            ByteBuffer cameraData = dynamicMeshComponent.dynamicMesh().getCameraBuffers()[renderer.getFrameIndex()].get();
-
-            sceneCamera.getView().get(0, cameraData);
-            sceneCamera.getProj().get(SizeUtil.MATRIX_SIZE_BYTES, cameraData);
-
-            graphicsCommands.setDrawBuffers(
-                    dynamicMeshComponent.dynamicMesh().getVertexBuffer(),
-                    dynamicMeshComponent.dynamicMesh().getIndexBuffer()
-            );
-            graphicsCommands.setShaderProgram(
-                    dynamicMeshComponent.dynamicMesh().getShaderProgram()
-            );
-            graphicsCommands.drawIndexed(dynamicMeshComponent.dynamicMesh().getIndexCount());
-        });
-
-        graphicsCommands.setDrawBuffers(uiVertexBuffer, uiIndexBuffer);
-        graphicsCommands.setShaderProgram(uiShaderProgram);
-        graphicsCommands.drawIndexed(6);
+            scene.getEngine().findEntitiesWith(TransformComponent.class, DynamicMeshComponent.class).stream().forEach(components -> {
 
 
+                TransformComponent transformComponent = components.comp1();
+                DynamicMeshComponent dynamicMeshComponent = components.comp2();
+
+                ByteBuffer transformsData = dynamicMeshComponent.dynamicMesh().getTransformsBuffers()[renderer.getFrameIndex()].get();
+                transformComponent.transform().get(0, transformsData);
+                ByteBuffer cameraData = dynamicMeshComponent.dynamicMesh().getCameraBuffers()[renderer.getFrameIndex()].get();
+
+                sceneCamera.getView().get(0, cameraData);
+                sceneCamera.getProj().get(SizeUtil.MATRIX_SIZE_BYTES, cameraData);
+
+                graphicsCommands.setDrawBuffers(
+                        dynamicMeshComponent.dynamicMesh().getVertexBuffer(),
+                        dynamicMeshComponent.dynamicMesh().getIndexBuffer()
+                );
+                graphicsCommands.setShaderProgram(
+                        dynamicMeshComponent.dynamicMesh().getShaderProgram()
+                );
+                graphicsCommands.drawIndexed(dynamicMeshComponent.dynamicMesh().getIndexCount());
+            });
+
+            graphicsCommands.setDrawBuffers(uiVertexBuffer, uiIndexBuffer);
+            graphicsCommands.setShaderProgram(uiShaderProgram);
+            graphicsCommands.drawIndexed(6);
+
+        }
         graphicsCommands.endRecording();
+
+        computeCommands.startRecording(
+                graphicsCommands.getFinishedSemaphores(),
+                renderer.getSwapchainRenderTarget(),
+                renderer.getFrameIndex()
+        );
+        {
+            computeCommands.setShaderProgram(computeShaderProgram);
+            computeCommands.dispatch(10, 10, 10);
+        }
+        computeCommands.endRecording();
+
+
+
+
+
+
         renderer.addCommandList(graphicsCommands);
+        renderer.addCommandList(computeCommands);
     }
 
     @Override

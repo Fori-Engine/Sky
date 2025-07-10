@@ -35,7 +35,7 @@ public class VulkanRenderer extends Renderer {
     private long debugMessenger;
     private VkPhysicalDevice physicalDevice;
     private VkPhysicalDeviceProperties physicalDeviceProperties;
-    private VulkanPhysicalDeviceQueueFamilies physicalDeviceQueueFamilies;
+    private VulkanQueueFamilies queueFamilies;
     private static final Set<String> DEVICE_EXTENSIONS = Stream.of(VK_KHR_SWAPCHAIN_EXTENSION_NAME, KHRDynamicRendering.VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME)
             .collect(toSet());
 
@@ -63,21 +63,21 @@ public class VulkanRenderer extends Renderer {
         physicalDeviceProperties = getPhysicalDeviceProperties(physicalDevice);
 
 
-        VulkanDeviceManager.setPhysicalDeviceProperties(physicalDeviceProperties);
+        VulkanRuntime.setPhysicalDeviceProperties(physicalDeviceProperties);
         Logger.info(VulkanRenderer.class, "Selected Physical Device " + physicalDeviceProperties.deviceNameString());
         device = createDevice(physicalDevice);
 
-        VulkanDeviceManager.setCurrentDevice(device);
-        VulkanDeviceManager.setCurrentPhysicalDevice(physicalDevice);
+        VulkanRuntime.setCurrentDevice(device);
+        VulkanRuntime.setCurrentPhysicalDevice(physicalDevice);
         VulkanAllocator.init(instance, device, physicalDevice);
         allocator = VulkanAllocator.getAllocator();
 
         graphicsQueue = getGraphicsQueue(device);
-        VulkanDeviceManager.setGraphicsQueue(graphicsQueue);
+        VulkanRuntime.setGraphicsQueue(graphicsQueue);
         presentQueue = getPresentQueue(device);
-        VulkanDeviceManager.setGraphicsFamilyIndex(physicalDeviceQueueFamilies.graphicsFamily);
+        VulkanRuntime.setGraphicsFamilyIndex(queueFamilies.graphicsFamily);
 
-        sharedCommandPool = VulkanUtil.createCommandPool(device, VulkanDeviceManager.getGraphicsFamilyIndex());
+        sharedCommandPool = VulkanUtil.createCommandPool(device, VulkanRuntime.getGraphicsFamilyIndex());
         swapchainRenderTarget = createSwapchainRenderTarget(rendererSettings);
 
         frameStartSemaphores = new VulkanSemaphore[maxFramesInFlight];
@@ -124,7 +124,7 @@ public class VulkanRenderer extends Renderer {
                         surfaceFormat.format(),
                         surfaceFormat.colorSpace(),
                         presentMode,
-                        physicalDeviceQueueFamilies,
+                        queueFamilies,
                         swapchainSupportDetails,
                         extent
                 );
@@ -219,10 +219,8 @@ public class VulkanRenderer extends Renderer {
 
                         vkGetPhysicalDeviceSurfaceSupportKHR(device, queueFamilyIndex, surface, hasPresentSupport);
                         if (hasPresentSupport.get(0) == VK_TRUE) presentFamilyIndex = queueFamilyIndex;
-
-
                     }
-                    physicalDeviceQueueFamilies = new VulkanPhysicalDeviceQueueFamilies(graphicsFamilyIndex, presentFamilyIndex);
+                    this.queueFamilies = new VulkanQueueFamilies(graphicsFamilyIndex, presentFamilyIndex);
                 }
 
                 //Find the requisite extensions
@@ -264,8 +262,8 @@ public class VulkanRenderer extends Renderer {
                     hasCorrectSwapchain = swapchainSupportDetails.formats.hasRemaining() && swapchainSupportDetails.presentModes.hasRemaining();
                 }
 
-                if(physicalDeviceQueueFamilies.graphicsFamily != null &&
-                        physicalDeviceQueueFamilies.presentFamily != null &&
+                if(queueFamilies.graphicsFamily != null &&
+                        queueFamilies.presentFamily != null &&
                         hasExtensions &&
                         hasCorrectSwapchain){
 
@@ -301,7 +299,7 @@ public class VulkanRenderer extends Renderer {
 
 
 
-            int[] uniqueQueueFamilies = IntStream.of(physicalDeviceQueueFamilies.graphicsFamily, physicalDeviceQueueFamilies.presentFamily).distinct().toArray();
+            int[] uniqueQueueFamilies = IntStream.of(queueFamilies.graphicsFamily, queueFamilies.presentFamily).distinct().toArray();
 
             VkDeviceQueueCreateInfo.Buffer queueCreateInfos = VkDeviceQueueCreateInfo.calloc(uniqueQueueFamilies.length, stack);
 
@@ -370,7 +368,7 @@ public class VulkanRenderer extends Renderer {
         VkQueue graphicsQueue;
         try(MemoryStack stack = stackPush()) {
             PointerBuffer pGraphicsQueue = stack.pointers(VK_NULL_HANDLE);
-            vkGetDeviceQueue(device, physicalDeviceQueueFamilies.graphicsFamily, 0, pGraphicsQueue);
+            vkGetDeviceQueue(device, queueFamilies.graphicsFamily, 0, pGraphicsQueue);
             graphicsQueue = new VkQueue(pGraphicsQueue.get(0), device);
         }
 
@@ -381,7 +379,7 @@ public class VulkanRenderer extends Renderer {
         VkQueue presentQueue;
         try(MemoryStack stack = stackPush()) {
             PointerBuffer pPresentQueue = stack.pointers(VK_NULL_HANDLE);
-            vkGetDeviceQueue(device, physicalDeviceQueueFamilies.presentFamily, 0, pPresentQueue);
+            vkGetDeviceQueue(device, queueFamilies.presentFamily, 0, pPresentQueue);
             presentQueue = new VkQueue(pPresentQueue.get(0), device);
         }
 

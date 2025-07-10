@@ -26,13 +26,13 @@ public class VulkanShaderProgram extends ShaderProgram {
     private VulkanPipeline pipeline;
 
 
-    public VulkanShaderProgram(Disposable parent, TextureFormatType colorTextureFormat, TextureFormatType depthTextureFormat) {
-        super(parent, colorTextureFormat, depthTextureFormat);
+    public VulkanShaderProgram(Disposable parent, ShaderProgramType type, TextureFormatType colorTextureFormat, TextureFormatType depthTextureFormat) {
+        super(parent, type, colorTextureFormat, depthTextureFormat);
         entryPoint = MemoryUtil.memUTF8("main");
     }
 
-    public VulkanShaderProgram(Disposable parent) {
-        super(parent);
+    public VulkanShaderProgram(Disposable parent, ShaderProgramType type) {
+        super(parent, type);
         entryPoint = MemoryUtil.memUTF8("main");
     }
 
@@ -44,11 +44,11 @@ public class VulkanShaderProgram extends ShaderProgram {
         for (int i = 0; i < shaders.length; i++) {
             VulkanShader vulkanShader = (VulkanShader) shaders[i];
 
-            VkPipelineShaderStageCreateInfo vertexShaderStageInfo = shaderStages.get(i);
-            vertexShaderStageInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
-            vertexShaderStageInfo.stage(vulkanShader.getStage());
-            vertexShaderStageInfo.module(vulkanShader.getModule());
-            vertexShaderStageInfo.pName(entryPoint);
+            VkPipelineShaderStageCreateInfo stageInfo = shaderStages.get(i);
+            stageInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
+            stageInfo.stage(vulkanShader.getStage());
+            stageInfo.module(vulkanShader.getModule());
+            stageInfo.pName(entryPoint);
         }
 
     }
@@ -65,11 +65,60 @@ public class VulkanShaderProgram extends ShaderProgram {
         return -1;
     }
 
+    private VulkanPipeline createComputePipeline(VkDevice device) {
+
+
+        long pipelineLayoutHandle;
+        long computePipelineHandle = 0;
+
+        try(MemoryStack stack = stackPush()) {
+
+
+
+
+            VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.calloc(stack);
+            {
+                pipelineLayoutInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
+                pipelineLayoutInfo.setLayoutCount(getShaderResSets().length);
+                pipelineLayoutInfo.pSetLayouts(stack.longs(getAllDescriptorSetLayouts()));
+            }
+            LongBuffer pPipelineLayout = stack.longs(VK_NULL_HANDLE);
+            if(vkCreatePipelineLayout(device, pipelineLayoutInfo, null, pPipelineLayout) != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create pipeline layout");
+            }
+            pipelineLayoutHandle = pPipelineLayout.get(0);
+
+
+            VkComputePipelineCreateInfo.Buffer pipelineInfo = VkComputePipelineCreateInfo.calloc(1, stack);
+            {
+                pipelineInfo.sType(VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO);
+                pipelineInfo.layout(pipelineLayoutHandle);
+                pipelineInfo.stage(shaderStages.get(0));
+
+
+            }
+
+
+            LongBuffer pComputePipeline = stack.mallocLong(1);
+
+
+            if(vkCreateComputePipelines(device, VK_NULL_HANDLE, pipelineInfo, null, pComputePipeline) != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create graphics pipeline");
+            }
+
+
+            computePipelineHandle = pComputePipeline.get(0);
+
+
+        }
+
+        return new VulkanPipeline(this, pipelineLayoutHandle, computePipelineHandle);
+    }
     private VulkanPipeline createGraphicsPipeline(VkDevice device) {
 
 
-        long pipelineLayout;
-        long graphicsPipeline = 0;
+        long pipelineLayoutHandle;
+        long graphicsPipelineHandle = 0;
 
         try(MemoryStack stack = stackPush()) {
 
@@ -224,7 +273,7 @@ public class VulkanShaderProgram extends ShaderProgram {
                 throw new RuntimeException("Failed to create pipeline layout");
             }
 
-            pipelineLayout = pPipelineLayout.get(0);
+            pipelineLayoutHandle = pPipelineLayout.get(0);
 
             VkPipelineRenderingCreateInfoKHR pipelineRenderingCreateInfoKHR = VkPipelineRenderingCreateInfoKHR.calloc(stack);
             pipelineRenderingCreateInfoKHR.colorAttachmentCount(1);
@@ -237,7 +286,7 @@ public class VulkanShaderProgram extends ShaderProgram {
             VkGraphicsPipelineCreateInfo.Buffer pipelineInfo = VkGraphicsPipelineCreateInfo.calloc(1, stack);
             {
                 pipelineInfo.sType(VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO);
-                pipelineInfo.layout(pipelineLayout);
+                pipelineInfo.layout(pipelineLayoutHandle);
                 pipelineInfo.pInputAssemblyState(inputAssembly);
                 pipelineInfo.pRasterizationState(rasterizer);
                 pipelineInfo.pColorBlendState(colorBlending);
@@ -260,12 +309,12 @@ public class VulkanShaderProgram extends ShaderProgram {
             }
 
 
-            graphicsPipeline = pGraphicsPipeline.get(0);
+            graphicsPipelineHandle = pGraphicsPipeline.get(0);
 
 
         }
 
-        return new VulkanPipeline(this, pipelineLayout, graphicsPipeline);
+        return new VulkanPipeline(this, pipelineLayoutHandle, graphicsPipelineHandle);
     }
 
 
@@ -343,7 +392,7 @@ public class VulkanShaderProgram extends ShaderProgram {
 
                 for (int i = 0; i < VulkanRenderer.FRAMES_IN_FLIGHT; i++) {
                     LongBuffer pDescriptorPool = stack.callocLong(1);
-                    if (vkCreateDescriptorPool(VulkanDeviceManager.getCurrentDevice(), descriptorPoolCreateInfo, null, pDescriptorPool) != VK_SUCCESS) {
+                    if (vkCreateDescriptorPool(VulkanRuntime.getCurrentDevice(), descriptorPoolCreateInfo, null, pDescriptorPool) != VK_SUCCESS) {
                         throw new RuntimeException("Failed to create descriptor pool");
                     }
                     descriptorPools.add(i, pDescriptorPool.get(0));
@@ -381,7 +430,7 @@ public class VulkanShaderProgram extends ShaderProgram {
                         descriptorSetLayoutCreateInfo.pBindings(descriptorSetLayoutBindings);
 
 
-                        if (vkCreateDescriptorSetLayout(VulkanDeviceManager.getCurrentDevice(), descriptorSetLayoutCreateInfo, null, pDescriptorSetLayout) != VK_SUCCESS) {
+                        if (vkCreateDescriptorSetLayout(VulkanRuntime.getCurrentDevice(), descriptorSetLayoutCreateInfo, null, pDescriptorSetLayout) != VK_SUCCESS) {
                             throw new RuntimeException("Failed to create descriptor set layout");
                         }
 
@@ -396,7 +445,7 @@ public class VulkanShaderProgram extends ShaderProgram {
                         descriptorSetAllocateInfo.pSetLayouts(pDescriptorSetLayout);
 
                         LongBuffer pDescriptorSet = stack.callocLong(1);
-                        if (vkAllocateDescriptorSets(VulkanDeviceManager.getCurrentDevice(), descriptorSetAllocateInfo, pDescriptorSet) != VK_SUCCESS) {
+                        if (vkAllocateDescriptorSets(VulkanRuntime.getCurrentDevice(), descriptorSetAllocateInfo, pDescriptorSet) != VK_SUCCESS) {
                             throw new RuntimeException("Failed to allocate descriptor set");
                         }
                         long descriptorSet = pDescriptorSet.get(0);
@@ -409,10 +458,8 @@ public class VulkanShaderProgram extends ShaderProgram {
             }
         }
 
-        pipeline = createGraphicsPipeline(VulkanDeviceManager.getCurrentDevice());
-
-
-
+        if(type == ShaderProgramType.Graphics) pipeline = createGraphicsPipeline(VulkanRuntime.getCurrentDevice());
+        else if(type == ShaderProgramType.Compute) pipeline = createComputePipeline(VulkanRuntime.getCurrentDevice());
     }
 
     public void updateBuffers(int frameIndex, ShaderUpdate<Buffer>... bufferUpdates){
@@ -453,7 +500,7 @@ public class VulkanShaderProgram extends ShaderProgram {
                 descriptorSetsWrite.descriptorCount(bufferUpdate.updateCount);
             }
 
-            vkUpdateDescriptorSets(VulkanDeviceManager.getCurrentDevice(), descriptorSetsWrites, null);
+            vkUpdateDescriptorSets(VulkanRuntime.getCurrentDevice(), descriptorSetsWrites, null);
         }
     }
     public void updateTextures(int frameIndex, ShaderUpdate<Texture>... textureUpdates){
@@ -496,7 +543,7 @@ public class VulkanShaderProgram extends ShaderProgram {
                 descriptorSetsWrite.descriptorCount(textureUpdate.updateCount);
             }
 
-            vkUpdateDescriptorSets(VulkanDeviceManager.getCurrentDevice(), descriptorSetsWrites, null);
+            vkUpdateDescriptorSets(VulkanRuntime.getCurrentDevice(), descriptorSetsWrites, null);
 
 
         }
@@ -568,7 +615,7 @@ public class VulkanShaderProgram extends ShaderProgram {
 
     @Override
     public void dispose() {
-        vkDeviceWaitIdle(VulkanDeviceManager.getCurrentDevice());
+        vkDeviceWaitIdle(VulkanRuntime.getCurrentDevice());
 
 
 
@@ -577,11 +624,11 @@ public class VulkanShaderProgram extends ShaderProgram {
 
         for(List<Long> frameDescriptorSetLayouts : descriptorSetLayouts){
             for(long descriptorSetLayouts : frameDescriptorSetLayouts)
-                vkDestroyDescriptorSetLayout(VulkanDeviceManager.getCurrentDevice(), descriptorSetLayouts, null);
+                vkDestroyDescriptorSetLayout(VulkanRuntime.getCurrentDevice(), descriptorSetLayouts, null);
         }
 
         for(long descriptorPool : descriptorPools)
-            vkDestroyDescriptorPool(VulkanDeviceManager.getCurrentDevice(), descriptorPool, null);
+            vkDestroyDescriptorPool(VulkanRuntime.getCurrentDevice(), descriptorPool, null);
 
 
     }

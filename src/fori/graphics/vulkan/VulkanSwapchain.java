@@ -19,7 +19,7 @@ public class VulkanSwapchain extends Disposable {
     private int imageFormat;
     private VkExtent2D extent;
 
-    public VulkanSwapchain(Disposable parent, long surface, int minImageCount, int imageFormat, int imageColorSpace, int presentMode, VulkanPhysicalDeviceQueueFamilies physicalDeviceQueueFamilies, VulkanSwapchainSupportInfo swapchainSupportDetails, VkExtent2D extent){
+    public VulkanSwapchain(Disposable parent, long surface, int minImageCount, int imageFormat, int imageColorSpace, int presentMode, VulkanQueueFamilies physicalDeviceQueueFamilies, VulkanSwapchainSupportInfo swapchainSupportDetails, VkExtent2D extent){
         super(parent);
         this.imageFormat = imageFormat;
         this.extent = extent;
@@ -54,7 +54,7 @@ public class VulkanSwapchain extends Disposable {
 
             LongBuffer pSwapChain = stack.longs(VK_NULL_HANDLE);
 
-            if (vkCreateSwapchainKHR(VulkanDeviceManager.getCurrentDevice(), swapchainCreateInfo, null, pSwapChain) != VK_SUCCESS) {
+            if (vkCreateSwapchainKHR(VulkanRuntime.getCurrentDevice(), swapchainCreateInfo, null, pSwapChain) != VK_SUCCESS) {
                 throw new RuntimeException("Failed to create swap chain");
             }
 
@@ -82,6 +82,6 @@ public class VulkanSwapchain extends Disposable {
     @Override
     public void dispose() {
         extent.free();
-        vkDestroySwapchainKHR(VulkanDeviceManager.getCurrentDevice(), handle, null);
+        vkDestroySwapchainKHR(VulkanRuntime.getCurrentDevice(), handle, null);
     }
 }

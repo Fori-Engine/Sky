@@ -1,5 +1,6 @@
 package fori.graphics;
 
+import fori.graphics.vulkan.VulkanComputeCommandList;
 import fori.graphics.vulkan.VulkanGraphicsCommandList;
 
 public abstract class CommandList extends Disposable {
@@ -15,7 +16,11 @@ public abstract class CommandList extends Disposable {
 
     public static GraphicsCommandList newGraphicsCommandList(Disposable disposable, int framesInFlight) {
         if(Renderer.getRenderAPI() == RenderAPI.Vulkan) return new VulkanGraphicsCommandList(disposable, framesInFlight);
+        return null;
+    }
 
+    public static ComputeCommandList newComputeCommandList(Disposable disposable, int framesInFlight) {
+        if(Renderer.getRenderAPI() == RenderAPI.Vulkan) return new VulkanComputeCommandList(disposable, framesInFlight);
         return null;
     }
 

@@ -6,7 +6,6 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.util.vma.VmaAllocationCreateInfo;
 import org.lwjgl.util.vma.VmaAllocationInfo;
-import org.lwjgl.vulkan.VkDevice;
 import org.lwjgl.vulkan.VkExtent3D;
 import org.lwjgl.vulkan.VkImageCreateInfo;
 
@@ -86,7 +85,7 @@ public class VulkanImage extends Disposable {
 
     @Override
     public void dispose() {
-        vkDeviceWaitIdle(VulkanDeviceManager.getCurrentDevice());
+        vkDeviceWaitIdle(VulkanRuntime.getCurrentDevice());
         if(memory != MemoryUtil.NULL) {
             vmaDestroyImage(VulkanAllocator.getAllocator().getId(), handle, pAllocation.get(0));
             pAllocation.free();

@@ -27,7 +27,7 @@ public class VulkanSampler extends Disposable {
             samplerCreateInfo.addressModeV(VK_SAMPLER_ADDRESS_MODE_REPEAT);
             samplerCreateInfo.addressModeW(VK_SAMPLER_ADDRESS_MODE_REPEAT);
             samplerCreateInfo.anisotropyEnable(anisotropy);
-            samplerCreateInfo.maxAnisotropy(VulkanDeviceManager.getPhysicalDeviceProperties().limits().maxSamplerAnisotropy());
+            samplerCreateInfo.maxAnisotropy(VulkanRuntime.getPhysicalDeviceProperties().limits().maxSamplerAnisotropy());
             samplerCreateInfo.borderColor(VK_BORDER_COLOR_INT_OPAQUE_BLACK);
             samplerCreateInfo.unnormalizedCoordinates(false);
             samplerCreateInfo.compareEnable(false);
@@ -35,7 +35,7 @@ public class VulkanSampler extends Disposable {
             samplerCreateInfo.mipmapMode(VK_SAMPLER_MIPMAP_MODE_LINEAR);
 
             LongBuffer pSampler = stack.callocLong(1);
-            if (vkCreateSampler(VulkanDeviceManager.getCurrentDevice(), samplerCreateInfo, null, pSampler) != VK_SUCCESS) {
+            if (vkCreateSampler(VulkanRuntime.getCurrentDevice(), samplerCreateInfo, null, pSampler) != VK_SUCCESS) {
                 throw new RuntimeException(Logger.error(VulkanSampler.class, "Failed to create sampler!"));
             }
 
@@ -51,8 +51,8 @@ public class VulkanSampler extends Disposable {
 
     @Override
     public void dispose() {
-        vkDeviceWaitIdle(VulkanDeviceManager.getCurrentDevice());
-        vkDestroySampler(VulkanDeviceManager.getCurrentDevice(), handle, null);
+        vkDeviceWaitIdle(VulkanRuntime.getCurrentDevice());
+        vkDestroySampler(VulkanRuntime.getCurrentDevice(), handle, null);
     }
 
 }

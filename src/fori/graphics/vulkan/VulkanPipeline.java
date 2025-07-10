@@ -24,8 +24,8 @@ public class VulkanPipeline extends Disposable {
 
     @Override
     public void dispose() {
-        vkDeviceWaitIdle(VulkanDeviceManager.getCurrentDevice());
-        vkDestroyPipeline(VulkanDeviceManager.getCurrentDevice(), pipeline, null);
-        vkDestroyPipelineLayout(VulkanDeviceManager.getCurrentDevice(), pipelineLayout, null);
+        vkDeviceWaitIdle(VulkanRuntime.getCurrentDevice());
+        vkDestroyPipeline(VulkanRuntime.getCurrentDevice(), pipeline, null);
+        vkDestroyPipelineLayout(VulkanRuntime.getCurrentDevice(), pipelineLayout, null);
     }
 }

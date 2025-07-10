@@ -23,7 +23,7 @@ public class VulkanShader extends Shader {
         super(parent, shaderType, bytecode);
 
 
-        module = createShaderModule(VulkanDeviceManager.getCurrentDevice(), bytecode.data);
+        module = createShaderModule(VulkanRuntime.getCurrentDevice(), bytecode.data);
 
     }
 
@@ -73,6 +73,6 @@ public class VulkanShader extends Shader {
 
     @Override
     public void dispose() {
-        vkDestroyShaderModule(VulkanDeviceManager.getCurrentDevice(), module, null);
+        vkDestroyShaderModule(VulkanRuntime.getCurrentDevice(), module, null);
     }
 }

@@ -126,7 +126,7 @@ public class VulkanBuffer extends Buffer {
     @Override
     public void dispose() {
         if(mapped) unmap();
-        vkDeviceWaitIdle(VulkanDeviceManager.getCurrentDevice());
+        vkDeviceWaitIdle(VulkanRuntime.getCurrentDevice());
         vmaDestroyBuffer(VulkanAllocator.getAllocator().getId(), handle, allocation);
     }
 

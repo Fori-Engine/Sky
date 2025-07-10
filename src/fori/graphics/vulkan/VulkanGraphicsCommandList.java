@@ -28,9 +28,9 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
     public VulkanGraphicsCommandList(Disposable parent, int framesInFlight) {
         super(parent, framesInFlight);
 
-        graphicsQueue = VulkanDeviceManager.getGraphicsQueue();
-        device = VulkanDeviceManager.getCurrentDevice();
-        commandPool = VulkanUtil.createCommandPool(device, VulkanDeviceManager.getGraphicsFamilyIndex());
+        graphicsQueue = VulkanRuntime.getGraphicsQueue();
+        device = VulkanRuntime.getCurrentDevice();
+        commandPool = VulkanUtil.createCommandPool(device, VulkanRuntime.getGraphicsFamilyIndex());
 
 
         submissionFences = new VulkanFence[framesInFlight];
@@ -289,7 +289,7 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
 
     @Override
     public void dispose() {
-        vkDeviceWaitIdle(VulkanDeviceManager.getCurrentDevice());
+        vkDeviceWaitIdle(VulkanRuntime.getCurrentDevice());
         vkDestroyCommandPool(device, commandPool, null);
     }
 }

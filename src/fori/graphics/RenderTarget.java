@@ -6,6 +6,9 @@ public class RenderTarget extends Disposable {
     //See VulkanGraphicsCommandList.start()
     private Texture[] textures;
 
+
+
+
     public RenderTarget(Disposable parent, int textureCount) {
         super(parent);
         this.textures = new Texture[textureCount];

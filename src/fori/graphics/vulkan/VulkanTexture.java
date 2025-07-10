@@ -35,7 +35,7 @@ public class VulkanTexture extends Texture {
                 imageHandle,
                 imageFormat
         );
-        imageView = new VulkanImageView(image, VulkanDeviceManager.getCurrentDevice(), image, aspectMask);
+        imageView = new VulkanImageView(image, VulkanRuntime.getCurrentDevice(), image, aspectMask);
         sampler = new VulkanSampler(this, minFilter, magFilter, false);
     }
 
@@ -56,7 +56,7 @@ public class VulkanTexture extends Texture {
                 tiling
         );
 
-        imageView = new VulkanImageView(image, VulkanDeviceManager.getCurrentDevice(), image, aspectMask);
+        imageView = new VulkanImageView(image, VulkanRuntime.getCurrentDevice(), image, aspectMask);
         sampler = new VulkanSampler(this, minFilter, magFilter, false);
 
         if(textureData != null) {
@@ -76,11 +76,11 @@ public class VulkanTexture extends Texture {
                 VkCommandPoolCreateInfo commandPoolCreateInfo = VkCommandPoolCreateInfo.calloc(stack);
                 commandPoolCreateInfo.sType(VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO);
                 commandPoolCreateInfo.flags(VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
-                commandPoolCreateInfo.queueFamilyIndex(VulkanDeviceManager.getGraphicsFamilyIndex());
+                commandPoolCreateInfo.queueFamilyIndex(VulkanRuntime.getGraphicsFamilyIndex());
 
                 LongBuffer pCommandPool = stack.mallocLong(1);
 
-                if (vkCreateCommandPool(VulkanDeviceManager.getCurrentDevice(), commandPoolCreateInfo, null, pCommandPool) != VK_SUCCESS) {
+                if (vkCreateCommandPool(VulkanRuntime.getCurrentDevice(), commandPoolCreateInfo, null, pCommandPool) != VK_SUCCESS) {
                     throw new RuntimeException("Failed to create command pool");
                 }
                 commandPool = pCommandPool.get(0);
@@ -93,22 +93,22 @@ public class VulkanTexture extends Texture {
 
                 PointerBuffer pCommandBuffers = stack.mallocPointer(1);
 
-                if (vkAllocateCommandBuffers(VulkanDeviceManager.getCurrentDevice(), allocInfo, pCommandBuffers) != VK_SUCCESS) {
+                if (vkAllocateCommandBuffers(VulkanRuntime.getCurrentDevice(), allocInfo, pCommandBuffers) != VK_SUCCESS) {
                     throw new RuntimeException(Logger.error(VulkanStaticMeshBatch.class, "Failed to create per-RenderCommand command buffer"));
                 }
 
-                commandBuffer = new VkCommandBuffer(pCommandBuffers.get(0), VulkanDeviceManager.getCurrentDevice());
+                commandBuffer = new VkCommandBuffer(pCommandBuffers.get(0), VulkanRuntime.getCurrentDevice());
 
                 LongBuffer pFence = stack.mallocLong(1);
 
                 VkFenceCreateInfo transferFenceCreateInfo = VkFenceCreateInfo.calloc(stack);
                 transferFenceCreateInfo.sType(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
-                vkCreateFence(VulkanDeviceManager.getCurrentDevice(), transferFenceCreateInfo, null, pFence);
+                vkCreateFence(VulkanRuntime.getCurrentDevice(), transferFenceCreateInfo, null, pFence);
 
                 fence = pFence.get(0);
 
 
-                vkResetFences(VulkanDeviceManager.getCurrentDevice(), fence);
+                vkResetFences(VulkanRuntime.getCurrentDevice(), fence);
 
                 VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
                 beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
@@ -145,11 +145,11 @@ public class VulkanTexture extends Texture {
                 submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
                 submitInfo.pCommandBuffers(stack.pointers(commandBuffer));
 
-                if (vkQueueSubmit(VulkanDeviceManager.getGraphicsQueue(), submitInfo, fence) != VK_SUCCESS) {
+                if (vkQueueSubmit(VulkanRuntime.getGraphicsQueue(), submitInfo, fence) != VK_SUCCESS) {
                     throw new RuntimeException(Logger.error(VulkanTexture.class, "Failed to submit per-RenderCommand command buffer"));
                 }
 
-                vkWaitForFences(VulkanDeviceManager.getCurrentDevice(), fence, true, VulkanUtil.UINT64_MAX);
+                vkWaitForFences(VulkanRuntime.getCurrentDevice(), fence, true, VulkanUtil.UINT64_MAX);
             }
         }
 
@@ -237,9 +237,9 @@ public class VulkanTexture extends Texture {
 
     @Override
     public void dispose() {
-        vkDeviceWaitIdle(VulkanDeviceManager.getCurrentDevice());
-        vkDestroyCommandPool(VulkanDeviceManager.getCurrentDevice(), commandPool, null);
-        vkDestroyFence(VulkanDeviceManager.getCurrentDevice(), fence, null);
+        vkDeviceWaitIdle(VulkanRuntime.getCurrentDevice());
+        vkDestroyCommandPool(VulkanRuntime.getCurrentDevice(), commandPool, null);
+        vkDestroyFence(VulkanRuntime.getCurrentDevice(), fence, null);
 
 
 

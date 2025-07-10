@@ -55,8 +55,8 @@ public class VulkanImageView extends Disposable {
 
     @Override
     public void dispose() {
-        vkDeviceWaitIdle(VulkanDeviceManager.getCurrentDevice());
-        vkDestroyImageView(VulkanDeviceManager.getCurrentDevice(), handle, null);
+        vkDeviceWaitIdle(VulkanRuntime.getCurrentDevice());
+        vkDestroyImageView(VulkanRuntime.getCurrentDevice(), handle, null);
     }
 
 }
