@@ -50,6 +50,7 @@ public class VulkanRenderer extends Renderer {
 
     private VulkanAllocator allocator;
     private int acquiredImageIndex;
+    private VulkanFence[] submissionFences;
 
 
     public VulkanRenderer(Disposable parent, VkInstance instance, long vkSurface, int width, int height, RendererSettings rendererSettings, long debugMessenger, Surface surface) {
@@ -81,9 +82,12 @@ public class VulkanRenderer extends Renderer {
         swapchainRenderTarget = createSwapchainRenderTarget(rendererSettings);
 
         frameStartSemaphores = new VulkanSemaphore[maxFramesInFlight];
+        submissionFences = new VulkanFence[maxFramesInFlight];
         for (int i = 0; i < maxFramesInFlight; i++) {
+            submissionFences[i] = new VulkanFence(this, device, VK_FENCE_CREATE_SIGNALED_BIT);
             frameStartSemaphores[i] = new VulkanSemaphore(this, device);
         }
+
 
 
     }
@@ -535,6 +539,9 @@ public class VulkanRenderer extends Renderer {
             swapchainRenderTarget = createSwapchainRenderTarget(settings);
             frameIndex = 0;
         }
+
+        vkWaitForFences(device, submissionFences[frameIndex].getHandle(), true, VulkanUtil.UINT64_MAX);
+        vkResetFences(device, submissionFences[frameIndex].getHandle());
     }
 
 
@@ -560,10 +567,16 @@ public class VulkanRenderer extends Renderer {
         }
 
 
-        for(CommandList commandList : commandLists) {
-            commandList.run();
+        for (int i = 0; i < commandLists.size() - 1; i++) {
+            CommandList commandList = commandLists.get(i);
+            commandList.run(Optional.empty());
         }
-        Semaphore[] finishedSemaphores = commandLists.getLast().getFinishedSemaphores();
+
+
+        CommandList lastCommandList = commandLists.getLast();
+        lastCommandList.run(Optional.of(submissionFences));
+
+        Semaphore[] finishedSemaphores = lastCommandList.getFinishedSemaphores();
 
 
 

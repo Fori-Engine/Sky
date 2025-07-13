@@ -51,7 +51,6 @@ public class VulkanBuffer extends Buffer {
             pBuffer = stack.callocLong(1);
             PointerBuffer pAllocation = stack.callocPointer(1);
 
-
             allocationInfo = VmaAllocationInfo.calloc(stack);
 
             vmaCreateBuffer(VulkanAllocator.getAllocator().getId(), bufferCreateInfo, allocationCreateInfo, pBuffer, pAllocation, allocationInfo);

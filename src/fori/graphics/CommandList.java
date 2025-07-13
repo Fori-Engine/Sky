@@ -3,6 +3,8 @@ package fori.graphics;
 import fori.graphics.vulkan.VulkanComputeCommandList;
 import fori.graphics.vulkan.VulkanGraphicsCommandList;
 
+import java.util.Optional;
+
 public abstract class CommandList extends Disposable {
     protected int frameIndex;
     protected int framesInFlight;
@@ -29,7 +31,7 @@ public abstract class CommandList extends Disposable {
         this.frameIndex = frameIndex;
     }
     public abstract void endRecording();
-    public abstract void run();
+    public abstract void run(Optional<Fence[]> submissionFences);
     public abstract void waitForFinish();
 
     public Semaphore[] getWaitSemaphores() {

@@ -1,6 +1,7 @@
 package fori.graphics.vulkan;
 
 import fori.graphics.Disposable;
+import fori.graphics.Fence;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkDevice;
 import org.lwjgl.vulkan.VkFenceCreateInfo;
@@ -9,10 +10,11 @@ import java.nio.LongBuffer;
 
 import static org.lwjgl.vulkan.VK10.*;
 
-public class VulkanFence extends Disposable {
+public class VulkanFence extends Fence {
 
-    private long handle;
     private VkDevice device;
+    private long handle;
+
 
     public VulkanFence(Disposable parent, VkDevice device, int flags) {
         super(parent);

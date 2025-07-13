@@ -3,9 +3,11 @@ package fori.graphics.vulkan;
 import fori.graphics.*;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
 
 import java.nio.LongBuffer;
+import java.util.Optional;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.KHRSwapchain.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
@@ -22,7 +24,6 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
     private VkRenderingInfoKHR renderingInfoKHR;
     private VkRenderingAttachmentInfo.Buffer colorAttachment;
     private VkRenderingAttachmentInfoKHR depthAttachment;
-    private VulkanFence[] submissionFences;
 
     public VulkanGraphicsCommandList(Disposable parent, int framesInFlight) {
         super(parent, framesInFlight);
@@ -31,15 +32,11 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
         device = VulkanRuntime.getCurrentDevice();
         commandPool = VulkanUtil.createCommandPool(device, VulkanRuntime.getGraphicsFamilyIndex());
 
-
-        submissionFences = new VulkanFence[framesInFlight];
         finishedSemaphores = new VulkanSemaphore[framesInFlight];
         commandBuffers = new VkCommandBuffer[framesInFlight];
 
         for (int i = 0; i < framesInFlight; i++) {
             finishedSemaphores[i] = new VulkanSemaphore(this, device);
-            submissionFences[i] = new VulkanFence(this, device, VK_FENCE_CREATE_SIGNALED_BIT);
-
 
             try(MemoryStack stack = stackPush()) {
                 VkCommandBufferAllocateInfo allocInfo = VkCommandBufferAllocateInfo.calloc(stack);
@@ -105,10 +102,7 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
     @Override
     public void startRecording(Semaphore[] waitSemaphores, int frameIndex) {
         super.startRecording(waitSemaphores, frameIndex);
-        vkWaitForFences(device, submissionFences[frameIndex].getHandle(), true, VulkanUtil.UINT64_MAX);
 
-
-        vkResetFences(device, submissionFences[frameIndex].getHandle());
         vkResetCommandBuffer(commandBuffers[frameIndex], 0);
     }
 
@@ -268,7 +262,7 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
     }
 
     @Override
-    public void run() {
+    public void run(Optional<Fence[]> submissionFences) {
         try(MemoryStack stack = stackPush()) {
 
             VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
@@ -280,7 +274,9 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
             submitInfo.pCommandBuffers(stack.pointers(commandBuffers[frameIndex]));
             submitInfo.pSignalSemaphores(stack.longs(((VulkanSemaphore) finishedSemaphores[frameIndex]).getHandle()));
 
-            vkQueueSubmit(graphicsQueue, submitInfo, ((VulkanFence) submissionFences[frameIndex]).getHandle());
+            if(submissionFences.isPresent())
+                vkQueueSubmit(graphicsQueue, submitInfo, ((VulkanFence[]) submissionFences.get())[frameIndex].getHandle());
+            else vkQueueSubmit(graphicsQueue, submitInfo, VK_NULL_HANDLE);
         }
 
 

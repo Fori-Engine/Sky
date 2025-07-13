@@ -80,7 +80,7 @@ public class VulkanShaderProgram extends ShaderProgram {
 
             VkComputePipelineCreateInfo.Buffer pipelineInfo = VkComputePipelineCreateInfo.calloc(1, stack);
             {
-                pipelineInfo.sType(VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO);
+                pipelineInfo.sType(VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO);
                 pipelineInfo.layout(pipelineLayoutHandle);
                 pipelineInfo.stage(shaderStages.get(0));
 

@@ -258,18 +258,12 @@ public class RenderSystem extends EcsSystem {
         }
         graphicsCommands.endRecording();
 
+
         computeCommands.startRecording(
                 graphicsCommands.getFinishedSemaphores(),
                 renderer.getFrameIndex()
         );
         {
-            /*
-            RenderTarget swapchainRT = renderer.getSwapchainRenderTarget();
-            computeCommands.copyTextures(targetA.getTexture(0), swapchainRT.getTexture(0));
-            computeCommands.copyTextures(targetA.getTexture(1), swapchainRT.getTexture(1));
-            computeCommands.copyTextures(targetA.getTexture(2), swapchainRT.getTexture(2));
-
-             */
 
 
 
