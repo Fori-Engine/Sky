@@ -51,7 +51,7 @@ public abstract class Renderer extends Disposable {
 
     public abstract void startFrame(boolean surfaceInvalidated);
     public abstract void endFrame();
-    public Semaphore[] getFrameStartSync() {
+    public Semaphore[] getRenderStartSemaphores() {
         return frameStartSemaphores;
     }
 

@@ -199,7 +199,7 @@ public class RenderSystem extends EcsSystem {
         });
 
         graphicsCommands.startRecording(
-                renderer.getFrameStartSync(),
+                renderer.getRenderStartSemaphores(),
                 renderer.getFrameIndex()
         );
         {
