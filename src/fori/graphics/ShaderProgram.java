@@ -3,12 +3,14 @@ package fori.graphics;
 import fori.Logger;
 import fori.graphics.vulkan.VulkanShaderProgram;
 
+import java.util.Optional;
+
 
 public abstract class ShaderProgram extends Disposable {
 
     protected Shader[] shaders;
     protected ShaderResSet[] resourcesSets;
-    protected VertexAttributes.Type[] attributes;
+    protected Optional<VertexAttributes.Type[]> attributes;
     protected TextureFormatType colorTextureFormat;
     protected TextureFormatType depthTextureFormat;
     protected ShaderProgramType type;
@@ -32,7 +34,7 @@ public abstract class ShaderProgram extends Disposable {
     public abstract void updateBuffers(int frameIndex, ShaderUpdate<Buffer>... bufferUpdates);
     public abstract void updateTextures(int frameIndex, ShaderUpdate<Texture>... textureUpdates);
 
-    public void bind(VertexAttributes.Type[] attributes, ShaderResSet... resourceSets){
+    public void bind(Optional<VertexAttributes.Type[]> attributes, ShaderResSet... resourceSets){
         this.attributes = attributes;
         this.resourcesSets = resourceSets;
     }
@@ -41,7 +43,7 @@ public abstract class ShaderProgram extends Disposable {
         return resourcesSets;
     }
 
-    public VertexAttributes.Type[] getAttributes() {
+    public Optional<VertexAttributes.Type[]> getAttributes() {
         return attributes;
     }
 

@@ -10,6 +10,7 @@ import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
@@ -126,7 +127,7 @@ public class VulkanShaderProgram extends ShaderProgram {
                 };
 
                 int vertexSize = 0;
-                for(VertexAttributes.Type attribute : attributes){
+                for(VertexAttributes.Type attribute : attributes.get()){
                     vertexSize += attribute.size;
                 }
 
@@ -143,18 +144,18 @@ public class VulkanShaderProgram extends ShaderProgram {
 
 
                 VkVertexInputAttributeDescription.Buffer attributeDescriptions =
-                        VkVertexInputAttributeDescription.calloc(attributes.length, stack);
+                        VkVertexInputAttributeDescription.calloc(attributes.get().length, stack);
 
                 int offset = 0;
 
-                for (int i = 0; i < attributes.length; i++) {
+                for (int i = 0; i < attributes.get().length; i++) {
                     VkVertexInputAttributeDescription attribute = attributeDescriptions.get(i);
                     attribute.binding(0);
                     attribute.location(i);
-                    attribute.format(attributeSizeToVulkanParam.apply(attributes[i].size));
+                    attribute.format(attributeSizeToVulkanParam.apply(attributes.get()[i].size));
                     attribute.offset(offset);
 
-                    offset += attributes[i].size * Float.BYTES;
+                    offset += attributes.get()[i].size * Float.BYTES;
                 }
 
 
@@ -339,7 +340,7 @@ public class VulkanShaderProgram extends ShaderProgram {
     }
 
     @Override
-    public void bind(VertexAttributes.Type[] attributes, ShaderResSet... resourceSets) {
+    public void bind(Optional<VertexAttributes.Type[]> attributes, ShaderResSet... resourceSets) {
         super.bind(attributes, resourceSets);
 
         try(MemoryStack stack = stackPush()) {

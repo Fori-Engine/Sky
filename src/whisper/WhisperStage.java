@@ -140,11 +140,12 @@ public class WhisperStage extends Stage {
             );
 
             shaderProgram.bind(
+                    Optional.of(
                     new VertexAttributes.Type[]{
                             PositionFloat3,
                             TransformIndexFloat1,
                             UVFloat2,
-                    },
+                    }),
                     new ShaderResSet(
                             0,
                             new ShaderRes(
@@ -169,7 +170,7 @@ public class WhisperStage extends Stage {
             );
 
 
-            mesh = Mesh.newMesh(shaderProgram.getAttributes(), AssetPacks.getAsset("core:assets/models/viking_room.obj"));
+            mesh = Mesh.newMesh(shaderProgram.getAttributes().get(), AssetPacks.getAsset("core:assets/models/viking_room.obj"));
             StaticMeshBatch shopStaticMeshBatch = renderer.newStaticMeshBatch(100000, 100000, 1, shaderProgram);
 
             shopStaticMeshBatch.submitMesh(mesh, new MeshUploaderWithTransform(0));
@@ -221,11 +222,12 @@ public class WhisperStage extends Stage {
                 );
 
                 shaderProgram.bind(
+                        Optional.of(
                         new VertexAttributes.Type[]{
                                 PositionFloat3,
                                 TransformIndexFloat1,
                                 ColorFloat4
-                        },
+                        }),
                         new ShaderResSet(
                                 0,
                                 new ShaderRes(
@@ -301,11 +303,12 @@ public class WhisperStage extends Stage {
 
 
                 shaderProgram.bind(
+                        Optional.of(
                         new VertexAttributes.Type[]{
                                 PositionFloat3,
                                 TransformIndexFloat1,
                                 ColorFloat4
-                        },
+                        }),
                         new ShaderResSet(
                                 0,
                                 new ShaderRes(

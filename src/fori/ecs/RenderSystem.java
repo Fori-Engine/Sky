@@ -4,6 +4,8 @@ import fori.asset.AssetPacks;
 import fori.graphics.*;
 import org.joml.Matrix4f;
 import java.nio.ByteBuffer;
+import java.util.Optional;
+
 import static fori.graphics.ShaderRes.ShaderStage.*;
 import static fori.graphics.ShaderRes.Type.*;
 import static fori.graphics.VertexAttributes.Type.*;
@@ -45,7 +47,8 @@ public class RenderSystem extends EcsSystem {
                     Shader.newShader(computeShaderProgram, ShaderType.Compute, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Compute), ShaderType.Compute))
             );
 
-            computeShaderProgram.bind(null,
+            computeShaderProgram.bind(
+                    Optional.empty(),
                     new ShaderResSet(
                     0,
                     new ShaderRes(
@@ -89,10 +92,10 @@ public class RenderSystem extends EcsSystem {
 
 
             uiShaderProgram.bind(
-                    new VertexAttributes.Type[]{
+                    Optional.of(new VertexAttributes.Type[]{
                             PositionFloat2,
                             ColorFloat4
-                    },
+                    }),
                     new ShaderResSet(
                             0,
                             new ShaderRes(
@@ -106,7 +109,7 @@ public class RenderSystem extends EcsSystem {
 
             uiVertexBuffer = Buffer.newBuffer(
                     renderer,
-                    VertexAttributes.getSize(uiShaderProgram.getAttributes()) * Float.BYTES * 4,
+                    VertexAttributes.getSize(uiShaderProgram.getAttributes().get()) * Float.BYTES * 4,
                     Buffer.Usage.VertexBuffer,
                     Buffer.Type.CPUGPUShared,
                     false
