@@ -5,7 +5,6 @@ import fori.graphics.vulkan.VulkanGraphicsCommandList;
 
 public abstract class CommandList extends Disposable {
     protected int frameIndex;
-    protected RenderTarget renderTarget;
     protected int framesInFlight;
     protected Semaphore[] waitSemaphores;
     protected Semaphore[] finishedSemaphores;
@@ -25,9 +24,8 @@ public abstract class CommandList extends Disposable {
     }
 
 
-    public void startRecording(Semaphore[] waitSemaphores, RenderTarget renderTarget, int frameIndex) {
+    public void startRecording(Semaphore[] waitSemaphores, int frameIndex) {
         this.waitSemaphores = waitSemaphores;
-        this.renderTarget = renderTarget;
         this.frameIndex = frameIndex;
     }
     public abstract void endRecording();

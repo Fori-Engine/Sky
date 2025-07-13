@@ -200,10 +200,10 @@ public class RenderSystem extends EcsSystem {
 
         graphicsCommands.startRecording(
                 renderer.getFrameStartSync(),
-                renderer.getSwapchainRenderTarget(), //targetA
                 renderer.getFrameIndex()
         );
         {
+            graphicsCommands.setRenderTarget(renderer.getSwapchainRenderTarget());
 
 
             scene.getEngine().findEntitiesWith(TransformComponent.class, StaticMeshComponent.class).stream().forEach(components -> {
@@ -228,8 +228,6 @@ public class RenderSystem extends EcsSystem {
                 );
                 graphicsCommands.drawIndexed(staticMeshComponent.staticMeshBatch().getIndexCount());
             });
-
-
             scene.getEngine().findEntitiesWith(TransformComponent.class, DynamicMeshComponent.class).stream().forEach(components -> {
 
 
@@ -262,7 +260,6 @@ public class RenderSystem extends EcsSystem {
 
         computeCommands.startRecording(
                 graphicsCommands.getFinishedSemaphores(),
-                renderer.getSwapchainRenderTarget(),
                 renderer.getFrameIndex()
         );
         {

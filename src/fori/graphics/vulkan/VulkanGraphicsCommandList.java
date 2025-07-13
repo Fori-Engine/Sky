@@ -22,8 +22,7 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
     private VkRenderingInfoKHR renderingInfoKHR;
     private VkRenderingAttachmentInfo.Buffer colorAttachment;
     private VkRenderingAttachmentInfoKHR depthAttachment;
-    protected VulkanFence[] submissionFences;
-
+    private VulkanFence[] submissionFences;
 
     public VulkanGraphicsCommandList(Disposable parent, int framesInFlight) {
         super(parent, framesInFlight);
@@ -102,14 +101,21 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
     }
 
 
+
     @Override
-    public void startRecording(Semaphore[] waitSemaphores, RenderTarget renderTarget, int frameIndex) {
-        super.startRecording(waitSemaphores, renderTarget, frameIndex);
+    public void startRecording(Semaphore[] waitSemaphores, int frameIndex) {
+        super.startRecording(waitSemaphores, frameIndex);
         vkWaitForFences(device, submissionFences[frameIndex].getHandle(), true, VulkanUtil.UINT64_MAX);
 
 
         vkResetFences(device, submissionFences[frameIndex].getHandle());
         vkResetCommandBuffer(commandBuffers[frameIndex], 0);
+    }
+
+    @Override
+    public void setRenderTarget(RenderTarget renderTarget) {
+        super.setRenderTarget(renderTarget);
+
 
         try(MemoryStack stack = stackPush()) {
 
@@ -219,7 +225,6 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
             vkCmdSetScissor(commandBuffers[frameIndex], 0, scissor);
 
         }
-
     }
 
     @Override

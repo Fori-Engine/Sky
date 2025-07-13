@@ -68,8 +68,8 @@ public class VulkanComputeCommandList extends ComputeCommandList {
     }
 
     @Override
-    public void startRecording(Semaphore[] waitSemaphores, RenderTarget renderTarget, int frameIndex) {
-        super.startRecording(waitSemaphores, renderTarget, frameIndex);
+    public void startRecording(Semaphore[] waitSemaphores, int frameIndex) {
+        super.startRecording(waitSemaphores, frameIndex);
         vkWaitForFences(device, submissionFences[frameIndex].getHandle(), true, VulkanUtil.UINT64_MAX);
 
 
