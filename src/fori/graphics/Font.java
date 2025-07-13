@@ -23,7 +23,7 @@ public class Font extends Disposable {
         this.textureAsset = textureAsset;
         this.fnt = fnt;
 
-        texture = Texture.newTexture(this, textureAsset, Texture.Filter.Nearest, Texture.Filter.Nearest);
+        //texture = Texture.newTexture(this, textureAsset, Texture.Filter.Nearest, Texture.Filter.Nearest);
         createGlyphs();
 
     }
