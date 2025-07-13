@@ -145,6 +145,7 @@ public class VulkanStaticMeshBatch extends StaticMeshBatch {
 
         stagingVertexBuffer.dispose();
         stagingIndexBuffer.dispose();
+        stagingTransferFence.dispose();
 
         parent.remove(stagingVertexBuffer);
         parent.remove(stagingIndexBuffer);
