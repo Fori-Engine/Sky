@@ -5,7 +5,7 @@ public abstract class ComputeCommandList extends CommandList {
         super(parent, framesInFlight);
     }
 
-    public abstract void copyTextures(Texture src, Texture dst);
+
     public abstract void setShaderProgram(ShaderProgram shaderProgram);
     public abstract void dispatch(int groupCountX, int groupCountY, int groupCountZ);
 }

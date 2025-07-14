@@ -51,10 +51,7 @@ public class VulkanComputeCommandList extends ComputeCommandList {
         }
     }
 
-    @Override
-    public void copyTextures(Texture src, Texture dst) {
 
-    }
 
     @Override
     public void setShaderProgram(ShaderProgram shaderProgram) {
