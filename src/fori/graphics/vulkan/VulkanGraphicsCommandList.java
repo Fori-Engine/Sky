@@ -23,6 +23,8 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
     private VkRenderingInfoKHR renderingInfoKHR;
     private VkRenderingAttachmentInfo.Buffer colorAttachment;
     private VkRenderingAttachmentInfoKHR depthAttachment;
+
+    //Maybe make this static so that all VulkanGraphicsCommandLists start from the same pipeline stage?
     private int srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 
     public VulkanGraphicsCommandList(Disposable parent, int framesInFlight) {
@@ -97,18 +99,46 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
         );
     }
 
+    @Override
+    public void setPresentable(RenderTarget renderTarget) {
+        VulkanUtil.transitionImageLayout(
+                ((VulkanTexture) this.renderTarget.getTexture(frameIndex)).getImage(),
+                commandBuffers[frameIndex],
+                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                0,
+                VK_IMAGE_ASPECT_COLOR_BIT,
+                srcStageMask,
+                VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
+        );
+        srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+
+    }
 
 
     @Override
     public void startRecording(Semaphore[] waitSemaphores, int frameIndex) {
         super.startRecording(waitSemaphores, frameIndex);
 
-        vkResetCommandBuffer(commandBuffers[frameIndex], 0);
+        try(MemoryStack stack = stackPush()) {
+
+            vkResetCommandBuffer(commandBuffers[frameIndex], 0);
+            VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
+            beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
+
+            if (vkBeginCommandBuffer(commandBuffers[frameIndex], beginInfo) != VK_SUCCESS) {
+                throw new RuntimeException("Failed to begin recording command buffer");
+            }
+        }
     }
 
     @Override
-    public void startRender(RenderTarget renderTarget) {
-        super.startRender(renderTarget);
+    public void setRenderTarget(RenderTarget renderTarget, boolean clear) {
+        super.setRenderTarget(renderTarget, clear);
+
+        int loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+        if(clear) loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 
 
         try(MemoryStack stack = stackPush()) {
@@ -131,7 +161,7 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
                 colorAttachment.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR);
                 colorAttachment.imageView(texture.getImageView().getHandle());
                 colorAttachment.imageLayout(VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR);
-                colorAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR);
+                colorAttachment.loadOp(loadOp);
                 colorAttachment.storeOp(VK_ATTACHMENT_STORE_OP_STORE);
                 colorAttachment.clearValue(colorClearValue);
             }
@@ -146,7 +176,7 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
                 depthAttachment.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR);
                 depthAttachment.imageView(depthImageView.getHandle());
                 depthAttachment.imageLayout(VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR);
-                depthAttachment.loadOp(VK_ATTACHMENT_LOAD_OP_CLEAR);
+                depthAttachment.loadOp(loadOp);
                 depthAttachment.storeOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
                 depthAttachment.clearValue(depthClearValue);
             }
@@ -162,12 +192,6 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
             renderingInfoKHR.pDepthAttachment(depthAttachment);
 
 
-            VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
-            beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
-
-            if (vkBeginCommandBuffer(commandBuffers[frameIndex], beginInfo) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to begin recording command buffer");
-            }
 
             VulkanUtil.transitionImageLayout(
                     ((VulkanTexture) renderTarget.getTexture(frameIndex)).getImage(),
@@ -210,22 +234,13 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
     }
 
     @Override
-    public void endRecording() {
+    public void flushRenderTarget() {
         KHRDynamicRendering.vkCmdEndRenderingKHR(commandBuffers[frameIndex]);
-        VulkanUtil.transitionImageLayout(
-                ((VulkanTexture) renderTarget.getTexture(frameIndex)).getImage(),
-                commandBuffers[frameIndex],
-                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-                0,
-                VK_IMAGE_ASPECT_COLOR_BIT,
-                srcStageMask,
-                VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
-        );
-        srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+    }
 
 
+    @Override
+    public void endRecording() {
         if (vkEndCommandBuffer(commandBuffers[frameIndex]) != VK_SUCCESS) {
             throw new RuntimeException("Failed to record command buffer");
         }

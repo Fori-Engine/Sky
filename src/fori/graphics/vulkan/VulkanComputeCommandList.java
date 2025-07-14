@@ -3,7 +3,6 @@ package fori.graphics.vulkan;
 import fori.graphics.*;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
 
 import java.util.Optional;
@@ -49,6 +48,21 @@ public class VulkanComputeCommandList extends ComputeCommandList {
                 commandBuffers[i] = new VkCommandBuffer(pCommandBuffers.get(i), device);
             }
         }
+    }
+
+    @Override
+    public void setWritable(RenderTarget renderTarget) {
+        VulkanUtil.transitionImageLayout(
+                ((VulkanTexture) renderTarget.getTexture(frameIndex)).getImage(),
+                commandBuffers[frameIndex],
+                VK_IMAGE_LAYOUT_UNDEFINED,
+                VK_IMAGE_LAYOUT_GENERAL,
+                VK_ACCESS_SHADER_READ_BIT,
+                VK_ACCESS_SHADER_READ_BIT,
+                VK_IMAGE_ASPECT_COLOR_BIT,
+                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
+        );
     }
 
 

@@ -6,6 +6,7 @@ public abstract class ComputeCommandList extends CommandList {
     }
 
 
+    public abstract void setWritable(RenderTarget renderTarget);
     public abstract void setShaderProgram(ShaderProgram shaderProgram);
     public abstract void dispatch(int groupCountX, int groupCountY, int groupCountZ);
 }

@@ -25,15 +25,16 @@ public class RenderSystem extends EcsSystem {
 
 
 
-    private GraphicsCommandList graphicsCommands;
-    private ComputeCommandList computeCommands;
+    private GraphicsCommandList render0, render1;
+    private ComputeCommandList compute0;
     private RenderTarget targetA;
 
     public RenderSystem(Renderer renderer, Scene scene) {
         this.renderer = renderer;
         this.scene = scene;
-        graphicsCommands = CommandList.newGraphicsCommandList(renderer, renderer.getMaxFramesInFlight());
-        computeCommands = CommandList.newComputeCommandList(renderer, renderer.getMaxFramesInFlight());
+        render0 = CommandList.newGraphicsCommandList(renderer, renderer.getMaxFramesInFlight());
+        render1 = CommandList.newGraphicsCommandList(renderer, renderer.getMaxFramesInFlight());
+        compute0 = CommandList.newComputeCommandList(renderer, renderer.getMaxFramesInFlight());
 
         //Compute Shader
         {
@@ -201,13 +202,10 @@ public class RenderSystem extends EcsSystem {
             sceneCamera = cameraComponent.camera();
         });
 
-        graphicsCommands.startRecording(
-                renderer.getRenderStartSemaphores(),
-                renderer.getFrameIndex()
-        );
+        render0.startRecording(renderer.getRenderStartSemaphores(), renderer.getFrameIndex());
         {
-            graphicsCommands.startRender(renderer.getSwapchainRenderTarget());
 
+            render0.setRenderTarget(renderer.getSwapchainRenderTarget(), true);
 
             scene.getEngine().findEntitiesWith(TransformComponent.class, StaticMeshComponent.class).stream().forEach(components -> {
 
@@ -222,14 +220,14 @@ public class RenderSystem extends EcsSystem {
                 sceneCamera.getView().get(0, cameraData);
                 sceneCamera.getProj().get(SizeUtil.MATRIX_SIZE_BYTES, cameraData);
 
-                graphicsCommands.setDrawBuffers(
+                render0.setDrawBuffers(
                         staticMeshComponent.staticMeshBatch().getVertexBuffer(),
                         staticMeshComponent.staticMeshBatch().getIndexBuffer()
                 );
-                graphicsCommands.setShaderProgram(
+                render0.setShaderProgram(
                         staticMeshComponent.staticMeshBatch().getShaderProgram()
                 );
-                graphicsCommands.drawIndexed(staticMeshComponent.staticMeshBatch().getIndexCount());
+                render0.drawIndexed(staticMeshComponent.staticMeshBatch().getIndexCount());
             });
             scene.getEngine().findEntitiesWith(TransformComponent.class, DynamicMeshComponent.class).stream().forEach(components -> {
 
@@ -244,42 +242,55 @@ public class RenderSystem extends EcsSystem {
                 sceneCamera.getView().get(0, cameraData);
                 sceneCamera.getProj().get(SizeUtil.MATRIX_SIZE_BYTES, cameraData);
 
-                graphicsCommands.setDrawBuffers(
+                render0.setDrawBuffers(
                         dynamicMeshComponent.dynamicMesh().getVertexBuffer(),
                         dynamicMeshComponent.dynamicMesh().getIndexBuffer()
                 );
-                graphicsCommands.setShaderProgram(
+                render0.setShaderProgram(
                         dynamicMeshComponent.dynamicMesh().getShaderProgram()
                 );
-                graphicsCommands.drawIndexed(dynamicMeshComponent.dynamicMesh().getIndexCount());
+                render0.drawIndexed(dynamicMeshComponent.dynamicMesh().getIndexCount());
             });
 
-            graphicsCommands.setDrawBuffers(uiVertexBuffer, uiIndexBuffer);
-            graphicsCommands.setShaderProgram(uiShaderProgram);
-            graphicsCommands.drawIndexed(6);
-
+            render0.flushRenderTarget();
         }
-        graphicsCommands.endRecording();
+        render0.endRecording();
 
 
-        computeCommands.startRecording(
-                graphicsCommands.getFinishedSemaphores(),
-                renderer.getFrameIndex()
-        );
+        compute0.startRecording(render0.getFinishedSemaphores(), renderer.getFrameIndex());
         {
 
-            computeCommands.setShaderProgram(computeShaderProgram);
-            computeCommands.dispatch(10, 10, 10);
+            compute0.setShaderProgram(computeShaderProgram);
+            compute0.dispatch(10, 10, 10);
+
         }
-        computeCommands.endRecording();
+        compute0.endRecording();
+
+        render1.startRecording(compute0.getFinishedSemaphores(), renderer.getFrameIndex());
+        {
+
+            render1.setRenderTarget(renderer.getSwapchainRenderTarget(), false);
+            render1.setDrawBuffers(uiVertexBuffer, uiIndexBuffer);
+            render1.setShaderProgram(uiShaderProgram);
+            render1.drawIndexed(6);
+            render1.flushRenderTarget();
+
+            render1.setPresentable(renderer.getSwapchainRenderTarget());
+
+        }
+        render1.endRecording();
 
 
 
 
 
 
-        renderer.addCommandList(graphicsCommands);
-        renderer.addCommandList(computeCommands);
+
+
+
+        renderer.addCommandList(render0);
+        renderer.addCommandList(compute0);
+        renderer.addCommandList(render1);
     }
 
     @Override
