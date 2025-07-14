@@ -3,7 +3,6 @@ package fori.graphics.vulkan;
 import fori.graphics.*;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
 
 import java.nio.LongBuffer;
@@ -24,6 +23,7 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
     private VkRenderingInfoKHR renderingInfoKHR;
     private VkRenderingAttachmentInfo.Buffer colorAttachment;
     private VkRenderingAttachmentInfoKHR depthAttachment;
+    private int srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 
     public VulkanGraphicsCommandList(Disposable parent, int framesInFlight) {
         super(parent, framesInFlight);
@@ -107,8 +107,8 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
     }
 
     @Override
-    public void setRenderTarget(RenderTarget renderTarget) {
-        super.setRenderTarget(renderTarget);
+    public void startRender(RenderTarget renderTarget) {
+        super.startRender(renderTarget);
 
 
         try(MemoryStack stack = stackPush()) {
@@ -169,32 +169,20 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
                 throw new RuntimeException("Failed to begin recording command buffer");
             }
 
-            VkImageMemoryBarrier.Buffer startBarrier = VkImageMemoryBarrier.calloc(1, stack);
-            {
-                startBarrier.sType(VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER);
-                startBarrier.oldLayout(VK_IMAGE_LAYOUT_UNDEFINED);
-                startBarrier.newLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-                startBarrier.srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
-                startBarrier.dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
-                startBarrier.dstAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
-                startBarrier.image(((VulkanTexture) renderTarget.getTexture(frameIndex)).getImage().getHandle());
-                startBarrier.subresourceRange().aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
-                startBarrier.subresourceRange().baseMipLevel(0);
-                startBarrier.subresourceRange().levelCount(1);
-                startBarrier.subresourceRange().baseArrayLayer(0);
-                startBarrier.subresourceRange().layerCount(1);
-            }
-
-
-            vkCmdPipelineBarrier(
+            VulkanUtil.transitionImageLayout(
+                    ((VulkanTexture) renderTarget.getTexture(frameIndex)).getImage(),
                     commandBuffers[frameIndex],
-                    VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-                    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                    VK_IMAGE_LAYOUT_UNDEFINED,
+                    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                     0,
-                    null,
-                    null,
-                    startBarrier
+                    VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                    VK_IMAGE_ASPECT_COLOR_BIT,
+                    srcStageMask,
+                    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
             );
+            srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+
 
             KHRDynamicRendering.vkCmdBeginRenderingKHR(commandBuffers[frameIndex], renderingInfoKHR);
             VkViewport.Buffer viewport = VkViewport.calloc(1, stack);
@@ -223,41 +211,23 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
 
     @Override
     public void endRecording() {
+        KHRDynamicRendering.vkCmdEndRenderingKHR(commandBuffers[frameIndex]);
+        VulkanUtil.transitionImageLayout(
+                ((VulkanTexture) renderTarget.getTexture(frameIndex)).getImage(),
+                commandBuffers[frameIndex],
+                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                0,
+                VK_IMAGE_ASPECT_COLOR_BIT,
+                srcStageMask,
+                VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
+        );
+        srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 
-        try(MemoryStack stack = stackPush()) {
 
-            KHRDynamicRendering.vkCmdEndRenderingKHR(commandBuffers[frameIndex]);
-
-
-            VkImageMemoryBarrier.Buffer endBarrier = VkImageMemoryBarrier.calloc(1, stack);
-            {
-                endBarrier.sType(VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER);
-                endBarrier.oldLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-                endBarrier.newLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
-                endBarrier.srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
-                endBarrier.dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
-                endBarrier.srcAccessMask(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
-                endBarrier.image(((VulkanTexture) renderTarget.getTexture(frameIndex)).getImage().getHandle());
-                endBarrier.subresourceRange().aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
-                endBarrier.subresourceRange().baseMipLevel(0);
-                endBarrier.subresourceRange().levelCount(1);
-                endBarrier.subresourceRange().baseArrayLayer(0);
-                endBarrier.subresourceRange().layerCount(1);
-            }
-
-            vkCmdPipelineBarrier(
-                    commandBuffers[frameIndex],
-                    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                    VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-                    0,
-                    null,
-                    null,
-                    endBarrier
-            );
-
-            if (vkEndCommandBuffer(commandBuffers[frameIndex]) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to record command buffer");
-            }
+        if (vkEndCommandBuffer(commandBuffers[frameIndex]) != VK_SUCCESS) {
+            throw new RuntimeException("Failed to record command buffer");
         }
     }
 

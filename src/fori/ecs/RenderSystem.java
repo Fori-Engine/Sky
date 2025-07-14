@@ -206,7 +206,7 @@ public class RenderSystem extends EcsSystem {
                 renderer.getFrameIndex()
         );
         {
-            graphicsCommands.setRenderTarget(renderer.getSwapchainRenderTarget());
+            graphicsCommands.startRender(renderer.getSwapchainRenderTarget());
 
 
             scene.getEngine().findEntitiesWith(TransformComponent.class, StaticMeshComponent.class).stream().forEach(components -> {
@@ -267,8 +267,6 @@ public class RenderSystem extends EcsSystem {
                 renderer.getFrameIndex()
         );
         {
-
-
 
             computeCommands.setShaderProgram(computeShaderProgram);
             computeCommands.dispatch(10, 10, 10);

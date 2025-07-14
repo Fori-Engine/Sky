@@ -11,7 +11,7 @@ public abstract class GraphicsCommandList extends CommandList {
         return renderTarget;
     }
 
-    public void setRenderTarget(RenderTarget renderTarget) {
+    public void startRender(RenderTarget renderTarget) {
         this.renderTarget = renderTarget;
     }
 

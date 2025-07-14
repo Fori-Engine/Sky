@@ -36,7 +36,7 @@ public class VulkanSwapchain extends Disposable {
             swapchainCreateInfo.imageColorSpace(imageColorSpace);
             swapchainCreateInfo.imageExtent(extent);
             swapchainCreateInfo.imageArrayLayers(1);
-            swapchainCreateInfo.imageUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+            swapchainCreateInfo.imageUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT);
 
             if (!physicalDeviceQueueFamilies.graphicsFamily.equals(physicalDeviceQueueFamilies.presentFamily)) {
                 swapchainCreateInfo.imageSharingMode(VK_SHARING_MODE_CONCURRENT);

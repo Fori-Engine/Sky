@@ -2,8 +2,10 @@ package fori.graphics.vulkan;
 
 import fori.graphics.TextureFormatType;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.VkCommandBuffer;
 import org.lwjgl.vulkan.VkCommandPoolCreateInfo;
 import org.lwjgl.vulkan.VkDevice;
+import org.lwjgl.vulkan.VkImageMemoryBarrier;
 
 import java.nio.LongBuffer;
 
@@ -45,6 +47,46 @@ public class VulkanUtil {
             }
         }
         return -1;
+    }
+
+    public static void transitionImageLayout(VulkanImage image,
+                                        VkCommandBuffer commandBuffer,
+                                        int oldLayout,
+                                        int newLayout,
+                                        int srcAccessMask,
+                                        int dstAccessMask,
+                                        int aspectMask,
+                                        int srcStageMask,
+                                        int dstStageMask) {
+        try(MemoryStack stack = stackPush()) {
+            VkImageMemoryBarrier.Buffer imageBarrier = VkImageMemoryBarrier.calloc(1, stack);
+            {
+                imageBarrier.sType(VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER);
+                imageBarrier.oldLayout(oldLayout);
+                imageBarrier.newLayout(newLayout);
+                imageBarrier.srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
+                imageBarrier.dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
+                imageBarrier.srcAccessMask(srcAccessMask);
+                imageBarrier.dstAccessMask(dstAccessMask);
+                imageBarrier.image(image.getHandle());
+                imageBarrier.subresourceRange().aspectMask(aspectMask);
+                imageBarrier.subresourceRange().baseMipLevel(0);
+                imageBarrier.subresourceRange().levelCount(1);
+                imageBarrier.subresourceRange().baseArrayLayer(0);
+                imageBarrier.subresourceRange().layerCount(1);
+            }
+
+
+            vkCmdPipelineBarrier(
+                    commandBuffer,
+                    srcStageMask,
+                    dstStageMask,
+                    0,
+                    null,
+                    null,
+                    imageBarrier
+            );
+        }
     }
 
 }
