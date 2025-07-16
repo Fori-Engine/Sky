@@ -199,7 +199,7 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
             VulkanUtil.transitionImageLayout(
                     ((VulkanTexture) renderTarget.getTexture(frameIndex)).getImage(),
                     commandBuffers[frameIndex],
-                    VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+                    VK_IMAGE_LAYOUT_GENERAL,
                     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                     VK_ACCESS_NONE,
                     clear ? VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT : VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
