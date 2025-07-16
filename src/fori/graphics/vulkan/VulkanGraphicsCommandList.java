@@ -13,6 +13,8 @@ import static org.lwjgl.vulkan.KHRSwapchain.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 import static org.lwjgl.vulkan.KHRSynchronization2.VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR;
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
+import static org.lwjgl.vulkan.VK13.VK_ACCESS_NONE;
+import static org.lwjgl.vulkan.VK13.VK_PIPELINE_STAGE_NONE;
 
 public class VulkanGraphicsCommandList extends GraphicsCommandList {
 
@@ -101,18 +103,21 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
 
     @Override
     public void setPresentable(RenderTarget renderTarget) {
+
+
         VulkanUtil.transitionImageLayout(
                 ((VulkanTexture) this.renderTarget.getTexture(frameIndex)).getImage(),
                 commandBuffers[frameIndex],
                 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                 VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
                 VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-                0,
+                VK_ACCESS_NONE,
                 VK_IMAGE_ASPECT_COLOR_BIT,
                 srcStageMask,
                 VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
         );
         srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+
 
     }
 
@@ -160,7 +165,7 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
 
                 colorAttachment.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR);
                 colorAttachment.imageView(texture.getImageView().getHandle());
-                colorAttachment.imageLayout(VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR);
+                colorAttachment.imageLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
                 colorAttachment.loadOp(loadOp);
                 colorAttachment.storeOp(VK_ATTACHMENT_STORE_OP_STORE);
                 colorAttachment.clearValue(colorClearValue);
@@ -175,7 +180,7 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
 
                 depthAttachment.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR);
                 depthAttachment.imageView(depthImageView.getHandle());
-                depthAttachment.imageLayout(VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR);
+                depthAttachment.imageLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
                 depthAttachment.loadOp(loadOp);
                 depthAttachment.storeOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
                 depthAttachment.clearValue(depthClearValue);
@@ -191,20 +196,22 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
             renderingInfoKHR.pColorAttachments(colorAttachment);
             renderingInfoKHR.pDepthAttachment(depthAttachment);
 
-
-
             VulkanUtil.transitionImageLayout(
                     ((VulkanTexture) renderTarget.getTexture(frameIndex)).getImage(),
                     commandBuffers[frameIndex],
-                    VK_IMAGE_LAYOUT_UNDEFINED,
+                    VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
                     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                    0,
-                    VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                    VK_ACCESS_NONE,
+                    clear ? VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT : VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
                     VK_IMAGE_ASPECT_COLOR_BIT,
-                    srcStageMask,
+                    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
             );
             srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+
+
+
 
 
 
@@ -214,6 +221,8 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
             viewport.y(0.0f);
             viewport.width(texture.getWidth());
             viewport.height(texture.getHeight());
+
+
 
 
             viewport.minDepth(0.0f);

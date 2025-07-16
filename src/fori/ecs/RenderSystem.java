@@ -253,8 +253,10 @@ public class RenderSystem extends EcsSystem {
             });
 
             render0.flushRenderTarget();
+
         }
         render0.endRecording();
+
 
 
         compute0.startRecording(render0.getFinishedSemaphores(), renderer.getFrameIndex());
@@ -265,6 +267,8 @@ public class RenderSystem extends EcsSystem {
 
         }
         compute0.endRecording();
+
+
 
         render1.startRecording(compute0.getFinishedSemaphores(), renderer.getFrameIndex());
         {
@@ -279,6 +283,10 @@ public class RenderSystem extends EcsSystem {
 
         }
         render1.endRecording();
+
+
+
+
 
 
 
