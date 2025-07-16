@@ -118,7 +118,7 @@ public class VulkanComputeCommandList extends ComputeCommandList {
             submitInfo.waitSemaphoreCount(1);
 
             submitInfo.pWaitSemaphores(stack.longs(((VulkanSemaphore) waitSemaphores[frameIndex]).getHandle()));
-            submitInfo.pWaitDstStageMask(stack.ints(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT));
+            submitInfo.pWaitDstStageMask(stack.ints(VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT));
             submitInfo.pCommandBuffers(stack.pointers(commandBuffers[frameIndex]));
             submitInfo.pSignalSemaphores(stack.longs(((VulkanSemaphore) finishedSemaphores[frameIndex]).getHandle()));
 
