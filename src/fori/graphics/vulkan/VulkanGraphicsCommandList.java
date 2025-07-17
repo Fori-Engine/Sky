@@ -10,11 +10,9 @@ import java.util.Optional;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.KHRSwapchain.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-import static org.lwjgl.vulkan.KHRSynchronization2.VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR;
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
 import static org.lwjgl.vulkan.VK13.VK_ACCESS_NONE;
-import static org.lwjgl.vulkan.VK13.VK_PIPELINE_STAGE_NONE;
 
 public class VulkanGraphicsCommandList extends GraphicsCommandList {
 
@@ -102,7 +100,7 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
     }
 
     @Override
-    public void setPresentable(RenderTarget renderTarget) {
+    public void makePresentable(RenderTarget renderTarget) {
 
 
         VulkanUtil.transitionImageLayout(
@@ -139,8 +137,8 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
     }
 
     @Override
-    public void setRenderTarget(RenderTarget renderTarget, boolean clear) {
-        super.setRenderTarget(renderTarget, clear);
+    public void startRendering(RenderTarget renderTarget, boolean clear) {
+        super.startRendering(renderTarget, clear);
 
         int loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
         if(clear) loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -243,7 +241,7 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
     }
 
     @Override
-    public void flushRenderTarget() {
+    public void endRendering() {
         KHRDynamicRendering.vkCmdEndRenderingKHR(commandBuffers[frameIndex]);
     }
 

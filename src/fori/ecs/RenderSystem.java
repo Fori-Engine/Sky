@@ -110,14 +110,14 @@ public class RenderSystem extends EcsSystem {
 
             uiVertexBuffer = Buffer.newBuffer(
                     renderer,
-                    VertexAttributes.getSize(uiShaderProgram.getAttributes().get()) * Float.BYTES * 4,
+                    VertexAttributes.getSize(uiShaderProgram.getAttributes().get()) * Float.BYTES * 8,
                     Buffer.Usage.VertexBuffer,
                     Buffer.Type.CPUGPUShared,
                     false
             );
             uiIndexBuffer = Buffer.newBuffer(
                     renderer,
-                    6 * Integer.BYTES,
+                    12 * Integer.BYTES,
                     Buffer.Usage.IndexBuffer,
                     Buffer.Type.CPUGPUShared,
                     false
@@ -151,47 +151,92 @@ public class RenderSystem extends EcsSystem {
             uiIndexBuffer.get().clear();
 
 
-            float x = 100, y = 100, w = 300, h = 300;
-            Color color = Color.RED;
+            {
+                float x = 100, y = 100, w = 300, h = 300;
+                Color color = Color.RED;
 
-            ByteBuffer uiVertexBufferData = uiVertexBuffer.get();
-            ByteBuffer uiIndexBufferData = uiIndexBuffer.get();
+                ByteBuffer uiVertexBufferData = uiVertexBuffer.get();
+                ByteBuffer uiIndexBufferData = uiIndexBuffer.get();
 
 
-            uiVertexBufferData.putFloat(x);
-            uiVertexBufferData.putFloat(y);
-            uiVertexBufferData.putFloat(color.r);
-            uiVertexBufferData.putFloat(color.g);
-            uiVertexBufferData.putFloat(color.b);
-            uiVertexBufferData.putFloat(color.a);
+                uiVertexBufferData.putFloat(x);
+                uiVertexBufferData.putFloat(y);
+                uiVertexBufferData.putFloat(color.r);
+                uiVertexBufferData.putFloat(color.g);
+                uiVertexBufferData.putFloat(color.b);
+                uiVertexBufferData.putFloat(color.a);
 
-            uiVertexBufferData.putFloat(x);
-            uiVertexBufferData.putFloat(y + h);
-            uiVertexBufferData.putFloat(color.r);
-            uiVertexBufferData.putFloat(color.g);
-            uiVertexBufferData.putFloat(color.b);
-            uiVertexBufferData.putFloat(color.a);
+                uiVertexBufferData.putFloat(x);
+                uiVertexBufferData.putFloat(y + h);
+                uiVertexBufferData.putFloat(color.r);
+                uiVertexBufferData.putFloat(color.g);
+                uiVertexBufferData.putFloat(color.b);
+                uiVertexBufferData.putFloat(color.a);
 
-            uiVertexBufferData.putFloat(x + w);
-            uiVertexBufferData.putFloat(y + h);
-            uiVertexBufferData.putFloat(color.r);
-            uiVertexBufferData.putFloat(color.g);
-            uiVertexBufferData.putFloat(color.b);
-            uiVertexBufferData.putFloat(color.a);
+                uiVertexBufferData.putFloat(x + w);
+                uiVertexBufferData.putFloat(y + h);
+                uiVertexBufferData.putFloat(color.r);
+                uiVertexBufferData.putFloat(color.g);
+                uiVertexBufferData.putFloat(color.b);
+                uiVertexBufferData.putFloat(color.a);
 
-            uiVertexBufferData.putFloat(x + w);
-            uiVertexBufferData.putFloat(y);
-            uiVertexBufferData.putFloat(color.r);
-            uiVertexBufferData.putFloat(color.g);
-            uiVertexBufferData.putFloat(color.b);
-            uiVertexBufferData.putFloat(color.a);
+                uiVertexBufferData.putFloat(x + w);
+                uiVertexBufferData.putFloat(y);
+                uiVertexBufferData.putFloat(color.r);
+                uiVertexBufferData.putFloat(color.g);
+                uiVertexBufferData.putFloat(color.b);
+                uiVertexBufferData.putFloat(color.a);
 
-            uiIndexBufferData.putInt(0);
-            uiIndexBufferData.putInt(1);
-            uiIndexBufferData.putInt(2);
-            uiIndexBufferData.putInt(2);
-            uiIndexBufferData.putInt(3);
-            uiIndexBufferData.putInt(0);
+                uiIndexBufferData.putInt(0);
+                uiIndexBufferData.putInt(1);
+                uiIndexBufferData.putInt(2);
+                uiIndexBufferData.putInt(2);
+                uiIndexBufferData.putInt(3);
+                uiIndexBufferData.putInt(0);
+            }
+            {
+                float x = 700, y = 350, w = 300, h = 300;
+                Color color = Color.BLUE;
+
+                ByteBuffer uiVertexBufferData = uiVertexBuffer.get();
+                ByteBuffer uiIndexBufferData = uiIndexBuffer.get();
+
+
+                uiVertexBufferData.putFloat(x);
+                uiVertexBufferData.putFloat(y);
+                uiVertexBufferData.putFloat(color.r);
+                uiVertexBufferData.putFloat(color.g);
+                uiVertexBufferData.putFloat(color.b);
+                uiVertexBufferData.putFloat(color.a);
+
+                uiVertexBufferData.putFloat(x);
+                uiVertexBufferData.putFloat(y + h);
+                uiVertexBufferData.putFloat(color.r);
+                uiVertexBufferData.putFloat(color.g);
+                uiVertexBufferData.putFloat(color.b);
+                uiVertexBufferData.putFloat(color.a);
+
+                uiVertexBufferData.putFloat(x + w);
+                uiVertexBufferData.putFloat(y + h);
+                uiVertexBufferData.putFloat(color.r);
+                uiVertexBufferData.putFloat(color.g);
+                uiVertexBufferData.putFloat(color.b);
+                uiVertexBufferData.putFloat(color.a);
+
+                uiVertexBufferData.putFloat(x + w);
+                uiVertexBufferData.putFloat(y);
+                uiVertexBufferData.putFloat(color.r);
+                uiVertexBufferData.putFloat(color.g);
+                uiVertexBufferData.putFloat(color.b);
+                uiVertexBufferData.putFloat(color.a);
+
+                uiIndexBufferData.putInt(0 + 4);
+                uiIndexBufferData.putInt(1 + 4);
+                uiIndexBufferData.putInt(2 + 4);
+                uiIndexBufferData.putInt(2 + 4);
+                uiIndexBufferData.putInt(3 + 4);
+                uiIndexBufferData.putInt(0 + 4);
+            }
         }
     }
 
@@ -205,7 +250,7 @@ public class RenderSystem extends EcsSystem {
         render0.startRecording(renderer.getRenderStartSemaphores(), renderer.getFrameIndex());
         {
 
-            render0.setRenderTarget(renderer.getSwapchainRenderTarget(), true);
+            render0.startRendering(renderer.getSwapchainRenderTarget(), true);
 
             scene.getEngine().findEntitiesWith(TransformComponent.class, StaticMeshComponent.class).stream().forEach(components -> {
 
@@ -252,7 +297,7 @@ public class RenderSystem extends EcsSystem {
                 render0.drawIndexed(dynamicMeshComponent.dynamicMesh().getIndexCount());
             });
 
-            render0.flushRenderTarget();
+            render0.endRendering();
 
         }
         render0.endRecording();
@@ -273,13 +318,13 @@ public class RenderSystem extends EcsSystem {
         render1.startRecording(compute0.getFinishedSemaphores(), renderer.getFrameIndex());
         {
 
-            render1.setRenderTarget(renderer.getSwapchainRenderTarget(), false);
+            render1.startRendering(renderer.getSwapchainRenderTarget(), false);
             render1.setDrawBuffers(uiVertexBuffer, uiIndexBuffer);
             render1.setShaderProgram(uiShaderProgram);
-            render1.drawIndexed(6);
-            render1.flushRenderTarget();
+            render1.drawIndexed(12);
+            render1.endRendering();
 
-            render1.setPresentable(renderer.getSwapchainRenderTarget());
+            render1.makePresentable(renderer.getSwapchainRenderTarget());
 
         }
         render1.endRecording();
