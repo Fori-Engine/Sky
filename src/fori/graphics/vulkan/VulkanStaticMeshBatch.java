@@ -23,7 +23,7 @@ public class VulkanStaticMeshBatch extends StaticMeshBatch {
     public VulkanStaticMeshBatch(Disposable parent,
                                  ShaderProgram shaderProgram,
                                  int framesInFlight,
-                                 long commandPool,
+                                 VulkanCommandPool commandPool,
                                  VkQueue graphicsQueue,
                                  VkDevice device,
                                  int maxVertexCount,
@@ -38,7 +38,7 @@ public class VulkanStaticMeshBatch extends StaticMeshBatch {
 
             VkCommandBufferAllocateInfo allocInfo = VkCommandBufferAllocateInfo.calloc(stack);
             allocInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
-            allocInfo.commandPool(commandPool);
+            allocInfo.commandPool(commandPool.getHandle());
             allocInfo.level(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
             allocInfo.commandBufferCount(1);
 

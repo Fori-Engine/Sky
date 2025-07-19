@@ -13,16 +13,19 @@ import static org.lwjgl.vulkan.VK10.*;
 public class VulkanComputeCommandList extends ComputeCommandList {
 
     private VkQueue computeQueue;
-    private long commandPool;
     private VkCommandBuffer[] commandBuffers;
     private VkDevice device;
+    private VulkanCommandPool commandPool;
 
     public VulkanComputeCommandList(Disposable parent, int framesInFlight) {
         super(parent, framesInFlight);
 
         computeQueue = VulkanRuntime.getGraphicsQueue();
         device = VulkanRuntime.getCurrentDevice();
-        commandPool = VulkanUtil.createCommandPool(device, VulkanRuntime.getGraphicsFamilyIndex());
+
+        //TODO(Shayan) This should use the compute family index!
+        commandPool = new VulkanCommandPool(this, device, VulkanRuntime.getGraphicsFamilyIndex());
+
 
 
         finishedSemaphores = new VulkanSemaphore[framesInFlight];
@@ -35,7 +38,7 @@ public class VulkanComputeCommandList extends ComputeCommandList {
             try(MemoryStack stack = stackPush()) {
                 VkCommandBufferAllocateInfo allocInfo = VkCommandBufferAllocateInfo.calloc(stack);
                 allocInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
-                allocInfo.commandPool(commandPool);
+                allocInfo.commandPool(commandPool.getHandle());
                 allocInfo.level(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
                 allocInfo.commandBufferCount(framesInFlight);
 
@@ -134,8 +137,5 @@ public class VulkanComputeCommandList extends ComputeCommandList {
     }
 
     @Override
-    public void dispose() {
-        vkDeviceWaitIdle(VulkanRuntime.getCurrentDevice());
-        vkDestroyCommandPool(device, commandPool, null);
-    }
+    public void dispose() {}
 }

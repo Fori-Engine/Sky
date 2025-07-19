@@ -17,12 +17,12 @@ import static org.lwjgl.vulkan.VK13.VK_ACCESS_NONE;
 public class VulkanGraphicsCommandList extends GraphicsCommandList {
 
     private VkQueue graphicsQueue;
-    private long commandPool;
     private VkCommandBuffer[] commandBuffers;
     private VkDevice device;
     private VkRenderingInfoKHR renderingInfoKHR;
     private VkRenderingAttachmentInfo.Buffer colorAttachment;
     private VkRenderingAttachmentInfoKHR depthAttachment;
+    private VulkanCommandPool commandPool;
 
 
     public VulkanGraphicsCommandList(Disposable parent, int framesInFlight) {
@@ -30,7 +30,7 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
 
         graphicsQueue = VulkanRuntime.getGraphicsQueue();
         device = VulkanRuntime.getCurrentDevice();
-        commandPool = VulkanUtil.createCommandPool(device, VulkanRuntime.getGraphicsFamilyIndex());
+        commandPool = new VulkanCommandPool(this, device, VulkanRuntime.getGraphicsFamilyIndex());
 
         finishedSemaphores = new VulkanSemaphore[framesInFlight];
         commandBuffers = new VkCommandBuffer[framesInFlight];
@@ -41,7 +41,7 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
             try(MemoryStack stack = stackPush()) {
                 VkCommandBufferAllocateInfo allocInfo = VkCommandBufferAllocateInfo.calloc(stack);
                 allocInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
-                allocInfo.commandPool(commandPool);
+                allocInfo.commandPool(commandPool.getHandle());
                 allocInfo.level(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
                 allocInfo.commandBufferCount(framesInFlight);
 
@@ -277,8 +277,5 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
 
 
     @Override
-    public void dispose() {
-        vkDeviceWaitIdle(VulkanRuntime.getCurrentDevice());
-        vkDestroyCommandPool(device, commandPool, null);
-    }
+    public void dispose() {}
 }

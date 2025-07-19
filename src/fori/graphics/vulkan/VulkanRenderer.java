@@ -44,7 +44,7 @@ public class VulkanRenderer extends Renderer {
     private VulkanSwapchain swapchain;
     private VulkanSwapchainSupportInfo swapchainSupportDetails;
 
-    private long sharedCommandPool;
+    private VulkanCommandPool commandPool;
     private long vkSurface;
     private VkInstance instance;
 
@@ -78,7 +78,7 @@ public class VulkanRenderer extends Renderer {
         presentQueue = getPresentQueue(device);
         VulkanRuntime.setGraphicsFamilyIndex(queueFamilies.graphicsFamily);
 
-        sharedCommandPool = VulkanUtil.createCommandPool(device, VulkanRuntime.getGraphicsFamilyIndex());
+        commandPool = new VulkanCommandPool(this, device, VulkanRuntime.getGraphicsFamilyIndex());
         swapchainRenderTarget = createSwapchainRenderTarget(rendererSettings);
 
         frameStartSemaphores = new VulkanSemaphore[maxFramesInFlight];
@@ -454,7 +454,7 @@ public class VulkanRenderer extends Renderer {
     @Override
     public StaticMeshBatch newStaticMeshBatch(int maxVertexCount, int maxIndexCount, int maxTransformCount, ShaderProgram shaderProgram) {
 
-        return new VulkanStaticMeshBatch(this, shaderProgram, getMaxFramesInFlight(), sharedCommandPool, graphicsQueue, device, maxVertexCount, maxIndexCount, maxTransformCount);
+        return new VulkanStaticMeshBatch(this, shaderProgram, getMaxFramesInFlight(), commandPool, graphicsQueue, device, maxVertexCount, maxIndexCount, maxTransformCount);
     }
 
 
@@ -613,7 +613,6 @@ public class VulkanRenderer extends Renderer {
         vkDeviceWaitIdle(device);
 
 
-        vkDestroyCommandPool(device, sharedCommandPool, null);
         vmaDestroyAllocator(allocator.getId());
         vkDestroySurfaceKHR(instance, vkSurface, null);
         EXTDebugUtils.vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, null);
