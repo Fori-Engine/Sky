@@ -96,6 +96,9 @@ public class GLFWSurface extends Surface {
                     if(!availableLayerNames.contains(validationLayerName)){
                         throw new RuntimeException("Validation Layer " + validationLayerName + " is not available");
                     }
+                    else {
+                        Logger.info(VulkanRenderer.class, validationLayerName);
+                    }
                 }
             }
 

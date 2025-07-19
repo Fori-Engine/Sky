@@ -37,7 +37,7 @@ public class VulkanUtil {
         return commandPool;
     }
 
-    public static int toVkTextureFormatEnum(TextureFormatType textureFormatType) {
+    public static int toVkImageFormatEnum(TextureFormatType textureFormatType) {
         switch (textureFormatType) {
             case ColorR8G8B8A8StandardRGB -> {
                 return VK_FORMAT_R8G8B8A8_SRGB;

@@ -164,17 +164,13 @@ public class VulkanRenderer extends Renderer {
 
         swapchainRenderTarget.addTexture(
                 maxFramesInFlight,
-                new VulkanTexture(
+                Texture.newDepthTexture(
                         swapchainRenderTarget,
                         swapchain.getExtent().width(),
                         swapchain.getExtent().height(),
-                        null,
+                        TextureFormatType.Depth32Float,
                         Texture.Filter.Nearest,
-                        Texture.Filter.Nearest,
-                        VK_FORMAT_D32_SFLOAT,
-                        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-                        VK_IMAGE_TILING_OPTIMAL,
-                        VK_IMAGE_ASPECT_DEPTH_BIT
+                        Texture.Filter.Nearest
                 )
         );
 

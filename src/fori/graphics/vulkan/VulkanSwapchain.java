@@ -41,7 +41,8 @@ public class VulkanSwapchain extends Disposable {
             if (!physicalDeviceQueueFamilies.graphicsFamily.equals(physicalDeviceQueueFamilies.presentFamily)) {
                 swapchainCreateInfo.imageSharingMode(VK_SHARING_MODE_CONCURRENT);
                 swapchainCreateInfo.pQueueFamilyIndices(stack.ints(physicalDeviceQueueFamilies.graphicsFamily, physicalDeviceQueueFamilies.presentFamily));
-            } else {
+            }
+            else {
                 swapchainCreateInfo.imageSharingMode(VK_SHARING_MODE_EXCLUSIVE);
             }
 

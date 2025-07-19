@@ -27,16 +27,17 @@ public class RenderSystem extends EcsSystem {
 
     private GraphicsCommandList render0, render1;
     private ComputeCommandList compute0;
-    private RenderTarget targetA;
+    private RenderTarget mainRT;
 
     public RenderSystem(Renderer renderer, Scene scene) {
         this.renderer = renderer;
         this.scene = scene;
         render0 = CommandList.newGraphicsCommandList(renderer, renderer.getMaxFramesInFlight());
         render1 = CommandList.newGraphicsCommandList(renderer, renderer.getMaxFramesInFlight());
-        compute0 = CommandList.newComputeCommandList(renderer, renderer.getMaxFramesInFlight());
+        //compute0 = CommandList.newComputeCommandList(renderer, renderer.getMaxFramesInFlight());
 
         //Compute Shader
+
         {
             ShaderReader.ShaderSources shaderSources = ShaderReader.read(
                     AssetPacks.<String>getAsset("core:assets/shaders/vulkan/Compute.glsl").asset
@@ -60,17 +61,17 @@ public class RenderSystem extends EcsSystem {
                     ).sizeBytes(SizeUtil.MATRIX_SIZE_BYTES)
             ));
 
-            /*
-            targetA = new RenderTarget(renderer, 3);
-            for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                targetA.addTexture(frameIndex, Texture.newTexture(targetA, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8StandardRGB, Texture.Filter.Nearest, Texture.Filter.Nearest));
-            }
-            targetA.addTexture(2, Texture.newTexture(targetA, renderer.getWidth(), renderer.getHeight(), TextureFormatType.Depth32Float, Texture.Filter.Nearest, Texture.Filter.Nearest));
-
-
-             */
 
         }
+
+
+        mainRT = new RenderTarget(renderer, 3);
+        for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
+            mainRT.addTexture(frameIndex, Texture.newColorTexture(mainRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8StandardRGB, Texture.Filter.Nearest, Texture.Filter.Nearest));
+        }
+        mainRT.addTexture(2, Texture.newDepthTexture(mainRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.Depth32Float, Texture.Filter.Nearest, Texture.Filter.Nearest));
+
+
 
         //UI
         {
@@ -247,6 +248,8 @@ public class RenderSystem extends EcsSystem {
             sceneCamera = cameraComponent.camera();
         });
 
+
+
         render0.startRecording(renderer.getRenderStartSemaphores(), renderer.getFrameIndex());
         {
 
@@ -302,6 +305,10 @@ public class RenderSystem extends EcsSystem {
         }
         render0.endRecording();
 
+        /*
+
+
+
 
 
         compute0.startRecording(render0.getFinishedSemaphores(), renderer.getFrameIndex());
@@ -313,9 +320,14 @@ public class RenderSystem extends EcsSystem {
         }
         compute0.endRecording();
 
+         */
 
 
-        render1.startRecording(compute0.getFinishedSemaphores(), renderer.getFrameIndex());
+
+
+
+
+        render1.startRecording(render0.getFinishedSemaphores(), renderer.getFrameIndex());
         {
 
             render1.startRendering(renderer.getSwapchainRenderTarget(), false);
@@ -326,6 +338,7 @@ public class RenderSystem extends EcsSystem {
 
             render1.makePresentable(renderer.getSwapchainRenderTarget());
 
+
         }
         render1.endRecording();
 
@@ -333,16 +346,8 @@ public class RenderSystem extends EcsSystem {
 
 
 
-
-
-
-
-
-
-
-
         renderer.addCommandList(render0);
-        renderer.addCommandList(compute0);
+        //renderer.addCommandList(compute0);
         renderer.addCommandList(render1);
     }
 

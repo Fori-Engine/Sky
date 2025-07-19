@@ -24,8 +24,6 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
     private VkRenderingAttachmentInfo.Buffer colorAttachment;
     private VkRenderingAttachmentInfoKHR depthAttachment;
 
-    //Maybe make this static so that all VulkanGraphicsCommandLists start from the same pipeline stage?
-    private int srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 
     public VulkanGraphicsCommandList(Disposable parent, int framesInFlight) {
         super(parent, framesInFlight);
@@ -111,10 +109,9 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
                 VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
                 VK_ACCESS_NONE,
                 VK_IMAGE_ASPECT_COLOR_BIT,
-                srcStageMask,
+                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                 VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
         );
-        srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 
 
     }
@@ -205,7 +202,6 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
                     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
             );
-            srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
 
 

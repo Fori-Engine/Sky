@@ -3,6 +3,10 @@ package fori.graphics;
 import fori.asset.Asset;
 import fori.asset.TextureData;
 import fori.graphics.vulkan.VulkanTexture;
+import fori.graphics.vulkan.VulkanUtil;
+
+import static org.lwjgl.vulkan.VK10.*;
+import static org.lwjgl.vulkan.VK10.VK_IMAGE_ASPECT_DEPTH_BIT;
 
 public abstract class Texture extends Disposable {
     protected int width, height;
@@ -53,13 +57,57 @@ public abstract class Texture extends Disposable {
     }
 
 
-    public static Texture newTexture(Disposable parent, Asset<TextureData> textureData, TextureFormatType textureFormatType, Filter minFilter, Filter magFilter){
-        if(Renderer.getRenderAPI() == RenderAPI.Vulkan) return new VulkanTexture(parent, textureData.asset.width, textureData.asset.height, textureData, textureFormatType, minFilter, magFilter);
+    public static Texture newColorTextureFromAsset(Disposable parent, Asset<TextureData> textureData, TextureFormatType textureFormatType, Filter minFilter, Filter magFilter){
+        if(Renderer.getRenderAPI() == RenderAPI.Vulkan) {
+            return new VulkanTexture(
+                    parent,
+                    textureData.asset.width,
+                    textureData.asset.height,
+                    textureData,
+                    minFilter,
+                    magFilter,
+                    VulkanUtil.toVkImageFormatEnum(textureFormatType),
+                    VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                    VK_IMAGE_TILING_OPTIMAL,
+                    VK_IMAGE_ASPECT_COLOR_BIT
+            );
+        }
         return null;
     }
 
-    public static Texture newTexture(Disposable parent, int width, int height, TextureFormatType textureFormatType, Filter minFilter, Filter magFilter){
-        if(Renderer.getRenderAPI() == RenderAPI.Vulkan) return new VulkanTexture(parent, width, height, null, textureFormatType, minFilter, magFilter);
+    public static Texture newColorTexture(Disposable parent, int width, int height, TextureFormatType textureFormatType, Filter minFilter, Filter magFilter){
+        if(Renderer.getRenderAPI() == RenderAPI.Vulkan) {
+            return new VulkanTexture(
+                    parent,
+                    width,
+                    height,
+                    null,
+                    minFilter,
+                    magFilter,
+                    VulkanUtil.toVkImageFormatEnum(textureFormatType),
+                    VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+                    VK_IMAGE_TILING_OPTIMAL,
+                    VK_IMAGE_ASPECT_COLOR_BIT
+            );
+        }
+        return null;
+    }
+
+    public static Texture newDepthTexture(Disposable parent, int width, int height, TextureFormatType textureFormatType, Filter minFilter, Filter magFilter){
+        if(Renderer.getRenderAPI() == RenderAPI.Vulkan) {
+            return new VulkanTexture(
+                    parent,
+                    width,
+                    height,
+                    null,
+                    minFilter,
+                    magFilter,
+                    VulkanUtil.toVkImageFormatEnum(textureFormatType),
+                    VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                    VK_IMAGE_TILING_OPTIMAL,
+                    VK_IMAGE_ASPECT_DEPTH_BIT
+            );
+        }
         return null;
     }
 

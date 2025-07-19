@@ -268,8 +268,8 @@ public class VulkanShaderProgram extends ShaderProgram {
             VkPipelineRenderingCreateInfoKHR pipelineRenderingCreateInfoKHR = VkPipelineRenderingCreateInfoKHR.calloc(stack);
             pipelineRenderingCreateInfoKHR.colorAttachmentCount(1);
             pipelineRenderingCreateInfoKHR.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR);
-            pipelineRenderingCreateInfoKHR.pColorAttachmentFormats(stack.ints(VulkanUtil.toVkTextureFormatEnum(colorTextureFormat)));
-            pipelineRenderingCreateInfoKHR.depthAttachmentFormat(VulkanUtil.toVkTextureFormatEnum(depthTextureFormat));
+            pipelineRenderingCreateInfoKHR.pColorAttachmentFormats(stack.ints(VulkanUtil.toVkImageFormatEnum(colorTextureFormat)));
+            pipelineRenderingCreateInfoKHR.depthAttachmentFormat(VulkanUtil.toVkImageFormatEnum(depthTextureFormat));
 
 
 
