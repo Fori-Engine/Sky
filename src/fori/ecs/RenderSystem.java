@@ -14,89 +14,104 @@ public class RenderSystem extends EcsSystem {
     private Renderer renderer;
     private Scene scene;
     private Camera sceneCamera;
-    private ShaderProgram computeShaderProgram;
+    private ShaderProgram mangaShaderProgram;
 
 
 
-    private Camera uiCamera;
-    private ShaderProgram uiShaderProgram;
-    private Buffer uiVertexBuffer, uiIndexBuffer;
-    private Buffer[] uiCameraBuffers;
+    private Camera swapchainPassCamera;
+    private ShaderProgram swapchainPassShaderProgram;
+    private Buffer swapchainPassVertexBuffer, swapchainPassIndexBuffer;
+    private Buffer[] swapchainPassCameraBuffers;
 
 
 
-    private GraphicsCommandList render0, render1;
-    private ComputeCommandList compute0;
-    private RenderTarget mainRT;
+    private GraphicsPass sceneColorPass, swapchainPass;
+    //private ComputePass mangaPass;
+    private RenderTarget sceneColorRT, mangaRT;
+
+    private RenderGraph renderGraph;
 
     public RenderSystem(Renderer renderer, Scene scene) {
         this.renderer = renderer;
         this.scene = scene;
-        render0 = CommandList.newGraphicsCommandList(renderer, renderer.getMaxFramesInFlight());
-        render1 = CommandList.newGraphicsCommandList(renderer, renderer.getMaxFramesInFlight());
-        //compute0 = CommandList.newComputeCommandList(renderer, renderer.getMaxFramesInFlight());
 
-        //Compute Shader
 
+
+
+        //Scene Color Render Target
+        {
+            sceneColorRT = new RenderTarget(renderer, 3);
+            for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
+                sceneColorRT.addTexture(frameIndex, Texture.newColorTexture(sceneColorRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8StandardRGB, Texture.Filter.Nearest, Texture.Filter.Nearest));
+            }
+            sceneColorRT.addTexture(2, Texture.newDepthTexture(sceneColorRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.Depth32Float, Texture.Filter.Nearest, Texture.Filter.Nearest));
+        }
+
+        /*
+        //Manga Shader
         {
             ShaderReader.ShaderSources shaderSources = ShaderReader.read(
-                    AssetPacks.<String>getAsset("core:assets/shaders/vulkan/Compute.glsl").asset
+                    AssetPacks.<String>getAsset("core:assets/shaders/vulkan/Manga.glsl").asset
             );
 
 
-            computeShaderProgram = ShaderProgram.newComputeShaderProgram(renderer);
-            computeShaderProgram.setShaders(
-                    Shader.newShader(computeShaderProgram, ShaderType.Compute, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Compute), ShaderType.Compute))
+            mangaShaderProgram = ShaderProgram.newComputeShaderProgram(renderer);
+            mangaShaderProgram.setShaders(
+                    Shader.newShader(mangaShaderProgram, ShaderType.Compute, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Compute), ShaderType.Compute))
             );
 
-            computeShaderProgram.bind(
+            mangaShaderProgram.bind(
                     Optional.empty(),
                     new ShaderResSet(
-                    0,
-                    new ShaderRes(
-                            "test",
                             0,
-                            UniformBuffer,
-                            VertexStage
-                    ).sizeBytes(SizeUtil.MATRIX_SIZE_BYTES)
-            ));
+                            new ShaderRes(
+                                    "test",
+                                    0,
+                                    UniformBuffer,
+                                    VertexStage
+                            ).sizeBytes(SizeUtil.MATRIX_SIZE_BYTES)
+                    ));
 
 
         }
 
-
-        mainRT = new RenderTarget(renderer, 3);
-        for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-            mainRT.addTexture(frameIndex, Texture.newColorTexture(mainRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8StandardRGB, Texture.Filter.Nearest, Texture.Filter.Nearest));
-        }
-        mainRT.addTexture(2, Texture.newDepthTexture(mainRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.Depth32Float, Texture.Filter.Nearest, Texture.Filter.Nearest));
-
-
-
-        //UI
+        //Manga Render Target
         {
-            uiCamera = new Camera(
+            mangaRT = new RenderTarget(renderer, 3);
+            for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
+                mangaRT.addTexture(frameIndex, Texture.newColorTexture(mangaRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8StandardRGB, Texture.Filter.Nearest, Texture.Filter.Nearest));
+            }
+            mangaRT.addTexture(2, Texture.newDepthTexture(mangaRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.Depth32Float, Texture.Filter.Nearest, Texture.Filter.Nearest));
+        }
+
+         */
+
+
+        //Swapchain Pass Resources
+        {
+            swapchainPassCamera = new Camera(
                     new Matrix4f().identity(),
                     new Matrix4f().ortho(0, renderer.getWidth(), 0, renderer.getHeight(), 0, 1, true),
                     false
             );
 
             ShaderReader.ShaderSources shaderSources = ShaderReader.read(
-                    AssetPacks.<String>getAsset("core:assets/shaders/vulkan/UI.glsl").asset
+                    AssetPacks.<String>getAsset("core:assets/shaders/vulkan/SwapchainPass.glsl").asset
             );
 
 
-            uiShaderProgram = ShaderProgram.newGraphicsShaderProgram(renderer, TextureFormatType.ColorR8G8B8A8StandardRGB, TextureFormatType.Depth32Float);
-            uiShaderProgram.setShaders(
-                    Shader.newShader(uiShaderProgram, ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex)),
-                    Shader.newShader(uiShaderProgram, ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
+            swapchainPassShaderProgram = ShaderProgram.newGraphicsShaderProgram(renderer, TextureFormatType.ColorR8G8B8A8StandardRGB, TextureFormatType.Depth32Float);
+            swapchainPassShaderProgram.setShaders(
+                    Shader.newShader(swapchainPassShaderProgram, ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex)),
+                    Shader.newShader(swapchainPassShaderProgram, ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
             );
 
 
-            uiShaderProgram.bind(
+            swapchainPassShaderProgram.bind(
                     Optional.of(new VertexAttributes.Type[]{
                             PositionFloat2,
-                            ColorFloat4
+                            ColorFloat4,
+                            UVFloat2
                     }),
                     new ShaderResSet(
                             0,
@@ -105,28 +120,35 @@ public class RenderSystem extends EcsSystem {
                                     0,
                                     UniformBuffer,
                                     VertexStage
-                            ).sizeBytes(SizeUtil.MATRIX_SIZE_BYTES)
+                            ).sizeBytes(SizeUtil.MATRIX_SIZE_BYTES),
+                            new ShaderRes(
+                                    "textures",
+                                    1,
+                                    CombinedSampler,
+                                    FragmentStage
+                            ).count(1)
                     )
+
             );
 
-            uiVertexBuffer = Buffer.newBuffer(
+            swapchainPassVertexBuffer = Buffer.newBuffer(
                     renderer,
-                    VertexAttributes.getSize(uiShaderProgram.getAttributes().get()) * Float.BYTES * 8,
+                    VertexAttributes.getSize(swapchainPassShaderProgram.getAttributes().get()) * Float.BYTES * 4,
                     Buffer.Usage.VertexBuffer,
                     Buffer.Type.CPUGPUShared,
                     false
             );
-            uiIndexBuffer = Buffer.newBuffer(
+            swapchainPassIndexBuffer = Buffer.newBuffer(
                     renderer,
-                    12 * Integer.BYTES,
+                    6 * Integer.BYTES,
                     Buffer.Usage.IndexBuffer,
                     Buffer.Type.CPUGPUShared,
                     false
             );
 
-            uiCameraBuffers = new Buffer[renderer.getMaxFramesInFlight()];
+            swapchainPassCameraBuffers = new Buffer[renderer.getMaxFramesInFlight()];
             for (int i = 0; i < renderer.getMaxFramesInFlight(); i++) {
-                uiCameraBuffers[i] = Buffer.newBuffer(
+                swapchainPassCameraBuffers[i] = Buffer.newBuffer(
                         renderer,
                         Camera.SIZE,
                         Buffer.Usage.UniformBuffer,
@@ -137,108 +159,112 @@ public class RenderSystem extends EcsSystem {
 
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
 
-                ByteBuffer uiCameraData = uiCameraBuffers[frameIndex].get();
+                ByteBuffer swapchainPassCameraBufferData = swapchainPassCameraBuffers[frameIndex].get();
 
-                uiCamera.getProj().get(0, uiCameraData);
+                swapchainPassCamera.getProj().get(0, swapchainPassCameraBufferData);
 
 
-                uiShaderProgram.updateBuffers(
+                swapchainPassShaderProgram.updateBuffers(
                         frameIndex,
-                        new ShaderUpdate<>("camera", 0, 0, uiCameraBuffers[frameIndex])
+                        new ShaderUpdate<>("camera", 0, 0, swapchainPassCameraBuffers[frameIndex])
                 );
             }
 
-            uiVertexBuffer.get().clear();
-            uiIndexBuffer.get().clear();
+            swapchainPassVertexBuffer.get().clear();
+            swapchainPassIndexBuffer.get().clear();
 
 
             {
-                float x = 100, y = 100, w = 300, h = 300;
+                float x = 400, y = 400, w = 640, h = 480;
                 Color color = Color.RED;
 
-                ByteBuffer uiVertexBufferData = uiVertexBuffer.get();
-                ByteBuffer uiIndexBufferData = uiIndexBuffer.get();
+                ByteBuffer swapchainPassVertexBufferData = swapchainPassVertexBuffer.get();
+                ByteBuffer swapchainPassIndexBufferData = swapchainPassIndexBuffer.get();
 
 
-                uiVertexBufferData.putFloat(x);
-                uiVertexBufferData.putFloat(y);
-                uiVertexBufferData.putFloat(color.r);
-                uiVertexBufferData.putFloat(color.g);
-                uiVertexBufferData.putFloat(color.b);
-                uiVertexBufferData.putFloat(color.a);
+                swapchainPassVertexBufferData.putFloat(x);
+                swapchainPassVertexBufferData.putFloat(y);
+                swapchainPassVertexBufferData.putFloat(color.r);
+                swapchainPassVertexBufferData.putFloat(color.g);
+                swapchainPassVertexBufferData.putFloat(color.b);
+                swapchainPassVertexBufferData.putFloat(color.a);
+                swapchainPassVertexBufferData.putFloat(0);
+                swapchainPassVertexBufferData.putFloat(0);
 
-                uiVertexBufferData.putFloat(x);
-                uiVertexBufferData.putFloat(y + h);
-                uiVertexBufferData.putFloat(color.r);
-                uiVertexBufferData.putFloat(color.g);
-                uiVertexBufferData.putFloat(color.b);
-                uiVertexBufferData.putFloat(color.a);
-
-                uiVertexBufferData.putFloat(x + w);
-                uiVertexBufferData.putFloat(y + h);
-                uiVertexBufferData.putFloat(color.r);
-                uiVertexBufferData.putFloat(color.g);
-                uiVertexBufferData.putFloat(color.b);
-                uiVertexBufferData.putFloat(color.a);
-
-                uiVertexBufferData.putFloat(x + w);
-                uiVertexBufferData.putFloat(y);
-                uiVertexBufferData.putFloat(color.r);
-                uiVertexBufferData.putFloat(color.g);
-                uiVertexBufferData.putFloat(color.b);
-                uiVertexBufferData.putFloat(color.a);
-
-                uiIndexBufferData.putInt(0);
-                uiIndexBufferData.putInt(1);
-                uiIndexBufferData.putInt(2);
-                uiIndexBufferData.putInt(2);
-                uiIndexBufferData.putInt(3);
-                uiIndexBufferData.putInt(0);
-            }
-            {
-                float x = 700, y = 350, w = 300, h = 300;
-                Color color = Color.BLUE;
-
-                ByteBuffer uiVertexBufferData = uiVertexBuffer.get();
-                ByteBuffer uiIndexBufferData = uiIndexBuffer.get();
+                swapchainPassVertexBufferData.putFloat(x);
+                swapchainPassVertexBufferData.putFloat(y + h);
+                swapchainPassVertexBufferData.putFloat(color.r);
+                swapchainPassVertexBufferData.putFloat(color.g);
+                swapchainPassVertexBufferData.putFloat(color.b);
+                swapchainPassVertexBufferData.putFloat(color.a);
+                swapchainPassVertexBufferData.putFloat(0);
+                swapchainPassVertexBufferData.putFloat(1);
 
 
-                uiVertexBufferData.putFloat(x);
-                uiVertexBufferData.putFloat(y);
-                uiVertexBufferData.putFloat(color.r);
-                uiVertexBufferData.putFloat(color.g);
-                uiVertexBufferData.putFloat(color.b);
-                uiVertexBufferData.putFloat(color.a);
+                swapchainPassVertexBufferData.putFloat(x + w);
+                swapchainPassVertexBufferData.putFloat(y + h);
+                swapchainPassVertexBufferData.putFloat(color.r);
+                swapchainPassVertexBufferData.putFloat(color.g);
+                swapchainPassVertexBufferData.putFloat(color.b);
+                swapchainPassVertexBufferData.putFloat(color.a);
+                swapchainPassVertexBufferData.putFloat(1);
+                swapchainPassVertexBufferData.putFloat(1);
 
-                uiVertexBufferData.putFloat(x);
-                uiVertexBufferData.putFloat(y + h);
-                uiVertexBufferData.putFloat(color.r);
-                uiVertexBufferData.putFloat(color.g);
-                uiVertexBufferData.putFloat(color.b);
-                uiVertexBufferData.putFloat(color.a);
 
-                uiVertexBufferData.putFloat(x + w);
-                uiVertexBufferData.putFloat(y + h);
-                uiVertexBufferData.putFloat(color.r);
-                uiVertexBufferData.putFloat(color.g);
-                uiVertexBufferData.putFloat(color.b);
-                uiVertexBufferData.putFloat(color.a);
+                swapchainPassVertexBufferData.putFloat(x + w);
+                swapchainPassVertexBufferData.putFloat(y);
+                swapchainPassVertexBufferData.putFloat(color.r);
+                swapchainPassVertexBufferData.putFloat(color.g);
+                swapchainPassVertexBufferData.putFloat(color.b);
+                swapchainPassVertexBufferData.putFloat(color.a);
+                swapchainPassVertexBufferData.putFloat(1);
+                swapchainPassVertexBufferData.putFloat(0);
 
-                uiVertexBufferData.putFloat(x + w);
-                uiVertexBufferData.putFloat(y);
-                uiVertexBufferData.putFloat(color.r);
-                uiVertexBufferData.putFloat(color.g);
-                uiVertexBufferData.putFloat(color.b);
-                uiVertexBufferData.putFloat(color.a);
 
-                uiIndexBufferData.putInt(0 + 4);
-                uiIndexBufferData.putInt(1 + 4);
-                uiIndexBufferData.putInt(2 + 4);
-                uiIndexBufferData.putInt(2 + 4);
-                uiIndexBufferData.putInt(3 + 4);
-                uiIndexBufferData.putInt(0 + 4);
+                swapchainPassIndexBufferData.putInt(0);
+                swapchainPassIndexBufferData.putInt(1);
+                swapchainPassIndexBufferData.putInt(2);
+                swapchainPassIndexBufferData.putInt(2);
+                swapchainPassIndexBufferData.putInt(3);
+                swapchainPassIndexBufferData.putInt(0);
             }
         }
+
+        renderGraph = new RenderGraph(renderer);
+
+        sceneColorPass = Pass.newGraphicsPass(renderGraph, "SceneColor", renderer.getMaxFramesInFlight());
+        {
+            sceneColorPass.setDependsOn(
+                    new ResourceDependency<>(sceneColorRT, ResourceDependencyType.RenderTargetWrite)
+            );
+
+        }
+        /*
+        mangaPass = Pass.newComputePass(renderGraph, renderer.getMaxFramesInFlight());
+        {
+            mangaPass.setDependsOn(
+                    new ResourceDependency<>(sceneColorRT, ResourceDependencyType.ShaderRead),
+                    new ResourceDependency<>(mangaRT, ResourceDependencyType.ShaderWrite)
+            );
+        }
+
+         */
+        swapchainPass = Pass.newGraphicsPass(renderGraph, "Swapchain", renderer.getMaxFramesInFlight());
+        {
+            swapchainPass.setDependsOn(
+                    new ResourceDependency<>(sceneColorRT, ResourceDependencyType.ShaderRead),
+                    //TODO(Shayan) This will break if the swapchain gets invalidated
+                    new ResourceDependency<>(renderer.getSwapchainRenderTarget(), ResourceDependencyType.RenderTargetWrite)
+            );
+
+            swapchainPass.setRoot(true);
+        }
+
+        renderGraph.addPasses(
+                sceneColorPass,
+                //mangaPass,
+                swapchainPass
+        );
     }
 
     @Override
@@ -248,107 +274,102 @@ public class RenderSystem extends EcsSystem {
             sceneCamera = cameraComponent.camera();
         });
 
+        swapchainPassShaderProgram.updateTextures(renderer.getFrameIndex(), new ShaderUpdate<>("textures", 0, 1, sceneColorRT.getTexture(renderer.getFrameIndex())).arrayIndex(0));
 
 
-        render0.startRecording(renderer.getRenderStartSemaphores(), renderer.getFrameIndex());
-        {
+        sceneColorPass.setPassExecuteCallback(() -> {
+            sceneColorPass.startRecording(renderer.getFrameIndex());
+            {
 
-            render0.startRendering(renderer.getSwapchainRenderTarget(), true);
+                sceneColorPass.barriers();
 
-            scene.getEngine().findEntitiesWith(TransformComponent.class, StaticMeshComponent.class).stream().forEach(components -> {
-
-
-                TransformComponent transformComponent = components.comp1();
-                StaticMeshComponent staticMeshComponent = components.comp2();
-
-                ByteBuffer transformsData = staticMeshComponent.staticMeshBatch().getTransformsBuffers()[renderer.getFrameIndex()].get();
-                transformComponent.transform().get(transformComponent.transformIndex() * SizeUtil.MATRIX_SIZE_BYTES, transformsData);
-                ByteBuffer cameraData = staticMeshComponent.staticMeshBatch().getCameraBuffers()[renderer.getFrameIndex()].get();
-
-                sceneCamera.getView().get(0, cameraData);
-                sceneCamera.getProj().get(SizeUtil.MATRIX_SIZE_BYTES, cameraData);
-
-                render0.setDrawBuffers(
-                        staticMeshComponent.staticMeshBatch().getVertexBuffer(),
-                        staticMeshComponent.staticMeshBatch().getIndexBuffer()
-                );
-                render0.setShaderProgram(
-                        staticMeshComponent.staticMeshBatch().getShaderProgram()
-                );
-                render0.drawIndexed(staticMeshComponent.staticMeshBatch().getIndexCount());
-            });
-            scene.getEngine().findEntitiesWith(TransformComponent.class, DynamicMeshComponent.class).stream().forEach(components -> {
+                sceneColorPass.startRendering(sceneColorRT, true);
+                {
+                    scene.getEngine().findEntitiesWith(TransformComponent.class, StaticMeshComponent.class).stream().forEach(components -> {
 
 
-                TransformComponent transformComponent = components.comp1();
-                DynamicMeshComponent dynamicMeshComponent = components.comp2();
+                        TransformComponent transformComponent = components.comp1();
+                        StaticMeshComponent staticMeshComponent = components.comp2();
 
-                ByteBuffer transformsData = dynamicMeshComponent.dynamicMesh().getTransformsBuffers()[renderer.getFrameIndex()].get();
-                transformComponent.transform().get(0, transformsData);
-                ByteBuffer cameraData = dynamicMeshComponent.dynamicMesh().getCameraBuffers()[renderer.getFrameIndex()].get();
+                        ByteBuffer transformsData = staticMeshComponent.staticMeshBatch().getTransformsBuffers()[renderer.getFrameIndex()].get();
+                        transformComponent.transform().get(transformComponent.transformIndex() * SizeUtil.MATRIX_SIZE_BYTES, transformsData);
+                        ByteBuffer cameraData = staticMeshComponent.staticMeshBatch().getCameraBuffers()[renderer.getFrameIndex()].get();
 
-                sceneCamera.getView().get(0, cameraData);
-                sceneCamera.getProj().get(SizeUtil.MATRIX_SIZE_BYTES, cameraData);
+                        sceneCamera.getView().get(0, cameraData);
+                        sceneCamera.getProj().get(SizeUtil.MATRIX_SIZE_BYTES, cameraData);
 
-                render0.setDrawBuffers(
-                        dynamicMeshComponent.dynamicMesh().getVertexBuffer(),
-                        dynamicMeshComponent.dynamicMesh().getIndexBuffer()
-                );
-                render0.setShaderProgram(
-                        dynamicMeshComponent.dynamicMesh().getShaderProgram()
-                );
-                render0.drawIndexed(dynamicMeshComponent.dynamicMesh().getIndexCount());
-            });
+                        sceneColorPass.setDrawBuffers(
+                                staticMeshComponent.staticMeshBatch().getVertexBuffer(),
+                                staticMeshComponent.staticMeshBatch().getIndexBuffer()
+                        );
+                        sceneColorPass.setShaderProgram(
+                                staticMeshComponent.staticMeshBatch().getShaderProgram()
+                        );
+                        sceneColorPass.drawIndexed(staticMeshComponent.staticMeshBatch().getIndexCount());
+                    });
+                    scene.getEngine().findEntitiesWith(TransformComponent.class, DynamicMeshComponent.class).stream().forEach(components -> {
 
-            render0.endRendering();
 
-        }
-        render0.endRecording();
+                        TransformComponent transformComponent = components.comp1();
+                        DynamicMeshComponent dynamicMeshComponent = components.comp2();
 
+                        ByteBuffer transformsData = dynamicMeshComponent.dynamicMesh().getTransformsBuffers()[renderer.getFrameIndex()].get();
+                        transformComponent.transform().get(0, transformsData);
+                        ByteBuffer cameraData = dynamicMeshComponent.dynamicMesh().getCameraBuffers()[renderer.getFrameIndex()].get();
+
+                        sceneCamera.getView().get(0, cameraData);
+                        sceneCamera.getProj().get(SizeUtil.MATRIX_SIZE_BYTES, cameraData);
+
+                        sceneColorPass.setDrawBuffers(
+                                dynamicMeshComponent.dynamicMesh().getVertexBuffer(),
+                                dynamicMeshComponent.dynamicMesh().getIndexBuffer()
+                        );
+                        sceneColorPass.setShaderProgram(
+                                dynamicMeshComponent.dynamicMesh().getShaderProgram()
+                        );
+                        sceneColorPass.drawIndexed(dynamicMeshComponent.dynamicMesh().getIndexCount());
+                    });
+                }
+                sceneColorPass.endRendering();
+
+            }
+            sceneColorPass.endRecording();
+        });
         /*
+        mangaPass.setPassExecuteCallback(() -> {
+            mangaPass.startRecording(renderer.getFrameIndex());
+            {
 
+                mangaPass.setShaderProgram(mangaShaderProgram);
+                mangaPass.dispatch(10, 10, 10);
 
-
-
-
-        compute0.startRecording(render0.getFinishedSemaphores(), renderer.getFrameIndex());
-        {
-
-            compute0.setShaderProgram(computeShaderProgram);
-            compute0.dispatch(10, 10, 10);
-
-        }
-        compute0.endRecording();
+            }
+            mangaPass.endRecording();
+        });
 
          */
+        swapchainPass.setPassExecuteCallback(() -> {
+            swapchainPass.startRecording(renderer.getFrameIndex());
+            {
+
+                swapchainPass.barriers();
+
+                swapchainPass.startRendering(renderer.getSwapchainRenderTarget(), true);
+                {
+                    swapchainPass.setDrawBuffers(swapchainPassVertexBuffer, swapchainPassIndexBuffer);
+                    swapchainPass.setShaderProgram(swapchainPassShaderProgram);
+                    swapchainPass.drawIndexed(6);
+                }
+                swapchainPass.endRendering();
 
 
 
+            }
+            swapchainPass.endRecording();
+        });
 
-
-
-        render1.startRecording(render0.getFinishedSemaphores(), renderer.getFrameIndex());
-        {
-
-            render1.startRendering(renderer.getSwapchainRenderTarget(), false);
-            render1.setDrawBuffers(uiVertexBuffer, uiIndexBuffer);
-            render1.setShaderProgram(uiShaderProgram);
-            render1.drawIndexed(12);
-            render1.endRendering();
-
-            render1.makePresentable(renderer.getSwapchainRenderTarget());
-
-
-        }
-        render1.endRecording();
-
-
-
-
-
-        renderer.addCommandList(render0);
-        //renderer.addCommandList(compute0);
-        renderer.addCommandList(render1);
+        renderGraph.present(swapchainPass);
+        renderer.render(renderGraph);
     }
 
     @Override

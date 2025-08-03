@@ -123,6 +123,7 @@ public class WhisperStage extends Stage {
 
 
 
+
         //Shop
         {
             ShaderProgram shaderProgram;
@@ -284,6 +285,7 @@ public class WhisperStage extends Stage {
 
 
 
+
         //Level
         {
 
@@ -361,9 +363,9 @@ public class WhisperStage extends Stage {
 
     public boolean update(){
 
-        renderer.startFrame(surface.update());
+        renderer.updateRenderer(surface.update());
         scene.tick();
-        renderer.endFrame();
+
 
 
         Time.deltaTime = (float) (surface.getTime() - startTime);

@@ -85,7 +85,7 @@ public abstract class Texture extends Disposable {
                     minFilter,
                     magFilter,
                     VulkanUtil.toVkImageFormatEnum(textureFormatType),
-                    VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+                    VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                     VK_IMAGE_TILING_OPTIMAL,
                     VK_IMAGE_ASPECT_COLOR_BIT
             );

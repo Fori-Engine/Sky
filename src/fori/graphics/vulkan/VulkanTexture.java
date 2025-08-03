@@ -27,11 +27,12 @@ public class VulkanTexture extends Texture {
     private VulkanCommandPool commandPool;
 
 
-    public VulkanTexture(Disposable parent, int width, int height, long imageHandle, int imageFormat, int aspectMask) {
+    public VulkanTexture(Disposable parent, int width, int height, long imageHandle, int currentLayout, int imageFormat, int aspectMask) {
         super(parent, width, height, null, toTextureFormatType(imageFormat), Nearest, Nearest);
         image = new VulkanImage(
                 this,
                 imageHandle,
+                currentLayout,
                 imageFormat
         );
         imageView = new VulkanImageView(image, VulkanRuntime.getCurrentDevice(), image, aspectMask);
@@ -99,11 +100,9 @@ public class VulkanTexture extends Texture {
                 }
 
 
-
                 VulkanUtil.transitionImageLayout(
                         image,
                         commandBuffer,
-                        VK_IMAGE_LAYOUT_UNDEFINED,
                         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                         0,
                         VK_ACCESS_TRANSFER_WRITE_BIT,
@@ -111,6 +110,8 @@ public class VulkanTexture extends Texture {
                         VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
                         VK_PIPELINE_STAGE_TRANSFER_BIT
                 );
+
+
 
                 VkBufferImageCopy.Buffer imageCopies = VkBufferImageCopy.calloc(1, stack);
                 imageCopies.imageSubresource().aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
@@ -124,8 +125,7 @@ public class VulkanTexture extends Texture {
                 VulkanUtil.transitionImageLayout(
                         image,
                         commandBuffer,
-                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                        VK_IMAGE_LAYOUT_GENERAL,
                         VK_ACCESS_TRANSFER_WRITE_BIT,
                         VK_ACCESS_SHADER_READ_BIT,
                         VK_IMAGE_ASPECT_COLOR_BIT,

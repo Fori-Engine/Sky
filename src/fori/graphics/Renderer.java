@@ -7,7 +7,7 @@ import fori.graphics.vulkan.VulkanRenderer;
 import fori.graphics.vulkan.VulkanSemaphore;
 import org.lwjgl.vulkan.VkInstance;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class Renderer extends Disposable {
@@ -19,9 +19,9 @@ public abstract class Renderer extends Disposable {
     protected int maxFramesInFlight;
     protected Surface surface;
     protected RenderTarget swapchainRenderTarget;
-    protected List<CommandList> commandLists = new LinkedList<>();
     protected VulkanSemaphore[] frameStartSemaphores;
     protected int frameIndex;
+    protected List<Pass> passes = new ArrayList<>();
 
 
 
@@ -45,16 +45,11 @@ public abstract class Renderer extends Disposable {
     public abstract DynamicMesh newDynamicMesh(int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram);
     public abstract void destroyDynamicMesh(DynamicMesh dynamicMesh);
 
-    public void addCommandList(CommandList commandList) {
-        commandLists.add(commandList);
-    }
-
-    public abstract void startFrame(boolean surfaceInvalidated);
-    public abstract void endFrame();
+    public abstract void updateRenderer(boolean surfaceInvalidated);
+    public abstract void render(RenderGraph renderGraph);
     public Semaphore[] getRenderStartSemaphores() {
         return frameStartSemaphores;
     }
-
 
 
     public int getFrameIndex() { return frameIndex; }
@@ -99,7 +94,4 @@ public abstract class Renderer extends Disposable {
     }
     public RenderTarget getSwapchainRenderTarget() { return swapchainRenderTarget; }
 
-    public List<CommandList> getCommandLists() {
-        return commandLists;
-    }
 }

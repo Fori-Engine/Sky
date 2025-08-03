@@ -1,8 +1,8 @@
 package fori.graphics;
 
-public abstract class ComputeCommandList extends CommandList {
-    public ComputeCommandList(Disposable parent, int framesInFlight) {
-        super(parent, framesInFlight);
+public abstract class ComputePass extends Pass {
+    public ComputePass(Disposable parent, String name, int framesInFlight) {
+        super(parent, name, framesInFlight);
     }
 
 

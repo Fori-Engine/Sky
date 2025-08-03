@@ -29,10 +29,12 @@ public class VulkanImage extends Disposable {
     private VmaAllocationCreateInfo allocationCreateInfo;
     private int format;
     private VulkanAllocator allocator;
+    private int currentLayout;
 
-    public VulkanImage(Disposable parent, long imageHandle, int imageFormat) {
+    public VulkanImage(Disposable parent, long imageHandle, int currentLayout, int imageFormat) {
         super(parent);
         this.handle = imageHandle;
+        this.currentLayout = currentLayout;
         this.format = imageFormat;
     }
 
@@ -40,6 +42,7 @@ public class VulkanImage extends Disposable {
         super(parent);
         this.format = format;
         this.allocator = allocator;
+        currentLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
         try(MemoryStack stack = MemoryStack.stackPush()) {
 
@@ -55,7 +58,7 @@ public class VulkanImage extends Disposable {
             imageCreateInfo.format(format);
             imageCreateInfo.tiling(tiling);
             imageCreateInfo.usage(usage);
-            imageCreateInfo.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED);
+            imageCreateInfo.initialLayout(currentLayout);
             imageCreateInfo.samples(VK_SAMPLE_COUNT_1_BIT);
             imageCreateInfo.sharingMode(VK_SHARING_MODE_EXCLUSIVE);
 
@@ -73,6 +76,14 @@ public class VulkanImage extends Disposable {
             memory = allocationInfo.deviceMemory();
             handle = pImage.get(0);
         }
+    }
+
+    public int getCurrentLayout() {
+        return currentLayout;
+    }
+
+    protected void setCurrentLayout(int currentLayout) {
+        this.currentLayout = currentLayout;
     }
 
     public int getFormat() {

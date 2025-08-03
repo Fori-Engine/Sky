@@ -14,7 +14,7 @@ import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
 import static org.lwjgl.vulkan.VK13.VK_ACCESS_NONE;
 
-public class VulkanGraphicsCommandList extends GraphicsCommandList {
+public class VulkanGraphicsPass extends GraphicsPass {
 
     private VkQueue graphicsQueue;
     private VkCommandBuffer[] commandBuffers;
@@ -25,8 +25,8 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
     private VulkanCommandPool commandPool;
 
 
-    public VulkanGraphicsCommandList(Disposable parent, int framesInFlight) {
-        super(parent, framesInFlight);
+    public VulkanGraphicsPass(Disposable parent, String name, int framesInFlight) {
+        super(parent, name, framesInFlight);
 
         graphicsQueue = VulkanRuntime.getGraphicsQueue();
         device = VulkanRuntime.getCurrentDevice();
@@ -101,25 +101,14 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
     public void makePresentable(RenderTarget renderTarget) {
 
 
-        VulkanUtil.transitionImageLayout(
-                ((VulkanTexture) this.renderTarget.getTexture(frameIndex)).getImage(),
-                commandBuffers[frameIndex],
-                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-                VK_ACCESS_NONE,
-                VK_IMAGE_ASPECT_COLOR_BIT,
-                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
-        );
 
 
     }
 
 
     @Override
-    public void startRecording(Semaphore[] waitSemaphores, int frameIndex) {
-        super.startRecording(waitSemaphores, frameIndex);
+    public void startRecording(int frameIndex) {
+        super.startRecording(frameIndex);
 
         try(MemoryStack stack = stackPush()) {
 
@@ -191,17 +180,6 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
             renderingInfoKHR.pColorAttachments(colorAttachment);
             renderingInfoKHR.pDepthAttachment(depthAttachment);
 
-            VulkanUtil.transitionImageLayout(
-                    ((VulkanTexture) renderTarget.getTexture(frameIndex)).getImage(),
-                    commandBuffers[frameIndex],
-                    VK_IMAGE_LAYOUT_GENERAL,
-                    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                    VK_ACCESS_NONE,
-                    clear ? VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT : VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
-                    VK_IMAGE_ASPECT_COLOR_BIT,
-                    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
-            );
 
 
 
@@ -250,7 +228,7 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
     }
 
     @Override
-    public void run(Optional<Fence[]> submissionFences) {
+    public void submit(Optional<Fence[]> submissionFences) {
         try(MemoryStack stack = stackPush()) {
 
             VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
@@ -275,7 +253,14 @@ public class VulkanGraphicsCommandList extends GraphicsCommandList {
         vkQueueWaitIdle(graphicsQueue);
     }
 
+    @Override
+    public void barriers() {
+        barrierInsertCallback.run(commandBuffers[frameIndex]);
+    }
+
 
     @Override
-    public void dispose() {}
+    public void dispose() {
+        vkDeviceWaitIdle(VulkanRuntime.getCurrentDevice());
+    }
 }

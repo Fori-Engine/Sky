@@ -1,10 +1,10 @@
 package fori.graphics;
 
-public abstract class GraphicsCommandList extends CommandList {
+public abstract class GraphicsPass extends Pass {
     protected RenderTarget renderTarget;
 
-    public GraphicsCommandList(Disposable parent, int framesInFlight) {
-        super(parent, framesInFlight);
+    public GraphicsPass(Disposable parent, String name, int framesInFlight) {
+        super(parent, name, framesInFlight);
     }
 
     public RenderTarget getRenderTarget() {

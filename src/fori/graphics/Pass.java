@@ -1,0 +1,101 @@
+package fori.graphics;
+
+import fori.graphics.vulkan.VulkanComputePass;
+import fori.graphics.vulkan.VulkanGraphicsPass;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+public abstract class Pass extends Disposable {
+    protected int frameIndex;
+    protected int framesInFlight;
+    protected Semaphore[] waitSemaphores;
+    protected Semaphore[] finishedSemaphores;
+    protected BarrierInsertCallback barrierInsertCallback;
+    protected PassExecuteCallback passExecuteCallback;
+    protected List<ResourceDependency> resourceDependencyList = new ArrayList<>();
+    protected boolean isRoot;
+    protected String name;
+
+
+
+    public Pass(Disposable parent, String name, int framesInFlight) {
+        super(parent);
+        this.name = name;
+        this.framesInFlight = framesInFlight;
+    }
+
+    public void setDependsOn(ResourceDependency... resourceDependencies) {
+        resourceDependencyList.addAll(Arrays.asList(resourceDependencies));
+    }
+
+    public List<ResourceDependency> getResourceDependencies() {
+        return resourceDependencyList;
+    }
+
+    public static GraphicsPass newGraphicsPass(Disposable disposable, String name, int framesInFlight) {
+        if(Renderer.getRenderAPI() == RenderAPI.Vulkan) return new VulkanGraphicsPass(disposable, name, framesInFlight);
+        return null;
+    }
+
+    public static ComputePass newComputePass(Disposable disposable, String name, int framesInFlight) {
+        if(Renderer.getRenderAPI() == RenderAPI.Vulkan) return new VulkanComputePass(disposable, name, framesInFlight);
+        return null;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public boolean isRoot() {
+        return isRoot;
+    }
+
+    public void setRoot(boolean root) {
+        isRoot = root;
+    }
+
+    public PassExecuteCallback getPassExecuteCallback() {
+        return passExecuteCallback;
+    }
+
+    public void setPassExecuteCallback(PassExecuteCallback passExecuteCallback) {
+        this.passExecuteCallback = passExecuteCallback;
+    }
+
+    public BarrierInsertCallback getBarrierInsertCallback() {
+        return barrierInsertCallback;
+    }
+
+    public void setBarrierInsertCallback(BarrierInsertCallback barrierInsertCallback) {
+        this.barrierInsertCallback = barrierInsertCallback;
+    }
+
+    public void startRecording(int frameIndex) {
+        this.frameIndex = frameIndex;
+    }
+    public abstract void endRecording();
+
+    public void setWaitSemaphores(Semaphore[] waitSemaphores) {
+        this.waitSemaphores = waitSemaphores;
+    }
+
+    public void setFinishedSemaphores(Semaphore[] finishedSemaphores) {
+        this.finishedSemaphores = finishedSemaphores;
+    }
+
+    public abstract void submit(Optional<Fence[]> submissionFences);
+    public abstract void waitForFinish();
+
+    public Semaphore[] getWaitSemaphores() {
+        return waitSemaphores;
+    }
+
+    public Semaphore[] getFinishedSemaphores() {
+        return finishedSemaphores;
+    }
+
+    public abstract void barriers();
+}

@@ -3,8 +3,11 @@
 
 layout(location = 0) in vec2 inputPos;
 layout(location = 1) in vec4 inputColor;
+layout(location = 2) in vec2 inputUV;
+
 
 layout(location = 0) out vec4 outputColor;
+layout(location = 1) out vec2 outputUV;
 
 
 
@@ -17,7 +20,7 @@ void main() {
 
     gl_Position = camera.proj * vec4(inputPos.xy, 0, 1.0);
     outputColor = inputColor;
-
+    outputUV = inputUV;
 }
 
 
@@ -25,9 +28,16 @@ void main() {
 #version 450
 #extension GL_EXT_nonuniform_qualifier : require
 
+
+
 layout(location = 0) in vec4 inputColor;
+layout(location = 1) in vec2 inputUV;
+
 layout(location = 0) out vec4 outputColor;
 
+layout(set = 0, binding = 1) uniform sampler2D[] textures;
+
+
 void main() {
-    outputColor = inputColor;
+    outputColor = texture(textures[0], inputUV) + vec4(1.0, 0.0, 0.0, 1.0);
 }

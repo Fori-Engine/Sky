@@ -30,7 +30,7 @@ jar {
     }
 
     manifest {
-        manifest.attributes["Main-Class"] = "editor.Launcher"
+        manifest.attributes["Main-Class"] = "whisper.Launcher"
     }
 
 }

@@ -31,7 +31,6 @@ public class VulkanUtil {
 
     public static void transitionImageLayout(VulkanImage image,
                                         VkCommandBuffer commandBuffer,
-                                        int oldLayout,
                                         int newLayout,
                                         int srcAccessMask,
                                         int dstAccessMask,
@@ -42,7 +41,7 @@ public class VulkanUtil {
             VkImageMemoryBarrier.Buffer imageBarrier = VkImageMemoryBarrier.calloc(1, stack);
             {
                 imageBarrier.sType(VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER);
-                imageBarrier.oldLayout(oldLayout);
+                imageBarrier.oldLayout(image.getCurrentLayout());
                 imageBarrier.newLayout(newLayout);
                 imageBarrier.srcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
                 imageBarrier.dstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
@@ -66,6 +65,10 @@ public class VulkanUtil {
                     null,
                     imageBarrier
             );
+
+            System.out.println("Layout change to " + newLayout + " finished!");
+
+            image.setCurrentLayout(newLayout);
         }
     }
 

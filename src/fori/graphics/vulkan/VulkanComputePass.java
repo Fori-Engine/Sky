@@ -10,15 +10,15 @@ import java.util.Optional;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
-public class VulkanComputeCommandList extends ComputeCommandList {
+public class VulkanComputePass extends ComputePass {
 
     private VkQueue computeQueue;
     private VkCommandBuffer[] commandBuffers;
     private VkDevice device;
     private VulkanCommandPool commandPool;
 
-    public VulkanComputeCommandList(Disposable parent, int framesInFlight) {
-        super(parent, framesInFlight);
+    public VulkanComputePass(Disposable parent, String name, int framesInFlight) {
+        super(parent, name, framesInFlight);
 
         computeQueue = VulkanRuntime.getGraphicsQueue();
         device = VulkanRuntime.getCurrentDevice();
@@ -55,17 +55,7 @@ public class VulkanComputeCommandList extends ComputeCommandList {
 
     @Override
     public void setWritable(RenderTarget renderTarget) {
-        VulkanUtil.transitionImageLayout(
-                ((VulkanTexture) renderTarget.getTexture(frameIndex)).getImage(),
-                commandBuffers[frameIndex],
-                VK_IMAGE_LAYOUT_UNDEFINED,
-                VK_IMAGE_LAYOUT_GENERAL,
-                VK_ACCESS_SHADER_READ_BIT,
-                VK_ACCESS_SHADER_READ_BIT,
-                VK_IMAGE_ASPECT_COLOR_BIT,
-                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
-        );
+
     }
 
 
@@ -82,8 +72,8 @@ public class VulkanComputeCommandList extends ComputeCommandList {
     }
 
     @Override
-    public void startRecording(Semaphore[] waitSemaphores, int frameIndex) {
-        super.startRecording(waitSemaphores, frameIndex);
+    public void startRecording(int frameIndex) {
+        super.startRecording(frameIndex);
 
         vkResetCommandBuffer(commandBuffers[frameIndex], 0);
 
@@ -113,7 +103,7 @@ public class VulkanComputeCommandList extends ComputeCommandList {
     }
 
     @Override
-    public void run(Optional<Fence[]> submissionFences) {
+    public void submit(Optional<Fence[]> submissionFences) {
         try(MemoryStack stack = stackPush()) {
 
             VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
@@ -135,6 +125,12 @@ public class VulkanComputeCommandList extends ComputeCommandList {
     public void waitForFinish() {
         vkQueueWaitIdle(computeQueue);
     }
+
+    @Override
+    public void barriers() {
+        barrierInsertCallback.run(commandBuffers[frameIndex]);
+    }
+
 
     @Override
     public void dispose() {}

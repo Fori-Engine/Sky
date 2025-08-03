@@ -49,7 +49,6 @@ public class VulkanRenderer extends Renderer {
     private VkInstance instance;
 
     private VulkanAllocator allocator;
-    private int acquiredImageIndex;
     private VulkanFence[] submissionFences;
 
 
@@ -87,8 +86,6 @@ public class VulkanRenderer extends Renderer {
             submissionFences[i] = new VulkanFence(this, device, VK_FENCE_CREATE_SIGNALED_BIT);
             frameStartSemaphores[i] = new VulkanSemaphore(this, device);
         }
-
-
 
     }
 
@@ -155,6 +152,7 @@ public class VulkanRenderer extends Renderer {
                     swapchain.getExtent().width(),
                     swapchain.getExtent().height(),
                     swapchain.getImages().get(i),
+                    VK_IMAGE_LAYOUT_GENERAL,
                     swapchain.getImageFormat(),
                     VK_IMAGE_ASPECT_COLOR_BIT
             ));
@@ -522,7 +520,7 @@ public class VulkanRenderer extends Renderer {
     }
 
     @Override
-    public void startFrame(boolean surfaceInvalidated) {
+    public void updateRenderer(boolean surfaceInvalidated) {
         if (surfaceInvalidated) {
             swapchain.disposeAll();
             this.remove(swapchain);
@@ -536,47 +534,121 @@ public class VulkanRenderer extends Renderer {
             frameIndex = 0;
         }
 
-        vkWaitForFences(device, submissionFences[frameIndex].getHandle(), true, VulkanUtil.UINT64_MAX);
+        vkWaitForFences(device, submissionFences[frameIndex].getHandle(), true, UINT64_MAX);
         vkResetFences(device, submissionFences[frameIndex].getHandle());
     }
 
 
-
     @Override
-    public void endFrame() {
+    public void render(RenderGraph renderGraph) {
 
 
         try(MemoryStack stack = stackPush()) {
+
 
             IntBuffer pImageIndex = stack.callocInt(1);
 
             vkAcquireNextImageKHR(
                     device,
                     swapchain.getHandle(),
-                    VulkanUtil.UINT64_MAX,
+                    UINT64_MAX,
                     ((VulkanSemaphore[]) frameStartSemaphores)[frameIndex].getHandle(),
                     VK_NULL_HANDLE,
                     pImageIndex
             );
 
-            acquiredImageIndex = pImageIndex.get(0);
-        }
+            Pass rootPasses = renderGraph.getPresenting();
+            LinkedHashSet<Pass> passes = new LinkedHashSet<>();
+            tracePasses(passes, rootPasses, renderGraph);
+            passes.add(rootPasses);
+
+            Semaphore[] waitSemaphores = frameStartSemaphores;
+            Pass lastPass = null;
+
+            int passCount = 0;
+            for(Pass pass : passes) {
+
+                pass.setWaitSemaphores(waitSemaphores);
+                waitSemaphores = pass.getFinishedSemaphores();
+                lastPass = pass;
+                passCount++;
 
 
-        for (int i = 0; i < commandLists.size() - 1; i++) {
-            CommandList commandList = commandLists.get(i);
-            commandList.run(Optional.empty());
-        }
+                //Insert actual barriers
+                {
+
+                    pass.setBarrierInsertCallback(object -> {
+
+                        VkCommandBuffer commandBuffer = (VkCommandBuffer) object;
+
+                        for(ResourceDependency rd : pass.getResourceDependencies()) {
+                            if(rd.getDependency() instanceof RenderTarget) {
+                                Texture texture = ((RenderTarget) rd.getDependency()).getTexture(frameIndex);
+                                VulkanImage image = ((VulkanTexture) texture).getImage();
+
+                                if ((rd.getType() & ResourceDependencyType.ShaderRead) != 0) {
+                                    VulkanUtil.transitionImageLayout(
+                                            image,
+                                            commandBuffer,
+                                            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,  // New Layout: Read-only for shaders
+                                            VK_ACCESS_NONE,                           // Old Access: No access
+                                            VK_ACCESS_SHADER_READ_BIT,                // New Access: Shader read
+                                            VK_IMAGE_ASPECT_COLOR_BIT,                // Aspect: Color channel
+                                            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,    // Pipeline Stage: Before fragment shader (shader read)
+                                            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT     // Pipeline Stage: After fragment shader (shader read)
+                                    );
+                                    System.out.println("ShaderRead");
+                                } else if ((rd.getType() & ResourceDependencyType.ShaderWrite) != 0) {
+                                    System.out.println("ShaderWrite");
+                                } else if ((rd.getType() & ResourceDependencyType.RenderTargetRead) != 0) {
+                                    System.out.println("RenderTargetRead");
+                                } else if ((rd.getType() & ResourceDependencyType.RenderTargetWrite) != 0) {
+                                    VulkanUtil.transitionImageLayout(
+                                            image,
+                                            commandBuffer,
+                                            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, // New Layout: Optimal for color attachment output
+                                            VK_ACCESS_NONE,                           // Old Access: No access
+                                            VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,     // New Access: Color attachment write
+                                            VK_IMAGE_ASPECT_COLOR_BIT,                // Aspect: Color channel
+                                            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // Pipeline Stage: Before color attachment output
+                                            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT  // Pipeline Stage: After color attachment output
+                                    );
+                                    System.out.println("RenderTargetWrite");
 
 
-        CommandList lastCommandList = commandLists.getLast();
-        lastCommandList.run(Optional.of(submissionFences));
-
-        Semaphore[] finishedSemaphores = lastCommandList.getFinishedSemaphores();
+                                }
+                            }
 
 
 
-        try(MemoryStack stack = stackPush()) {
+                        }
+                    });
+
+
+
+
+
+                }
+
+                pass.getPassExecuteCallback().run();
+
+
+
+                if(passCount == passes.size()) pass.submit(Optional.of(submissionFences));
+                else pass.submit(Optional.empty());
+
+            }
+
+
+            /*
+            1. Go through all passes
+            2. Configure wait and finish semaphores
+            3. Insert pipeline barriers based on the actions of the LAST pass using the pass' command buffer
+             */
+
+
+            Semaphore[] finishedSemaphores = lastPass.getFinishedSemaphores();
+
             VkPresentInfoKHR presentInfo = VkPresentInfoKHR.calloc(stack);
             presentInfo.sType(VK_STRUCTURE_TYPE_PRESENT_INFO_KHR);
             presentInfo.pWaitSemaphores(stack.longs(
@@ -584,16 +656,58 @@ public class VulkanRenderer extends Renderer {
             ));
             presentInfo.swapchainCount(1);
             presentInfo.pSwapchains(stack.longs(swapchain.getHandle()));
-            presentInfo.pImageIndices(stack.ints(acquiredImageIndex));
+            presentInfo.pImageIndices(pImageIndex);
 
             vkQueuePresentKHR(presentQueue, presentInfo);
 
             frameIndex = (frameIndex + 1) % FRAMES_IN_FLIGHT;
         }
-
-        commandLists.clear();
     }
 
+    private List<Pass> getAllPassesWritingToRT(Pass thisPass, RenderTarget renderTarget, RenderGraph renderGraph) {
+
+        List<Pass> writers = new ArrayList<>();
+
+        for(Pass otherPass : renderGraph.getPasses()) {
+            if(otherPass != thisPass) {
+                for (ResourceDependency otherResourceDependency : otherPass.getResourceDependencies()) {
+                    if((otherResourceDependency.getType() & ResourceDependencyType.RenderTargetWrite) != 0 ||
+                            (otherResourceDependency.getType() & ResourceDependencyType.ShaderWrite) != 0) {
+
+
+                        if(otherResourceDependency.getDependency() == renderTarget) {
+                            writers.add(otherPass);
+                            break;
+                        }
+                    }
+                }
+
+
+            }
+        }
+
+        return writers;
+    }
+    private void tracePasses(LinkedHashSet<Pass> passes, Pass thisPass, RenderGraph renderGraph) {
+        for(ResourceDependency resourceDependency : thisPass.getResourceDependencies()) {
+
+            if((resourceDependency.getType() & ResourceDependencyType.ShaderRead) != 0 ||
+                    (resourceDependency.getType() & ResourceDependencyType.RenderTargetRead) != 0) {
+
+                List<Pass> writers = getAllPassesWritingToRT(thisPass, (RenderTarget) resourceDependency.getDependency(), renderGraph);
+
+                for(Pass writer : writers) {
+                    if(!passes.contains(writer)) {
+                        tracePasses(passes, writer, renderGraph);
+                        passes.add(writer);
+                    }
+                }
+
+
+            }
+        }
+
+    }
 
 
     @Override
