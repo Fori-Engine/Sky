@@ -371,6 +371,8 @@ public class WhisperStage extends Stage {
         Time.deltaTime = (float) (surface.getTime() - startTime);
         startTime = (float) surface.getTime();
 
+        System.out.println(Time.framesPerSecond());
+
 
         return !surface.shouldClose();
     }

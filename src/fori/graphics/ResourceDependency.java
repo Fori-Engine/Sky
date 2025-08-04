@@ -13,6 +13,10 @@ public class ResourceDependency<ResourceType> {
         return dependency;
     }
 
+    public void setDependency(ResourceType dependency) {
+        this.dependency = dependency;
+    }
+
     public int getType() {
         return type;
     }

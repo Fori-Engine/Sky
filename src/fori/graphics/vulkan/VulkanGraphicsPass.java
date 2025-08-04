@@ -254,7 +254,7 @@ public class VulkanGraphicsPass extends GraphicsPass {
     }
 
     @Override
-    public void barriers() {
+    public void resolveResourceDependencies() {
         barrierInsertCallback.run(commandBuffers[frameIndex]);
     }
 

@@ -127,7 +127,7 @@ public class VulkanComputePass extends ComputePass {
     }
 
     @Override
-    public void barriers() {
+    public void resolveResourceDependencies() {
         barrierInsertCallback.run(commandBuffers[frameIndex]);
     }
 

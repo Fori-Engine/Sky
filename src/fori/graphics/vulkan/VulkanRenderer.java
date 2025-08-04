@@ -557,13 +557,12 @@ public class VulkanRenderer extends Renderer {
                     pImageIndex
             );
 
-            Pass rootPasses = renderGraph.getPresenting();
-            LinkedHashSet<Pass> passes = new LinkedHashSet<>();
-            tracePasses(passes, rootPasses, renderGraph);
-            passes.add(rootPasses);
+
 
             Semaphore[] waitSemaphores = frameStartSemaphores;
             Pass lastPass = null;
+
+            Set<Pass> passes = renderGraph.walk(renderGraph.getTargetPass());
 
             int passCount = 0;
             for(Pass pass : passes) {
@@ -664,50 +663,7 @@ public class VulkanRenderer extends Renderer {
         }
     }
 
-    private List<Pass> getAllPassesWritingToRT(Pass thisPass, RenderTarget renderTarget, RenderGraph renderGraph) {
 
-        List<Pass> writers = new ArrayList<>();
-
-        for(Pass otherPass : renderGraph.getPasses()) {
-            if(otherPass != thisPass) {
-                for (ResourceDependency otherResourceDependency : otherPass.getResourceDependencies()) {
-                    if((otherResourceDependency.getType() & ResourceDependencyType.RenderTargetWrite) != 0 ||
-                            (otherResourceDependency.getType() & ResourceDependencyType.ShaderWrite) != 0) {
-
-
-                        if(otherResourceDependency.getDependency() == renderTarget) {
-                            writers.add(otherPass);
-                            break;
-                        }
-                    }
-                }
-
-
-            }
-        }
-
-        return writers;
-    }
-    private void tracePasses(LinkedHashSet<Pass> passes, Pass thisPass, RenderGraph renderGraph) {
-        for(ResourceDependency resourceDependency : thisPass.getResourceDependencies()) {
-
-            if((resourceDependency.getType() & ResourceDependencyType.ShaderRead) != 0 ||
-                    (resourceDependency.getType() & ResourceDependencyType.RenderTargetRead) != 0) {
-
-                List<Pass> writers = getAllPassesWritingToRT(thisPass, (RenderTarget) resourceDependency.getDependency(), renderGraph);
-
-                for(Pass writer : writers) {
-                    if(!passes.contains(writer)) {
-                        tracePasses(passes, writer, renderGraph);
-                        passes.add(writer);
-                    }
-                }
-
-
-            }
-        }
-
-    }
 
 
     @Override

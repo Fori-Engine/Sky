@@ -16,7 +16,6 @@ public abstract class Pass extends Disposable {
     protected BarrierInsertCallback barrierInsertCallback;
     protected PassExecuteCallback passExecuteCallback;
     protected List<ResourceDependency> resourceDependencyList = new ArrayList<>();
-    protected boolean isRoot;
     protected String name;
 
 
@@ -49,13 +48,6 @@ public abstract class Pass extends Disposable {
         return name;
     }
 
-    public boolean isRoot() {
-        return isRoot;
-    }
-
-    public void setRoot(boolean root) {
-        isRoot = root;
-    }
 
     public PassExecuteCallback getPassExecuteCallback() {
         return passExecuteCallback;
@@ -97,5 +89,5 @@ public abstract class Pass extends Disposable {
         return finishedSemaphores;
     }
 
-    public abstract void barriers();
+    public abstract void resolveResourceDependencies();
 }

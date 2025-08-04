@@ -1,27 +1,22 @@
 package fori.graphics;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class RenderGraph extends Disposable {
 
     private List<Pass> passes = new ArrayList<>();
-    private Pass presenting;
+    private Pass targetPass;
 
     public RenderGraph(Disposable parent) {
         super(parent);
     }
 
-    public void present(Pass pass) {
-        if(pass.isRoot) {
-            presenting = pass;
-        }
-        else throw new RuntimeException("Pass is not a root pass");
+    public void setTargetPass(Pass targetPass) {
+        this.targetPass = targetPass;
     }
 
-    public Pass getPresenting() {
-        return presenting;
+    public Pass getTargetPass() {
+        return targetPass;
     }
 
     public void addPasses(Pass... passes) {
@@ -34,6 +29,57 @@ public class RenderGraph extends Disposable {
 
     @Override
     public void dispose() {
+
+    }
+
+    public Set<Pass> walk(Pass targetPass) {
+        LinkedHashSet<Pass> passes = new LinkedHashSet<>();
+        tracePasses(passes, targetPass);
+        passes.add(targetPass);
+
+        return passes;
+    }
+
+    private List<Pass> getAllDependencyWriters(Pass thisPass, ResourceDependency resourceDependency) {
+
+        List<Pass> writers = new ArrayList<>();
+
+        for(Pass otherPass : passes) {
+            if(otherPass != thisPass) {
+                for (ResourceDependency otherResourceDependency : otherPass.getResourceDependencies()) {
+                    if((otherResourceDependency.getType() & ResourceDependencyType.RenderTargetWrite) != 0 ||
+                            (otherResourceDependency.getType() & ResourceDependencyType.ShaderWrite) != 0) {
+                        if(otherResourceDependency.getDependency() == resourceDependency.getDependency()) {
+                            writers.add(otherPass);
+                            break;
+                        }
+                    }
+                }
+
+
+            }
+        }
+
+        return writers;
+    }
+    private void tracePasses(LinkedHashSet<Pass> passes, Pass thisPass) {
+        for(ResourceDependency resourceDependency : thisPass.getResourceDependencies()) {
+
+            if((resourceDependency.getType() & ResourceDependencyType.ShaderRead) != 0 ||
+                    (resourceDependency.getType() & ResourceDependencyType.RenderTargetRead) != 0) {
+
+                List<Pass> writers = getAllDependencyWriters(thisPass, resourceDependency);
+
+                for(Pass writer : writers) {
+                    if(!passes.contains(writer)) {
+                        tracePasses(passes, writer);
+                        passes.add(writer);
+                    }
+                }
+
+
+            }
+        }
 
     }
 }

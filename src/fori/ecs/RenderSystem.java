@@ -29,14 +29,14 @@ public class RenderSystem extends EcsSystem {
     //private ComputePass mangaPass;
     private RenderTarget sceneColorRT, mangaRT;
 
+    private ResourceDependency<RenderTarget> swapchainRTDependency;
     private RenderGraph renderGraph;
 
     public RenderSystem(Renderer renderer, Scene scene) {
         this.renderer = renderer;
         this.scene = scene;
 
-
-
+        swapchainRTDependency = new ResourceDependency<>(renderer.getSwapchainRenderTarget(), ResourceDependencyType.RenderTargetWrite);
 
         //Scene Color Render Target
         {
@@ -133,14 +133,14 @@ public class RenderSystem extends EcsSystem {
 
             swapchainPassVertexBuffer = Buffer.newBuffer(
                     renderer,
-                    VertexAttributes.getSize(swapchainPassShaderProgram.getAttributes().get()) * Float.BYTES * 4,
+                    VertexAttributes.getSize(swapchainPassShaderProgram.getAttributes().get()) * Float.BYTES * 8,
                     Buffer.Usage.VertexBuffer,
                     Buffer.Type.CPUGPUShared,
                     false
             );
             swapchainPassIndexBuffer = Buffer.newBuffer(
                     renderer,
-                    6 * Integer.BYTES,
+                    12 * Integer.BYTES,
                     Buffer.Usage.IndexBuffer,
                     Buffer.Type.CPUGPUShared,
                     false
@@ -228,6 +228,60 @@ public class RenderSystem extends EcsSystem {
                 swapchainPassIndexBufferData.putInt(3);
                 swapchainPassIndexBufferData.putInt(0);
             }
+            {
+                float x = 1040, y = 400, w = 640, h = 480;
+                Color color = Color.RED;
+
+                ByteBuffer swapchainPassVertexBufferData = swapchainPassVertexBuffer.get();
+                ByteBuffer swapchainPassIndexBufferData = swapchainPassIndexBuffer.get();
+
+
+                swapchainPassVertexBufferData.putFloat(x);
+                swapchainPassVertexBufferData.putFloat(y);
+                swapchainPassVertexBufferData.putFloat(color.r);
+                swapchainPassVertexBufferData.putFloat(color.g);
+                swapchainPassVertexBufferData.putFloat(color.b);
+                swapchainPassVertexBufferData.putFloat(color.a);
+                swapchainPassVertexBufferData.putFloat(0);
+                swapchainPassVertexBufferData.putFloat(0);
+
+                swapchainPassVertexBufferData.putFloat(x);
+                swapchainPassVertexBufferData.putFloat(y + h);
+                swapchainPassVertexBufferData.putFloat(color.r);
+                swapchainPassVertexBufferData.putFloat(color.g);
+                swapchainPassVertexBufferData.putFloat(color.b);
+                swapchainPassVertexBufferData.putFloat(color.a);
+                swapchainPassVertexBufferData.putFloat(0);
+                swapchainPassVertexBufferData.putFloat(1);
+
+
+                swapchainPassVertexBufferData.putFloat(x + w);
+                swapchainPassVertexBufferData.putFloat(y + h);
+                swapchainPassVertexBufferData.putFloat(color.r);
+                swapchainPassVertexBufferData.putFloat(color.g);
+                swapchainPassVertexBufferData.putFloat(color.b);
+                swapchainPassVertexBufferData.putFloat(color.a);
+                swapchainPassVertexBufferData.putFloat(1);
+                swapchainPassVertexBufferData.putFloat(1);
+
+
+                swapchainPassVertexBufferData.putFloat(x + w);
+                swapchainPassVertexBufferData.putFloat(y);
+                swapchainPassVertexBufferData.putFloat(color.r);
+                swapchainPassVertexBufferData.putFloat(color.g);
+                swapchainPassVertexBufferData.putFloat(color.b);
+                swapchainPassVertexBufferData.putFloat(color.a);
+                swapchainPassVertexBufferData.putFloat(1);
+                swapchainPassVertexBufferData.putFloat(0);
+
+
+                swapchainPassIndexBufferData.putInt(0 + 4);
+                swapchainPassIndexBufferData.putInt(1 + 4);
+                swapchainPassIndexBufferData.putInt(2 + 4);
+                swapchainPassIndexBufferData.putInt(2 + 4);
+                swapchainPassIndexBufferData.putInt(3 + 4);
+                swapchainPassIndexBufferData.putInt(0 + 4);
+            }
         }
 
         renderGraph = new RenderGraph(renderer);
@@ -253,11 +307,8 @@ public class RenderSystem extends EcsSystem {
         {
             swapchainPass.setDependsOn(
                     new ResourceDependency<>(sceneColorRT, ResourceDependencyType.ShaderRead),
-                    //TODO(Shayan) This will break if the swapchain gets invalidated
-                    new ResourceDependency<>(renderer.getSwapchainRenderTarget(), ResourceDependencyType.RenderTargetWrite)
+                    swapchainRTDependency
             );
-
-            swapchainPass.setRoot(true);
         }
 
         renderGraph.addPasses(
@@ -274,6 +325,7 @@ public class RenderSystem extends EcsSystem {
             sceneCamera = cameraComponent.camera();
         });
 
+        swapchainRTDependency.setDependency(renderer.getSwapchainRenderTarget());
         swapchainPassShaderProgram.updateTextures(renderer.getFrameIndex(), new ShaderUpdate<>("textures", 0, 1, sceneColorRT.getTexture(renderer.getFrameIndex())).arrayIndex(0));
 
 
@@ -281,7 +333,7 @@ public class RenderSystem extends EcsSystem {
             sceneColorPass.startRecording(renderer.getFrameIndex());
             {
 
-                sceneColorPass.barriers();
+                sceneColorPass.resolveResourceDependencies();
 
                 sceneColorPass.startRendering(sceneColorRT, true);
                 {
@@ -352,13 +404,13 @@ public class RenderSystem extends EcsSystem {
             swapchainPass.startRecording(renderer.getFrameIndex());
             {
 
-                swapchainPass.barriers();
+                swapchainPass.resolveResourceDependencies();
 
                 swapchainPass.startRendering(renderer.getSwapchainRenderTarget(), true);
                 {
                     swapchainPass.setDrawBuffers(swapchainPassVertexBuffer, swapchainPassIndexBuffer);
                     swapchainPass.setShaderProgram(swapchainPassShaderProgram);
-                    swapchainPass.drawIndexed(6);
+                    swapchainPass.drawIndexed(12);
                 }
                 swapchainPass.endRendering();
 
@@ -368,7 +420,7 @@ public class RenderSystem extends EcsSystem {
             swapchainPass.endRecording();
         });
 
-        renderGraph.present(swapchainPass);
+        renderGraph.setTargetPass(swapchainPass);
         renderer.render(renderGraph);
     }
 
