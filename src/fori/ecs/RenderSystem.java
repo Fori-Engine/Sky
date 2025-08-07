@@ -14,7 +14,6 @@ public class RenderSystem extends EcsSystem {
     private Renderer renderer;
     private Scene scene;
     private Camera sceneCamera;
-    private ShaderProgram mangaShaderProgram;
 
 
 
@@ -26,66 +25,36 @@ public class RenderSystem extends EcsSystem {
 
 
     private GraphicsPass sceneColorPass, swapchainPass;
-    //private ComputePass mangaPass;
-    private RenderTarget sceneColorRT, mangaRT;
+    private RenderTarget sceneColorRT;
 
-    private ResourceDependency<RenderTarget> swapchainRTDependency;
+    private Texture[] sceneColorTextures;
+    private Texture[] swapchainColorTextures;
+
     private RenderGraph renderGraph;
 
     public RenderSystem(Renderer renderer, Scene scene) {
         this.renderer = renderer;
         this.scene = scene;
 
-        swapchainRTDependency = new ResourceDependency<>(renderer.getSwapchainRenderTarget(), ResourceDependencyType.RenderTargetWrite);
 
-        //Scene Color Render Target
         {
             sceneColorRT = new RenderTarget(renderer, 3);
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
                 sceneColorRT.addTexture(frameIndex, Texture.newColorTexture(sceneColorRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8StandardRGB, Texture.Filter.Nearest, Texture.Filter.Nearest));
             }
             sceneColorRT.addTexture(2, Texture.newDepthTexture(sceneColorRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.Depth32Float, Texture.Filter.Nearest, Texture.Filter.Nearest));
-        }
 
-        /*
-        //Manga Shader
-        {
-            ShaderReader.ShaderSources shaderSources = ShaderReader.read(
-                    AssetPacks.<String>getAsset("core:assets/shaders/vulkan/Manga.glsl").asset
-            );
+            sceneColorTextures = new Texture[] {
+                    sceneColorRT.getTexture(0),
+                    sceneColorRT.getTexture(1)
+            };
 
-
-            mangaShaderProgram = ShaderProgram.newComputeShaderProgram(renderer);
-            mangaShaderProgram.setShaders(
-                    Shader.newShader(mangaShaderProgram, ShaderType.Compute, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Compute), ShaderType.Compute))
-            );
-
-            mangaShaderProgram.bind(
-                    Optional.empty(),
-                    new ShaderResSet(
-                            0,
-                            new ShaderRes(
-                                    "test",
-                                    0,
-                                    UniformBuffer,
-                                    VertexStage
-                            ).sizeBytes(SizeUtil.MATRIX_SIZE_BYTES)
-                    ));
-
+            swapchainColorTextures = new Texture[]{
+                    renderer.getSwapchainRenderTarget().getTexture(0),
+                    renderer.getSwapchainRenderTarget().getTexture(1)
+            };
 
         }
-
-        //Manga Render Target
-        {
-            mangaRT = new RenderTarget(renderer, 3);
-            for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                mangaRT.addTexture(frameIndex, Texture.newColorTexture(mangaRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8StandardRGB, Texture.Filter.Nearest, Texture.Filter.Nearest));
-            }
-            mangaRT.addTexture(2, Texture.newDepthTexture(mangaRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.Depth32Float, Texture.Filter.Nearest, Texture.Filter.Nearest));
-        }
-
-         */
-
 
         //Swapchain Pass Resources
         {
@@ -289,31 +258,29 @@ public class RenderSystem extends EcsSystem {
         sceneColorPass = Pass.newGraphicsPass(renderGraph, "SceneColor", renderer.getMaxFramesInFlight());
         {
             sceneColorPass.setDependsOn(
-                    new ResourceDependency<>(sceneColorRT, ResourceDependencyType.RenderTargetWrite)
+                new ResourceDependency<>(
+                    sceneColorTextures,
+                    ResourceDependencyType.RenderTargetWrite
+                )
             );
 
         }
-        /*
-        mangaPass = Pass.newComputePass(renderGraph, renderer.getMaxFramesInFlight());
-        {
-            mangaPass.setDependsOn(
-                    new ResourceDependency<>(sceneColorRT, ResourceDependencyType.ShaderRead),
-                    new ResourceDependency<>(mangaRT, ResourceDependencyType.ShaderWrite)
-            );
-        }
-
-         */
         swapchainPass = Pass.newGraphicsPass(renderGraph, "Swapchain", renderer.getMaxFramesInFlight());
         {
             swapchainPass.setDependsOn(
-                    new ResourceDependency<>(sceneColorRT, ResourceDependencyType.ShaderRead),
-                    swapchainRTDependency
+                new ResourceDependency<>(
+                    sceneColorTextures,
+                    ResourceDependencyType.FragmentShaderRead
+                ),
+                new ResourceDependency<>(
+                        swapchainColorTextures,
+                        ResourceDependencyType.RenderTargetWrite
+                )
             );
         }
 
         renderGraph.addPasses(
                 sceneColorPass,
-                //mangaPass,
                 swapchainPass
         );
     }
@@ -325,7 +292,7 @@ public class RenderSystem extends EcsSystem {
             sceneCamera = cameraComponent.camera();
         });
 
-        swapchainRTDependency.setDependency(renderer.getSwapchainRenderTarget());
+
         swapchainPassShaderProgram.updateTextures(renderer.getFrameIndex(), new ShaderUpdate<>("textures", 0, 1, sceneColorRT.getTexture(renderer.getFrameIndex())).arrayIndex(0));
 
 
@@ -387,19 +354,6 @@ public class RenderSystem extends EcsSystem {
             }
             sceneColorPass.endRecording();
         });
-        /*
-        mangaPass.setPassExecuteCallback(() -> {
-            mangaPass.startRecording(renderer.getFrameIndex());
-            {
-
-                mangaPass.setShaderProgram(mangaShaderProgram);
-                mangaPass.dispatch(10, 10, 10);
-
-            }
-            mangaPass.endRecording();
-        });
-
-         */
         swapchainPass.setPassExecuteCallback(() -> {
             swapchainPass.startRecording(renderer.getFrameIndex());
             {

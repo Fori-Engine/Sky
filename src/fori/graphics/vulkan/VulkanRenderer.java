@@ -576,16 +576,16 @@ public class VulkanRenderer extends Renderer {
                 //Insert actual barriers
                 {
 
-                    pass.setBarrierInsertCallback(object -> {
+                    pass.setBarrierCallback(object -> {
 
                         VkCommandBuffer commandBuffer = (VkCommandBuffer) object;
 
                         for(ResourceDependency rd : pass.getResourceDependencies()) {
-                            if(rd.getDependency() instanceof RenderTarget) {
-                                Texture texture = ((RenderTarget) rd.getDependency()).getTexture(frameIndex);
+                            if(rd.getDependency() instanceof Texture[]) {
+                                Texture texture = ((Texture[]) rd.getDependency())[frameIndex];
                                 VulkanImage image = ((VulkanTexture) texture).getImage();
 
-                                if ((rd.getType() & ResourceDependencyType.ShaderRead) != 0) {
+                                if ((rd.getType() & ResourceDependencyType.FragmentShaderRead) != 0) {
                                     VulkanUtil.transitionImageLayout(
                                             image,
                                             commandBuffer,
@@ -597,11 +597,14 @@ public class VulkanRenderer extends Renderer {
                                             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT     // Pipeline Stage: After fragment shader (shader read)
                                     );
                                     System.out.println("ShaderRead");
-                                } else if ((rd.getType() & ResourceDependencyType.ShaderWrite) != 0) {
+                                }
+                                else if ((rd.getType() & ResourceDependencyType.FragmentShaderWrite) != 0) {
                                     System.out.println("ShaderWrite");
-                                } else if ((rd.getType() & ResourceDependencyType.RenderTargetRead) != 0) {
+                                }
+                                else if ((rd.getType() & ResourceDependencyType.RenderTargetRead) != 0) {
                                     System.out.println("RenderTargetRead");
-                                } else if ((rd.getType() & ResourceDependencyType.RenderTargetWrite) != 0) {
+                                }
+                                else if ((rd.getType() & ResourceDependencyType.RenderTargetWrite) != 0) {
                                     VulkanUtil.transitionImageLayout(
                                             image,
                                             commandBuffer,
@@ -638,12 +641,6 @@ public class VulkanRenderer extends Renderer {
 
             }
 
-
-            /*
-            1. Go through all passes
-            2. Configure wait and finish semaphores
-            3. Insert pipeline barriers based on the actions of the LAST pass using the pass' command buffer
-             */
 
 
             Semaphore[] finishedSemaphores = lastPass.getFinishedSemaphores();

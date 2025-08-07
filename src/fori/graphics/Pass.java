@@ -13,7 +13,7 @@ public abstract class Pass extends Disposable {
     protected int framesInFlight;
     protected Semaphore[] waitSemaphores;
     protected Semaphore[] finishedSemaphores;
-    protected BarrierInsertCallback barrierInsertCallback;
+    protected BarrierCallback barrierCallback;
     protected PassExecuteCallback passExecuteCallback;
     protected List<ResourceDependency> resourceDependencyList = new ArrayList<>();
     protected String name;
@@ -57,12 +57,12 @@ public abstract class Pass extends Disposable {
         this.passExecuteCallback = passExecuteCallback;
     }
 
-    public BarrierInsertCallback getBarrierInsertCallback() {
-        return barrierInsertCallback;
+    public BarrierCallback getBarrierInsertCallback() {
+        return barrierCallback;
     }
 
-    public void setBarrierInsertCallback(BarrierInsertCallback barrierInsertCallback) {
-        this.barrierInsertCallback = barrierInsertCallback;
+    public void setBarrierCallback(BarrierCallback barrierCallback) {
+        this.barrierCallback = barrierCallback;
     }
 
     public void startRecording(int frameIndex) {

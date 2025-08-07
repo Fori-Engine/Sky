@@ -9,10 +9,8 @@ import java.nio.LongBuffer;
 import java.util.Optional;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.vulkan.KHRSwapchain.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
-import static org.lwjgl.vulkan.VK13.VK_ACCESS_NONE;
 
 public class VulkanGraphicsPass extends GraphicsPass {
 
@@ -255,7 +253,7 @@ public class VulkanGraphicsPass extends GraphicsPass {
 
     @Override
     public void resolveResourceDependencies() {
-        barrierInsertCallback.run(commandBuffers[frameIndex]);
+        barrierCallback.run(commandBuffers[frameIndex]);
     }
 
 
