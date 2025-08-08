@@ -273,8 +273,12 @@ public class RenderSystem extends EcsSystem {
                     ResourceDependencyType.FragmentShaderRead
                 ),
                 new ResourceDependency<>(
-                        swapchainColorTextures,
-                        ResourceDependencyType.RenderTargetWrite
+                    swapchainColorTextures,
+                    ResourceDependencyType.RenderTargetWrite
+                ),
+                new ResourceDependency<>(
+                    swapchainColorTextures,
+                    ResourceDependencyType.Present
                 )
             );
         }

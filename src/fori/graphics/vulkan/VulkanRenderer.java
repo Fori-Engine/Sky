@@ -601,6 +601,18 @@ public class VulkanRenderer extends Renderer {
                                 else if ((rd.getType() & ResourceDependencyType.FragmentShaderWrite) != 0) {
                                     System.out.println("ShaderWrite");
                                 }
+                                else if((rd.getType() & ResourceDependencyType.Present) != 0) {
+                                    VulkanUtil.transitionImageLayout(
+                                            image,
+                                            commandBuffer,
+                                            VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+                                            VK_ACCESS_NONE,
+                                            VK_ACCESS_NONE,
+                                            VK_IMAGE_ASPECT_COLOR_BIT,
+                                            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                                            VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
+                                    );
+                                }
                                 else if ((rd.getType() & ResourceDependencyType.RenderTargetRead) != 0) {
                                     System.out.println("RenderTargetRead");
                                 }

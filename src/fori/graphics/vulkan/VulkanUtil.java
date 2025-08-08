@@ -2,10 +2,7 @@ package fori.graphics.vulkan;
 
 import fori.graphics.TextureFormatType;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.VkCommandBuffer;
-import org.lwjgl.vulkan.VkCommandPoolCreateInfo;
-import org.lwjgl.vulkan.VkDevice;
-import org.lwjgl.vulkan.VkImageMemoryBarrier;
+import org.lwjgl.vulkan.*;
 
 import java.nio.LongBuffer;
 
@@ -54,6 +51,7 @@ public class VulkanUtil {
                 imageBarrier.subresourceRange().baseArrayLayer(0);
                 imageBarrier.subresourceRange().layerCount(1);
             }
+
 
 
             vkCmdPipelineBarrier(
