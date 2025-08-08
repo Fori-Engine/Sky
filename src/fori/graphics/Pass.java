@@ -89,5 +89,5 @@ public abstract class Pass extends Disposable {
         return finishedSemaphores;
     }
 
-    public abstract void resolveResourceDependencies();
+    public abstract void resolveBarriers();
 }

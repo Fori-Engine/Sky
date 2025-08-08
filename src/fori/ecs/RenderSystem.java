@@ -304,7 +304,7 @@ public class RenderSystem extends EcsSystem {
             sceneColorPass.startRecording(renderer.getFrameIndex());
             {
 
-                sceneColorPass.resolveResourceDependencies();
+                sceneColorPass.resolveBarriers();
 
                 sceneColorPass.startRendering(sceneColorRT, true);
                 {
@@ -362,7 +362,7 @@ public class RenderSystem extends EcsSystem {
             swapchainPass.startRecording(renderer.getFrameIndex());
             {
 
-                swapchainPass.resolveResourceDependencies();
+                swapchainPass.resolveBarriers();
 
                 swapchainPass.startRendering(renderer.getSwapchainRenderTarget(), true);
                 {
