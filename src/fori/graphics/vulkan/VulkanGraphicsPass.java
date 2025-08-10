@@ -18,8 +18,8 @@ public class VulkanGraphicsPass extends GraphicsPass {
     private VkCommandBuffer[] commandBuffers;
     private VkDevice device;
     private VkRenderingInfoKHR renderingInfoKHR;
-    private VkRenderingAttachmentInfo.Buffer colorAttachment;
-    private VkRenderingAttachmentInfoKHR depthAttachment;
+    private VkRenderingAttachmentInfo.Buffer colorRenderingAttachmentInfo;
+    private VkRenderingAttachmentInfoKHR depthRenderingAttachmentInfo;
     private VulkanCommandPool commandPool;
 
 
@@ -128,37 +128,39 @@ public class VulkanGraphicsPass extends GraphicsPass {
 
             VkClearValue depthClearValue = VkClearValue.calloc(stack);
             depthClearValue.depthStencil().set(1.0f, 0);
-            VulkanTexture texture = (VulkanTexture) renderTarget.getTexture(frameIndex);
+
+            RenderTargetAttachment colorAttachment = renderTarget.getAttachment(RenderTargetAttachmentType.Color);
+            RenderTargetAttachment depthAttachment = renderTarget.getAttachment(RenderTargetAttachmentType.Depth);
+
+
+            VulkanTexture texture = (VulkanTexture) colorAttachment.getTextures()[frameIndex];
 
 
 
-            colorAttachment = VkRenderingAttachmentInfoKHR.calloc(1, stack);
+
+
+            colorRenderingAttachmentInfo = VkRenderingAttachmentInfoKHR.calloc(1, stack);
             {
-                /*TODO(Shayan) BAD BAD BAD! Making assumptions about which image will be the depth image
-                   for a given rendertarget!*/
-
-
-                colorAttachment.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR);
-                colorAttachment.imageView(texture.getImageView().getHandle());
-                colorAttachment.imageLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-                colorAttachment.loadOp(loadOp);
-                colorAttachment.storeOp(VK_ATTACHMENT_STORE_OP_STORE);
-                colorAttachment.clearValue(colorClearValue);
+                colorRenderingAttachmentInfo.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR);
+                colorRenderingAttachmentInfo.imageView(texture.getImageView().getHandle());
+                colorRenderingAttachmentInfo.imageLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+                colorRenderingAttachmentInfo.loadOp(loadOp);
+                colorRenderingAttachmentInfo.storeOp(VK_ATTACHMENT_STORE_OP_STORE);
+                colorRenderingAttachmentInfo.clearValue(colorClearValue);
             }
-            depthAttachment = VkRenderingAttachmentInfoKHR.calloc(stack);
+            depthRenderingAttachmentInfo = VkRenderingAttachmentInfoKHR.calloc(stack);
             {
 
-                /*TODO(Shayan) BAD BAD BAD! Making assumptions about which image will be the depth image
-                   for a given rendertarget!*/
-                VulkanTexture depthImage = ((VulkanTexture) renderTarget.getTexture(framesInFlight));
+
+                VulkanTexture depthImage = ((VulkanTexture) depthAttachment.getTextures()[0]);
                 VulkanImageView depthImageView = depthImage.getImageView();
 
-                depthAttachment.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR);
-                depthAttachment.imageView(depthImageView.getHandle());
-                depthAttachment.imageLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-                depthAttachment.loadOp(loadOp);
-                depthAttachment.storeOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
-                depthAttachment.clearValue(depthClearValue);
+                depthRenderingAttachmentInfo.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR);
+                depthRenderingAttachmentInfo.imageView(depthImageView.getHandle());
+                depthRenderingAttachmentInfo.imageLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+                depthRenderingAttachmentInfo.loadOp(loadOp);
+                depthRenderingAttachmentInfo.storeOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
+                depthRenderingAttachmentInfo.clearValue(depthClearValue);
             }
 
             renderingInfoKHR = VkRenderingInfoKHR.calloc(stack);
@@ -168,8 +170,8 @@ public class VulkanGraphicsPass extends GraphicsPass {
             renderArea.extent(VkExtent2D.calloc(stack).set(texture.getWidth(), texture.getHeight()));
             renderingInfoKHR.renderArea(renderArea);
             renderingInfoKHR.layerCount(1);
-            renderingInfoKHR.pColorAttachments(colorAttachment);
-            renderingInfoKHR.pDepthAttachment(depthAttachment);
+            renderingInfoKHR.pColorAttachments(colorRenderingAttachmentInfo);
+            renderingInfoKHR.pDepthAttachment(depthRenderingAttachmentInfo);
 
 
 

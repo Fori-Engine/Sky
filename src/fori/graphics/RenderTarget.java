@@ -1,30 +1,32 @@
 package fori.graphics;
 
+import java.util.ArrayList;
+
 public class RenderTarget extends Disposable {
 
-    //TODO(Shayan) using indices is a bad idea and it causes assumptions about which texture does what
-    //See VulkanGraphicsCommandList.start()
-    private Texture[] textures;
+    private ArrayList<RenderTargetAttachment> attachments;
 
 
 
 
-    public RenderTarget(Disposable parent, int textureCount) {
+    public RenderTarget(Disposable parent) {
         super(parent);
-        this.textures = new Texture[textureCount];
+        attachments = new ArrayList<>();
     }
 
-    public void addTexture(int index, Texture texture) {
-        textures[index] = texture;
+    public void addAttachment(RenderTargetAttachment attachment) {
+        attachments.add(attachment);
     }
 
-    public Texture getTexture(int index) {
-        return textures[index];
+    public RenderTargetAttachment getAttachment(long mask) {
+        for(RenderTargetAttachment attachment : attachments) {
+            if((attachment.getMask() & mask) != 0) return attachment;
+        }
+
+        return null;
     }
 
-    public int getTextureCount() {
-        return textures.length;
-    }
+
 
     @Override
     public void dispose() {

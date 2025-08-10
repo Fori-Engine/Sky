@@ -92,7 +92,7 @@ public class VulkanRenderer extends Renderer {
 
 
     private RenderTarget createSwapchainRenderTarget(RendererSettings rendererSettings) {
-        RenderTarget swapchainRenderTarget = new RenderTarget(this, maxFramesInFlight + 1);
+        RenderTarget swapchainRenderTarget = new RenderTarget(this);
 
 
         try(MemoryStack stack = stackPush()) {
@@ -146,8 +146,10 @@ public class VulkanRenderer extends Renderer {
 
         }
 
+
+        Texture[] colorTextures = new Texture[maxFramesInFlight];
         for (int i = 0; i < swapchain.getImages().size(); i++) {
-            swapchainRenderTarget.addTexture(i, new VulkanTexture(
+            colorTextures[i] = new VulkanTexture(
                     swapchainRenderTarget,
                     swapchain.getExtent().width(),
                     swapchain.getExtent().height(),
@@ -155,22 +157,24 @@ public class VulkanRenderer extends Renderer {
                     VK_IMAGE_LAYOUT_UNDEFINED,
                     swapchain.getImageFormat(),
                     VK_IMAGE_ASPECT_COLOR_BIT
-            ));
+            );
         }
 
+        RenderTargetAttachment colorAttachment = new RenderTargetAttachment(RenderTargetAttachmentType.Color, colorTextures);
 
-
-        swapchainRenderTarget.addTexture(
-                maxFramesInFlight,
-                Texture.newDepthTexture(
-                        swapchainRenderTarget,
-                        swapchain.getExtent().width(),
-                        swapchain.getExtent().height(),
-                        TextureFormatType.Depth32Float,
-                        Texture.Filter.Nearest,
-                        Texture.Filter.Nearest
-                )
+        Texture depthTexture = Texture.newDepthTexture(
+            swapchainRenderTarget,
+            swapchain.getExtent().width(),
+            swapchain.getExtent().height(),
+            TextureFormatType.Depth32Float,
+            Texture.Filter.Nearest,
+            Texture.Filter.Nearest
         );
+
+        RenderTargetAttachment depthAttachment = new RenderTargetAttachment(RenderTargetAttachmentType.Depth, new Texture[]{depthTexture});
+
+        swapchainRenderTarget.addAttachment(colorAttachment);
+        swapchainRenderTarget.addAttachment(depthAttachment);
 
 
         return swapchainRenderTarget;

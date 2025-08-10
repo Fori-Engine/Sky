@@ -38,21 +38,23 @@ public class RenderSystem extends EcsSystem {
 
 
         {
-            sceneColorRT = new RenderTarget(renderer, 3);
-            for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                sceneColorRT.addTexture(frameIndex, Texture.newColorTexture(sceneColorRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8StandardRGB, Texture.Filter.Nearest, Texture.Filter.Nearest));
-            }
-            sceneColorRT.addTexture(2, Texture.newDepthTexture(sceneColorRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.Depth32Float, Texture.Filter.Nearest, Texture.Filter.Nearest));
-
-            sceneColorTextures = new Texture[] {
-                    sceneColorRT.getTexture(0),
-                    sceneColorRT.getTexture(1)
+            sceneColorRT = new RenderTarget(renderer);
+            sceneColorTextures = new Texture[]{
+                    Texture.newColorTexture(sceneColorRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8StandardRGB, Texture.Filter.Nearest, Texture.Filter.Nearest),
+                    Texture.newColorTexture(sceneColorRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8StandardRGB, Texture.Filter.Nearest, Texture.Filter.Nearest)
             };
 
-            swapchainColorTextures = new Texture[]{
-                    renderer.getSwapchainRenderTarget().getTexture(0),
-                    renderer.getSwapchainRenderTarget().getTexture(1)
-            };
+            sceneColorRT.addAttachment(
+                    new RenderTargetAttachment(RenderTargetAttachmentType.Color, sceneColorTextures)
+            );
+
+            sceneColorRT.addAttachment(
+                    new RenderTargetAttachment(RenderTargetAttachmentType.Depth, new Texture[]{
+                            Texture.newDepthTexture(sceneColorRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.Depth32Float, Texture.Filter.Nearest, Texture.Filter.Nearest)
+                    })
+            );
+
+            swapchainColorTextures = renderer.getSwapchainRenderTarget().getAttachment(RenderTargetAttachmentType.Color).getTextures();
 
         }
 
@@ -243,7 +245,7 @@ public class RenderSystem extends EcsSystem {
         });
 
 
-        swapchainPassShaderProgram.updateTextures(renderer.getFrameIndex(), new ShaderUpdate<>("textures", 0, 1, sceneColorRT.getTexture(renderer.getFrameIndex())).arrayIndex(0));
+        swapchainPassShaderProgram.updateTextures(renderer.getFrameIndex(), new ShaderUpdate<>("textures", 0, 1, sceneColorTextures[renderer.getFrameIndex()]).arrayIndex(0));
 
 
         sceneColorPass.setPassExecuteCallback(() -> {
