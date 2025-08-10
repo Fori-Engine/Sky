@@ -152,7 +152,7 @@ public class VulkanRenderer extends Renderer {
                     swapchain.getExtent().width(),
                     swapchain.getExtent().height(),
                     swapchain.getImages().get(i),
-                    VK_IMAGE_LAYOUT_GENERAL,
+                    VK_IMAGE_LAYOUT_UNDEFINED,
                     swapchain.getImageFormat(),
                     VK_IMAGE_ASPECT_COLOR_BIT
             ));
