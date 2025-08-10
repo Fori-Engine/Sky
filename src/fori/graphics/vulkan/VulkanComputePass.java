@@ -53,10 +53,7 @@ public class VulkanComputePass extends ComputePass {
         }
     }
 
-    @Override
-    public void setWritable(RenderTarget renderTarget) {
 
-    }
 
 
 
