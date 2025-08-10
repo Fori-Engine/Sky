@@ -1,16 +1,16 @@
 package fori.graphics;
 
 public class RenderTargetAttachment {
-    private long mask = 0;
+    private long flags = 0;
     private Texture[] textures;
 
-    public RenderTargetAttachment(long mask, Texture[] textures) {
-        this.mask = mask;
+    public RenderTargetAttachment(long flags, Texture[] textures) {
+        this.flags = flags;
         this.textures = textures;
     }
 
-    public long getMask() {
-        return mask;
+    public long getFlags() {
+        return flags;
     }
 
     public Texture[] getTextures() {

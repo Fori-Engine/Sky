@@ -20,7 +20,7 @@ public class RenderTarget extends Disposable {
 
     public RenderTargetAttachment getAttachment(long mask) {
         for(RenderTargetAttachment attachment : attachments) {
-            if((attachment.getMask() & mask) != 0) return attachment;
+            if((attachment.getFlags() & mask) != 0) return attachment;
         }
 
         return null;
