@@ -35,7 +35,7 @@ public class GLFWSurface extends Surface {
     public void requestRenderAPI(RenderAPI api) {
         if(api == RenderAPI.Vulkan) {
             try (MemoryStack stack = stackPush()) {
-                vkInstance = createInstance(title, List.of("VK_LAYER_KHRONOS_validation", "VK_LAYER_KHRONOS_synchronization2"));
+                vkInstance = createInstance(title, List.of("VK_LAYER_KHRONOS_validation"));
                 LongBuffer pSurface = stack.mallocLong(1);
                 glfwCreateWindowSurface(vkInstance, handle,
                         null, pSurface);

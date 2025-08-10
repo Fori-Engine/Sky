@@ -39,5 +39,5 @@ layout(set = 0, binding = 1) uniform sampler2D[] textures;
 
 
 void main() {
-    outputColor = texture(textures[0], inputUV) + vec4(1.0, 0.0, 0.0, 1.0);
+    outputColor = texture(textures[0], inputUV) + inputColor;
 }
