@@ -24,6 +24,7 @@ public class RenderSystem extends EcsSystem {
 
 
 
+    private RenderTarget swapchainRT;
     private GraphicsPass sceneColorPass, swapchainPass;
     private RenderTarget sceneColorRT;
 
@@ -54,7 +55,8 @@ public class RenderSystem extends EcsSystem {
                     })
             );
 
-            swapchainColorTextures = renderer.getSwapchainRenderTarget().getAttachment(RenderTargetAttachmentType.Color).getTextures();
+            swapchainRT = renderer.getSwapchainRenderTarget();
+            swapchainColorTextures = swapchainRT.getAttachment(RenderTargetAttachmentType.Color).getTextures();
 
         }
 
@@ -243,6 +245,20 @@ public class RenderSystem extends EcsSystem {
             CameraComponent cameraComponent = components1.comp();
             sceneCamera = cameraComponent.camera();
         });
+
+
+        if(swapchainRT != renderer.getSwapchainRenderTarget()) {
+            swapchainRT = renderer.getSwapchainRenderTarget();
+
+            RenderTargetAttachment colorAttachment = swapchainRT.getAttachment(RenderTargetAttachmentType.Color);
+            Texture[] colorAttachmentTextures = colorAttachment.getTextures();
+            for (int i = 0; i < colorAttachmentTextures.length; i++) {
+                swapchainColorTextures[i] = colorAttachmentTextures[i];
+            }
+
+        }
+
+
 
 
         swapchainPassShaderProgram.updateTextures(renderer.getFrameIndex(), new ShaderUpdate<>("textures", 0, 1, sceneColorTextures[renderer.getFrameIndex()]).arrayIndex(0));
