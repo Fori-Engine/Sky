@@ -95,13 +95,6 @@ public class VulkanGraphicsPass extends GraphicsPass {
         );
     }
 
-    @Override
-    public void makePresentable(RenderTarget renderTarget) {
-
-
-
-
-    }
 
 
     @Override
