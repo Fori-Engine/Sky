@@ -4,11 +4,8 @@ import fori.graphics.TextureFormatType;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
-import java.nio.LongBuffer;
-
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
-import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
 
 public class VulkanUtil {
     public static final int UINT64_MAX = 0xFFFFFFFF;
@@ -16,10 +13,13 @@ public class VulkanUtil {
 
     public static int toVkImageFormatEnum(TextureFormatType textureFormatType) {
         switch (textureFormatType) {
-            case ColorR8G8B8A8StandardRGB -> {
+            case ColorR8G8B8A8 -> {
                 return VK_FORMAT_R8G8B8A8_SRGB;
             }
-            case Depth32Float -> {
+            case ColorR32G32B32A32 -> {
+                return VK_FORMAT_R32G32B32A32_SFLOAT;
+            }
+            case Depth32 -> {
                 return VK_FORMAT_D32_SFLOAT;
             }
         }

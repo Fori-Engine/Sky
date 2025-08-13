@@ -166,7 +166,7 @@ public class VulkanRenderer extends Renderer {
             swapchainRenderTarget,
             swapchain.getExtent().width(),
             swapchain.getExtent().height(),
-            TextureFormatType.Depth32Float,
+            TextureFormatType.Depth32,
             Texture.Filter.Nearest,
             Texture.Filter.Nearest
         );
@@ -590,20 +590,49 @@ public class VulkanRenderer extends Renderer {
                                 VulkanImage image = ((VulkanTexture) texture).getImage();
 
                                 if ((rd.getType() & ResourceDependencyType.FragmentShaderRead) != 0) {
+
+                                    //Uhhh....Vulkan is kind of unhappy if you use shader_read_only_optimal
+                                    //if the image is a storage image, it prefers general instead, maybe check
+                                    //Vulkan image for this?
+
+
                                     VulkanUtil.transitionImageLayout(
                                             image,
                                             commandBuffer,
-                                            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,  // New Layout: Read-only for shaders
-                                            VK_ACCESS_NONE,                           // Old Access: No access
-                                            VK_ACCESS_SHADER_READ_BIT,                // New Access: Shader read
-                                            VK_IMAGE_ASPECT_COLOR_BIT,                // Aspect: Color channel
-                                            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,    // Pipeline Stage: Before fragment shader (shader read)
-                                            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT     // Pipeline Stage: After fragment shader (shader read)
+                                            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                            VK_ACCESS_NONE,
+                                            VK_ACCESS_SHADER_READ_BIT,
+                                            VK_IMAGE_ASPECT_COLOR_BIT,
+                                            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
                                     );
-                                    System.out.println("ShaderRead");
                                 }
                                 else if ((rd.getType() & ResourceDependencyType.FragmentShaderWrite) != 0) {
-                                    System.out.println("ShaderWrite");
+                                    Logger.todo(VulkanRenderer.class, "FragmentShaderWrite transitions are not supported");
+                                }
+                                else if ((rd.getType() & ResourceDependencyType.ComputeShaderRead) != 0) {
+                                    VulkanUtil.transitionImageLayout(
+                                            image,
+                                            commandBuffer,
+                                            VK_IMAGE_LAYOUT_GENERAL,
+                                            VK_ACCESS_NONE,
+                                            VK_ACCESS_SHADER_READ_BIT,
+                                            VK_IMAGE_ASPECT_COLOR_BIT,
+                                            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                                            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
+                                    );
+                                }
+                                else if ((rd.getType() & ResourceDependencyType.ComputeShaderWrite) != 0) {
+                                    VulkanUtil.transitionImageLayout(
+                                            image,
+                                            commandBuffer,
+                                            VK_IMAGE_LAYOUT_GENERAL,
+                                            VK_ACCESS_NONE,
+                                            VK_ACCESS_SHADER_READ_BIT,
+                                            VK_IMAGE_ASPECT_COLOR_BIT,
+                                            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                                            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
+                                    );
                                 }
                                 else if((rd.getType() & ResourceDependencyType.Present) != 0) {
                                     VulkanUtil.transitionImageLayout(
@@ -618,22 +647,19 @@ public class VulkanRenderer extends Renderer {
                                     );
                                 }
                                 else if ((rd.getType() & ResourceDependencyType.RenderTargetRead) != 0) {
-                                    System.out.println("RenderTargetRead");
+                                    Logger.todo(VulkanRenderer.class, "RenderTargetRead transitions are not supported");
                                 }
                                 else if ((rd.getType() & ResourceDependencyType.RenderTargetWrite) != 0) {
                                     VulkanUtil.transitionImageLayout(
                                             image,
                                             commandBuffer,
-                                            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, // New Layout: Optimal for color attachment output
-                                            VK_ACCESS_NONE,                           // Old Access: No access
-                                            VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,     // New Access: Color attachment write
-                                            VK_IMAGE_ASPECT_COLOR_BIT,                // Aspect: Color channel
-                                            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // Pipeline Stage: Before color attachment output
-                                            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT  // Pipeline Stage: After color attachment output
+                                            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                                            VK_ACCESS_NONE,
+                                            VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                                            VK_IMAGE_ASPECT_COLOR_BIT,
+                                            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                                            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
                                     );
-                                    System.out.println("RenderTargetWrite");
-
-
                                 }
                             }
 

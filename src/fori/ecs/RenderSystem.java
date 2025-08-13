@@ -17,19 +17,30 @@ public class RenderSystem extends EcsSystem {
 
 
 
-    private Camera swapchainPassCamera;
+
+
+
+    private GraphicsPass sceneColorPass;
+    private RenderTarget sceneColorRT;
+    private Texture[] sceneColorTextures;
+
+    private ComputePass mangaPass;
+    private RenderTarget mangaColorRT;
+    private Texture[] mangaColorTextures;
+    private ShaderProgram mangaPassShaderProgram;
+
+
+    private GraphicsPass swapchainPass;
+    private RenderTarget swapchainRT;
+    private Texture[] swapchainColorTextures;
+
     private ShaderProgram swapchainPassShaderProgram;
+    private Camera swapchainPassCamera;
     private Buffer swapchainPassVertexBuffer, swapchainPassIndexBuffer;
     private Buffer[] swapchainPassCameraBuffers;
 
 
 
-    private RenderTarget swapchainRT;
-    private GraphicsPass sceneColorPass, swapchainPass;
-    private RenderTarget sceneColorRT;
-
-    private Texture[] sceneColorTextures;
-    private Texture[] swapchainColorTextures;
 
     private RenderGraph renderGraph;
 
@@ -38,11 +49,12 @@ public class RenderSystem extends EcsSystem {
         this.scene = scene;
 
 
+        //Scene Color Pass Resources
         {
             sceneColorRT = new RenderTarget(renderer);
             sceneColorTextures = new Texture[]{
-                    Texture.newColorTexture(sceneColorRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8StandardRGB, Texture.Filter.Nearest, Texture.Filter.Nearest),
-                    Texture.newColorTexture(sceneColorRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8StandardRGB, Texture.Filter.Nearest, Texture.Filter.Nearest)
+                    Texture.newColorTexture(sceneColorRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8, Texture.Filter.Nearest, Texture.Filter.Nearest),
+                    Texture.newColorTexture(sceneColorRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8, Texture.Filter.Nearest, Texture.Filter.Nearest)
             };
 
             sceneColorRT.addAttachment(
@@ -51,17 +63,61 @@ public class RenderSystem extends EcsSystem {
 
             sceneColorRT.addAttachment(
                     new RenderTargetAttachment(RenderTargetAttachmentType.Depth, new Texture[]{
-                            Texture.newDepthTexture(sceneColorRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.Depth32Float, Texture.Filter.Nearest, Texture.Filter.Nearest)
+                            Texture.newDepthTexture(sceneColorRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.Depth32, Texture.Filter.Nearest, Texture.Filter.Nearest)
                     })
             );
+        }
 
-            swapchainRT = renderer.getSwapchainRenderTarget();
-            swapchainColorTextures = swapchainRT.getAttachment(RenderTargetAttachmentType.Color).getTextures();
+        //Manga Pass Resources
+        {
+            mangaColorRT = new RenderTarget(renderer);
+            mangaColorTextures = new Texture[]{
+                    Texture.newTexture(mangaColorRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32, Texture.Filter.Nearest, Texture.Filter.Nearest),
+                    Texture.newTexture(mangaColorRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32, Texture.Filter.Nearest, Texture.Filter.Nearest)
+            };
+
+            mangaColorRT.addAttachment(
+                    new RenderTargetAttachment(RenderTargetAttachmentType.Color, mangaColorTextures)
+            );
+
+            ShaderReader.ShaderSources shaderSources = ShaderReader.read(
+                    AssetPacks.<String>getAsset("core:assets/shaders/vulkan/MangaPass.glsl").asset
+            );
+
+            mangaPassShaderProgram = ShaderProgram.newComputeShaderProgram(renderer);
+            mangaPassShaderProgram.setShaders(
+                    Shader.newShader(mangaPassShaderProgram, ShaderType.Compute, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Compute), ShaderType.Compute))
+            );
+
+
+            mangaPassShaderProgram.bind(
+                    Optional.empty(),
+                    new ShaderResSet(
+                            0,
+                            new ShaderRes(
+                                    "inputTextures",
+                                    0,
+                                    CombinedSampler,
+                                    ComputeStage
+                            ).count(1),
+                            new ShaderRes(
+                                    "outputTextures",
+                                    1,
+                                    StorageImage,
+                                    ComputeStage
+                            ).count(1)
+                    )
+
+            );
+
 
         }
 
         //Swapchain Pass Resources
         {
+            swapchainRT = renderer.getSwapchainRenderTarget();
+            swapchainColorTextures = swapchainRT.getAttachment(RenderTargetAttachmentType.Color).getTextures();
+
             swapchainPassCamera = new Camera(
                     new Matrix4f().identity(),
                     new Matrix4f().ortho(0, renderer.getWidth(), 0, renderer.getHeight(), 0, 1, true),
@@ -73,7 +129,7 @@ public class RenderSystem extends EcsSystem {
             );
 
 
-            swapchainPassShaderProgram = ShaderProgram.newGraphicsShaderProgram(renderer, TextureFormatType.ColorR8G8B8A8StandardRGB, TextureFormatType.Depth32Float);
+            swapchainPassShaderProgram = ShaderProgram.newGraphicsShaderProgram(renderer, TextureFormatType.ColorR8G8B8A8, TextureFormatType.Depth32);
             swapchainPassShaderProgram.setShaders(
                     Shader.newShader(swapchainPassShaderProgram, ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex)),
                     Shader.newShader(swapchainPassShaderProgram, ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
@@ -215,11 +271,26 @@ public class RenderSystem extends EcsSystem {
             );
 
         }
+        mangaPass = Pass.newComputePass(renderer, "Manga", renderer.getMaxFramesInFlight());
+        {
+            mangaPass.setDependsOn(
+                new ResourceDependency<>(
+                    sceneColorTextures,
+                    ResourceDependencyType.ComputeShaderRead
+                ),
+                new ResourceDependency<>(
+                    mangaColorTextures,
+                    ResourceDependencyType.ComputeShaderWrite
+                )
+            );
+        }
+
+
         swapchainPass = Pass.newGraphicsPass(renderGraph, "Swapchain", renderer.getMaxFramesInFlight());
         {
             swapchainPass.setDependsOn(
                 new ResourceDependency<>(
-                    sceneColorTextures,
+                    mangaColorTextures,
                     ResourceDependencyType.FragmentShaderRead
                 ),
                 new ResourceDependency<>(
@@ -235,6 +306,7 @@ public class RenderSystem extends EcsSystem {
 
         renderGraph.addPasses(
                 sceneColorPass,
+                mangaPass,
                 swapchainPass
         );
     }
@@ -258,10 +330,10 @@ public class RenderSystem extends EcsSystem {
 
         }
 
+        mangaPassShaderProgram.updateTextures(renderer.getFrameIndex(), new ShaderUpdate<>("inputTextures", 0, 0, sceneColorTextures[renderer.getFrameIndex()]).arrayIndex(0));
+        mangaPassShaderProgram.updateTextures(renderer.getFrameIndex(), new ShaderUpdate<>("outputTextures", 0, 1, mangaColorTextures[renderer.getFrameIndex()]).arrayIndex(0));
 
-
-
-        swapchainPassShaderProgram.updateTextures(renderer.getFrameIndex(), new ShaderUpdate<>("textures", 0, 1, sceneColorTextures[renderer.getFrameIndex()]).arrayIndex(0));
+        swapchainPassShaderProgram.updateTextures(renderer.getFrameIndex(), new ShaderUpdate<>("textures", 0, 1, mangaColorTextures[renderer.getFrameIndex()]).arrayIndex(0));
 
 
         sceneColorPass.setPassExecuteCallback(() -> {
@@ -321,6 +393,15 @@ public class RenderSystem extends EcsSystem {
 
             }
             sceneColorPass.endRecording();
+        });
+        mangaPass.setPassExecuteCallback(() -> {
+            mangaPass.startRecording(renderer.getFrameIndex());
+            {
+                mangaPass.resolveBarriers();
+                mangaPass.setShaderProgram(mangaPassShaderProgram);
+                mangaPass.dispatch(1920, 1080, 1);
+            }
+            mangaPass.endRecording();
         });
         swapchainPass.setPassExecuteCallback(() -> {
             swapchainPass.startRecording(renderer.getFrameIndex());

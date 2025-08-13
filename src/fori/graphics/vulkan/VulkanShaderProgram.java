@@ -579,6 +579,9 @@ public class VulkanShaderProgram extends ShaderProgram {
             case FragmentStage -> {
                 return VK_SHADER_STAGE_FRAGMENT_BIT;
             }
+            case ComputeStage -> {
+                return VK_SHADER_STAGE_COMPUTE_BIT;
+            }
         }
 
         return 0;

@@ -30,11 +30,13 @@ public class VulkanImage extends Disposable {
     private int format;
     private VulkanAllocator allocator;
     private int currentLayout;
+    private int usage;
 
-    public VulkanImage(Disposable parent, long imageHandle, int currentLayout, int imageFormat) {
+    public VulkanImage(Disposable parent, long imageHandle, int currentLayout, int usage, int imageFormat) {
         super(parent);
         this.handle = imageHandle;
         this.currentLayout = currentLayout;
+        this.usage = usage;
         this.format = imageFormat;
     }
 
@@ -42,7 +44,8 @@ public class VulkanImage extends Disposable {
         super(parent);
         this.format = format;
         this.allocator = allocator;
-        currentLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        this.currentLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        this.usage = usage;
 
         try(MemoryStack stack = MemoryStack.stackPush()) {
 
@@ -84,6 +87,10 @@ public class VulkanImage extends Disposable {
 
     protected void setCurrentLayout(int currentLayout) {
         this.currentLayout = currentLayout;
+    }
+
+    public int getUsage() {
+        return usage;
     }
 
     public int getFormat() {

@@ -48,7 +48,8 @@ public class RenderGraph extends Disposable {
             if(otherPass != thisPass) {
                 for (ResourceDependency otherResourceDependency : otherPass.getResourceDependencies()) {
                     if((otherResourceDependency.getType() & ResourceDependencyType.RenderTargetWrite) != 0 ||
-                            (otherResourceDependency.getType() & ResourceDependencyType.FragmentShaderWrite) != 0) {
+                        (otherResourceDependency.getType() & ResourceDependencyType.FragmentShaderWrite) != 0 ||
+                        (otherResourceDependency.getType() & ResourceDependencyType.ComputeShaderWrite) != 0) {
                         if(otherResourceDependency.getDependency() == resourceDependency.getDependency()) {
                             writers.add(otherPass);
                             break;
@@ -65,8 +66,9 @@ public class RenderGraph extends Disposable {
     private void tracePasses(LinkedHashSet<Pass> passes, Pass thisPass) {
         for(ResourceDependency resourceDependency : thisPass.getResourceDependencies()) {
 
-            if((resourceDependency.getType() & ResourceDependencyType.FragmentShaderRead) != 0 ||
-                    (resourceDependency.getType() & ResourceDependencyType.RenderTargetRead) != 0) {
+            if((resourceDependency.getType() & ResourceDependencyType.RenderTargetRead) != 0 ||
+                    (resourceDependency.getType() & ResourceDependencyType.FragmentShaderRead) != 0 ||
+                    (resourceDependency.getType() & ResourceDependencyType.ComputeShaderRead) != 0) {
 
                 List<Pass> writers = getAllDependencyWriters(thisPass, resourceDependency);
 

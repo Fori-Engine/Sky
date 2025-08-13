@@ -87,8 +87,8 @@ public class VulkanComputePass extends ComputePass {
     }
 
     @Override
-    public void dispatch(int groupCountX, int groupCountY, int groupCountZ) {
-        vkCmdDispatch(commandBuffers[frameIndex], groupCountX, groupCountY, groupCountZ);
+    public void dispatch(int workGroupCountX, int workGroupCountY, int workGroupCountZ) {
+        vkCmdDispatch(commandBuffers[frameIndex], workGroupCountX, workGroupCountY, workGroupCountZ);
     }
 
 

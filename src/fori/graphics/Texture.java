@@ -93,6 +93,24 @@ public abstract class Texture extends Disposable {
         return null;
     }
 
+    public static Texture newTexture(Disposable parent, int width, int height, TextureFormatType textureFormatType, Filter minFilter, Filter magFilter){
+        if(Renderer.getRenderAPI() == RenderAPI.Vulkan) {
+            return new VulkanTexture(
+                    parent,
+                    width,
+                    height,
+                    null,
+                    minFilter,
+                    magFilter,
+                    VulkanUtil.toVkImageFormatEnum(textureFormatType),
+                    VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT,
+                    VK_IMAGE_TILING_OPTIMAL,
+                    VK_IMAGE_ASPECT_COLOR_BIT
+            );
+        }
+        return null;
+    }
+
     public static Texture newDepthTexture(Disposable parent, int width, int height, TextureFormatType textureFormatType, Filter minFilter, Filter magFilter){
         if(Renderer.getRenderAPI() == RenderAPI.Vulkan) {
             return new VulkanTexture(

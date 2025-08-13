@@ -7,6 +7,8 @@ public class ResourceDependencyType {
     public static final int FragmentShaderRead = 1 << 2;
     public static final int FragmentShaderWrite = 1 << 3;
     public static final int Present = 1 << 4;
+    public static final int ComputeShaderRead = 1 << 5;
+    public static final int ComputeShaderWrite = 1 << 6;
 
     private ResourceDependencyType(){}
 }

@@ -33,6 +33,7 @@ public class VulkanTexture extends Texture {
                 this,
                 imageHandle,
                 currentLayout,
+                VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
                 imageFormat
         );
         imageView = new VulkanImageView(image, VulkanRuntime.getCurrentDevice(), image, aspectMask);
@@ -156,10 +157,13 @@ public class VulkanTexture extends Texture {
     private static TextureFormatType toTextureFormatType(int vulkanImageFormatEnum) {
         switch (vulkanImageFormatEnum) {
             case VK_FORMAT_R8G8B8A8_SRGB -> {
-                return TextureFormatType.ColorR8G8B8A8StandardRGB;
+                return TextureFormatType.ColorR8G8B8A8;
+            }
+            case VK_FORMAT_R32G32B32A32_SFLOAT -> {
+                return TextureFormatType.ColorR32G32B32A32;
             }
             case VK_FORMAT_D32_SFLOAT -> {
-                return TextureFormatType.Depth32Float;
+                return TextureFormatType.Depth32;
             }
         }
 
