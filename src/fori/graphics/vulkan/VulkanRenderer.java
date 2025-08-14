@@ -590,12 +590,6 @@ public class VulkanRenderer extends Renderer {
                                 VulkanImage image = ((VulkanTexture) texture).getImage();
 
                                 if ((rd.getType() & ResourceDependencyType.FragmentShaderRead) != 0) {
-
-                                    //Uhhh....Vulkan is kind of unhappy if you use shader_read_only_optimal
-                                    //if the image is a storage image, it prefers general instead, maybe check
-                                    //Vulkan image for this?
-
-
                                     VulkanUtil.transitionImageLayout(
                                             image,
                                             commandBuffer,
@@ -614,7 +608,7 @@ public class VulkanRenderer extends Renderer {
                                     VulkanUtil.transitionImageLayout(
                                             image,
                                             commandBuffer,
-                                            VK_IMAGE_LAYOUT_GENERAL,
+                                            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                                             VK_ACCESS_NONE,
                                             VK_ACCESS_SHADER_READ_BIT,
                                             VK_IMAGE_ASPECT_COLOR_BIT,
@@ -627,8 +621,8 @@ public class VulkanRenderer extends Renderer {
                                             image,
                                             commandBuffer,
                                             VK_IMAGE_LAYOUT_GENERAL,
-                                            VK_ACCESS_NONE,
                                             VK_ACCESS_SHADER_READ_BIT,
+                                            VK_ACCESS_SHADER_WRITE_BIT,
                                             VK_IMAGE_ASPECT_COLOR_BIT,
                                             VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
                                             VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
