@@ -95,13 +95,13 @@ public class RenderSystem extends EcsSystem {
                     new ShaderResSet(
                             0,
                             new ShaderRes(
-                                    "inputTextures",
+                                    "inputTexture",
                                     0,
                                     CombinedSampler,
                                     ComputeStage
                             ).count(1),
                             new ShaderRes(
-                                    "outputTextures",
+                                    "outputTexture",
                                     1,
                                     StorageImage,
                                     ComputeStage
@@ -151,7 +151,7 @@ public class RenderSystem extends EcsSystem {
                                     VertexStage
                             ).sizeBytes(SizeUtil.MATRIX_SIZE_BYTES),
                             new ShaderRes(
-                                    "textures",
+                                    "inputTexture",
                                     1,
                                     CombinedSampler,
                                     FragmentStage
@@ -330,10 +330,12 @@ public class RenderSystem extends EcsSystem {
 
         }
 
-        mangaPassShaderProgram.updateTextures(renderer.getFrameIndex(), new ShaderUpdate<>("inputTextures", 0, 0, sceneColorTextures[renderer.getFrameIndex()]).arrayIndex(0));
-        mangaPassShaderProgram.updateTextures(renderer.getFrameIndex(), new ShaderUpdate<>("outputTextures", 0, 1, mangaColorTextures[renderer.getFrameIndex()]).arrayIndex(0));
+        //UMMM all of these descriptors should be set based on which path is taken in the rendergraph!
+        //Not hardcoded in!
+        mangaPassShaderProgram.updateTextures(renderer.getFrameIndex(), new ShaderUpdate<>("inputTexture", 0, 0, sceneColorTextures[renderer.getFrameIndex()]));
+        mangaPassShaderProgram.updateTextures(renderer.getFrameIndex(), new ShaderUpdate<>("outputTexture", 0, 1, mangaColorTextures[renderer.getFrameIndex()]));
 
-        swapchainPassShaderProgram.updateTextures(renderer.getFrameIndex(), new ShaderUpdate<>("textures", 0, 1, mangaColorTextures[renderer.getFrameIndex()]).arrayIndex(0));
+        swapchainPassShaderProgram.updateTextures(renderer.getFrameIndex(), new ShaderUpdate<>("inputTexture", 0, 1, mangaColorTextures[renderer.getFrameIndex()]));
 
 
         sceneColorPass.setPassExecuteCallback(() -> {
