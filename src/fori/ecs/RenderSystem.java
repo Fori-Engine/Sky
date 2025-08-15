@@ -72,8 +72,8 @@ public class RenderSystem extends EcsSystem {
         {
             mangaColorRT = new RenderTarget(renderer);
             mangaColorTextures = new Texture[]{
-                    Texture.newTexture(mangaColorRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32, Texture.Filter.Nearest, Texture.Filter.Nearest),
-                    Texture.newTexture(mangaColorRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32, Texture.Filter.Nearest, Texture.Filter.Nearest)
+                    Texture.newStorageTexture(mangaColorRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32, Texture.Filter.Nearest, Texture.Filter.Nearest),
+                    Texture.newStorageTexture(mangaColorRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32, Texture.Filter.Nearest, Texture.Filter.Nearest)
             };
 
             mangaColorRT.addAttachment(

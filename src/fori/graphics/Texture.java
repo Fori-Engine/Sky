@@ -93,7 +93,7 @@ public abstract class Texture extends Disposable {
         return null;
     }
 
-    public static Texture newTexture(Disposable parent, int width, int height, TextureFormatType textureFormatType, Filter minFilter, Filter magFilter){
+    public static Texture newStorageTexture(Disposable parent, int width, int height, TextureFormatType textureFormatType, Filter minFilter, Filter magFilter){
         if(Renderer.getRenderAPI() == RenderAPI.Vulkan) {
             return new VulkanTexture(
                     parent,
