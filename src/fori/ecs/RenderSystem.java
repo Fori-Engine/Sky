@@ -267,7 +267,7 @@ public class RenderSystem extends EcsSystem {
                 new ResourceDependency<>(
                     "OutputTextures",
                     sceneColorTextures,
-                    ResourceDependencyType.RenderTargetWrite
+                    ResourceDependencyTypes.RenderTargetWrite
                 )
             );
 
@@ -278,12 +278,12 @@ public class RenderSystem extends EcsSystem {
                 new ResourceDependency<>(
                     "InputTextures",
                     sceneColorTextures,
-                    ResourceDependencyType.ComputeShaderRead
+                    ResourceDependencyTypes.ComputeShaderRead
                 ),
                 new ResourceDependency<>(
                     "OutputTextures",
                     mangaColorTextures,
-                    ResourceDependencyType.ComputeShaderWrite
+                    ResourceDependencyTypes.ComputeShaderWrite
                 )
             );
         }
@@ -295,17 +295,17 @@ public class RenderSystem extends EcsSystem {
                 new ResourceDependency<>(
                     "InputTextures",
                     mangaColorTextures,
-                    ResourceDependencyType.FragmentShaderRead
+                    ResourceDependencyTypes.FragmentShaderRead
                 ),
                 new ResourceDependency<>(
                     "SwapchainColorTextures",
                     swapchainColorTextures,
-                    ResourceDependencyType.RenderTargetWrite
+                    ResourceDependencyTypes.RenderTargetWrite
                 ),
                 new ResourceDependency<>(
                     "SwapchainColorTextures",
                     swapchainColorTextures,
-                    ResourceDependencyType.Present
+                    ResourceDependencyTypes.Present
                 )
             );
         }
@@ -401,7 +401,7 @@ public class RenderSystem extends EcsSystem {
                             "inputTexture",
                             0,
                             0,
-                            ((Texture[]) mangaPass.getResourceDependencyByNameAndType("InputTextures", ResourceDependencyType.ComputeShaderRead).getDependency())[renderer.getFrameIndex()]
+                            ((Texture[]) mangaPass.getResourceDependencyByNameAndType("InputTextures", ResourceDependencyTypes.ComputeShaderRead).getDependency())[renderer.getFrameIndex()]
                     )
             );
             mangaPassShaderProgram.updateTextures(
@@ -410,7 +410,7 @@ public class RenderSystem extends EcsSystem {
                             "outputTexture",
                             0,
                             1,
-                            ((Texture[]) mangaPass.getResourceDependencyByNameAndType("OutputTextures", ResourceDependencyType.ComputeShaderWrite).getDependency())[renderer.getFrameIndex()]
+                            ((Texture[]) mangaPass.getResourceDependencyByNameAndType("OutputTextures", ResourceDependencyTypes.ComputeShaderWrite).getDependency())[renderer.getFrameIndex()]
                     )
             );
 
@@ -431,7 +431,7 @@ public class RenderSystem extends EcsSystem {
                             "inputTexture",
                             0,
                             1,
-                            ((Texture[]) swapchainPass.getResourceDependencyByNameAndType("InputTextures", ResourceDependencyType.FragmentShaderRead).getDependency())[renderer.getFrameIndex()])
+                            ((Texture[]) swapchainPass.getResourceDependencyByNameAndType("InputTextures", ResourceDependencyTypes.FragmentShaderRead).getDependency())[renderer.getFrameIndex()])
             );
 
             swapchainPass.startRecording(renderer.getFrameIndex());

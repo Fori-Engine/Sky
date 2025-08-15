@@ -589,7 +589,7 @@ public class VulkanRenderer extends Renderer {
                                 Texture texture = ((Texture[]) rd.getDependency())[frameIndex];
                                 VulkanImage image = ((VulkanTexture) texture).getImage();
 
-                                if ((rd.getType() & ResourceDependencyType.FragmentShaderRead) != 0) {
+                                if ((rd.getType() & ResourceDependencyTypes.FragmentShaderRead) != 0) {
                                     VulkanUtil.transitionImageLayout(
                                             image,
                                             commandBuffer,
@@ -601,10 +601,10 @@ public class VulkanRenderer extends Renderer {
                                             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
                                     );
                                 }
-                                else if ((rd.getType() & ResourceDependencyType.FragmentShaderWrite) != 0) {
+                                else if ((rd.getType() & ResourceDependencyTypes.FragmentShaderWrite) != 0) {
                                     Logger.todo(VulkanRenderer.class, "FragmentShaderWrite transitions are not supported");
                                 }
-                                else if ((rd.getType() & ResourceDependencyType.ComputeShaderRead) != 0) {
+                                else if ((rd.getType() & ResourceDependencyTypes.ComputeShaderRead) != 0) {
                                     VulkanUtil.transitionImageLayout(
                                             image,
                                             commandBuffer,
@@ -616,7 +616,7 @@ public class VulkanRenderer extends Renderer {
                                             VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
                                     );
                                 }
-                                else if ((rd.getType() & ResourceDependencyType.ComputeShaderWrite) != 0) {
+                                else if ((rd.getType() & ResourceDependencyTypes.ComputeShaderWrite) != 0) {
                                     VulkanUtil.transitionImageLayout(
                                             image,
                                             commandBuffer,
@@ -628,7 +628,7 @@ public class VulkanRenderer extends Renderer {
                                             VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
                                     );
                                 }
-                                else if((rd.getType() & ResourceDependencyType.Present) != 0) {
+                                else if((rd.getType() & ResourceDependencyTypes.Present) != 0) {
                                     VulkanUtil.transitionImageLayout(
                                             image,
                                             commandBuffer,
@@ -640,10 +640,10 @@ public class VulkanRenderer extends Renderer {
                                             VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
                                     );
                                 }
-                                else if ((rd.getType() & ResourceDependencyType.RenderTargetRead) != 0) {
+                                else if ((rd.getType() & ResourceDependencyTypes.RenderTargetRead) != 0) {
                                     Logger.todo(VulkanRenderer.class, "RenderTargetRead transitions are not supported");
                                 }
-                                else if ((rd.getType() & ResourceDependencyType.RenderTargetWrite) != 0) {
+                                else if ((rd.getType() & ResourceDependencyTypes.RenderTargetWrite) != 0) {
                                     VulkanUtil.transitionImageLayout(
                                             image,
                                             commandBuffer,

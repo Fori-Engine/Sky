@@ -1,6 +1,6 @@
 package fori.graphics;
 
-public class ResourceDependencyType {
+public class ResourceDependencyTypes {
 
     public static final int RenderTargetRead = 1;
     public static final int RenderTargetWrite = 1 << 1;
@@ -10,5 +10,5 @@ public class ResourceDependencyType {
     public static final int ComputeShaderRead = 1 << 5;
     public static final int ComputeShaderWrite = 1 << 6;
 
-    private ResourceDependencyType(){}
+    private ResourceDependencyTypes(){}
 }
