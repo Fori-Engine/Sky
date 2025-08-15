@@ -26,7 +26,7 @@ public abstract class Pass extends Disposable {
         this.framesInFlight = framesInFlight;
     }
 
-    public void setDependsOn(ResourceDependency... resourceDependencies) {
+    public void setResourceDependencies(ResourceDependency... resourceDependencies) {
         resourceDependencyList.addAll(Arrays.asList(resourceDependencies));
     }
 

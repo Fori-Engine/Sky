@@ -263,7 +263,7 @@ public class RenderSystem extends EcsSystem {
 
         sceneColorPass = Pass.newGraphicsPass(renderGraph, "SceneColor", renderer.getMaxFramesInFlight());
         {
-            sceneColorPass.setDependsOn(
+            sceneColorPass.setResourceDependencies(
                 new ResourceDependency<>(
                     sceneColorTextures,
                     ResourceDependencyType.RenderTargetWrite
@@ -273,7 +273,7 @@ public class RenderSystem extends EcsSystem {
         }
         mangaPass = Pass.newComputePass(renderer, "Manga", renderer.getMaxFramesInFlight());
         {
-            mangaPass.setDependsOn(
+            mangaPass.setResourceDependencies(
                 new ResourceDependency<>(
                     sceneColorTextures,
                     ResourceDependencyType.ComputeShaderRead
@@ -288,7 +288,7 @@ public class RenderSystem extends EcsSystem {
 
         swapchainPass = Pass.newGraphicsPass(renderGraph, "Swapchain", renderer.getMaxFramesInFlight());
         {
-            swapchainPass.setDependsOn(
+            swapchainPass.setResourceDependencies(
                 new ResourceDependency<>(
                     mangaColorTextures,
                     ResourceDependencyType.FragmentShaderRead
