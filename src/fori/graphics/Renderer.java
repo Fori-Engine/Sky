@@ -19,7 +19,7 @@ public abstract class Renderer extends Disposable {
     protected int maxFramesInFlight;
     protected Surface surface;
     protected RenderTarget swapchainRenderTarget;
-    protected VulkanSemaphore[] frameStartSemaphores;
+    protected Semaphore[] frameStartSemaphores;
     protected int frameIndex;
 
 
