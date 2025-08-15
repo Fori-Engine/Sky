@@ -21,7 +21,7 @@ public abstract class Renderer extends Disposable {
     protected RenderTarget swapchainRenderTarget;
     protected VulkanSemaphore[] frameStartSemaphores;
     protected int frameIndex;
-    protected List<Pass> passes = new ArrayList<>();
+
 
 
 
