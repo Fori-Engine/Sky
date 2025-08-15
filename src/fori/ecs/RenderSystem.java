@@ -265,6 +265,7 @@ public class RenderSystem extends EcsSystem {
         {
             sceneColorPass.setResourceDependencies(
                 new ResourceDependency<>(
+                    "OutputTextures",
                     sceneColorTextures,
                     ResourceDependencyType.RenderTargetWrite
                 )
@@ -275,10 +276,12 @@ public class RenderSystem extends EcsSystem {
         {
             mangaPass.setResourceDependencies(
                 new ResourceDependency<>(
+                    "InputTextures",
                     sceneColorTextures,
                     ResourceDependencyType.ComputeShaderRead
                 ),
                 new ResourceDependency<>(
+                    "OutputTextures",
                     mangaColorTextures,
                     ResourceDependencyType.ComputeShaderWrite
                 )
@@ -290,14 +293,17 @@ public class RenderSystem extends EcsSystem {
         {
             swapchainPass.setResourceDependencies(
                 new ResourceDependency<>(
+                    "InputTextures",
                     mangaColorTextures,
                     ResourceDependencyType.FragmentShaderRead
                 ),
                 new ResourceDependency<>(
+                    "SwapchainColorTextures",
                     swapchainColorTextures,
                     ResourceDependencyType.RenderTargetWrite
                 ),
                 new ResourceDependency<>(
+                    "SwapchainColorTextures",
                     swapchainColorTextures,
                     ResourceDependencyType.Present
                 )
@@ -329,14 +335,6 @@ public class RenderSystem extends EcsSystem {
             }
 
         }
-
-        //UMMM all of these descriptors should be set based on which path is taken in the rendergraph!
-        //Not hardcoded in!
-        mangaPassShaderProgram.updateTextures(renderer.getFrameIndex(), new ShaderUpdate<>("inputTexture", 0, 0, sceneColorTextures[renderer.getFrameIndex()]));
-        mangaPassShaderProgram.updateTextures(renderer.getFrameIndex(), new ShaderUpdate<>("outputTexture", 0, 1, mangaColorTextures[renderer.getFrameIndex()]));
-
-        swapchainPassShaderProgram.updateTextures(renderer.getFrameIndex(), new ShaderUpdate<>("inputTexture", 0, 1, mangaColorTextures[renderer.getFrameIndex()]));
-
 
         sceneColorPass.setPassExecuteCallback(() -> {
             sceneColorPass.startRecording(renderer.getFrameIndex());
@@ -397,6 +395,27 @@ public class RenderSystem extends EcsSystem {
             sceneColorPass.endRecording();
         });
         mangaPass.setPassExecuteCallback(() -> {
+            mangaPassShaderProgram.updateTextures(
+                    renderer.getFrameIndex(),
+                    new ShaderUpdate<>(
+                            "inputTexture",
+                            0,
+                            0,
+                            ((Texture[]) mangaPass.getResourceDependencyByNameAndType("InputTextures", ResourceDependencyType.ComputeShaderRead).getDependency())[renderer.getFrameIndex()]
+                    )
+            );
+            mangaPassShaderProgram.updateTextures(
+                    renderer.getFrameIndex(),
+                    new ShaderUpdate<>(
+                            "outputTexture",
+                            0,
+                            1,
+                            ((Texture[]) mangaPass.getResourceDependencyByNameAndType("OutputTextures", ResourceDependencyType.ComputeShaderWrite).getDependency())[renderer.getFrameIndex()]
+                    )
+            );
+
+
+
             mangaPass.startRecording(renderer.getFrameIndex());
             {
                 mangaPass.resolveBarriers();
@@ -406,6 +425,15 @@ public class RenderSystem extends EcsSystem {
             mangaPass.endRecording();
         });
         swapchainPass.setPassExecuteCallback(() -> {
+            swapchainPassShaderProgram.updateTextures(
+                    renderer.getFrameIndex(),
+                    new ShaderUpdate<>(
+                            "inputTexture",
+                            0,
+                            1,
+                            ((Texture[]) swapchainPass.getResourceDependencyByNameAndType("InputTextures", ResourceDependencyType.FragmentShaderRead).getDependency())[renderer.getFrameIndex()])
+            );
+
             swapchainPass.startRecording(renderer.getFrameIndex());
             {
 

@@ -44,6 +44,13 @@ public abstract class Pass extends Disposable {
         return null;
     }
 
+    public ResourceDependency getResourceDependencyByNameAndType(String name, int type) {
+        for(ResourceDependency rd : resourceDependencyList) {
+            if(rd.getName().equals(name) && rd.getType() == type) return rd;
+        }
+        return null;
+    }
+
     public String getName() {
         return name;
     }
