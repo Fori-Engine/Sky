@@ -513,10 +513,10 @@ public class VulkanShaderProgram extends ShaderProgram {
                     }
                 }
 
-                VulkanImage image = ((VulkanTexture) textureUpdate.update).getImage();
 
                 VkDescriptorImageInfo.Buffer descriptorImageInfo = VkDescriptorImageInfo.calloc(1, stack);
-                descriptorImageInfo.imageLayout(image.getCurrentLayout());
+
+                descriptorImageInfo.imageLayout(textureUpdate.update.isStorageTexture() ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
                 descriptorImageInfo.imageView(((VulkanTexture) textureUpdate.update).getImageView().getHandle());
                 descriptorImageInfo.sampler(((VulkanTexture) textureUpdate.update).getSampler().getHandle());
 

@@ -13,6 +13,7 @@ public abstract class Texture extends Disposable {
     protected Filter minFilter, magFilter;
     protected byte[] textureData;
     protected TextureFormatType formatType;
+    protected boolean isStorageTexture;
 
     public enum Filter {
         Linear,
@@ -38,6 +39,10 @@ public abstract class Texture extends Disposable {
 
     public TextureFormatType getFormatType() {
         return formatType;
+    }
+
+    public boolean isStorageTexture() {
+        return isStorageTexture;
     }
 
     public int getWidth() {

@@ -27,17 +27,18 @@ public class VulkanTexture extends Texture {
     private VulkanCommandPool commandPool;
 
 
-    public VulkanTexture(Disposable parent, int width, int height, long imageHandle, int currentLayout, int imageFormat, int aspectMask) {
+    public VulkanTexture(Disposable parent, int width, int height, long imageHandle, int currentLayout, int usage, int imageFormat, int aspectMask) {
         super(parent, width, height, null, toTextureFormatType(imageFormat), Nearest, Nearest);
         image = new VulkanImage(
                 this,
                 imageHandle,
                 currentLayout,
-                VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+                usage,
                 imageFormat
         );
         imageView = new VulkanImageView(image, VulkanRuntime.getCurrentDevice(), image, aspectMask);
         sampler = new VulkanSampler(this, minFilter, magFilter, false);
+        isStorageTexture = (usage & VK_IMAGE_USAGE_STORAGE_BIT) != 0;
     }
 
     public VulkanTexture(Disposable parent, int width, int height, Asset<TextureData> textureData, Filter minFilter, Filter magFilter, int imageFormat, int usage, int tiling, int aspectMask) {
@@ -52,6 +53,8 @@ public class VulkanTexture extends Texture {
                 usage,
                 tiling
         );
+
+        isStorageTexture = (usage & VK_IMAGE_USAGE_STORAGE_BIT) != 0;
 
         imageView = new VulkanImageView(image, VulkanRuntime.getCurrentDevice(), image, aspectMask);
         sampler = new VulkanSampler(this, minFilter, magFilter, false);
@@ -126,7 +129,7 @@ public class VulkanTexture extends Texture {
                 VulkanUtil.transitionImageLayout(
                         image,
                         commandBuffer,
-                        VK_IMAGE_LAYOUT_GENERAL,
+                        isStorageTexture ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                         VK_ACCESS_TRANSFER_WRITE_BIT,
                         VK_ACCESS_SHADER_READ_BIT,
                         VK_IMAGE_ASPECT_COLOR_BIT,

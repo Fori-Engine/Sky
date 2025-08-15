@@ -64,7 +64,7 @@ public class VulkanUtil {
                     imageBarrier
             );
 
-            System.out.println("Layout change to " + newLayout + " finished!");
+
 
             image.setCurrentLayout(newLayout);
         }
