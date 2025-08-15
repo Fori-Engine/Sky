@@ -129,8 +129,8 @@ public class VulkanGraphicsPass extends GraphicsPass {
             VkClearValue depthClearValue = VkClearValue.calloc(stack);
             depthClearValue.depthStencil().set(1.0f, 0);
 
-            RenderTargetAttachment colorAttachment = renderTarget.getAttachment(RenderTargetAttachmentType.Color);
-            RenderTargetAttachment depthAttachment = renderTarget.getAttachment(RenderTargetAttachmentType.Depth);
+            RenderTargetAttachment colorAttachment = renderTarget.getAttachment(RenderTargetAttachmentTypes.Color);
+            RenderTargetAttachment depthAttachment = renderTarget.getAttachment(RenderTargetAttachmentTypes.Depth);
 
 
             VulkanTexture texture = (VulkanTexture) colorAttachment.getTextures()[frameIndex];

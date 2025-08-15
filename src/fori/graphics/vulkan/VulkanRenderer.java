@@ -161,7 +161,7 @@ public class VulkanRenderer extends Renderer {
             );
         }
 
-        RenderTargetAttachment colorAttachment = new RenderTargetAttachment(RenderTargetAttachmentType.Color, colorTextures);
+        RenderTargetAttachment colorAttachment = new RenderTargetAttachment(RenderTargetAttachmentTypes.Color, colorTextures);
 
         Texture depthTexture = Texture.newDepthTexture(
             swapchainRenderTarget,
@@ -172,7 +172,7 @@ public class VulkanRenderer extends Renderer {
             Texture.Filter.Nearest
         );
 
-        RenderTargetAttachment depthAttachment = new RenderTargetAttachment(RenderTargetAttachmentType.Depth, new Texture[]{depthTexture});
+        RenderTargetAttachment depthAttachment = new RenderTargetAttachment(RenderTargetAttachmentTypes.Depth, new Texture[]{depthTexture});
 
         swapchainRenderTarget.addAttachment(colorAttachment);
         swapchainRenderTarget.addAttachment(depthAttachment);

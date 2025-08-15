@@ -58,11 +58,11 @@ public class RenderSystem extends EcsSystem {
             };
 
             sceneColorRT.addAttachment(
-                    new RenderTargetAttachment(RenderTargetAttachmentType.Color, sceneColorTextures)
+                    new RenderTargetAttachment(RenderTargetAttachmentTypes.Color, sceneColorTextures)
             );
 
             sceneColorRT.addAttachment(
-                    new RenderTargetAttachment(RenderTargetAttachmentType.Depth, new Texture[]{
+                    new RenderTargetAttachment(RenderTargetAttachmentTypes.Depth, new Texture[]{
                             Texture.newDepthTexture(sceneColorRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.Depth32, Texture.Filter.Nearest, Texture.Filter.Nearest)
                     })
             );
@@ -77,7 +77,7 @@ public class RenderSystem extends EcsSystem {
             };
 
             mangaColorRT.addAttachment(
-                    new RenderTargetAttachment(RenderTargetAttachmentType.Color, mangaColorTextures)
+                    new RenderTargetAttachment(RenderTargetAttachmentTypes.Color, mangaColorTextures)
             );
 
             ShaderReader.ShaderSources shaderSources = ShaderReader.read(
@@ -116,7 +116,7 @@ public class RenderSystem extends EcsSystem {
         //Swapchain Pass Resources
         {
             swapchainRT = renderer.getSwapchainRenderTarget();
-            swapchainColorTextures = swapchainRT.getAttachment(RenderTargetAttachmentType.Color).getTextures();
+            swapchainColorTextures = swapchainRT.getAttachment(RenderTargetAttachmentTypes.Color).getTextures();
 
             swapchainPassCamera = new Camera(
                     new Matrix4f().identity(),
@@ -328,7 +328,7 @@ public class RenderSystem extends EcsSystem {
         if(swapchainRT != renderer.getSwapchainRenderTarget()) {
             swapchainRT = renderer.getSwapchainRenderTarget();
 
-            RenderTargetAttachment colorAttachment = swapchainRT.getAttachment(RenderTargetAttachmentType.Color);
+            RenderTargetAttachment colorAttachment = swapchainRT.getAttachment(RenderTargetAttachmentTypes.Color);
             Texture[] colorAttachmentTextures = colorAttachment.getTextures();
             for (int i = 0; i < colorAttachmentTextures.length; i++) {
                 swapchainColorTextures[i] = colorAttachmentTextures[i];
