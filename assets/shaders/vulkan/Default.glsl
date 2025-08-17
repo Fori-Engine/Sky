@@ -1,5 +1,5 @@
 #type vertex
-#version 450
+#version 460
 
 layout(location = 0) in vec3 inputPos;
 layout(location = 1) in float inputTransformIndex;
@@ -25,7 +25,7 @@ void main() {
 
 
 #type fragment
-#version 450
+#version 460
 #extension GL_EXT_nonuniform_qualifier : require
 #define MATERIAL_SIZE 4
 

@@ -1,5 +1,5 @@
 #type vertex
-#version 450
+#version 460
 
 layout(location = 0) in vec2 inputPos;
 layout(location = 1) in vec4 inputColor;
