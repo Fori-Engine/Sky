@@ -622,7 +622,7 @@ public class VulkanRenderer extends Renderer {
                                             image,
                                             commandBuffer,
                                             VK_IMAGE_LAYOUT_GENERAL,
-                                            0,
+                                            VK_ACCESS_NONE,
                                             VK_ACCESS_SHADER_WRITE_BIT,
                                             VK_IMAGE_ASPECT_COLOR_BIT,
                                             VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
