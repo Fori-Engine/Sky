@@ -336,13 +336,15 @@ public class RenderSystem extends EcsSystem {
 
         }
 
+
+
         sceneColorPass.setPassExecuteCallback(() -> {
             sceneColorPass.startRecording(renderer.getFrameIndex());
             {
 
                 sceneColorPass.resolveBarriers();
 
-                sceneColorPass.startRendering(sceneColorRT, true);
+                sceneColorPass.startRendering(sceneColorRT, renderer.getWidth(), renderer.getHeight(),true);
                 {
                     scene.getEngine().findEntitiesWith(TransformComponent.class, StaticMeshComponent.class).stream().forEach(components -> {
 
@@ -439,7 +441,7 @@ public class RenderSystem extends EcsSystem {
 
                 swapchainPass.resolveBarriers();
 
-                swapchainPass.startRendering(renderer.getSwapchainRenderTarget(), true);
+                swapchainPass.startRendering(renderer.getSwapchainRenderTarget(), renderer.getWidth(), renderer.getHeight(), true);
                 {
                     swapchainPass.setDrawBuffers(swapchainPassVertexBuffer, swapchainPassIndexBuffer);
                     swapchainPass.setShaderProgram(swapchainPassShaderProgram);

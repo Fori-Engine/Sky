@@ -1,6 +1,7 @@
 package fori.graphics;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class RenderTarget extends Disposable {
 
@@ -16,6 +17,14 @@ public class RenderTarget extends Disposable {
 
     public void addAttachment(RenderTargetAttachment attachment) {
         attachments.add(attachment);
+    }
+
+    public List<RenderTargetAttachment> getAttachments() {
+        return attachments;
+    }
+
+    public RenderTargetAttachment getAttachmentByIndex(int index) {
+        return attachments.get(index);
     }
 
     public RenderTargetAttachment getAttachment(long mask) {

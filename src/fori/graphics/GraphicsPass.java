@@ -11,7 +11,7 @@ public abstract class GraphicsPass extends Pass {
         return renderTarget;
     }
 
-    public void startRendering(RenderTarget renderTarget, boolean clear) {
+    public void startRendering(RenderTarget renderTarget, int width, int height, boolean clear) {
         this.renderTarget = renderTarget;
     }
     public abstract void endRendering();

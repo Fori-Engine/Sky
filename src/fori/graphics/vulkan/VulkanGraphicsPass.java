@@ -18,8 +18,8 @@ public class VulkanGraphicsPass extends GraphicsPass {
     private VkCommandBuffer[] commandBuffers;
     private VkDevice device;
     private VkRenderingInfoKHR renderingInfoKHR;
-    private VkRenderingAttachmentInfo.Buffer colorRenderingAttachmentInfo;
-    private VkRenderingAttachmentInfoKHR depthRenderingAttachmentInfo;
+    private VkRenderingAttachmentInfo.Buffer renderingAttachmentInfoKHRs;
+    private VkRenderingAttachmentInfoKHR depthRenderingAttachmentInfoKHR;
     private VulkanCommandPool commandPool;
 
 
@@ -114,8 +114,8 @@ public class VulkanGraphicsPass extends GraphicsPass {
     }
 
     @Override
-    public void startRendering(RenderTarget renderTarget, boolean clear) {
-        super.startRendering(renderTarget, clear);
+    public void startRendering(RenderTarget renderTarget, int width, int height, boolean clear) {
+        super.startRendering(renderTarget, width, height, clear);
 
         int loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
         if(clear) loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -126,52 +126,68 @@ public class VulkanGraphicsPass extends GraphicsPass {
             VkClearValue colorClearValue = VkClearValue.calloc(stack);
             colorClearValue.color().float32(stack.floats(0.5f, 0.5f, 0.5f, 1.0f));
 
+
+
+            int attachmentCount = 0;
+            for(RenderTargetAttachment renderTargetAttachment : renderTarget.getAttachments()) {
+                if((renderTargetAttachment.getFlags() & RenderTargetAttachmentTypes.Depth) == 0)
+                    attachmentCount++;
+            }
+
+
+
+            renderingAttachmentInfoKHRs = VkRenderingAttachmentInfoKHR.calloc(attachmentCount, stack);
+            {
+                for (int i = 0; i < attachmentCount; i++) {
+
+                    VulkanTexture texture = (VulkanTexture) renderTarget.getAttachmentByIndex(i).getTextures()[frameIndex];
+
+                    VkRenderingAttachmentInfoKHR renderingAttachmentInfoKHR = (VkRenderingAttachmentInfoKHR) renderingAttachmentInfoKHRs.get(i);
+                    renderingAttachmentInfoKHR.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR);
+                    renderingAttachmentInfoKHR.imageView(texture.getImageView().getHandle());
+                    renderingAttachmentInfoKHR.imageLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+                    renderingAttachmentInfoKHR.loadOp(loadOp);
+                    renderingAttachmentInfoKHR.storeOp(VK_ATTACHMENT_STORE_OP_STORE);
+                    renderingAttachmentInfoKHR.clearValue(colorClearValue);
+
+                }
+
+
+
+
+
+            }
+
             VkClearValue depthClearValue = VkClearValue.calloc(stack);
             depthClearValue.depthStencil().set(1.0f, 0);
-
-            RenderTargetAttachment colorAttachment = renderTarget.getAttachment(RenderTargetAttachmentTypes.Color);
             RenderTargetAttachment depthAttachment = renderTarget.getAttachment(RenderTargetAttachmentTypes.Depth);
 
 
-            VulkanTexture texture = (VulkanTexture) colorAttachment.getTextures()[frameIndex];
 
-
-
-
-
-            colorRenderingAttachmentInfo = VkRenderingAttachmentInfoKHR.calloc(1, stack);
-            {
-                colorRenderingAttachmentInfo.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR);
-                colorRenderingAttachmentInfo.imageView(texture.getImageView().getHandle());
-                colorRenderingAttachmentInfo.imageLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-                colorRenderingAttachmentInfo.loadOp(loadOp);
-                colorRenderingAttachmentInfo.storeOp(VK_ATTACHMENT_STORE_OP_STORE);
-                colorRenderingAttachmentInfo.clearValue(colorClearValue);
-            }
-            depthRenderingAttachmentInfo = VkRenderingAttachmentInfoKHR.calloc(stack);
+            depthRenderingAttachmentInfoKHR = VkRenderingAttachmentInfoKHR.calloc(stack);
             {
 
 
                 VulkanTexture depthImage = ((VulkanTexture) depthAttachment.getTextures()[0]);
                 VulkanImageView depthImageView = depthImage.getImageView();
 
-                depthRenderingAttachmentInfo.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR);
-                depthRenderingAttachmentInfo.imageView(depthImageView.getHandle());
-                depthRenderingAttachmentInfo.imageLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-                depthRenderingAttachmentInfo.loadOp(loadOp);
-                depthRenderingAttachmentInfo.storeOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
-                depthRenderingAttachmentInfo.clearValue(depthClearValue);
+                depthRenderingAttachmentInfoKHR.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR);
+                depthRenderingAttachmentInfoKHR.imageView(depthImageView.getHandle());
+                depthRenderingAttachmentInfoKHR.imageLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+                depthRenderingAttachmentInfoKHR.loadOp(loadOp);
+                depthRenderingAttachmentInfoKHR.storeOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
+                depthRenderingAttachmentInfoKHR.clearValue(depthClearValue);
             }
 
             renderingInfoKHR = VkRenderingInfoKHR.calloc(stack);
             renderingInfoKHR.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_RENDERING_INFO_KHR);
             VkRect2D renderArea = VkRect2D.calloc(stack);
             renderArea.offset(VkOffset2D.calloc(stack).set(0, 0));
-            renderArea.extent(VkExtent2D.calloc(stack).set(texture.getWidth(), texture.getHeight()));
+            renderArea.extent(VkExtent2D.calloc(stack).set(width, height));
             renderingInfoKHR.renderArea(renderArea);
             renderingInfoKHR.layerCount(1);
-            renderingInfoKHR.pColorAttachments(colorRenderingAttachmentInfo);
-            renderingInfoKHR.pDepthAttachment(depthRenderingAttachmentInfo);
+            renderingInfoKHR.pColorAttachments(renderingAttachmentInfoKHRs);
+            renderingInfoKHR.pDepthAttachment(depthRenderingAttachmentInfoKHR);
 
 
 
@@ -184,8 +200,8 @@ public class VulkanGraphicsPass extends GraphicsPass {
             VkViewport.Buffer viewport = VkViewport.calloc(1, stack);
             viewport.x(0.0f);
             viewport.y(0.0f);
-            viewport.width(texture.getWidth());
-            viewport.height(texture.getHeight());
+            viewport.width(width);
+            viewport.height(height);
 
 
 
@@ -199,7 +215,7 @@ public class VulkanGraphicsPass extends GraphicsPass {
             VkRect2D.Buffer scissor = VkRect2D.calloc(1, stack);
             {
                 scissor.offset(VkOffset2D.calloc(stack).set(0, 0));
-                scissor.extent(VkExtent2D.calloc(stack).set(texture.getWidth(), texture.getHeight()));
+                scissor.extent(VkExtent2D.calloc(stack).set(width, height));
             }
 
             vkCmdSetScissor(commandBuffers[frameIndex], 0, scissor);
