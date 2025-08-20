@@ -60,11 +60,11 @@ public class VulkanComputePass extends ComputePass {
     @Override
     public void setShaderProgram(ShaderProgram shaderProgram) {
         try(MemoryStack stack = stackPush()) {
-            VulkanShaderProgram vulkanShaderProgram = (VulkanShaderProgram) shaderProgram;
+            this.shaderProgram = shaderProgram;
             VulkanPipeline pipeline = ((VulkanShaderProgram) shaderProgram).getPipeline();
             vkCmdBindPipeline(commandBuffers[frameIndex], VK_PIPELINE_BIND_POINT_COMPUTE, pipeline.getHandle());
             vkCmdBindDescriptorSets(commandBuffers[frameIndex], VK_PIPELINE_BIND_POINT_COMPUTE,
-                    pipeline.getLayout(), 0, stack.longs(vulkanShaderProgram.getDescriptorSets(frameIndex)), null);
+                    pipeline.getLayoutHandle(), 0, stack.longs(((VulkanShaderProgram) shaderProgram).getDescriptorSets(frameIndex)), null);
         }
     }
 
@@ -87,7 +87,11 @@ public class VulkanComputePass extends ComputePass {
     }
 
     @Override
-    public void dispatch(int workGroupCountX, int workGroupCountY, int workGroupCountZ) {
+    public void dispatch(int workGroupCountX, int workGroupCountY, int workGroupCountZ, int shaderMode) {
+        VkCommandBuffer commandBuffer = commandBuffers[frameIndex];
+
+        long pipelineLayoutHandle = ((VulkanShaderProgram) shaderProgram).getPipeline().getLayoutHandle();
+        vkCmdPushConstants(commandBuffer, pipelineLayoutHandle, VK_SHADER_STAGE_ALL, 0, new int[]{shaderMode});
         vkCmdDispatch(commandBuffers[frameIndex], workGroupCountX, workGroupCountY, workGroupCountZ);
     }
 

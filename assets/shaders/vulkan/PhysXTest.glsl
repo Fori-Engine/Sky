@@ -16,6 +16,10 @@ layout(std140, set = 0, binding = 1) readonly buffer Transforms {
     mat4 models[];
 } transforms;
 
+layout(push_constant) uniform PushConstants {
+    int mode;
+} shaderMode;
+
 void main() {
 
     gl_Position = camera.proj * camera.view * transforms.models[int(inputTransformIndex)] * vec4(inputPos.xyz, 1.0);
@@ -28,6 +32,10 @@ void main() {
 #version 460
 layout(location = 0) in vec4 inputColor;
 layout(location = 0) out vec4 outputColor;
+
+layout(push_constant) uniform PushConstants {
+    int mode;
+} shaderMode;
 
 void main() {
     outputColor = inputColor;

@@ -6,21 +6,31 @@ layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 layout(set = 0, binding = 0) uniform sampler2D inputTexture;
 layout(set = 0, binding = 1, rgba32f) writeonly uniform image2D outputTexture;
 
+layout(push_constant) uniform PushConstants {
+    int mode;
+} shaderMode;
+
 void main() {
     ivec2 uv = ivec2(gl_WorkGroupID.x, gl_WorkGroupID.y);
 
     vec4 inputColor = texelFetch(inputTexture, uv, 0);
+    vec4 outputColor;
 
-    float grayscale = (inputColor.r + inputColor.g + inputColor.b) / 3.0;
+    if(shaderMode.mode == 0){
 
-    if(int(uv.x) % 2 != 0) {
-        if(int(uv.y) % 2 == 0) {
-            grayscale = 0.4;
+        float grayscale = (inputColor.r + inputColor.g + inputColor.b) / 3.0;
+
+        if (int(uv.x) % 2 != 0) {
+            if (int(uv.y) % 2 == 0) {
+                grayscale = 0.4;
+            }
         }
+        outputColor = vec4(grayscale, grayscale, grayscale, 1);
+    }
+    else if(shaderMode.mode == 1) {
+        outputColor = inputColor;
     }
 
-    imageStore(outputTexture, uv, vec4(grayscale, grayscale, grayscale, 1));
 
-
-
+    imageStore(outputTexture, uv, outputColor);
 }

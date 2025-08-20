@@ -74,19 +74,23 @@ public class VulkanGraphicsPass extends GraphicsPass {
     @Override
     public void setShaderProgram(ShaderProgram shaderProgram) {
         try(MemoryStack stack = stackPush()) {
-            VulkanShaderProgram vulkanShaderProgram = (VulkanShaderProgram) shaderProgram;
+            this.shaderProgram = shaderProgram;
             VulkanPipeline pipeline = ((VulkanShaderProgram) shaderProgram).getPipeline();
             vkCmdBindPipeline(commandBuffers[frameIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getHandle());
             vkCmdBindDescriptorSets(commandBuffers[frameIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    pipeline.getLayout(), 0, stack.longs(vulkanShaderProgram.getDescriptorSets(frameIndex)), null);
+                    pipeline.getLayoutHandle(), 0, stack.longs(((VulkanShaderProgram) shaderProgram).getDescriptorSets(frameIndex)), null);
 
         }
     }
 
     @Override
-    public void drawIndexed(int indexCount) {
+    public void drawIndexed(int indexCount, int shaderMode) {
+        VkCommandBuffer commandBuffer = commandBuffers[frameIndex];
+
+        long pipelineLayoutHandle = ((VulkanShaderProgram) shaderProgram).getPipeline().getLayoutHandle();
+        vkCmdPushConstants(commandBuffer, pipelineLayoutHandle, VK_SHADER_STAGE_ALL, 0, new int[]{shaderMode});
         vkCmdDrawIndexed(
-                commandBuffers[frameIndex],
+                commandBuffer,
                 indexCount,
                 1,
                 0,

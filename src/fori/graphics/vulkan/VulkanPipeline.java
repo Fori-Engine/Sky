@@ -14,7 +14,7 @@ public class VulkanPipeline extends Disposable {
         this.pipeline = pipeline;
     }
 
-    public long getLayout() {
+    public long getLayoutHandle() {
         return pipelineLayout;
     }
 

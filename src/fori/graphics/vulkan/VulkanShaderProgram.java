@@ -63,7 +63,15 @@ public class VulkanShaderProgram extends ShaderProgram {
 
         try(MemoryStack stack = stackPush()) {
 
-
+            VkPushConstantRange.Buffer pushConstantRanges = VkPushConstantRange.calloc(1, stack);
+            {
+                VkPushConstantRange shaderModePushConstantRange = pushConstantRanges.get(0);
+                {
+                    shaderModePushConstantRange.offset(0);
+                    shaderModePushConstantRange.size(Integer.BYTES);
+                    shaderModePushConstantRange.stageFlags(VK_SHADER_STAGE_ALL);
+                }
+            }
 
 
             VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.calloc(stack);
@@ -71,6 +79,7 @@ public class VulkanShaderProgram extends ShaderProgram {
                 pipelineLayoutInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
                 pipelineLayoutInfo.setLayoutCount(getShaderResSets().length);
                 pipelineLayoutInfo.pSetLayouts(stack.longs(getAllDescriptorSetLayouts()));
+                pipelineLayoutInfo.pPushConstantRanges(pushConstantRanges);
             }
             LongBuffer pPipelineLayout = stack.longs(VK_NULL_HANDLE);
             if(vkCreatePipelineLayout(device, pipelineLayoutInfo, null, pPipelineLayout) != VK_SUCCESS) {
@@ -247,6 +256,16 @@ public class VulkanShaderProgram extends ShaderProgram {
 
             }
 
+            VkPushConstantRange.Buffer pushConstantRanges = VkPushConstantRange.calloc(1, stack);
+            {
+                VkPushConstantRange shaderModePushConstantRange = pushConstantRanges.get(0);
+                {
+                    shaderModePushConstantRange.offset(0);
+                    shaderModePushConstantRange.size(Integer.BYTES);
+                    shaderModePushConstantRange.stageFlags(VK_SHADER_STAGE_ALL);
+                }
+            }
+
 
 
             VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.calloc(stack);
@@ -254,6 +273,7 @@ public class VulkanShaderProgram extends ShaderProgram {
                 pipelineLayoutInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
                 pipelineLayoutInfo.setLayoutCount(getShaderResSets().length);
                 pipelineLayoutInfo.pSetLayouts(stack.longs(getAllDescriptorSetLayouts()));
+                pipelineLayoutInfo.pPushConstantRanges(pushConstantRanges);
 
 
             }
