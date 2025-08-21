@@ -118,8 +118,8 @@ public class VulkanGraphicsPass extends GraphicsPass {
     }
 
     @Override
-    public void startRendering(RenderTarget renderTarget, int width, int height, boolean clear) {
-        super.startRendering(renderTarget, width, height, clear);
+    public void startRendering(RenderTarget renderTarget, int width, int height, boolean clear, Color color) {
+        super.startRendering(renderTarget, width, height, clear, color);
 
         int loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
         if(clear) loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -128,7 +128,7 @@ public class VulkanGraphicsPass extends GraphicsPass {
         try(MemoryStack stack = stackPush()) {
 
             VkClearValue colorClearValue = VkClearValue.calloc(stack);
-            colorClearValue.color().float32(stack.floats(0.5f, 0.5f, 0.5f, 1.0f));
+            colorClearValue.color().float32(stack.floats(color.r, color.g, color.b, color.a));
 
 
 
