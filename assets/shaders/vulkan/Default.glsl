@@ -45,5 +45,6 @@ layout(push_constant) uniform PushConstants {
 
 
 void main() {
-    outputColor = texture(textures[0], inputUV);
+    if(shaderMode.mode == 0) outputColor = texture(textures[0], inputUV);
+    if(shaderMode.mode == 1) outputColor = vec4(gl_FragCoord.z, 0, 0, 1);
 }

@@ -16,7 +16,10 @@ void main() {
     vec4 inputColor = texelFetch(inputTexture, uv, 0);
     vec4 outputColor;
 
-    if(shaderMode.mode == 0){
+    if(shaderMode.mode == 0) {
+        outputColor = inputColor;
+    }
+    else if(shaderMode.mode == 1){
 
         float grayscale = (inputColor.r + inputColor.g + inputColor.b) / 3.0;
 
@@ -27,9 +30,7 @@ void main() {
         }
         outputColor = vec4(grayscale, grayscale, grayscale, 1);
     }
-    else if(shaderMode.mode == 1) {
-        outputColor = inputColor;
-    }
+
 
 
     imageStore(outputTexture, uv, outputColor);

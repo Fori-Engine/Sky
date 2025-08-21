@@ -366,7 +366,7 @@ public class RenderSystem extends EcsSystem {
                         sceneColorPass.setShaderProgram(
                                 staticMeshComponent.staticMeshBatch().getShaderProgram()
                         );
-                        sceneColorPass.drawIndexed(staticMeshComponent.staticMeshBatch().getIndexCount(), 0);
+                        sceneColorPass.drawIndexed(staticMeshComponent.staticMeshBatch().getIndexCount(), 1);
                     });
                     scene.getEngine().findEntitiesWith(TransformComponent.class, DynamicMeshComponent.class).stream().forEach(components -> {
 
@@ -388,7 +388,7 @@ public class RenderSystem extends EcsSystem {
                         sceneColorPass.setShaderProgram(
                                 dynamicMeshComponent.dynamicMesh().getShaderProgram()
                         );
-                        sceneColorPass.drawIndexed(dynamicMeshComponent.dynamicMesh().getIndexCount(), 0);
+                        sceneColorPass.drawIndexed(dynamicMeshComponent.dynamicMesh().getIndexCount(), 1);
                     });
                 }
                 sceneColorPass.endRendering();
@@ -422,7 +422,7 @@ public class RenderSystem extends EcsSystem {
             {
                 mangaPass.resolveBarriers();
                 mangaPass.setShaderProgram(mangaPassShaderProgram);
-                mangaPass.dispatch(1920, 1080, 1, 1);
+                mangaPass.dispatch(1920, 1080, 1, 0);
             }
             mangaPass.endRecording();
         });
