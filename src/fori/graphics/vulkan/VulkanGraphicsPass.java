@@ -119,7 +119,7 @@ public class VulkanGraphicsPass extends GraphicsPass {
 
     @Override
     public void startRendering(RenderTarget renderTarget, int width, int height, boolean clear, Color color) {
-        super.startRendering(renderTarget, width, height, clear, color);
+        this.renderTarget = renderTarget;
 
         int loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
         if(clear) loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
