@@ -27,6 +27,15 @@ public class RenderTarget extends Disposable {
         return attachments.get(index);
     }
 
+    public int getAttachmentCountExcludingDepth() {
+        int attachmentCount = 0;
+        for(RenderTargetAttachment renderTargetAttachment : getAttachments()) {
+            if((renderTargetAttachment.getFlags() & RenderTargetAttachmentTypes.Depth) == 0)
+                attachmentCount++;
+        }
+        return attachmentCount;
+    }
+
     public RenderTargetAttachment getAttachment(long mask) {
         for(RenderTargetAttachment attachment : attachments) {
             if((attachment.getFlags() & mask) != 0) return attachment;

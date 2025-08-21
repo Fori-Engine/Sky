@@ -132,11 +132,7 @@ public class VulkanGraphicsPass extends GraphicsPass {
 
 
 
-            int attachmentCount = 0;
-            for(RenderTargetAttachment renderTargetAttachment : renderTarget.getAttachments()) {
-                if((renderTargetAttachment.getFlags() & RenderTargetAttachmentTypes.Depth) == 0)
-                    attachmentCount++;
-            }
+            int attachmentCount = renderTarget.getAttachmentCountExcludingDepth();
 
 
 

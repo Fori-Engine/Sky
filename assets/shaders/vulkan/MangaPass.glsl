@@ -3,8 +3,10 @@
 
 layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
-layout(set = 0, binding = 0) uniform sampler2D inputTexture;
+layout(set = 0, binding = 0) uniform sampler2D inputColorTexture;
 layout(set = 0, binding = 1, rgba32f) writeonly uniform image2D outputTexture;
+layout(set = 0, binding = 2) uniform sampler2D inputPosTexture;
+
 
 layout(push_constant) uniform PushConstants {
     int mode;
@@ -13,9 +15,10 @@ layout(push_constant) uniform PushConstants {
 void main() {
     ivec2 uv = ivec2(gl_WorkGroupID.x, gl_WorkGroupID.y);
 
-    vec4 inputColor = texelFetch(inputTexture, uv, 0);
-    vec4 outputColor;
+    vec4 inputColor = texelFetch(inputPosTexture, uv, 0);
+    vec4 outputColor = inputColor;
 
+    /*
     if(shaderMode.mode == 0) {
         outputColor = inputColor;
     }
@@ -30,6 +33,7 @@ void main() {
         }
         outputColor = vec4(grayscale, grayscale, grayscale, 1);
     }
+    */
 
 
 

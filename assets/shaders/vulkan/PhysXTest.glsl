@@ -6,6 +6,7 @@ layout(location = 1) in float inputTransformIndex;
 layout(location = 2) in vec4 inputColor;
 
 layout(location = 0) out vec4 outputColor;
+layout(location = 1) out vec3 outputPos;
 
 layout(set = 0, binding = 0) uniform Camera {
     mat4 view;
@@ -25,19 +26,23 @@ void main() {
     gl_Position = camera.proj * camera.view * transforms.models[int(inputTransformIndex)] * vec4(inputPos.xyz, 1.0);
 
     outputColor = inputColor;
+    outputPos = inputPos;
 }
 
 
 #type fragment
 #version 460
 layout(location = 0) in vec4 inputColor;
+layout(location = 1) in vec3 inputPos;
 layout(location = 0) out vec4 outputColor;
+layout(location = 1) out vec4 outputPos;
+
 
 layout(push_constant) uniform PushConstants {
     int mode;
 } shaderMode;
 
 void main() {
-    if(shaderMode.mode == 0) outputColor = inputColor;
-    if(shaderMode.mode == 1) outputColor = vec4(gl_FragCoord.z, 0, 0, 1);
+    outputColor = inputColor;
+    outputPos = vec4(inputPos.xyz, 1);
 }

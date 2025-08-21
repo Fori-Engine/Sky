@@ -70,7 +70,7 @@ public class Mesh {
 
     public void put(MeshUploader meshUploader, int currentVertexCount, ShaderProgram shaderProgram, ByteBuffer vertexBufferData, ByteBuffer indexBufferData) {
         for (int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++) {
-            for(VertexAttributes.Type vertexAttribute : shaderProgram.getAttributes().get()){
+            for(VertexAttributes.Type vertexAttribute : shaderProgram.getShaderMap().get(ShaderType.Vertex).getVertexAttributes()){
                 meshUploader.upload(vertexAttribute, vertexIndex, vertexBufferData, vertexData);
             }
         }

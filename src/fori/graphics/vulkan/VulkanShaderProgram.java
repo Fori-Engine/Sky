@@ -27,36 +27,23 @@ public class VulkanShaderProgram extends ShaderProgram {
     private VulkanPipeline pipeline;
 
 
-    public VulkanShaderProgram(Disposable parent, ShaderProgramType type, TextureFormatType colorTextureFormat, TextureFormatType depthTextureFormat) {
-        super(parent, type, colorTextureFormat, depthTextureFormat);
-        entryPoint = MemoryUtil.memUTF8("main");
-    }
-
     public VulkanShaderProgram(Disposable parent, ShaderProgramType type) {
         super(parent, type);
         entryPoint = MemoryUtil.memUTF8("main");
     }
 
     @Override
-    public void setShaders(Shader... shaders) {
-        this.shaders = shaders;
-        shaderStages = VkPipelineShaderStageCreateInfo.calloc(shaders.length);
-
-        for (int i = 0; i < shaders.length; i++) {
-            VulkanShader vulkanShader = (VulkanShader) shaders[i];
-
-            VkPipelineShaderStageCreateInfo stageInfo = shaderStages.get(i);
-            stageInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
-            stageInfo.stage(vulkanShader.getStage());
-            stageInfo.module(vulkanShader.getModule());
-            stageInfo.pName(entryPoint);
-        }
-
+    public void addShader(ShaderType shaderType, Shader shader) {
+        shaderMap.put(shaderType, shader);
     }
 
 
-    private VulkanPipeline createComputePipeline(VkDevice device) {
 
+
+    private VulkanPipeline createComputePipeline(VkDevice device) {
+        createStages();
+
+        Shader computeShader = shaderMap.get(ShaderType.Compute);
 
         long pipelineLayoutHandle;
         long computePipelineHandle = 0;
@@ -114,6 +101,12 @@ public class VulkanShaderProgram extends ShaderProgram {
         return new VulkanPipeline(this, pipelineLayoutHandle, computePipelineHandle);
     }
     private VulkanPipeline createGraphicsPipeline(VkDevice device) {
+        createStages();
+
+        Shader vertexShader = shaderMap.get(ShaderType.Vertex);
+        Shader fragmentShader = shaderMap.get(ShaderType.Fragment);
+
+
 
 
         long pipelineLayoutHandle;
@@ -136,7 +129,7 @@ public class VulkanShaderProgram extends ShaderProgram {
                 };
 
                 int vertexSize = 0;
-                for(VertexAttributes.Type attribute : attributes.get()){
+                for(VertexAttributes.Type attribute : vertexShader.getVertexAttributes()){
                     vertexSize += attribute.size;
                 }
 
@@ -153,18 +146,18 @@ public class VulkanShaderProgram extends ShaderProgram {
 
 
                 VkVertexInputAttributeDescription.Buffer attributeDescriptions =
-                        VkVertexInputAttributeDescription.calloc(attributes.get().length, stack);
+                        VkVertexInputAttributeDescription.calloc(vertexShader.getVertexAttributes().length, stack);
 
                 int offset = 0;
 
-                for (int i = 0; i < attributes.get().length; i++) {
+                for (int i = 0; i < vertexShader.getVertexAttributes().length; i++) {
                     VkVertexInputAttributeDescription attribute = attributeDescriptions.get(i);
                     attribute.binding(0);
                     attribute.location(i);
-                    attribute.format(attributeSizeToVulkanParam.apply(attributes.get()[i].size));
+                    attribute.format(attributeSizeToVulkanParam.apply(vertexShader.getVertexAttributes()[i].size));
                     attribute.offset(offset);
 
-                    offset += attributes.get()[i].size * Float.BYTES;
+                    offset += vertexShader.getVertexAttributes()[i].size * Float.BYTES;
                 }
 
 
@@ -286,10 +279,19 @@ public class VulkanShaderProgram extends ShaderProgram {
             pipelineLayoutHandle = pPipelineLayout.get(0);
 
             VkPipelineRenderingCreateInfoKHR pipelineRenderingCreateInfoKHR = VkPipelineRenderingCreateInfoKHR.calloc(stack);
-            pipelineRenderingCreateInfoKHR.colorAttachmentCount(1);
+            pipelineRenderingCreateInfoKHR.colorAttachmentCount(fragmentShader.getAttachmentTextureFormatTypes().length);
             pipelineRenderingCreateInfoKHR.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR);
-            pipelineRenderingCreateInfoKHR.pColorAttachmentFormats(stack.ints(VulkanUtil.toVkImageFormatEnum(colorTextureFormat)));
-            pipelineRenderingCreateInfoKHR.depthAttachmentFormat(VulkanUtil.toVkImageFormatEnum(depthTextureFormat));
+
+            int[] vkImageFormatEnums = new int[fragmentShader.getAttachmentTextureFormatTypes().length];
+            for (int i = 0; i < vkImageFormatEnums.length; i++) {
+                vkImageFormatEnums[i] = VulkanUtil.toVkImageFormatEnum(fragmentShader.getAttachmentTextureFormatTypes()[i]);
+            }
+
+            pipelineRenderingCreateInfoKHR.pColorAttachmentFormats(stack.ints(vkImageFormatEnums));
+
+
+
+            pipelineRenderingCreateInfoKHR.depthAttachmentFormat(VulkanUtil.toVkImageFormatEnum(fragmentShader.getDepthAttachmentTextureFormatType()));
 
 
 
@@ -327,6 +329,23 @@ public class VulkanShaderProgram extends ShaderProgram {
         return new VulkanPipeline(this, pipelineLayoutHandle, graphicsPipelineHandle);
     }
 
+    private void createStages() {
+        shaderStages = VkPipelineShaderStageCreateInfo.calloc(shaderMap.size());
+
+        int shaderIndex = 0;
+        for(Shader shader : shaderMap.values()) {
+            VulkanShader vulkanShader = (VulkanShader) shader;
+
+            VkPipelineShaderStageCreateInfo stageInfo = shaderStages.get(shaderIndex);
+            stageInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
+            stageInfo.stage(vulkanShader.getStage());
+            stageInfo.module(vulkanShader.getModule());
+            stageInfo.pName(entryPoint);
+
+            shaderIndex++;
+        }
+    }
+
 
     private int toVkDepthCompareOpEnum(DepthTestType depthTestType) {
         if(depthTestType == null) return -1;
@@ -360,8 +379,7 @@ public class VulkanShaderProgram extends ShaderProgram {
     }
 
     @Override
-    public void bind(Optional<VertexAttributes.Type[]> attributes, ShaderResSet... resourceSets) {
-        this.attributes = attributes;
+    public void bind(ShaderResSet... resourceSets) {
         this.resourcesSets = resourceSets;
 
         try(MemoryStack stack = stackPush()) {

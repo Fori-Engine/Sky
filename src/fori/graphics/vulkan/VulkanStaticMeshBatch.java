@@ -57,7 +57,7 @@ public class VulkanStaticMeshBatch extends StaticMeshBatch {
 
         stagingVertexBuffer = Buffer.newBuffer(
                 parent,
-                VertexAttributes.getSize(this.shaderProgram.getAttributes().get()) * Float.BYTES * this.maxVertexCount,
+                VertexAttributes.getSize(this.shaderProgram.getShaderMap().get(ShaderType.Vertex).getVertexAttributes()) * Float.BYTES * this.maxVertexCount,
                 Buffer.Usage.VertexBuffer,
                 Buffer.Type.CPUGPUShared,
                 true
@@ -71,7 +71,7 @@ public class VulkanStaticMeshBatch extends StaticMeshBatch {
         );
         vertexBuffer = Buffer.newBuffer(
                 parent,
-                VertexAttributes.getSize(this.shaderProgram.getAttributes().get()) * Float.BYTES * this.maxVertexCount,
+                VertexAttributes.getSize(this.shaderProgram.getShaderMap().get(ShaderType.Vertex).getVertexAttributes()) * Float.BYTES * this.maxVertexCount,
                 Buffer.Usage.VertexBuffer,
                 Buffer.Type.GPULocal,
                 false
@@ -168,9 +168,9 @@ public class VulkanStaticMeshBatch extends StaticMeshBatch {
 
 
             VkBufferCopy.Buffer vertexBufferCopy = VkBufferCopy.calloc(1, stack);
-            vertexBufferCopy.size((long) vertexCount * VertexAttributes.getSize(shaderProgram.getAttributes().get()) * Float.BYTES);
+            vertexBufferCopy.size((long) vertexCount * VertexAttributes.getSize(shaderProgram.getShaderMap().get(ShaderType.Vertex).getVertexAttributes()) * Float.BYTES);
             vertexBufferCopy.srcOffset(0);
-            vertexBufferCopy.dstOffset((long) this.vertexCount * VertexAttributes.getSize(shaderProgram.getAttributes().get()) * Float.BYTES);
+            vertexBufferCopy.dstOffset((long) this.vertexCount * VertexAttributes.getSize(shaderProgram.getShaderMap().get(ShaderType.Vertex).getVertexAttributes()) * Float.BYTES);
 
             vkCmdCopyBuffer(commandBuffer, ((VulkanBuffer) stagingVertexBuffer).getHandle(), ((VulkanBuffer) vertexBuffer).getHandle(), vertexBufferCopy);
 
