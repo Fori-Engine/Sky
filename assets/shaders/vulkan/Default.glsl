@@ -30,8 +30,6 @@ void main() {
 
 #type fragment
 #version 460
-#extension GL_EXT_nonuniform_qualifier : require
-#define MATERIAL_SIZE 4
 
 layout(location = 0) in vec2 inputUV;
 layout(location = 0) out vec4 outputColor;
