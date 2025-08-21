@@ -34,10 +34,7 @@ public abstract class ShaderProgram extends Disposable {
     public abstract void updateBuffers(int frameIndex, ShaderUpdate<Buffer>... bufferUpdates);
     public abstract void updateTextures(int frameIndex, ShaderUpdate<Texture>... textureUpdates);
 
-    public void bind(Optional<VertexAttributes.Type[]> attributes, ShaderResSet... resourceSets){
-        this.attributes = attributes;
-        this.resourcesSets = resourceSets;
-    }
+    public abstract void bind(Optional<VertexAttributes.Type[]> attributes, ShaderResSet... resourceSets);
 
     public ShaderResSet[] getShaderResSets(){
         return resourcesSets;

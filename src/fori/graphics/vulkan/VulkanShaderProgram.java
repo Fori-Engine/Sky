@@ -361,7 +361,8 @@ public class VulkanShaderProgram extends ShaderProgram {
 
     @Override
     public void bind(Optional<VertexAttributes.Type[]> attributes, ShaderResSet... resourceSets) {
-        super.bind(attributes, resourceSets);
+        this.attributes = attributes;
+        this.resourcesSets = resourceSets;
 
         try(MemoryStack stack = stackPush()) {
 
