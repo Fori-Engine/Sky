@@ -23,10 +23,12 @@ layout(push_constant) uniform PushConstants {
 
 void main() {
 
-    gl_Position = camera.proj * camera.view * transforms.models[int(inputTransformIndex)] * vec4(inputPos.xyz, 1.0);
+    if(shaderMode.mode == 0) {
+        gl_Position = camera.proj * camera.view * transforms.models[int(inputTransformIndex)] * vec4(inputPos.xyz, 1.0);
+        outputPos = vec4(transforms.models[int(inputTransformIndex)] * vec4(inputPos.xyz, 1.0)).xyz;
+        outputUV = inputUV;
+    }
 
-    outputUV = inputUV;
-    outputPos = inputPos;
 }
 
 
