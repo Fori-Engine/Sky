@@ -94,7 +94,7 @@ public class WhisperStage extends Stage {
         );
 
         scene = new Scene("Main_Scene");
-        scene.addSystem(new RenderSystem(renderer, scene));
+        scene.addSystem(new RenderSystem(renderer, scene, new DefaultRenderPipelineImpl()));
         scene.addSystem(new NVPhysXSystem(scene, 4, 1f/60f));
         scene.addSystem(new ScriptSystem(scene));
 
