@@ -209,18 +209,23 @@ public class VulkanShaderProgram extends ShaderProgram {
                 multisampling.rasterizationSamples(VK_SAMPLE_COUNT_1_BIT);
             }
 
-            VkPipelineColorBlendAttachmentState.Buffer colorBlendAttachment = VkPipelineColorBlendAttachmentState.calloc(1, stack);
+            int attachmentCount = fragmentShader.getAttachmentTextureFormatTypes().length;
+
+            VkPipelineColorBlendAttachmentState.Buffer colorBlendAttachments = VkPipelineColorBlendAttachmentState.calloc(attachmentCount, stack);
             {
-                colorBlendAttachment.colorWriteMask(VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT);
-                colorBlendAttachment.blendEnable(false);
-                colorBlendAttachment.colorWriteMask(VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT);
-                colorBlendAttachment.blendEnable(true);
-                colorBlendAttachment.srcColorBlendFactor(VK_BLEND_FACTOR_SRC_ALPHA);
-                colorBlendAttachment.dstColorBlendFactor(VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA);
-                colorBlendAttachment.colorBlendOp(VK_BLEND_OP_ADD);
-                colorBlendAttachment.srcAlphaBlendFactor(VK_BLEND_FACTOR_ONE);
-                colorBlendAttachment.dstAlphaBlendFactor(VK_BLEND_FACTOR_ZERO);
-                colorBlendAttachment.alphaBlendOp(VK_BLEND_OP_ADD);
+                for(VkPipelineColorBlendAttachmentState colorBlendAttachment : colorBlendAttachments) {
+
+                    colorBlendAttachment.colorWriteMask(VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT);
+                    colorBlendAttachment.blendEnable(false);
+                    colorBlendAttachment.colorWriteMask(VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT);
+                    colorBlendAttachment.blendEnable(true);
+                    colorBlendAttachment.srcColorBlendFactor(VK_BLEND_FACTOR_SRC_ALPHA);
+                    colorBlendAttachment.dstColorBlendFactor(VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA);
+                    colorBlendAttachment.colorBlendOp(VK_BLEND_OP_ADD);
+                    colorBlendAttachment.srcAlphaBlendFactor(VK_BLEND_FACTOR_ONE);
+                    colorBlendAttachment.dstAlphaBlendFactor(VK_BLEND_FACTOR_ZERO);
+                    colorBlendAttachment.alphaBlendOp(VK_BLEND_OP_ADD);
+                }
 
             }
 
@@ -230,8 +235,9 @@ public class VulkanShaderProgram extends ShaderProgram {
                 colorBlending.sType(VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO);
                 colorBlending.logicOpEnable(false);
                 colorBlending.logicOp(VK_LOGIC_OP_COPY);
-                colorBlending.pAttachments(colorBlendAttachment);
+                colorBlending.pAttachments(colorBlendAttachments);
                 colorBlending.blendConstants(stack.floats(0.0f, 0.0f, 0.0f, 0.0f));
+                colorBlending.attachmentCount(attachmentCount);
             }
 
             VkPipelineDepthStencilStateCreateInfo depthStencil = VkPipelineDepthStencilStateCreateInfo.calloc(stack);
