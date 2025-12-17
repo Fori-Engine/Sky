@@ -104,7 +104,7 @@ public class VulkanTexture extends Texture {
                 }
 
 
-                VulkanUtil.transitionImageLayout(
+                VulkanUtil.transitionImages(
                         image,
                         commandBuffer,
                         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
@@ -126,7 +126,7 @@ public class VulkanTexture extends Texture {
                 vkCmdCopyBufferToImage(commandBuffer, ((VulkanBuffer) imageData).getHandle(), image.getHandle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, imageCopies);
 
 
-                VulkanUtil.transitionImageLayout(
+                VulkanUtil.transitionImages(
                         image,
                         commandBuffer,
                         isStorageTexture ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,

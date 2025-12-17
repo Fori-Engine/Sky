@@ -1,10 +1,12 @@
 package fori.graphics.vulkan;
 
+import fori.graphics.Renderer;
 import fori.graphics.TextureFormatType;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.vulkan.EXTDebugUtils.vkSetDebugUtilsObjectNameEXT;
 import static org.lwjgl.vulkan.VK10.*;
 
 public class VulkanUtil {
@@ -26,7 +28,7 @@ public class VulkanUtil {
         return -1;
     }
 
-    public static void transitionImageLayout(VulkanImage image,
+    public static void transitionImages(VulkanImage image,
                                         VkCommandBuffer commandBuffer,
                                         int newLayout,
                                         int srcAccessMask,
@@ -51,6 +53,7 @@ public class VulkanUtil {
                 imageBarrier.subresourceRange().baseArrayLayer(0);
                 imageBarrier.subresourceRange().layerCount(1);
             }
+
 
 
 

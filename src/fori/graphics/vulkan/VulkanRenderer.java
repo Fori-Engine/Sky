@@ -590,15 +590,35 @@ public class VulkanRenderer extends Renderer {
                                 Texture texture = ((Texture[]) rd.getDependency())[frameIndex];
                                 VulkanImage image = ((VulkanTexture) texture).getImage();
 
+
+                                int srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+
+                                //All writes have to wait on reads
+                                int writeSrcAccessMask = VK_ACCESS_NONE;
+                                //All reads have to wait on writes
+                                int readSrcAccessMask = VK_ACCESS_NONE;
+
+                                boolean isWaitingForAnyPass = false;
+                                if(rd.getPassMetadata() != null){
+                                    srcStageMask = rd.getPassMetadata() instanceof GraphicsPass ? VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT : VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+                                    writeSrcAccessMask = rd.getPassMetadata() instanceof GraphicsPass ? VK_ACCESS_COLOR_ATTACHMENT_READ_BIT : VK_ACCESS_SHADER_READ_BIT;
+                                    readSrcAccessMask = rd.getPassMetadata() instanceof GraphicsPass ? VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT : VK_ACCESS_SHADER_WRITE_BIT;
+
+                                    isWaitingForAnyPass = true;
+                                }
+
+
                                 if ((rd.getType() & ResourceDependencyTypes.FragmentShaderRead) != 0) {
-                                    VulkanUtil.transitionImageLayout(
+
+
+                                    VulkanUtil.transitionImages(
                                             image,
                                             commandBuffer,
-                                            texture.isStorageTexture() ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                                            VK_ACCESS_SHADER_WRITE_BIT,
+                                            VK_IMAGE_LAYOUT_GENERAL,
+                                            readSrcAccessMask,
                                             VK_ACCESS_SHADER_READ_BIT,
                                             VK_IMAGE_ASPECT_COLOR_BIT,
-                                            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                            srcStageMask,
                                             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
                                     );
                                 }
@@ -606,11 +626,11 @@ public class VulkanRenderer extends Renderer {
                                     Logger.todo(VulkanRenderer.class, "FragmentShaderWrite transitions are not supported");
                                 }
                                 else if ((rd.getType() & ResourceDependencyTypes.ComputeShaderRead) != 0) {
-                                    VulkanUtil.transitionImageLayout(
+                                    VulkanUtil.transitionImages(
                                             image,
                                             commandBuffer,
                                             texture.isStorageTexture() ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                                            VK_ACCESS_SHADER_WRITE_BIT,
+                                            readSrcAccessMask,
                                             VK_ACCESS_SHADER_READ_BIT,
                                             VK_IMAGE_ASPECT_COLOR_BIT,
                                             VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
@@ -618,26 +638,26 @@ public class VulkanRenderer extends Renderer {
                                     );
                                 }
                                 else if ((rd.getType() & ResourceDependencyTypes.ComputeShaderWrite) != 0) {
-                                    VulkanUtil.transitionImageLayout(
+                                    VulkanUtil.transitionImages(
                                             image,
                                             commandBuffer,
                                             VK_IMAGE_LAYOUT_GENERAL,
-                                            VK_ACCESS_NONE,
+                                            isWaitingForAnyPass ? VK_ACCESS_SHADER_READ_BIT : VK_ACCESS_NONE,
                                             VK_ACCESS_SHADER_WRITE_BIT,
                                             VK_IMAGE_ASPECT_COLOR_BIT,
-                                            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                                            srcStageMask,
                                             VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
                                     );
                                 }
                                 else if((rd.getType() & ResourceDependencyTypes.Present) != 0) {
-                                    VulkanUtil.transitionImageLayout(
+                                    VulkanUtil.transitionImages(
                                             image,
                                             commandBuffer,
                                             VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-                                            VK_ACCESS_NONE,
+                                            writeSrcAccessMask,
                                             VK_ACCESS_NONE,
                                             VK_IMAGE_ASPECT_COLOR_BIT,
-                                            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                                            srcStageMask,
                                             VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
                                     );
                                 }
@@ -645,17 +665,19 @@ public class VulkanRenderer extends Renderer {
                                     Logger.todo(VulkanRenderer.class, "RenderTargetRead transitions are not supported");
                                 }
                                 else if ((rd.getType() & ResourceDependencyTypes.RenderTargetWrite) != 0) {
-                                    VulkanUtil.transitionImageLayout(
+                                    VulkanUtil.transitionImages(
                                             image,
                                             commandBuffer,
                                             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                                            VK_ACCESS_NONE,
+                                            writeSrcAccessMask,
                                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
                                             VK_IMAGE_ASPECT_COLOR_BIT,
-                                            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                                            srcStageMask,
                                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
                                     );
                                 }
+                                rd.setPassMetadata(pass);
+
                             }
 
 
@@ -669,7 +691,7 @@ public class VulkanRenderer extends Renderer {
 
                 }
 
-                pass.getPassExecuteCallback().run();
+                pass.getPassExecuteCallback().onExecutePass();
 
 
 

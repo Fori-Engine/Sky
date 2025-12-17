@@ -561,7 +561,14 @@ public class VulkanShaderProgram extends ShaderProgram {
 
                 VkDescriptorImageInfo.Buffer descriptorImageInfo = VkDescriptorImageInfo.calloc(1, stack);
 
-                descriptorImageInfo.imageLayout(textureUpdate.update.isStorageTexture() ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+                //todo(shayan) Sometimes fragment shaders in the rendergraph
+                // will want to use VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL on a storage image
+                // but our descriptor update doesn't know that and will still use VK_IMAGE_LAYOUT_GENERAL
+                // which throws a validation error, maybe update descriptors after the graph has processed resources?
+                // maybe in a separate graphFinished() function
+
+                descriptorImageInfo.imageLayout(VK_IMAGE_LAYOUT_GENERAL);
                 descriptorImageInfo.imageView(((VulkanTexture) textureUpdate.update).getImageView().getHandle());
                 descriptorImageInfo.sampler(((VulkanTexture) textureUpdate.update).getSampler().getHandle());
 

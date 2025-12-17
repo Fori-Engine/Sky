@@ -14,12 +14,13 @@ import static fori.graphics.VertexAttributes.Type.*;
 
 public class DefaultRenderPipelineImpl extends RenderPipeline {
 
-    private Camera sceneCamera;
 
-    private GraphicsPass scenePass;
-    private RenderTarget sceneRT;
-    private Texture[] sceneColorTextures;
-    private Texture[] scenePosTextures;
+
+    //private Camera sceneCamera;
+    //private GraphicsPass scenePass;
+    //private RenderTarget sceneRT;
+    //private Texture[] sceneColorTextures;
+    //private Texture[] scenePosTextures;
 
     private ComputePass mangaPass;
     private RenderTarget mangaColorRT;
@@ -44,6 +45,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
     @Override
     public void init(Renderer renderer, Scene scene) {
+        /*
         //Scene Color Pass Resources
         {
             sceneRT = new RenderTarget(renderer);
@@ -71,6 +73,10 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
             );
         }
 
+         */
+
+
+
         //Manga Pass Resources
         {
             mangaColorRT = new RenderTarget(renderer);
@@ -97,30 +103,41 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
             mangaPassShaderProgram.bind(
                     new ShaderResSet(
                             0,
+                            /*
                             new ShaderRes(
                                     "inputColorTexture",
                                     0,
                                     CombinedSampler,
                                     ComputeStage
                             ).count(1),
+
+                             */
+
+
                             new ShaderRes(
                                     "outputTexture",
                                     1,
                                     StorageImage,
                                     ComputeStage
-                            ).count(1),
+                            ).count(1)
+
+                            /*
                             new ShaderRes(
                                     "inputPosTexture",
                                     2,
                                     CombinedSampler,
                                     ComputeStage
                             ).count(1)
+
+                             */
                     )
 
             );
 
 
         }
+
+
 
         //Swapchain Pass Resources
         {
@@ -171,6 +188,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                                     CombinedSampler,
                                     FragmentStage
                             ).count(1)
+
                     )
 
             );
@@ -276,6 +294,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
         renderGraph = new RenderGraph(renderer);
 
+        /*
         scenePass = Pass.newGraphicsPass(renderGraph, "SceneColor", renderer.getMaxFramesInFlight());
         {
             scenePass.setResourceDependencies(
@@ -292,9 +311,12 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
             );
 
         }
+        */
+
         mangaPass = Pass.newComputePass(renderer, "Manga", renderer.getMaxFramesInFlight());
         {
             mangaPass.setResourceDependencies(
+                    /*
                     new ResourceDependency<>(
                             "InputColorTextures",
                             sceneColorTextures,
@@ -305,6 +327,8 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                             scenePosTextures,
                             ResourceDependencyTypes.ComputeShaderRead
                     ),
+
+                     */
                     new ResourceDependency<>(
                             "OutputTextures",
                             mangaColorTextures,
@@ -312,11 +336,10 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                     )
             );
         }
-
-
         swapchainPass = Pass.newGraphicsPass(renderGraph, "Swapchain", renderer.getMaxFramesInFlight());
         {
             swapchainPass.setResourceDependencies(
+
                     new ResourceDependency<>(
                             "InputTextures",
                             mangaColorTextures,
@@ -336,7 +359,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
         }
 
         renderGraph.addPasses(
-                scenePass,
+                //scenePass,
                 mangaPass,
                 swapchainPass
         );
@@ -344,10 +367,13 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
     @Override
     public void render(Renderer renderer, Scene scene) {
+        /*
         scene.getEngine().findEntitiesWith(CameraComponent.class).stream().forEach(components1 -> {
             CameraComponent cameraComponent = components1.comp();
             sceneCamera = cameraComponent.camera();
         });
+
+         */
 
 
         if(swapchainRT != renderer.getSwapchainRenderTarget()) {
@@ -363,6 +389,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
 
 
+        /*
         scenePass.setPassExecuteCallback(() -> {
             scenePass.startRecording(renderer.getFrameIndex());
             {
@@ -421,7 +448,12 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
             }
             scenePass.endRecording();
         });
+
+         */
+
         mangaPass.setPassExecuteCallback(() -> {
+
+            /*
             mangaPassShaderProgram.updateTextures(
                     renderer.getFrameIndex(),
                     new ShaderUpdate<>(
@@ -431,6 +463,10 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                             ((Texture[]) mangaPass.getResourceDependencyByNameAndType("InputColorTextures", ResourceDependencyTypes.ComputeShaderRead).getDependency())[renderer.getFrameIndex()]
                     )
             );
+
+             */
+
+
             mangaPassShaderProgram.updateTextures(
                     renderer.getFrameIndex(),
                     new ShaderUpdate<>(
@@ -440,6 +476,8 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                             ((Texture[]) mangaPass.getResourceDependencyByNameAndType("OutputTextures", ResourceDependencyTypes.ComputeShaderWrite).getDependency())[renderer.getFrameIndex()]
                     )
             );
+
+            /*
             mangaPassShaderProgram.updateTextures(
                     renderer.getFrameIndex(),
                     new ShaderUpdate<>(
@@ -449,6 +487,10 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                             ((Texture[]) mangaPass.getResourceDependencyByNameAndType("InputPosTextures", ResourceDependencyTypes.ComputeShaderRead).getDependency())[renderer.getFrameIndex()]
                     )
             );
+
+             */
+
+
 
 
 
@@ -460,7 +502,10 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
             }
             mangaPass.endRecording();
         });
+
+
         swapchainPass.setPassExecuteCallback(() -> {
+
             swapchainPassShaderProgram.updateTextures(
                     renderer.getFrameIndex(),
                     new ShaderUpdate<>(
