@@ -598,13 +598,10 @@ public class VulkanRenderer extends Renderer {
                                 //All reads have to wait on writes
                                 int readSrcAccessMask = VK_ACCESS_NONE;
 
-                                boolean isWaitingForAnyPass = false;
                                 if(rd.getPassMetadata() != null){
                                     srcStageMask = rd.getPassMetadata() instanceof GraphicsPass ? VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT : VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
                                     writeSrcAccessMask = rd.getPassMetadata() instanceof GraphicsPass ? VK_ACCESS_COLOR_ATTACHMENT_READ_BIT : VK_ACCESS_SHADER_READ_BIT;
                                     readSrcAccessMask = rd.getPassMetadata() instanceof GraphicsPass ? VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT : VK_ACCESS_SHADER_WRITE_BIT;
-
-                                    isWaitingForAnyPass = true;
                                 }
 
 
@@ -642,7 +639,7 @@ public class VulkanRenderer extends Renderer {
                                             image,
                                             commandBuffer,
                                             VK_IMAGE_LAYOUT_GENERAL,
-                                            isWaitingForAnyPass ? VK_ACCESS_SHADER_READ_BIT : VK_ACCESS_NONE,
+                                            writeSrcAccessMask,
                                             VK_ACCESS_SHADER_WRITE_BIT,
                                             VK_IMAGE_ASPECT_COLOR_BIT,
                                             srcStageMask,
