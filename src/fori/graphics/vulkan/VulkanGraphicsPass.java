@@ -190,12 +190,7 @@ public class VulkanGraphicsPass extends GraphicsPass {
             renderingInfoKHR.pDepthAttachment(depthRenderingAttachmentInfoKHR);
 
 
-
-
-
-
-
-
+            //System.out.println("[" + name + "]");
             KHRDynamicRendering.vkCmdBeginRenderingKHR(commandBuffers[frameIndex], renderingInfoKHR);
             VkViewport.Buffer viewport = VkViewport.calloc(1, stack);
             viewport.x(0.0f);

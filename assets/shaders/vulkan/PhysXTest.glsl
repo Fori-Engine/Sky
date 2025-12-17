@@ -36,7 +36,6 @@ void main() {
 layout(location = 0) in vec4 inputColor;
 layout(location = 1) in vec3 inputPos;
 layout(location = 0) out vec4 outputColor;
-layout(location = 1) out vec4 outputPos;
 
 
 layout(push_constant) uniform PushConstants {
@@ -45,7 +44,6 @@ layout(push_constant) uniform PushConstants {
 
 void main() {
     if(shaderMode.mode == 0) {
-        outputColor = inputColor;
-        outputPos = vec4(inputPos.xyz, 1);
+        outputColor = vec4(inputPos.xyz, 1.0);
     }
 }

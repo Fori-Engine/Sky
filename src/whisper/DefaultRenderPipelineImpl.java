@@ -16,10 +16,10 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
 
 
-    //private Camera sceneCamera;
-    //private GraphicsPass scenePass;
-    //private RenderTarget sceneRT;
-    //private Texture[] sceneColorTextures;
+    private Camera sceneCamera;
+    private GraphicsPass scenePass;
+    private RenderTarget sceneRT;
+    private Texture[] sceneColorTextures;
     //private Texture[] scenePosTextures;
 
     private ComputePass mangaPass;
@@ -45,7 +45,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
     @Override
     public void init(Renderer renderer, Scene scene) {
-        /*
+
         //Scene Color Pass Resources
         {
             sceneRT = new RenderTarget(renderer);
@@ -53,18 +53,24 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                     Texture.newColorTexture(sceneRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8, Texture.Filter.Nearest, Texture.Filter.Nearest),
                     Texture.newColorTexture(sceneRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8, Texture.Filter.Nearest, Texture.Filter.Nearest)
             };
+            /*
             scenePosTextures = new Texture[]{
                     Texture.newColorTexture(sceneRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8, Texture.Filter.Nearest, Texture.Filter.Nearest),
                     Texture.newColorTexture(sceneRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8, Texture.Filter.Nearest, Texture.Filter.Nearest)
             };
 
+             */
+
 
             sceneRT.addAttachment(
                     new RenderTargetAttachment(RenderTargetAttachmentTypes.Color, sceneColorTextures)
             );
+            /*
             sceneRT.addAttachment(
                     new RenderTargetAttachment(RenderTargetAttachmentTypes.Pos, scenePosTextures)
             );
+
+             */
 
             sceneRT.addAttachment(
                     new RenderTargetAttachment(RenderTargetAttachmentTypes.Depth, new Texture[]{
@@ -72,8 +78,6 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                     })
             );
         }
-
-         */
 
 
 
@@ -103,17 +107,13 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
             mangaPassShaderProgram.bind(
                     new ShaderResSet(
                             0,
-                            /*
+
                             new ShaderRes(
                                     "inputColorTexture",
                                     0,
                                     CombinedSampler,
                                     ComputeStage
                             ).count(1),
-
-                             */
-
-
                             new ShaderRes(
                                     "outputTexture",
                                     1,
@@ -294,7 +294,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
         renderGraph = new RenderGraph(renderer);
 
-        /*
+
         scenePass = Pass.newGraphicsPass(renderGraph, "SceneColor", renderer.getMaxFramesInFlight());
         {
             scenePass.setResourceDependencies(
@@ -302,26 +302,30 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                             "OutputColorTextures",
                             sceneColorTextures,
                             ResourceDependencyTypes.RenderTargetWrite
-                    ),
+                    )
+                    /*
                     new ResourceDependency<>(
                             "OutputPosTextures",
                             scenePosTextures,
                             ResourceDependencyTypes.RenderTargetWrite
                     )
+
+                     */
             );
 
         }
-        */
+
 
         mangaPass = Pass.newComputePass(renderer, "Manga", renderer.getMaxFramesInFlight());
         {
             mangaPass.setResourceDependencies(
-                    /*
+
                     new ResourceDependency<>(
                             "InputColorTextures",
                             sceneColorTextures,
                             ResourceDependencyTypes.ComputeShaderRead
                     ),
+                    /*
                     new ResourceDependency<>(
                             "InputPosTextures",
                             scenePosTextures,
@@ -359,7 +363,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
         }
 
         renderGraph.addPasses(
-                //scenePass,
+                scenePass,
                 mangaPass,
                 swapchainPass
         );
@@ -367,13 +371,13 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
     @Override
     public void render(Renderer renderer, Scene scene) {
-        /*
+
         scene.getEngine().findEntitiesWith(CameraComponent.class).stream().forEach(components1 -> {
             CameraComponent cameraComponent = components1.comp();
             sceneCamera = cameraComponent.camera();
         });
 
-         */
+
 
 
         if(swapchainRT != renderer.getSwapchainRenderTarget()) {
@@ -389,7 +393,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
 
 
-        /*
+
         scenePass.setPassExecuteCallback(() -> {
             scenePass.startRecording(renderer.getFrameIndex());
             {
@@ -449,11 +453,11 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
             scenePass.endRecording();
         });
 
-         */
+
 
         mangaPass.setPassExecuteCallback(() -> {
 
-            /*
+
             mangaPassShaderProgram.updateTextures(
                     renderer.getFrameIndex(),
                     new ShaderUpdate<>(
@@ -463,8 +467,6 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                             ((Texture[]) mangaPass.getResourceDependencyByNameAndType("InputColorTextures", ResourceDependencyTypes.ComputeShaderRead).getDependency())[renderer.getFrameIndex()]
                     )
             );
-
-             */
 
 
             mangaPassShaderProgram.updateTextures(
@@ -498,7 +500,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
             {
                 mangaPass.resolveBarriers();
                 mangaPass.setShaderProgram(mangaPassShaderProgram);
-                mangaPass.dispatch(1920, 1080, 1, 1);
+                mangaPass.dispatch(1920, 1080, 1, 0);
             }
             mangaPass.endRecording();
         });

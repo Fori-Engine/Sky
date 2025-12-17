@@ -150,7 +150,7 @@ public class WhisperStage extends Stage {
             shaderProgram.addShader(
                     ShaderType.Fragment,
                     Shader.newShader(shaderProgram, ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
-                            .setAttachmentTextureFormatTypes(TextureFormatType.ColorR8G8B8A8, TextureFormatType.ColorR8G8B8A8)
+                            .setAttachmentTextureFormatTypes(TextureFormatType.ColorR8G8B8A8)
                             .setDepthAttachmentTextureFormatType(TextureFormatType.Depth32)
             );
 
@@ -239,7 +239,7 @@ public class WhisperStage extends Stage {
                 shaderProgram.addShader(
                         ShaderType.Fragment,
                         Shader.newShader(shaderProgram, ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
-                                .setAttachmentTextureFormatTypes(TextureFormatType.ColorR8G8B8A8, TextureFormatType.ColorR8G8B8A8)
+                                .setAttachmentTextureFormatTypes(TextureFormatType.ColorR8G8B8A8)
                                 .setDepthAttachmentTextureFormatType(TextureFormatType.Depth32)
                 );
 
@@ -325,7 +325,7 @@ public class WhisperStage extends Stage {
                 shaderProgram.addShader(
                         ShaderType.Fragment,
                         Shader.newShader(shaderProgram, ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
-                                .setAttachmentTextureFormatTypes(TextureFormatType.ColorR8G8B8A8, TextureFormatType.ColorR8G8B8A8)
+                                .setAttachmentTextureFormatTypes(TextureFormatType.ColorR8G8B8A8)
                                 .setDepthAttachmentTextureFormatType(TextureFormatType.Depth32)
                 );
 

@@ -39,7 +39,6 @@ layout(location = 0) in vec2 inputUV;
 layout(location = 1) in vec3 inputPos;
 
 layout(location = 0) out vec4 outputColor;
-layout(location = 1) out vec4 outputPos;
 
 layout(set = 0, binding = 2) uniform sampler2D[] textures;
 
@@ -51,7 +50,6 @@ layout(push_constant) uniform PushConstants {
 
 void main() {
     if(shaderMode.mode == 0) {
-        outputColor = texture(textures[0], inputUV);
-        outputPos = vec4(inputPos.xyz, 1.0);
+        outputColor = vec4(inputPos.xyz, 1.0);//texture(textures[0], inputUV);
     }
 }

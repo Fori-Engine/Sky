@@ -629,7 +629,7 @@ public class VulkanRenderer extends Renderer {
                                     VulkanUtil.transitionImages(
                                             image,
                                             commandBuffer,
-                                            texture.isStorageTexture() ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                            VK_IMAGE_LAYOUT_GENERAL,
                                             readSrcAccessMask,
                                             VK_ACCESS_SHADER_READ_BIT,
                                             VK_IMAGE_ASPECT_COLOR_BIT,
