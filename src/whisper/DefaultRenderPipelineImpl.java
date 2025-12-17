@@ -20,7 +20,6 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
     private GraphicsPass scenePass;
     private RenderTarget sceneRT;
     private Texture[] sceneColorTextures;
-    //private Texture[] scenePosTextures;
 
     private ComputePass mangaPass;
     private RenderTarget mangaColorRT;
@@ -120,16 +119,6 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                                     StorageImage,
                                     ComputeStage
                             ).count(1)
-
-                            /*
-                            new ShaderRes(
-                                    "inputPosTexture",
-                                    2,
-                                    CombinedSampler,
-                                    ComputeStage
-                            ).count(1)
-
-                             */
                     )
 
             );
@@ -303,14 +292,6 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                             sceneColorTextures,
                             ResourceDependencyTypes.RenderTargetWrite
                     )
-                    /*
-                    new ResourceDependency<>(
-                            "OutputPosTextures",
-                            scenePosTextures,
-                            ResourceDependencyTypes.RenderTargetWrite
-                    )
-
-                     */
             );
 
         }
@@ -325,14 +306,6 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                             sceneColorTextures,
                             ResourceDependencyTypes.ComputeShaderRead
                     ),
-                    /*
-                    new ResourceDependency<>(
-                            "InputPosTextures",
-                            scenePosTextures,
-                            ResourceDependencyTypes.ComputeShaderRead
-                    ),
-
-                     */
                     new ResourceDependency<>(
                             "OutputTextures",
                             mangaColorTextures,
@@ -478,23 +451,6 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                             ((Texture[]) mangaPass.getResourceDependencyByNameAndType("OutputTextures", ResourceDependencyTypes.ComputeShaderWrite).getDependency())[renderer.getFrameIndex()]
                     )
             );
-
-            /*
-            mangaPassShaderProgram.updateTextures(
-                    renderer.getFrameIndex(),
-                    new ShaderUpdate<>(
-                            "inputPosTexture",
-                            0,
-                            2,
-                            ((Texture[]) mangaPass.getResourceDependencyByNameAndType("InputPosTextures", ResourceDependencyTypes.ComputeShaderRead).getDependency())[renderer.getFrameIndex()]
-                    )
-            );
-
-             */
-
-
-
-
 
             mangaPass.startRecording(renderer.getFrameIndex());
             {
