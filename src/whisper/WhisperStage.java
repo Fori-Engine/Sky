@@ -33,6 +33,7 @@ public class WhisperStage extends Stage {
     private Entity cameraEntity;
     private Entity playerEntity;
     private Entity levelEntity;
+    private Entity spotlightEntity;
     private Renderer renderer;
 
 
@@ -79,7 +80,7 @@ public class WhisperStage extends Stage {
         String logDstPath = cmd.getOptionValue("logdst");
 
 
-        AssetPacks.open("core", AssetPack.openLocal(new File("assets")));
+        AssetPacks.open("core", AssetPack.openPack(new File("assets.pkg")));
 
 
         surface.display();
@@ -298,6 +299,60 @@ public class WhisperStage extends Stage {
             );
         }
 
+        //Spotlight
+        {
+            RenderTarget lightRT = new RenderTarget(renderer);
+            lightRT.addAttachment(
+                    new RenderTargetAttachment(
+                            RenderTargetAttachmentTypes.Color,
+                            new Texture[]{
+                                    Texture.newColorTexture(
+                                            lightRT,
+                                            640,
+                                            480,
+                                            TextureFormatType.ColorR8G8B8A8,
+                                            Texture.Filter.Nearest,
+                                            Texture.Filter.Nearest
+                                    ),
+                                    Texture.newColorTexture(
+                                            lightRT,
+                                            640,
+                                            480,
+                                            TextureFormatType.ColorR8G8B8A8,
+                                            Texture.Filter.Nearest,
+                                            Texture.Filter.Nearest
+                                    )
+                            }
+                    )
+            );
+            lightRT.addAttachment(
+                    new RenderTargetAttachment(RenderTargetAttachmentTypes.Depth, new Texture[]{
+                            Texture.newDepthTexture(lightRT, 640, 480, TextureFormatType.Depth32, Texture.Filter.Nearest, Texture.Filter.Nearest)
+                    })
+            );
+
+
+
+            spotlightEntity = scene.createEntity(
+                    new LightComponent(
+                            new Matrix4f().lookAt(
+                                    new Vector3f(0.0f, 5.0f, 10.0f),
+                                    new Vector3f(0, 0, 0),
+                                    new Vector3f(0.0f, 1.0f, 0.0f)
+                            ),
+                            new Matrix4f().perspective(
+                                    (float) Math.toRadians(75.0f),
+                                    (float) renderer.getWidth() / renderer.getHeight(),
+                                    0.01f,
+                                    100.0f,
+                                    true
+                            ),
+                            true,
+                            lightRT
+                    )
+            );
+
+        }
 
 
 

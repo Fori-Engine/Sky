@@ -18,13 +18,13 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
     private Camera sceneCamera;
     private GraphicsPass scenePass;
-    private RenderTarget sceneRT;
+    private RenderTarget scenePassRT;
     private Texture[] sceneColorTextures;
 
-    private ComputePass mangaPass;
-    private RenderTarget mangaColorRT;
-    private Texture[] mangaColorTextures;
-    private ShaderProgram mangaPassShaderProgram;
+    private ComputePass shadowPass;
+    private RenderTarget shadowPassRT;
+    private Texture[] shadowPassColorTextures;
+    private ShaderProgram shadowPassShaderProgram;
 
 
     private GraphicsPass swapchainPass;
@@ -47,10 +47,10 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
         //Scene Color Pass Resources
         {
-            sceneRT = new RenderTarget(renderer);
+            scenePassRT = new RenderTarget(renderer);
             sceneColorTextures = new Texture[]{
-                    Texture.newColorTexture(sceneRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8, Texture.Filter.Nearest, Texture.Filter.Nearest),
-                    Texture.newColorTexture(sceneRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8, Texture.Filter.Nearest, Texture.Filter.Nearest)
+                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8, Texture.Filter.Nearest, Texture.Filter.Nearest),
+                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8, Texture.Filter.Nearest, Texture.Filter.Nearest)
             };
             /*
             scenePosTextures = new Texture[]{
@@ -61,7 +61,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
              */
 
 
-            sceneRT.addAttachment(
+            scenePassRT.addAttachment(
                     new RenderTargetAttachment(RenderTargetAttachmentTypes.Color, sceneColorTextures)
             );
             /*
@@ -71,39 +71,39 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
              */
 
-            sceneRT.addAttachment(
+            scenePassRT.addAttachment(
                     new RenderTargetAttachment(RenderTargetAttachmentTypes.Depth, new Texture[]{
-                            Texture.newDepthTexture(sceneRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.Depth32, Texture.Filter.Nearest, Texture.Filter.Nearest)
+                            Texture.newDepthTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.Depth32, Texture.Filter.Nearest, Texture.Filter.Nearest)
                     })
             );
         }
 
 
 
-        //Manga Pass Resources
+        //Shadow Pass Resources
         {
-            mangaColorRT = new RenderTarget(renderer);
-            mangaColorTextures = new Texture[]{
-                    Texture.newStorageTexture(mangaColorRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32, Texture.Filter.Nearest, Texture.Filter.Nearest),
-                    Texture.newStorageTexture(mangaColorRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32, Texture.Filter.Nearest, Texture.Filter.Nearest)
+            shadowPassRT = new RenderTarget(renderer);
+            shadowPassColorTextures = new Texture[]{
+                    Texture.newStorageTexture(shadowPassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32, Texture.Filter.Nearest, Texture.Filter.Nearest),
+                    Texture.newStorageTexture(shadowPassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32, Texture.Filter.Nearest, Texture.Filter.Nearest)
             };
 
-            mangaColorRT.addAttachment(
-                    new RenderTargetAttachment(RenderTargetAttachmentTypes.Color, mangaColorTextures)
+            shadowPassRT.addAttachment(
+                    new RenderTargetAttachment(RenderTargetAttachmentTypes.Color, shadowPassColorTextures)
             );
 
             ShaderReader.ShaderSources shaderSources = ShaderReader.read(
-                    AssetPacks.<String>getAsset("core:assets/shaders/vulkan/MangaPass.glsl").asset
+                    AssetPacks.<String>getAsset("core:assets/shaders/vulkan/ShadowPass.glsl").asset
             );
 
-            mangaPassShaderProgram = ShaderProgram.newComputeShaderProgram(renderer);
-            mangaPassShaderProgram.addShader(
+            shadowPassShaderProgram = ShaderProgram.newComputeShaderProgram(renderer);
+            shadowPassShaderProgram.addShader(
                     ShaderType.Compute,
-                    Shader.newShader(mangaPassShaderProgram, ShaderType.Compute, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Compute), ShaderType.Compute))
+                    Shader.newShader(shadowPassShaderProgram, ShaderType.Compute, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Compute), ShaderType.Compute))
             );
 
 
-            mangaPassShaderProgram.bind(
+            shadowPassShaderProgram.bind(
                     new ShaderResSet(
                             0,
 
@@ -297,9 +297,9 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
         }
 
 
-        mangaPass = Pass.newComputePass(renderer, "Manga", renderer.getMaxFramesInFlight());
+        shadowPass = Pass.newComputePass(renderer, "Shadow", renderer.getMaxFramesInFlight());
         {
-            mangaPass.setResourceDependencies(
+            shadowPass.setResourceDependencies(
 
                     new ResourceDependency<>(
                             "InputColorTextures",
@@ -308,7 +308,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                     ),
                     new ResourceDependency<>(
                             "OutputTextures",
-                            mangaColorTextures,
+                            shadowPassColorTextures,
                             ResourceDependencyTypes.ComputeShaderWrite
                     )
             );
@@ -319,7 +319,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
                     new ResourceDependency<>(
                             "InputTextures",
-                            mangaColorTextures,
+                            shadowPassColorTextures,
                             ResourceDependencyTypes.FragmentShaderRead
                     ),
                     new ResourceDependency<>(
@@ -337,10 +337,12 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
         renderGraph.addPasses(
                 scenePass,
-                mangaPass,
+                shadowPass,
                 swapchainPass
         );
     }
+
+
 
     @Override
     public void render(Renderer renderer, Scene scene) {
@@ -373,54 +375,128 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
                 scenePass.resolveBarriers();
 
-                scenePass.startRendering(sceneRT, renderer.getWidth(), renderer.getHeight(),true, Color.BLACK);
+                //Shadow Map Gen (mode 1)
                 {
-                    scene.getEngine().findEntitiesWith(TransformComponent.class, StaticMeshComponent.class).stream().forEach(components -> {
+                    scene.getEngine().findEntitiesWith(LightComponent.class).stream().forEach(lightEntityComponent -> {
+
+                        int width, height;
+                        {
+                            Texture texture = lightEntityComponent.comp().renderTarget.getAttachmentByIndex(0).getTextures()[0];
+                            width = texture.getWidth();
+                            height = texture.getHeight();
+                        }
 
 
-                        TransformComponent transformComponent = components.comp1();
-                        StaticMeshComponent staticMeshComponent = components.comp2();
-
-                        ByteBuffer transformsData = staticMeshComponent.staticMeshBatch().getTransformsBuffers()[renderer.getFrameIndex()].get();
-                        transformComponent.transform().get(transformComponent.transformIndex() * SizeUtil.MATRIX_SIZE_BYTES, transformsData);
-                        ByteBuffer cameraData = staticMeshComponent.staticMeshBatch().getCameraBuffers()[renderer.getFrameIndex()].get();
-
-                        sceneCamera.getView().get(0, cameraData);
-                        sceneCamera.getProj().get(SizeUtil.MATRIX_SIZE_BYTES, cameraData);
-
-                        scenePass.setDrawBuffers(
-                                staticMeshComponent.staticMeshBatch().getVertexBuffer(),
-                                staticMeshComponent.staticMeshBatch().getIndexBuffer()
-                        );
-                        scenePass.setShaderProgram(
-                                staticMeshComponent.staticMeshBatch().getShaderProgram()
-                        );
-                        scenePass.drawIndexed(staticMeshComponent.staticMeshBatch().getIndexCount(), 0);
-                    });
-                    scene.getEngine().findEntitiesWith(TransformComponent.class, DynamicMeshComponent.class).stream().forEach(components -> {
+                        scenePass.startRendering(lightEntityComponent.comp().renderTarget, width, height, true, Color.BLACK);
+                        {
 
 
-                        TransformComponent transformComponent = components.comp1();
-                        DynamicMeshComponent dynamicMeshComponent = components.comp2();
+                            scene.getEngine().findEntitiesWith(TransformComponent.class, StaticMeshComponent.class).stream().forEach(components -> {
 
-                        ByteBuffer transformsData = dynamicMeshComponent.dynamicMesh().getTransformsBuffers()[renderer.getFrameIndex()].get();
-                        transformComponent.transform().get(0, transformsData);
-                        ByteBuffer cameraData = dynamicMeshComponent.dynamicMesh().getCameraBuffers()[renderer.getFrameIndex()].get();
 
-                        sceneCamera.getView().get(0, cameraData);
-                        sceneCamera.getProj().get(SizeUtil.MATRIX_SIZE_BYTES, cameraData);
+                                TransformComponent transformComponent = components.comp1();
+                                StaticMeshComponent staticMeshComponent = components.comp2();
 
-                        scenePass.setDrawBuffers(
-                                dynamicMeshComponent.dynamicMesh().getVertexBuffer(),
-                                dynamicMeshComponent.dynamicMesh().getIndexBuffer()
-                        );
-                        scenePass.setShaderProgram(
-                                dynamicMeshComponent.dynamicMesh().getShaderProgram()
-                        );
-                        scenePass.drawIndexed(dynamicMeshComponent.dynamicMesh().getIndexCount(), 0);
+                                ByteBuffer transformsData = staticMeshComponent.staticMeshBatch().getTransformsBuffers()[renderer.getFrameIndex()].get();
+                                transformComponent.transform().get(transformComponent.transformIndex() * SizeUtil.MATRIX_SIZE_BYTES, transformsData);
+                                ByteBuffer cameraData = staticMeshComponent.staticMeshBatch().getCameraBuffers()[renderer.getFrameIndex()].get();
+
+
+                                lightEntityComponent.comp().view.get(0, cameraData);
+                                lightEntityComponent.comp().proj.get(SizeUtil.MATRIX_SIZE_BYTES, cameraData);
+
+
+                                scenePass.setDrawBuffers(
+                                        staticMeshComponent.staticMeshBatch().getVertexBuffer(),
+                                        staticMeshComponent.staticMeshBatch().getIndexBuffer()
+                                );
+                                scenePass.setShaderProgram(
+                                        staticMeshComponent.staticMeshBatch().getShaderProgram()
+                                );
+                                scenePass.drawIndexed(staticMeshComponent.staticMeshBatch().getIndexCount(), 1);
+                            });
+                            scene.getEngine().findEntitiesWith(TransformComponent.class, DynamicMeshComponent.class).stream().forEach(components -> {
+
+
+                                TransformComponent transformComponent = components.comp1();
+                                DynamicMeshComponent dynamicMeshComponent = components.comp2();
+
+                                ByteBuffer transformsData = dynamicMeshComponent.dynamicMesh().getTransformsBuffers()[renderer.getFrameIndex()].get();
+                                transformComponent.transform().get(0, transformsData);
+                                ByteBuffer cameraData = dynamicMeshComponent.dynamicMesh().getCameraBuffers()[renderer.getFrameIndex()].get();
+
+
+                                lightEntityComponent.comp().view.get(0, cameraData);
+                                lightEntityComponent.comp().proj.get(SizeUtil.MATRIX_SIZE_BYTES, cameraData);
+
+                                scenePass.setDrawBuffers(
+                                        dynamicMeshComponent.dynamicMesh().getVertexBuffer(),
+                                        dynamicMeshComponent.dynamicMesh().getIndexBuffer()
+                                );
+                                scenePass.setShaderProgram(
+                                        dynamicMeshComponent.dynamicMesh().getShaderProgram()
+                                );
+                                scenePass.drawIndexed(dynamicMeshComponent.dynamicMesh().getIndexCount(), 1);
+                            });
+                        }
+                        scenePass.endRendering();
                     });
                 }
-                scenePass.endRendering();
+
+                //Default Rendering (mode 0)
+                {
+                    scenePass.startRendering(scenePassRT, renderer.getWidth(), renderer.getHeight(), true, Color.BLACK);
+                    {
+                        scene.getEngine().findEntitiesWith(TransformComponent.class, StaticMeshComponent.class).stream().forEach(components -> {
+
+
+                            TransformComponent transformComponent = components.comp1();
+                            StaticMeshComponent staticMeshComponent = components.comp2();
+
+                            ByteBuffer transformsData = staticMeshComponent.staticMeshBatch().getTransformsBuffers()[renderer.getFrameIndex()].get();
+                            transformComponent.transform().get(transformComponent.transformIndex() * SizeUtil.MATRIX_SIZE_BYTES, transformsData);
+                            ByteBuffer cameraData = staticMeshComponent.staticMeshBatch().getCameraBuffers()[renderer.getFrameIndex()].get();
+
+
+                            sceneCamera.getView().get(0, cameraData);
+                            sceneCamera.getProj().get(SizeUtil.MATRIX_SIZE_BYTES, cameraData);
+
+
+                            scenePass.setDrawBuffers(
+                                    staticMeshComponent.staticMeshBatch().getVertexBuffer(),
+                                    staticMeshComponent.staticMeshBatch().getIndexBuffer()
+                            );
+                            scenePass.setShaderProgram(
+                                    staticMeshComponent.staticMeshBatch().getShaderProgram()
+                            );
+                            scenePass.drawIndexed(staticMeshComponent.staticMeshBatch().getIndexCount(), 0);
+                        });
+                        scene.getEngine().findEntitiesWith(TransformComponent.class, DynamicMeshComponent.class).stream().forEach(components -> {
+
+
+                            TransformComponent transformComponent = components.comp1();
+                            DynamicMeshComponent dynamicMeshComponent = components.comp2();
+
+                            ByteBuffer transformsData = dynamicMeshComponent.dynamicMesh().getTransformsBuffers()[renderer.getFrameIndex()].get();
+                            transformComponent.transform().get(0, transformsData);
+                            ByteBuffer cameraData = dynamicMeshComponent.dynamicMesh().getCameraBuffers()[renderer.getFrameIndex()].get();
+
+
+                            sceneCamera.getView().get(0, cameraData);
+                            sceneCamera.getProj().get(SizeUtil.MATRIX_SIZE_BYTES, cameraData);
+
+                            scenePass.setDrawBuffers(
+                                    dynamicMeshComponent.dynamicMesh().getVertexBuffer(),
+                                    dynamicMeshComponent.dynamicMesh().getIndexBuffer()
+                            );
+                            scenePass.setShaderProgram(
+                                    dynamicMeshComponent.dynamicMesh().getShaderProgram()
+                            );
+                            scenePass.drawIndexed(dynamicMeshComponent.dynamicMesh().getIndexCount(), 0);
+                        });
+                    }
+                    scenePass.endRendering();
+                }
 
             }
             scenePass.endRecording();
@@ -428,37 +504,37 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
 
 
-        mangaPass.setPassExecuteCallback(() -> {
+        shadowPass.setPassExecuteCallback(() -> {
 
 
-            mangaPassShaderProgram.updateTextures(
+            shadowPassShaderProgram.updateTextures(
                     renderer.getFrameIndex(),
                     new ShaderUpdate<>(
                             "inputColorTexture",
                             0,
                             0,
-                            ((Texture[]) mangaPass.getResourceDependencyByNameAndType("InputColorTextures", ResourceDependencyTypes.ComputeShaderRead).getDependency())[renderer.getFrameIndex()]
+                            ((Texture[]) shadowPass.getResourceDependencyByNameAndType("InputColorTextures", ResourceDependencyTypes.ComputeShaderRead).getDependency())[renderer.getFrameIndex()]
                     )
             );
 
 
-            mangaPassShaderProgram.updateTextures(
+            shadowPassShaderProgram.updateTextures(
                     renderer.getFrameIndex(),
                     new ShaderUpdate<>(
                             "outputTexture",
                             0,
                             1,
-                            ((Texture[]) mangaPass.getResourceDependencyByNameAndType("OutputTextures", ResourceDependencyTypes.ComputeShaderWrite).getDependency())[renderer.getFrameIndex()]
+                            ((Texture[]) shadowPass.getResourceDependencyByNameAndType("OutputTextures", ResourceDependencyTypes.ComputeShaderWrite).getDependency())[renderer.getFrameIndex()]
                     )
             );
 
-            mangaPass.startRecording(renderer.getFrameIndex());
+            shadowPass.startRecording(renderer.getFrameIndex());
             {
-                mangaPass.resolveBarriers();
-                mangaPass.setShaderProgram(mangaPassShaderProgram);
-                mangaPass.dispatch(1920, 1080, 1, 0);
+                shadowPass.resolveBarriers();
+                shadowPass.setShaderProgram(shadowPassShaderProgram);
+                shadowPass.dispatch(1920, 1080, 1, 0);
             }
-            mangaPass.endRecording();
+            shadowPass.endRecording();
         });
 
 

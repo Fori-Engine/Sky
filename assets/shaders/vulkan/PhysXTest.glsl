@@ -23,11 +23,9 @@ layout(push_constant) uniform PushConstants {
 
 void main() {
 
-    if(shaderMode.mode == 0) {
-        gl_Position = camera.proj * camera.view * transforms.models[int(inputTransformIndex)] * vec4(inputPos.xyz, 1.0);
-        outputPos = vec4(transforms.models[int(inputTransformIndex)] * vec4(inputPos.xyz, 1.0)).xyz;
-        outputColor = inputColor;
-    }
+    gl_Position = camera.proj * camera.view * transforms.models[int(inputTransformIndex)] * vec4(inputPos.xyz, 1.0);
+    outputPos = vec4(transforms.models[int(inputTransformIndex)] * vec4(inputPos.xyz, 1.0)).xyz;
+    outputColor = inputColor;
 }
 
 
@@ -44,6 +42,10 @@ layout(push_constant) uniform PushConstants {
 
 void main() {
     if(shaderMode.mode == 0) {
-        outputColor = vec4(inputPos.xyz, 1.0);
+        outputColor = inputColor;
+    }
+    else {
+        float depth = inputPos.z;
+        outputColor = vec4(depth, depth, depth, 1.0);
     }
 }

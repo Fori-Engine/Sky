@@ -25,8 +25,8 @@ void main() {
     }
     else if(shaderMode.mode == 1){
 
-        float grayscale = (inputColor.r + inputColor.g + inputColor.b) / 3.0;
-        outputColor = vec4(grayscale, grayscale, grayscale, 1);
+        //float grayscale = (inputColor.r + inputColor.g + inputColor.b) / 3.0;
+        outputColor = outputColor * vec4(1.0, 0.0, 0.0, 1.0); //vec4(grayscale, grayscale, grayscale, 1);
     }
     imageStore(outputTexture, uv, outputColor);
 }
