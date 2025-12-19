@@ -28,8 +28,9 @@ public class VulkanStaticMeshBatch extends StaticMeshBatch {
                                  VkDevice device,
                                  int maxVertexCount,
                                  int maxIndexCount,
-                                 int maxTransformCount) {
-        super(maxVertexCount, maxIndexCount, maxTransformCount, shaderProgram);
+                                 int maxTransformCount,
+                                 int maxCameraCount) {
+        super(maxVertexCount, maxIndexCount, maxTransformCount, maxCameraCount, shaderProgram);
         this.parent = parent;
         this.graphicsQueue = graphicsQueue;
         this.device = device;
@@ -98,8 +99,8 @@ public class VulkanStaticMeshBatch extends StaticMeshBatch {
 
             cameraBuffers[i] = Buffer.newBuffer(
                     parent,
-                    Camera.SIZE,
-                    Buffer.Usage.UniformBuffer,
+                    SizeUtil.MATRIX_SIZE_BYTES * maxCameraCount * 2,
+                    Buffer.Usage.ShaderStorageBuffer,
                     Buffer.Type.CPUGPUShared,
                     false
             );

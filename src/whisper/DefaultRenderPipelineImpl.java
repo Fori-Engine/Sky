@@ -191,7 +191,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
             for (int i = 0; i < renderer.getMaxFramesInFlight(); i++) {
                 swapchainPassCameraBuffers[i] = Buffer.newBuffer(
                         renderer,
-                        Camera.SIZE,
+                        SizeUtil.MATRIX_SIZE_BYTES,
                         Buffer.Usage.UniformBuffer,
                         Buffer.Type.CPUGPUShared,
                         false
@@ -392,6 +392,9 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
                 //Default Rendering (mode 0)
                 {
+                    int mode = 0;
+
+
                     scenePass.startRendering(scenePassRT, renderer.getWidth(), renderer.getHeight(), true, Color.BLACK);
                     {
                         scene.getEngine().findEntitiesWith(TransformComponent.class, StaticMeshComponent.class).stream().forEach(components -> {
@@ -406,7 +409,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
 
                             sceneCamera.getView().get(0, cameraData);
-                            sceneCamera.getProj().get(SizeUtil.MATRIX_SIZE_BYTES, cameraData);
+                            sceneCamera.getProj().get(staticMeshComponent.staticMeshBatch().getMaxCameraCount() * SizeUtil.MATRIX_SIZE_BYTES, cameraData);
 
 
                             scenePass.setDrawBuffers(
@@ -416,7 +419,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                             scenePass.setShaderProgram(
                                     staticMeshComponent.staticMeshBatch().getShaderProgram()
                             );
-                            scenePass.drawIndexed(staticMeshComponent.staticMeshBatch().getIndexCount(), new int[]{0});
+                            scenePass.drawIndexed(staticMeshComponent.staticMeshBatch().getIndexCount(), new int[]{mode, 0});
                         });
                         scene.getEngine().findEntitiesWith(TransformComponent.class, DynamicMeshComponent.class).stream().forEach(components -> {
 
@@ -428,9 +431,8 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                             transformComponent.transform().get(0, transformsData);
                             ByteBuffer cameraData = dynamicMeshComponent.dynamicMesh().getCameraBuffers()[renderer.getFrameIndex()].get();
 
-
                             sceneCamera.getView().get(0, cameraData);
-                            sceneCamera.getProj().get(SizeUtil.MATRIX_SIZE_BYTES, cameraData);
+                            sceneCamera.getProj().get(dynamicMeshComponent.dynamicMesh().getMaxCameraCount() * SizeUtil.MATRIX_SIZE_BYTES, cameraData);
 
                             scenePass.setDrawBuffers(
                                     dynamicMeshComponent.dynamicMesh().getVertexBuffer(),
@@ -439,7 +441,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                             scenePass.setShaderProgram(
                                     dynamicMeshComponent.dynamicMesh().getShaderProgram()
                             );
-                            scenePass.drawIndexed(dynamicMeshComponent.dynamicMesh().getIndexCount(), new int[]{0});
+                            scenePass.drawIndexed(dynamicMeshComponent.dynamicMesh().getIndexCount(), new int[]{mode, 0});
                         });
                     }
                     scenePass.endRendering();

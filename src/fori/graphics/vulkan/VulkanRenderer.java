@@ -455,9 +455,9 @@ public class VulkanRenderer extends Renderer {
 
 
     @Override
-    public StaticMeshBatch newStaticMeshBatch(int maxVertexCount, int maxIndexCount, int maxTransformCount, ShaderProgram shaderProgram) {
+    public StaticMeshBatch newStaticMeshBatch(int maxVertexCount, int maxIndexCount, int maxTransformCount, int maxCameraCount, ShaderProgram shaderProgram) {
 
-        return new VulkanStaticMeshBatch(this, shaderProgram, getMaxFramesInFlight(), commandPool, graphicsQueue, device, maxVertexCount, maxIndexCount, maxTransformCount);
+        return new VulkanStaticMeshBatch(this, shaderProgram, getMaxFramesInFlight(), commandPool, graphicsQueue, device, maxVertexCount, maxIndexCount, maxTransformCount, maxCameraCount);
     }
 
 
@@ -510,14 +510,15 @@ public class VulkanRenderer extends Renderer {
     }
 
     @Override
-    public DynamicMesh newDynamicMesh(int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram) {
+    public DynamicMesh newDynamicMesh(int maxVertexCount, int maxIndexCount, int maxCameraCount, ShaderProgram shaderProgram) {
 
         VulkanDynamicMesh vulkanDynamicMesh = new VulkanDynamicMesh(
                 this,
                 shaderProgram,
                 getMaxFramesInFlight(),
                 maxVertexCount,
-                maxIndexCount
+                maxIndexCount,
+                maxCameraCount
         );
 
 

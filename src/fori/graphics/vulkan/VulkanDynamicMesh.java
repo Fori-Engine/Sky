@@ -9,9 +9,10 @@ public class VulkanDynamicMesh extends DynamicMesh {
                              ShaderProgram shaderProgram,
                              int framesInFlight,
                              int maxVertexCount,
-                             int maxIndexCount) {
+                             int maxIndexCount,
+                             int maxCameraCount) {
 
-        super(maxVertexCount, maxIndexCount, shaderProgram);
+        super(maxVertexCount, maxIndexCount, maxCameraCount, shaderProgram);
         vertexBuffer = Buffer.newBuffer(
                 parent,
                 VertexAttributes.getSize(shaderProgram.getShaderMap().get(ShaderType.Vertex).getVertexAttributes()) * Float.BYTES * this.maxVertexCount,
@@ -41,8 +42,8 @@ public class VulkanDynamicMesh extends DynamicMesh {
 
             cameraBuffers[i] = Buffer.newBuffer(
                     parent,
-                    Camera.SIZE,
-                    Buffer.Usage.UniformBuffer,
+                    SizeUtil.MATRIX_SIZE_BYTES * maxCameraCount * 2,
+                    Buffer.Usage.ShaderStorageBuffer,
                     Buffer.Type.CPUGPUShared,
                     false
             );

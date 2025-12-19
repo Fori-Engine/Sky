@@ -80,7 +80,7 @@ public class WhisperStage extends Stage {
         String logDstPath = cmd.getOptionValue("logdst");
 
 
-        AssetPacks.open("core", AssetPack.openPack(new File("assets.pkg")));
+        AssetPacks.open("core", AssetPack.openLocal(new File("assets")));
 
 
         surface.display();
@@ -160,11 +160,11 @@ public class WhisperStage extends Stage {
                     new ShaderResSet(
                             0,
                             new ShaderRes(
-                                    "camera",
+                                    "cameras",
                                     0,
-                                    UniformBuffer,
+                                    ShaderStorageBuffer,
                                     VertexStage
-                            ).sizeBytes(2 * SizeUtil.MATRIX_SIZE_BYTES),
+                            ).sizeBytes(2 * Camera.SIZE),
                             new ShaderRes(
                                     "transforms",
                                     1,
@@ -182,7 +182,7 @@ public class WhisperStage extends Stage {
 
 
             mesh = Mesh.newMesh(shaderProgram.getShaderMap().get(ShaderType.Vertex).getVertexAttributes(), AssetPacks.getAsset("core:assets/models/viking_room.obj"));
-            StaticMeshBatch shopStaticMeshBatch = renderer.newStaticMeshBatch(100000, 100000, 1, shaderProgram);
+            StaticMeshBatch shopStaticMeshBatch = renderer.newStaticMeshBatch(100000, 100000, 1, 2, shaderProgram);
 
             shopStaticMeshBatch.submitMesh(mesh, new MeshUploaderWithTransform(0));
             shopStaticMeshBatch.finish();
@@ -198,7 +198,7 @@ public class WhisperStage extends Stage {
 
                 shopStaticMeshBatch.getShaderProgram().updateBuffers(
                         frameIndex,
-                        new ShaderUpdate<>("camera", 0, 0, shopStaticMeshBatch.getCameraBuffers()[frameIndex]),
+                        new ShaderUpdate<>("cameras", 0, 0, shopStaticMeshBatch.getCameraBuffers()[frameIndex]),
                         new ShaderUpdate<>("transforms", 0, 1, shopStaticMeshBatch.getTransformsBuffers()[frameIndex])
                 );
             }
@@ -213,6 +213,7 @@ public class WhisperStage extends Stage {
 
 
         }
+
 
 
         //Player
@@ -248,11 +249,11 @@ public class WhisperStage extends Stage {
                         new ShaderResSet(
                                 0,
                                 new ShaderRes(
-                                        "camera",
+                                        "cameras",
                                         0,
-                                        UniformBuffer,
+                                        ShaderStorageBuffer,
                                         VertexStage
-                                ).sizeBytes(2 * SizeUtil.MATRIX_SIZE_BYTES),
+                                ).sizeBytes(2 * Camera.SIZE),
                                 new ShaderRes(
                                         "transforms",
                                         1,
@@ -266,7 +267,7 @@ public class WhisperStage extends Stage {
 
 
             Mesh mesh = MeshGenerator.newBox(1.0f, 1.0f, 1.0f);
-            DynamicMesh dynamicMesh = renderer.newDynamicMesh(100000, 100000, shaderProgram);
+            DynamicMesh dynamicMesh = renderer.newDynamicMesh(100000, 100000, 2, shaderProgram);
             dynamicMesh.submit(mesh, new MeshUploaderWithTransform(0));
             scene.registerDynamicMesh(dynamicMesh);
 
@@ -354,8 +355,6 @@ public class WhisperStage extends Stage {
 
         }
 
-
-
         //Level
         {
 
@@ -388,11 +387,11 @@ public class WhisperStage extends Stage {
                         new ShaderResSet(
                                 0,
                                 new ShaderRes(
-                                        "camera",
+                                        "cameras",
                                         0,
-                                        UniformBuffer,
+                                        ShaderStorageBuffer,
                                         VertexStage
-                                ).sizeBytes(2 * SizeUtil.MATRIX_SIZE_BYTES),
+                                ).sizeBytes(2 * Camera.SIZE),
                                 new ShaderRes(
                                         "transforms",
                                         1,
@@ -406,7 +405,7 @@ public class WhisperStage extends Stage {
 
 
             Mesh mesh = MeshGenerator.newBox(10.0f, 1.0f, 10.0f);
-            DynamicMesh dynamicMesh = renderer.newDynamicMesh(100000, 100000, shaderProgram);
+            DynamicMesh dynamicMesh = renderer.newDynamicMesh(100000, 100000, 2, shaderProgram);
             dynamicMesh.submit(mesh, new MeshUploaderWithTransform(0));
             scene.registerDynamicMesh(dynamicMesh);
 
@@ -426,6 +425,8 @@ public class WhisperStage extends Stage {
                     new NVPhysXComponent(new BoxCollider(10f, 1f, 10f), new Material(0.05f, 0.05f, 0.99f), ActorType.Static)
             );
         }
+
+
 
 
 

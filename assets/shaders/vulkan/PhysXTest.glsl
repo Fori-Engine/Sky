@@ -8,22 +8,23 @@ layout(location = 2) in vec4 inputColor;
 layout(location = 0) out vec4 outputColor;
 layout(location = 1) out vec3 outputPos;
 
-layout(set = 0, binding = 0) uniform Camera {
-    mat4 view;
-    mat4 proj;
-} camera;
+layout(std140, set = 0, binding = 0) readonly buffer Cameras {
+    mat4 view[2];
+    mat4 proj[2];
+} cameras;
 
 layout(std140, set = 0, binding = 1) readonly buffer Transforms {
     mat4 models[];
 } transforms;
 
 layout(push_constant) uniform PushConstants {
-    int mode[];
+    int mode[2];
 } shaderMode;
 
 void main() {
+    int cameraIndex = shaderMode.mode[1];
 
-    gl_Position = camera.proj * camera.view * transforms.models[int(inputTransformIndex)] * vec4(inputPos.xyz, 1.0);
+    gl_Position = cameras.proj[cameraIndex] * cameras.view[cameraIndex] * transforms.models[int(inputTransformIndex)] * vec4(inputPos.xyz, 1.0);
     outputPos = vec4(transforms.models[int(inputTransformIndex)] * vec4(inputPos.xyz, 1.0)).xyz;
     outputColor = inputColor;
 }
@@ -37,7 +38,7 @@ layout(location = 0) out vec4 outputColor;
 
 
 layout(push_constant) uniform PushConstants {
-    int mode[];
+    int mode[2];
 } shaderMode;
 
 void main() {

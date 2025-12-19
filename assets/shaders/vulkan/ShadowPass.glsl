@@ -8,7 +8,7 @@ layout(set = 0, binding = 1, rgba32f) writeonly uniform image2D outputTexture;
 
 
 layout(push_constant) uniform PushConstants {
-    int mode[];
+    int mode[1];
 } shaderMode;
 
 void main() {
@@ -22,7 +22,7 @@ void main() {
     if(shaderMode.mode[0] == 0) {
         outputColor = inputColor;
     }
-    else if(shaderMode.mode == 1){
+    else if(shaderMode.mode[0] == 1){
 
         //float grayscale = (inputColor.r + inputColor.g + inputColor.b) / 3.0;
         outputColor = outputColor * vec4(1.0, 0.0, 0.0, 1.0); //vec4(grayscale, grayscale, grayscale, 1);
