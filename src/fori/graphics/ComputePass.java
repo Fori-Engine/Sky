@@ -6,5 +6,5 @@ public abstract class ComputePass extends Pass {
         super(parent, name, framesInFlight);
     }
     public abstract void setShaderProgram(ShaderProgram shaderProgram);
-    public abstract void dispatch(int groupCountX, int groupCountY, int groupCountZ, int shaderMode);
+    public abstract void dispatch(int groupCountX, int groupCountY, int groupCountZ, int[] shaderMode);
 }

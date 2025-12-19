@@ -13,17 +13,13 @@ public abstract class ShaderProgram extends Disposable {
     protected Map<ShaderType, Shader> shaderMap = new HashMap<>();
     protected ShaderResSet[] resourcesSets;
     protected ShaderProgramType type;
+    protected int shaderContextSize;
 
 
-    public ShaderProgram(Disposable parent, ShaderProgramType type, RenderTarget renderTarget){
+    public ShaderProgram(Disposable parent, ShaderProgramType type, int shaderContextSize){
         super(parent);
         this.type = type;
-
-    }
-
-    public ShaderProgram(Disposable parent, ShaderProgramType type){
-        super(parent);
-        this.type = type;
+        this.shaderContextSize = shaderContextSize;
     }
 
 
@@ -41,15 +37,15 @@ public abstract class ShaderProgram extends Disposable {
         return shaderMap;
     }
 
-    public static ShaderProgram newGraphicsShaderProgram(Disposable parent){
+    public static ShaderProgram newGraphicsShaderProgram(Disposable parent, int shaderContextSize){
         if(Renderer.getRenderAPI() == RenderAPI.Vulkan){
-            return new VulkanShaderProgram(parent, ShaderProgramType.Graphics);
+            return new VulkanShaderProgram(parent, ShaderProgramType.Graphics, shaderContextSize);
         }
         return null;
     }
-    public static ShaderProgram newComputeShaderProgram(Disposable parent) {
+    public static ShaderProgram newComputeShaderProgram(Disposable parent, int shaderContextSize) {
         if(Renderer.getRenderAPI() == RenderAPI.Vulkan){
-            return new VulkanShaderProgram(parent, ShaderProgramType.Compute);
+            return new VulkanShaderProgram(parent, ShaderProgramType.Compute, shaderContextSize);
         }
         return null;
     }

@@ -5,11 +5,10 @@ layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
 layout(set = 0, binding = 0) uniform sampler2D inputColorTexture;
 layout(set = 0, binding = 1, rgba32f) writeonly uniform image2D outputTexture;
-//layout(set = 0, binding = 2) uniform sampler2D inputPosTexture;
 
 
 layout(push_constant) uniform PushConstants {
-    int mode;
+    int mode[];
 } shaderMode;
 
 void main() {
@@ -20,7 +19,7 @@ void main() {
     vec4 inputColor = texelFetch(inputColorTexture, uv, 0);
     vec4 outputColor = inputColor;
 
-    if(shaderMode.mode == 0) {
+    if(shaderMode.mode[0] == 0) {
         outputColor = inputColor;
     }
     else if(shaderMode.mode == 1){

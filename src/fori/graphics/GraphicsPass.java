@@ -17,5 +17,5 @@ public abstract class GraphicsPass extends Pass {
 
     public abstract void setDrawBuffers(Buffer vertexBuffer, Buffer indexBuffer);
     public abstract void setShaderProgram(ShaderProgram shaderProgram);
-    public abstract void drawIndexed(int indexCount, int shaderMode);
+    public abstract void drawIndexed(int indexCount, int[] shaderMode);
 }

@@ -135,7 +135,7 @@ public class WhisperStage extends Stage {
             );
 
 
-            shaderProgram = ShaderProgram.newGraphicsShaderProgram(renderer);
+            shaderProgram = ShaderProgram.newGraphicsShaderProgram(renderer, 2);
             shaderProgram.addShader(
                     ShaderType.Vertex,
                     Shader.newShader(shaderProgram, ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex))
@@ -226,7 +226,7 @@ public class WhisperStage extends Stage {
                 );
 
 
-                shaderProgram = ShaderProgram.newGraphicsShaderProgram(renderer);
+                shaderProgram = ShaderProgram.newGraphicsShaderProgram(renderer, 2);
                 shaderProgram.addShader(
                         ShaderType.Vertex,
                         Shader.newShader(shaderProgram, ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex))
@@ -336,13 +336,13 @@ public class WhisperStage extends Stage {
             spotlightEntity = scene.createEntity(
                     new LightComponent(
                             new Matrix4f().lookAt(
-                                    new Vector3f(0.0f, 5.0f, 10.0f),
+                                    new Vector3f(0.0f, 10.0f, 0f),
                                     new Vector3f(0, 0, 0),
-                                    new Vector3f(0.0f, 1.0f, 0.0f)
+                                    new Vector3f(0.0f, -1.0f, 0.0f)
                             ),
                             new Matrix4f().perspective(
-                                    (float) Math.toRadians(75.0f),
-                                    (float) renderer.getWidth() / renderer.getHeight(),
+                                    (float) Math.toRadians(45.0f),
+                                    (float) 640 / 480,
                                     0.01f,
                                     100.0f,
                                     true
@@ -367,7 +367,7 @@ public class WhisperStage extends Stage {
                 );
 
 
-                shaderProgram = ShaderProgram.newGraphicsShaderProgram(renderer);
+                shaderProgram = ShaderProgram.newGraphicsShaderProgram(renderer, 2);
                 shaderProgram.addShader(
                         ShaderType.Vertex,
                         Shader.newShader(shaderProgram, ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex))

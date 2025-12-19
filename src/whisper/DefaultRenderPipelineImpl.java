@@ -17,14 +17,18 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
 
     private Camera sceneCamera;
+
+
     private GraphicsPass scenePass;
     private RenderTarget scenePassRT;
     private Texture[] sceneColorTextures;
 
-    private ComputePass shadowPass;
-    private RenderTarget shadowPassRT;
-    private Texture[] shadowPassColorTextures;
-    private ShaderProgram shadowPassShaderProgram;
+
+
+    private ComputePass shadowMapPass;
+    private RenderTarget shadowMapPassRT;
+    private Texture[] shadowMapPassColorTextures;
+    private ShaderProgram shadowMapPassShaderProgram;
 
 
     private GraphicsPass swapchainPass;
@@ -52,24 +56,10 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                     Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8, Texture.Filter.Nearest, Texture.Filter.Nearest),
                     Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8, Texture.Filter.Nearest, Texture.Filter.Nearest)
             };
-            /*
-            scenePosTextures = new Texture[]{
-                    Texture.newColorTexture(sceneRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8, Texture.Filter.Nearest, Texture.Filter.Nearest),
-                    Texture.newColorTexture(sceneRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8, Texture.Filter.Nearest, Texture.Filter.Nearest)
-            };
-
-             */
-
 
             scenePassRT.addAttachment(
                     new RenderTargetAttachment(RenderTargetAttachmentTypes.Color, sceneColorTextures)
             );
-            /*
-            sceneRT.addAttachment(
-                    new RenderTargetAttachment(RenderTargetAttachmentTypes.Pos, scenePosTextures)
-            );
-
-             */
 
             scenePassRT.addAttachment(
                     new RenderTargetAttachment(RenderTargetAttachmentTypes.Depth, new Texture[]{
@@ -82,28 +72,28 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
         //Shadow Pass Resources
         {
-            shadowPassRT = new RenderTarget(renderer);
-            shadowPassColorTextures = new Texture[]{
-                    Texture.newStorageTexture(shadowPassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32, Texture.Filter.Nearest, Texture.Filter.Nearest),
-                    Texture.newStorageTexture(shadowPassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32, Texture.Filter.Nearest, Texture.Filter.Nearest)
+            shadowMapPassRT = new RenderTarget(renderer);
+            shadowMapPassColorTextures = new Texture[]{
+                    Texture.newStorageTexture(shadowMapPassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32, Texture.Filter.Nearest, Texture.Filter.Nearest),
+                    Texture.newStorageTexture(shadowMapPassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32, Texture.Filter.Nearest, Texture.Filter.Nearest)
             };
 
-            shadowPassRT.addAttachment(
-                    new RenderTargetAttachment(RenderTargetAttachmentTypes.Color, shadowPassColorTextures)
+            shadowMapPassRT.addAttachment(
+                    new RenderTargetAttachment(RenderTargetAttachmentTypes.Color, shadowMapPassColorTextures)
             );
 
             ShaderReader.ShaderSources shaderSources = ShaderReader.read(
                     AssetPacks.<String>getAsset("core:assets/shaders/vulkan/ShadowPass.glsl").asset
             );
 
-            shadowPassShaderProgram = ShaderProgram.newComputeShaderProgram(renderer);
-            shadowPassShaderProgram.addShader(
+            shadowMapPassShaderProgram = ShaderProgram.newComputeShaderProgram(renderer, 1);
+            shadowMapPassShaderProgram.addShader(
                     ShaderType.Compute,
-                    Shader.newShader(shadowPassShaderProgram, ShaderType.Compute, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Compute), ShaderType.Compute))
+                    Shader.newShader(shadowMapPassShaderProgram, ShaderType.Compute, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Compute), ShaderType.Compute))
             );
 
 
-            shadowPassShaderProgram.bind(
+            shadowMapPassShaderProgram.bind(
                     new ShaderResSet(
                             0,
 
@@ -144,7 +134,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
             );
 
 
-            swapchainPassShaderProgram = ShaderProgram.newGraphicsShaderProgram(renderer);
+            swapchainPassShaderProgram = ShaderProgram.newGraphicsShaderProgram(renderer, 1);
             swapchainPassShaderProgram.addShader(
                     ShaderType.Vertex,
                     Shader.newShader(swapchainPassShaderProgram, ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex))
@@ -297,9 +287,9 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
         }
 
 
-        shadowPass = Pass.newComputePass(renderer, "Shadow", renderer.getMaxFramesInFlight());
+        shadowMapPass = Pass.newComputePass(renderer, "Shadow", renderer.getMaxFramesInFlight());
         {
-            shadowPass.setResourceDependencies(
+            shadowMapPass.setResourceDependencies(
 
                     new ResourceDependency<>(
                             "InputColorTextures",
@@ -308,7 +298,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                     ),
                     new ResourceDependency<>(
                             "OutputTextures",
-                            shadowPassColorTextures,
+                            shadowMapPassColorTextures,
                             ResourceDependencyTypes.ComputeShaderWrite
                     )
             );
@@ -319,7 +309,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
                     new ResourceDependency<>(
                             "InputTextures",
-                            shadowPassColorTextures,
+                            shadowMapPassColorTextures,
                             ResourceDependencyTypes.FragmentShaderRead
                     ),
                     new ResourceDependency<>(
@@ -337,7 +327,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
         renderGraph.addPasses(
                 scenePass,
-                shadowPass,
+                shadowMapPass,
                 swapchainPass
         );
     }
@@ -375,73 +365,30 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
                 scenePass.resolveBarriers();
 
-                //Shadow Map Gen (mode 1)
-                {
-                    scene.getEngine().findEntitiesWith(LightComponent.class).stream().forEach(lightEntityComponent -> {
+                /*
+                Shader invocations only happen when the command buffer actually executes, not when it's being recorded lmao
+                This means that during recording only the light transform gets sent to the shader because it's the last
+                thing to get written during CB recording
 
-                        int width, height;
-                        {
-                            Texture texture = lightEntityComponent.comp().renderTarget.getAttachmentByIndex(0).getTextures()[0];
-                            width = texture.getWidth();
-                            height = texture.getHeight();
-                        }
+                Push descriptors maybe?
 
+                A proper solution is to actually like, create a pass entirely for generating shadow maps, shove
+                EVERY SINGLE light transform into one SSBO and just:
 
-                        scenePass.startRendering(lightEntityComponent.comp().renderTarget, width, height, true, Color.BLACK);
-                        {
+                - Set light transform index via push constants
+                - Draw
+                - Repeat for all lights
 
+                 */
 
-                            scene.getEngine().findEntitiesWith(TransformComponent.class, StaticMeshComponent.class).stream().forEach(components -> {
-
-
-                                TransformComponent transformComponent = components.comp1();
-                                StaticMeshComponent staticMeshComponent = components.comp2();
-
-                                ByteBuffer transformsData = staticMeshComponent.staticMeshBatch().getTransformsBuffers()[renderer.getFrameIndex()].get();
-                                transformComponent.transform().get(transformComponent.transformIndex() * SizeUtil.MATRIX_SIZE_BYTES, transformsData);
-                                ByteBuffer cameraData = staticMeshComponent.staticMeshBatch().getCameraBuffers()[renderer.getFrameIndex()].get();
+                /*
+                - Push constants data
+                - camera/light pov ssbo { n view matrices, n proj matrices}
+                - ShadowMapGenPass
 
 
-                                lightEntityComponent.comp().view.get(0, cameraData);
-                                lightEntityComponent.comp().proj.get(SizeUtil.MATRIX_SIZE_BYTES, cameraData);
 
-
-                                scenePass.setDrawBuffers(
-                                        staticMeshComponent.staticMeshBatch().getVertexBuffer(),
-                                        staticMeshComponent.staticMeshBatch().getIndexBuffer()
-                                );
-                                scenePass.setShaderProgram(
-                                        staticMeshComponent.staticMeshBatch().getShaderProgram()
-                                );
-                                scenePass.drawIndexed(staticMeshComponent.staticMeshBatch().getIndexCount(), 1);
-                            });
-                            scene.getEngine().findEntitiesWith(TransformComponent.class, DynamicMeshComponent.class).stream().forEach(components -> {
-
-
-                                TransformComponent transformComponent = components.comp1();
-                                DynamicMeshComponent dynamicMeshComponent = components.comp2();
-
-                                ByteBuffer transformsData = dynamicMeshComponent.dynamicMesh().getTransformsBuffers()[renderer.getFrameIndex()].get();
-                                transformComponent.transform().get(0, transformsData);
-                                ByteBuffer cameraData = dynamicMeshComponent.dynamicMesh().getCameraBuffers()[renderer.getFrameIndex()].get();
-
-
-                                lightEntityComponent.comp().view.get(0, cameraData);
-                                lightEntityComponent.comp().proj.get(SizeUtil.MATRIX_SIZE_BYTES, cameraData);
-
-                                scenePass.setDrawBuffers(
-                                        dynamicMeshComponent.dynamicMesh().getVertexBuffer(),
-                                        dynamicMeshComponent.dynamicMesh().getIndexBuffer()
-                                );
-                                scenePass.setShaderProgram(
-                                        dynamicMeshComponent.dynamicMesh().getShaderProgram()
-                                );
-                                scenePass.drawIndexed(dynamicMeshComponent.dynamicMesh().getIndexCount(), 1);
-                            });
-                        }
-                        scenePass.endRendering();
-                    });
-                }
+                 */
 
                 //Default Rendering (mode 0)
                 {
@@ -469,7 +416,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                             scenePass.setShaderProgram(
                                     staticMeshComponent.staticMeshBatch().getShaderProgram()
                             );
-                            scenePass.drawIndexed(staticMeshComponent.staticMeshBatch().getIndexCount(), 0);
+                            scenePass.drawIndexed(staticMeshComponent.staticMeshBatch().getIndexCount(), new int[]{0});
                         });
                         scene.getEngine().findEntitiesWith(TransformComponent.class, DynamicMeshComponent.class).stream().forEach(components -> {
 
@@ -492,11 +439,83 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                             scenePass.setShaderProgram(
                                     dynamicMeshComponent.dynamicMesh().getShaderProgram()
                             );
-                            scenePass.drawIndexed(dynamicMeshComponent.dynamicMesh().getIndexCount(), 0);
+                            scenePass.drawIndexed(dynamicMeshComponent.dynamicMesh().getIndexCount(), new int[]{0});
                         });
                     }
                     scenePass.endRendering();
                 }
+
+                //Shadow Map Gen (mode 1)
+                /*
+                {
+                    scene.getEngine().findEntitiesWith(LightComponent.class).stream().forEach(lightEntityComponent -> {
+
+                        int width, height;
+                        {
+                            Texture texture = lightEntityComponent.comp().renderTarget.getAttachmentByIndex(0).getTextures()[0];
+                            width = texture.getWidth();
+                            height = texture.getHeight();
+                        }
+
+
+                        scenePass.startRendering(lightEntityComponent.comp().renderTarget, width, height, true, Color.RED);
+                        {
+
+
+                            scene.getEngine().findEntitiesWith(TransformComponent.class, StaticMeshComponent.class).stream().forEach(components -> {
+
+
+                                TransformComponent transformComponent = components.comp1();
+                                StaticMeshComponent staticMeshComponent = components.comp2();
+
+                                ByteBuffer transformsData = staticMeshComponent.staticMeshBatch().getTransformsBuffers()[renderer.getFrameIndex()].get();
+                                transformComponent.transform().get(transformComponent.transformIndex() * SizeUtil.MATRIX_SIZE_BYTES, transformsData);
+                                ByteBuffer cameraData = staticMeshComponent.staticMeshBatch().getCameraBuffers()[renderer.getFrameIndex()].get();
+
+
+                                lightEntityComponent.comp().view.get(0, cameraData);
+                                lightEntityComponent.comp().proj.get(SizeUtil.MATRIX_SIZE_BYTES, cameraData);
+
+
+                                scenePass.setDrawBuffers(
+                                        staticMeshComponent.staticMeshBatch().getVertexBuffer(),
+                                        staticMeshComponent.staticMeshBatch().getIndexBuffer()
+                                );
+                                scenePass.setShaderProgram(
+                                        staticMeshComponent.staticMeshBatch().getShaderProgram()
+                                );
+                                scenePass.drawIndexed(staticMeshComponent.staticMeshBatch().getIndexCount(), new int[]{1});
+                            });
+                            scene.getEngine().findEntitiesWith(TransformComponent.class, DynamicMeshComponent.class).stream().forEach(components -> {
+
+
+                                TransformComponent transformComponent = components.comp1();
+                                DynamicMeshComponent dynamicMeshComponent = components.comp2();
+
+                                ByteBuffer transformsData = dynamicMeshComponent.dynamicMesh().getTransformsBuffers()[renderer.getFrameIndex()].get();
+                                transformComponent.transform().get(0, transformsData);
+                                ByteBuffer cameraData = dynamicMeshComponent.dynamicMesh().getCameraBuffers()[renderer.getFrameIndex()].get();
+
+
+                                lightEntityComponent.comp().view.get(0, cameraData);
+                                lightEntityComponent.comp().proj.get(SizeUtil.MATRIX_SIZE_BYTES, cameraData);
+
+                                scenePass.setDrawBuffers(
+                                        dynamicMeshComponent.dynamicMesh().getVertexBuffer(),
+                                        dynamicMeshComponent.dynamicMesh().getIndexBuffer()
+                                );
+                                scenePass.setShaderProgram(
+                                        dynamicMeshComponent.dynamicMesh().getShaderProgram()
+                                );
+                                scenePass.drawIndexed(dynamicMeshComponent.dynamicMesh().getIndexCount(), new int[]{1});
+                            });
+                        }
+                        scenePass.endRendering();
+                    });
+
+                }
+
+                 */
 
             }
             scenePass.endRecording();
@@ -504,37 +523,37 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
 
 
-        shadowPass.setPassExecuteCallback(() -> {
+        shadowMapPass.setPassExecuteCallback(() -> {
 
 
-            shadowPassShaderProgram.updateTextures(
+            shadowMapPassShaderProgram.updateTextures(
                     renderer.getFrameIndex(),
                     new ShaderUpdate<>(
                             "inputColorTexture",
                             0,
                             0,
-                            ((Texture[]) shadowPass.getResourceDependencyByNameAndType("InputColorTextures", ResourceDependencyTypes.ComputeShaderRead).getDependency())[renderer.getFrameIndex()]
+                            ((Texture[]) shadowMapPass.getResourceDependencyByNameAndType("InputColorTextures", ResourceDependencyTypes.ComputeShaderRead).getDependency())[renderer.getFrameIndex()]
                     )
             );
 
 
-            shadowPassShaderProgram.updateTextures(
+            shadowMapPassShaderProgram.updateTextures(
                     renderer.getFrameIndex(),
                     new ShaderUpdate<>(
                             "outputTexture",
                             0,
                             1,
-                            ((Texture[]) shadowPass.getResourceDependencyByNameAndType("OutputTextures", ResourceDependencyTypes.ComputeShaderWrite).getDependency())[renderer.getFrameIndex()]
+                            ((Texture[]) shadowMapPass.getResourceDependencyByNameAndType("OutputTextures", ResourceDependencyTypes.ComputeShaderWrite).getDependency())[renderer.getFrameIndex()]
                     )
             );
 
-            shadowPass.startRecording(renderer.getFrameIndex());
+            shadowMapPass.startRecording(renderer.getFrameIndex());
             {
-                shadowPass.resolveBarriers();
-                shadowPass.setShaderProgram(shadowPassShaderProgram);
-                shadowPass.dispatch(1920, 1080, 1, 0);
+                shadowMapPass.resolveBarriers();
+                shadowMapPass.setShaderProgram(shadowMapPassShaderProgram);
+                shadowMapPass.dispatch(1920, 1080, 1, new int[]{0});
             }
-            shadowPass.endRecording();
+            shadowMapPass.endRecording();
         });
 
 
@@ -558,7 +577,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                 {
                     swapchainPass.setDrawBuffers(swapchainPassVertexBuffer, swapchainPassIndexBuffer);
                     swapchainPass.setShaderProgram(swapchainPassShaderProgram);
-                    swapchainPass.drawIndexed(6, 1);
+                    swapchainPass.drawIndexed(6, new int[]{1});
                 }
                 swapchainPass.endRendering();
 

@@ -87,11 +87,11 @@ public class VulkanComputePass extends ComputePass {
     }
 
     @Override
-    public void dispatch(int workGroupCountX, int workGroupCountY, int workGroupCountZ, int shaderMode) {
+    public void dispatch(int workGroupCountX, int workGroupCountY, int workGroupCountZ, int[] shaderMode) {
         VkCommandBuffer commandBuffer = commandBuffers[frameIndex];
 
         long pipelineLayoutHandle = ((VulkanShaderProgram) shaderProgram).getPipeline().getLayoutHandle();
-        vkCmdPushConstants(commandBuffer, pipelineLayoutHandle, VK_SHADER_STAGE_ALL, 0, new int[]{shaderMode});
+        vkCmdPushConstants(commandBuffer, pipelineLayoutHandle, VK_SHADER_STAGE_ALL, 0, shaderMode);
         vkCmdDispatch(commandBuffers[frameIndex], workGroupCountX, workGroupCountY, workGroupCountZ);
     }
 

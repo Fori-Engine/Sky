@@ -18,7 +18,7 @@ layout(std140, set = 0, binding = 1) readonly buffer Transforms {
 } transforms;
 
 layout(push_constant) uniform PushConstants {
-    int mode;
+    int mode[];
 } shaderMode;
 
 void main() {
@@ -41,13 +41,13 @@ layout(location = 0) out vec4 outputColor;
 layout(set = 0, binding = 2) uniform sampler2D[] textures;
 
 layout(push_constant) uniform PushConstants {
-    int mode;
+    int mode[];
 } shaderMode;
 
 
 
 void main() {
-    if(shaderMode.mode == 0) {
+    if(shaderMode.mode[0] == 0) {
         outputColor = texture(textures[0], inputUV);
     }
     else {

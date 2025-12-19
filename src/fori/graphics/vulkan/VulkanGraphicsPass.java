@@ -84,11 +84,11 @@ public class VulkanGraphicsPass extends GraphicsPass {
     }
 
     @Override
-    public void drawIndexed(int indexCount, int shaderMode) {
+    public void drawIndexed(int indexCount, int[] shaderMode) {
         VkCommandBuffer commandBuffer = commandBuffers[frameIndex];
 
         long pipelineLayoutHandle = ((VulkanShaderProgram) shaderProgram).getPipeline().getLayoutHandle();
-        vkCmdPushConstants(commandBuffer, pipelineLayoutHandle, VK_SHADER_STAGE_ALL, 0, new int[]{shaderMode});
+        vkCmdPushConstants(commandBuffer, pipelineLayoutHandle, VK_SHADER_STAGE_ALL, 0, shaderMode);
         vkCmdDrawIndexed(
                 commandBuffer,
                 indexCount,

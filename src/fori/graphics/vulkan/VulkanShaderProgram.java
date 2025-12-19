@@ -27,8 +27,8 @@ public class VulkanShaderProgram extends ShaderProgram {
     private VulkanPipeline pipeline;
 
 
-    public VulkanShaderProgram(Disposable parent, ShaderProgramType type) {
-        super(parent, type);
+    public VulkanShaderProgram(Disposable parent, ShaderProgramType type, int shaderContextSize) {
+        super(parent, type, shaderContextSize);
         entryPoint = MemoryUtil.memUTF8("main");
     }
 
@@ -55,7 +55,7 @@ public class VulkanShaderProgram extends ShaderProgram {
                 VkPushConstantRange shaderModePushConstantRange = pushConstantRanges.get(0);
                 {
                     shaderModePushConstantRange.offset(0);
-                    shaderModePushConstantRange.size(Integer.BYTES);
+                    shaderModePushConstantRange.size(Integer.BYTES * shaderContextSize);
                     shaderModePushConstantRange.stageFlags(VK_SHADER_STAGE_ALL);
                 }
             }
@@ -260,7 +260,7 @@ public class VulkanShaderProgram extends ShaderProgram {
                 VkPushConstantRange shaderModePushConstantRange = pushConstantRanges.get(0);
                 {
                     shaderModePushConstantRange.offset(0);
-                    shaderModePushConstantRange.size(Integer.BYTES);
+                    shaderModePushConstantRange.size(Integer.BYTES * shaderContextSize);
                     shaderModePushConstantRange.stageFlags(VK_SHADER_STAGE_ALL);
                 }
             }
