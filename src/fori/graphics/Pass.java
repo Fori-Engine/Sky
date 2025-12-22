@@ -44,9 +44,9 @@ public abstract class Pass extends Disposable {
         return null;
     }
 
-    public Dependency getDependencyByNameAndType(String name, int type) {
+    public Dependency getDependency(String name) {
         for(Dependency rd : dependencyList) {
-            if(rd.getName().equals(name) && rd.getType() == type) return rd;
+            if(rd.getName().equals(name)) return rd;
         }
         return null;
     }
