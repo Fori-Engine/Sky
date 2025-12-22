@@ -32,13 +32,14 @@ public class RenderGraph extends Disposable {
 
     }
 
-    public Set<Pass> walk(Pass targetPass) {
-        LinkedHashSet<Pass> passes = new LinkedHashSet<>();
+    public List<Pass> walk(Pass targetPass) {
+        LinkedList<Pass> passes = new LinkedList<>();
         tracePasses(passes, targetPass);
         passes.add(targetPass);
 
         return passes;
     }
+
 
     private List<Pass> getAllDependencyWriters(Pass thisPass, ResourceDependency resourceDependency) {
 
@@ -63,7 +64,7 @@ public class RenderGraph extends Disposable {
 
         return writers;
     }
-    private void tracePasses(LinkedHashSet<Pass> passes, Pass thisPass) {
+    private void tracePasses(LinkedList<Pass> passes, Pass thisPass) {
         for(ResourceDependency resourceDependency : thisPass.getResourceDependencies()) {
 
             if((resourceDependency.getType() & ResourceDependencyTypes.RenderTargetRead) != 0 ||
@@ -75,6 +76,10 @@ public class RenderGraph extends Disposable {
                 for(Pass writer : writers) {
                     if(!passes.contains(writer)) {
                         tracePasses(passes, writer);
+                        passes.add(writer);
+                    }
+                    else {
+                        passes.remove(writer);
                         passes.add(writer);
                     }
                 }

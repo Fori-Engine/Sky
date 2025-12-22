@@ -1,34 +1,27 @@
 package fori.graphics;
 
-public class ResourceDependency<ResourceType> {
+public class ResourceDependency {
     private String name;
-    private ResourceType dependency;
+    private Resource dependency;
     private int type;
-    private Pass passMetadata;
 
-    public ResourceDependency(String name, ResourceType dependency, int type) {
+
+    public ResourceDependency(String name, Resource dependency, int type) {
         this.name = name;
         this.dependency = dependency;
         this.type = type;
     }
 
-    public Pass getPassMetadata() {
-        return passMetadata;
-    }
-
-    public void setPassMetadata(Pass passMetadata) {
-        this.passMetadata = passMetadata;
-    }
 
     public String getName() {
         return name;
     }
 
-    public ResourceType getDependency() {
+    public Resource getDependency() {
         return dependency;
     }
 
-    public void setDependency(ResourceType dependency) {
+    public void setDependency(Resource dependency) {
         this.dependency = dependency;
     }
 

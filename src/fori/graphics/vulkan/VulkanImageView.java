@@ -22,7 +22,6 @@ public class VulkanImageView extends Disposable {
             VkImageViewCreateInfo imageViewCreateInfo = VkImageViewCreateInfo.calloc(stack);
             LongBuffer pImageView = stack.callocLong(1);
 
-
             imageViewCreateInfo.sType(VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO);
             imageViewCreateInfo.image(image.getHandle());
             imageViewCreateInfo.viewType(VK_IMAGE_VIEW_TYPE_2D);

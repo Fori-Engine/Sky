@@ -6,7 +6,6 @@ import fori.graphics.StaticMeshBatch;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
-import java.nio.LongBuffer;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
@@ -86,7 +85,7 @@ public class VulkanStaticMeshBatch extends StaticMeshBatch {
         );
 
         transformsBuffers = new Buffer[framesInFlight];
-        cameraBuffers = new Buffer[framesInFlight];
+        sceneDescBuffers = new Buffer[framesInFlight];
 
         for (int i = 0; i < framesInFlight; i++) {
             transformsBuffers[i] = Buffer.newBuffer(
@@ -97,7 +96,7 @@ public class VulkanStaticMeshBatch extends StaticMeshBatch {
                     false
             );
 
-            cameraBuffers[i] = Buffer.newBuffer(
+            sceneDescBuffers[i] = Buffer.newBuffer(
                     parent,
                     SizeUtil.MATRIX_SIZE_BYTES * maxCameraCount * 2,
                     Buffer.Usage.ShaderStorageBuffer,

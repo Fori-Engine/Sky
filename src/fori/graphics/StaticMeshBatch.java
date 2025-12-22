@@ -2,7 +2,7 @@ package fori.graphics;
 
 public abstract class StaticMeshBatch {
     protected Buffer[] transformsBuffers;
-    protected Buffer[] cameraBuffers;
+    protected Buffer[] sceneDescBuffers;
     protected Buffer vertexBuffer;
     protected Buffer indexBuffer;
     public ShaderProgram shaderProgram;
@@ -49,8 +49,8 @@ public abstract class StaticMeshBatch {
         return transformsBuffers;
     }
 
-    public Buffer[] getCameraBuffers() {
-        return cameraBuffers;
+    public Buffer[] getSceneDescBuffers() {
+        return sceneDescBuffers;
     }
 
     public ShaderProgram getShaderProgram() {

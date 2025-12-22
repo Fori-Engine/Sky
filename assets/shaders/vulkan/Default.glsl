@@ -6,12 +6,27 @@ layout(location = 1) in float inputTransformIndex;
 layout(location = 2) in vec2 inputUV;
 
 layout(location = 0) out vec2 outputUV;
-layout(location = 1) out vec3 outputPos;
 
-layout(std140, set = 0, binding = 0) readonly buffer Cameras {
-    mat4 view[2];
-    mat4 proj[2];
-} cameras;
+#define MAX_LIGHTS 10
+
+struct Camera {
+    mat4 view;
+    mat4 proj;
+};
+
+struct Light {
+    mat4 view;
+    mat4 proj;
+};
+
+struct Scene {
+    Camera camera;
+    Light lights[MAX_LIGHTS];
+};
+
+layout(std140, set = 0, binding = 0) readonly buffer SceneDesc {
+    Scene scene;
+} sceneDesc;
 
 layout(std140, set = 0, binding = 1) readonly buffer Transforms {
     mat4 models[];
@@ -23,10 +38,17 @@ layout(push_constant) uniform PushConstants {
 
 void main() {
 
-    int cameraIndex = shaderMode.mode[1];
+    mat4 m;
+    int renderMode = shaderMode.mode[0];
 
-    gl_Position = cameras.proj[cameraIndex] * cameras.view[cameraIndex] * transforms.models[int(inputTransformIndex)] * vec4(inputPos.xyz, 1.0);
-    outputPos = vec4(transforms.models[int(inputTransformIndex)] * vec4(inputPos.xyz, 1.0)).xyz;
+    if(renderMode == 0) m = sceneDesc.scene.camera.proj * sceneDesc.scene.camera.view;
+    if(renderMode == 1) {
+        int lightIndex = shaderMode.mode[1];
+        m = sceneDesc.scene.lights[lightIndex].proj * sceneDesc.scene.lights[lightIndex].view;
+    }
+    gl_Position = m * transforms.models[int(inputTransformIndex)] * vec4(inputPos.xyz, 1.0);
+
+
     outputUV = inputUV;
 
 }
@@ -36,8 +58,6 @@ void main() {
 #version 460
 
 layout(location = 0) in vec2 inputUV;
-layout(location = 1) in vec3 inputPos;
-
 layout(location = 0) out vec4 outputColor;
 
 layout(set = 0, binding = 2) uniform sampler2D[] textures;
@@ -53,7 +73,7 @@ void main() {
         outputColor = texture(textures[0], inputUV);
     }
     else {
-        float depth = inputPos.z;
+        float depth = gl_FragCoord.z;
         outputColor = vec4(depth, depth, depth, 1.0);
     }
 }

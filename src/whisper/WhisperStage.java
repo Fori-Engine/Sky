@@ -160,11 +160,11 @@ public class WhisperStage extends Stage {
                     new ShaderResSet(
                             0,
                             new ShaderRes(
-                                    "cameras",
+                                    "sceneDesc",
                                     0,
                                     ShaderStorageBuffer,
                                     VertexStage
-                            ).sizeBytes(2 * Camera.SIZE),
+                            ).sizeBytes(4 * 4 * Float.SIZE * 11),
                             new ShaderRes(
                                     "transforms",
                                     1,
@@ -198,7 +198,7 @@ public class WhisperStage extends Stage {
 
                 shopStaticMeshBatch.getShaderProgram().updateBuffers(
                         frameIndex,
-                        new ShaderUpdate<>("cameras", 0, 0, shopStaticMeshBatch.getCameraBuffers()[frameIndex]),
+                        new ShaderUpdate<>("cameras", 0, 0, shopStaticMeshBatch.getSceneDescBuffers()[frameIndex]),
                         new ShaderUpdate<>("transforms", 0, 1, shopStaticMeshBatch.getTransformsBuffers()[frameIndex])
                 );
             }
@@ -249,11 +249,11 @@ public class WhisperStage extends Stage {
                         new ShaderResSet(
                                 0,
                                 new ShaderRes(
-                                        "cameras",
+                                        "sceneDesc",
                                         0,
                                         ShaderStorageBuffer,
                                         VertexStage
-                                ).sizeBytes(2 * Camera.SIZE),
+                                ).sizeBytes(4 * 4 * Float.SIZE * 11),
                                 new ShaderRes(
                                         "transforms",
                                         1,
@@ -275,7 +275,7 @@ public class WhisperStage extends Stage {
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
                 dynamicMesh.getShaderProgram().updateBuffers(
                         frameIndex,
-                        new ShaderUpdate<>("camera", 0, 0, dynamicMesh.getCameraBuffers()[frameIndex]),
+                        new ShaderUpdate<>("camera", 0, 0, dynamicMesh.getSceneDescBuffers()[frameIndex]),
                         new ShaderUpdate<>("transforms", 0, 1, dynamicMesh.getTransformsBuffers()[frameIndex])
                 );
             }
@@ -337,9 +337,9 @@ public class WhisperStage extends Stage {
             spotlightEntity = scene.createEntity(
                     new LightComponent(
                             new Matrix4f().lookAt(
-                                    new Vector3f(0.0f, 10.0f, 0f),
+                                    new Vector3f(0.0f, 6.0f, 6.0f),
                                     new Vector3f(0, 0, 0),
-                                    new Vector3f(0.0f, -1.0f, 0.0f)
+                                    new Vector3f(0.0f, 1.0f, 0.0f)
                             ),
                             new Matrix4f().perspective(
                                     (float) Math.toRadians(45.0f),
@@ -387,11 +387,11 @@ public class WhisperStage extends Stage {
                         new ShaderResSet(
                                 0,
                                 new ShaderRes(
-                                        "cameras",
+                                        "sceneDesc",
                                         0,
                                         ShaderStorageBuffer,
                                         VertexStage
-                                ).sizeBytes(2 * Camera.SIZE),
+                                ).sizeBytes(4 * 4 * Float.SIZE * 11),
                                 new ShaderRes(
                                         "transforms",
                                         1,
@@ -413,7 +413,7 @@ public class WhisperStage extends Stage {
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
                 dynamicMesh.getShaderProgram().updateBuffers(
                         frameIndex,
-                        new ShaderUpdate<>("camera", 0, 0, dynamicMesh.getCameraBuffers()[frameIndex]),
+                        new ShaderUpdate<>("camera", 0, 0, dynamicMesh.getSceneDescBuffers()[frameIndex]),
                         new ShaderUpdate<>("transforms", 0, 1, dynamicMesh.getTransformsBuffers()[frameIndex])
                 );
             }
@@ -445,9 +445,6 @@ public class WhisperStage extends Stage {
 
         Time.deltaTime = (float) (surface.getTime() - startTime);
         startTime = (float) surface.getTime();
-
-        System.out.println(Time.framesPerSecond());
-
 
         return !surface.shouldClose();
     }

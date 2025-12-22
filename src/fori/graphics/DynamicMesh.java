@@ -2,7 +2,7 @@ package fori.graphics;
 
 public abstract class DynamicMesh {
     protected Buffer[] transformsBuffers;
-    protected Buffer[] cameraBuffers;
+    protected Buffer[] sceneDescBuffers;
     protected ShaderProgram shaderProgram;
     protected int maxVertexCount;
     protected int maxIndexCount;
@@ -39,8 +39,8 @@ public abstract class DynamicMesh {
         return transformsBuffers;
     }
 
-    public Buffer[] getCameraBuffers() {
-        return cameraBuffers;
+    public Buffer[] getSceneDescBuffers() {
+        return sceneDescBuffers;
     }
 
     public ShaderProgram getShaderProgram() {

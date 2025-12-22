@@ -29,7 +29,7 @@ public class VulkanDynamicMesh extends DynamicMesh {
         );
 
         transformsBuffers = new Buffer[framesInFlight];
-        cameraBuffers = new Buffer[framesInFlight];
+        sceneDescBuffers = new Buffer[framesInFlight];
 
         for (int i = 0; i < framesInFlight; i++) {
             transformsBuffers[i] = Buffer.newBuffer(
@@ -40,7 +40,7 @@ public class VulkanDynamicMesh extends DynamicMesh {
                     false
             );
 
-            cameraBuffers[i] = Buffer.newBuffer(
+            sceneDescBuffers[i] = Buffer.newBuffer(
                     parent,
                     SizeUtil.MATRIX_SIZE_BYTES * maxCameraCount * 2,
                     Buffer.Usage.ShaderStorageBuffer,
