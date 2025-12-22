@@ -421,7 +421,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
             ).setDependency(shadowMapTexturesResource);
         }
 
-        //Update all in-memory scene desc buffers before their descriptors are updated inside the passes
+        //Update all in-memory scene desc/transform buffers before their descriptors are updated inside the passes
         {
             scene.getEngine().findEntitiesWith(TransformComponent.class, StaticMeshComponent.class).stream().forEach(components -> {
 
