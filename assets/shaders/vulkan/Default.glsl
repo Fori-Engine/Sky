@@ -12,6 +12,9 @@ layout(location = 0) out vec2 outputUV;
 struct Camera {
     mat4 view;
     mat4 proj;
+
+    mat4 invView;
+    mat4 invProj;
 };
 
 struct Light {

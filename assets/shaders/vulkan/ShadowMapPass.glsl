@@ -8,6 +8,9 @@ layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 struct Camera {
     mat4 view;
     mat4 proj;
+
+    mat4 invView;
+    mat4 invProj;
 };
 
 struct Light {
@@ -34,11 +37,6 @@ layout(push_constant) uniform PushConstants {
     int mode[1];
 } shaderMode;
 
-/*
-We need access to the SceneDesc [-]
-We need an attachment from Scene that contains only gl_FragCoord [-]
-We need the inverse camera view and inverse camera projection
-*/
 
 void main() {
 

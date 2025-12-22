@@ -402,8 +402,11 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
         sceneDescData.clear();
         camera.getView().get(sceneDescData);
         camera.getProj().get(SizeUtil.MATRIX_SIZE_BYTES, sceneDescData);
+        camera.getInvView().get(2 * SizeUtil.MATRIX_SIZE_BYTES, sceneDescData);
+        camera.getInvProj().get(3 * SizeUtil.MATRIX_SIZE_BYTES, sceneDescData);
 
-        int offset = 2 * SizeUtil.MATRIX_SIZE_BYTES;
+
+        int offset = 4 * SizeUtil.MATRIX_SIZE_BYTES;
 
         int lightIndex = 0;
 
