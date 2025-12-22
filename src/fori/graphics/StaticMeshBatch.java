@@ -11,14 +11,12 @@ public abstract class StaticMeshBatch {
     protected int maxVertexCount;
     protected int maxIndexCount;
     protected int maxTransformCount;
-    protected int maxCameraCount;
     protected boolean finalized;
 
-    public StaticMeshBatch(int maxVertexCount, int maxIndexCount, int maxTransformCount, int maxCameraCount, ShaderProgram shaderProgram) {
+    public StaticMeshBatch(int maxVertexCount, int maxIndexCount, int maxTransformCount, ShaderProgram shaderProgram) {
         this.maxIndexCount = maxIndexCount;
         this.maxVertexCount = maxVertexCount;
         this.maxTransformCount = maxTransformCount;
-        this.maxCameraCount = maxCameraCount;
         this.shaderProgram = shaderProgram;
     }
 
@@ -26,9 +24,6 @@ public abstract class StaticMeshBatch {
     public abstract Buffer getDefaultVertexBuffer();
     public abstract Buffer getDefaultIndexBuffer();
 
-    public int getMaxCameraCount() {
-        return maxCameraCount;
-    }
 
     public void finish() {
         finalized = true;

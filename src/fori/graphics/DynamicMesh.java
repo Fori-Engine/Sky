@@ -11,12 +11,10 @@ public abstract class DynamicMesh {
     protected Buffer vertexBuffer;
     protected Buffer indexBuffer;
     protected boolean finalized;
-    protected int maxCameraCount;
 
-    public DynamicMesh(int maxVertexCount, int maxIndexCount, int maxCameraCount, ShaderProgram shaderProgram) {
+    public DynamicMesh(int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram) {
         this.maxVertexCount = maxVertexCount;
         this.maxIndexCount = maxIndexCount;
-        this.maxCameraCount = maxCameraCount;
         this.shaderProgram = shaderProgram;
     }
 
@@ -31,9 +29,6 @@ public abstract class DynamicMesh {
         return indexBuffer;
     }
 
-    public int getMaxCameraCount() {
-        return maxCameraCount;
-    }
 
     public Buffer[] getTransformsBuffers() {
         return transformsBuffers;

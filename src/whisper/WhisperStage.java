@@ -164,7 +164,7 @@ public class WhisperStage extends Stage {
                                     0,
                                     ShaderStorageBuffer,
                                     VertexStage
-                            ).sizeBytes(4 * 4 * Float.SIZE * 11),
+                            ).sizeBytes(SizeUtil.SCENE_DESC_SIZE_BYTES),
                             new ShaderRes(
                                     "transforms",
                                     1,
@@ -182,7 +182,7 @@ public class WhisperStage extends Stage {
 
 
             mesh = Mesh.newMesh(shaderProgram.getShaderMap().get(ShaderType.Vertex).getVertexAttributes(), AssetPacks.getAsset("core:assets/models/viking_room.obj"));
-            StaticMeshBatch shopStaticMeshBatch = renderer.newStaticMeshBatch(100000, 100000, 1, 2, shaderProgram);
+            StaticMeshBatch shopStaticMeshBatch = renderer.newStaticMeshBatch(100000, 100000, 1, shaderProgram);
 
             shopStaticMeshBatch.submitMesh(mesh, new MeshUploaderWithTransform(0));
             shopStaticMeshBatch.finish();
@@ -253,7 +253,7 @@ public class WhisperStage extends Stage {
                                         0,
                                         ShaderStorageBuffer,
                                         VertexStage
-                                ).sizeBytes(4 * 4 * Float.SIZE * 11),
+                                ).sizeBytes(SizeUtil.SCENE_DESC_SIZE_BYTES),
                                 new ShaderRes(
                                         "transforms",
                                         1,
@@ -267,7 +267,7 @@ public class WhisperStage extends Stage {
 
 
             Mesh mesh = MeshGenerator.newBox(1.0f, 1.0f, 1.0f);
-            DynamicMesh dynamicMesh = renderer.newDynamicMesh(100000, 100000, 2, shaderProgram);
+            DynamicMesh dynamicMesh = renderer.newDynamicMesh(100000, 100000, shaderProgram);
             dynamicMesh.submit(mesh, new MeshUploaderWithTransform(0));
             scene.registerDynamicMesh(dynamicMesh);
 
@@ -391,7 +391,7 @@ public class WhisperStage extends Stage {
                                         0,
                                         ShaderStorageBuffer,
                                         VertexStage
-                                ).sizeBytes(4 * 4 * Float.SIZE * 11),
+                                ).sizeBytes(SizeUtil.SCENE_DESC_SIZE_BYTES),
                                 new ShaderRes(
                                         "transforms",
                                         1,
@@ -405,7 +405,7 @@ public class WhisperStage extends Stage {
 
 
             Mesh mesh = MeshGenerator.newBox(10.0f, 1.0f, 10.0f);
-            DynamicMesh dynamicMesh = renderer.newDynamicMesh(100000, 100000, 2, shaderProgram);
+            DynamicMesh dynamicMesh = renderer.newDynamicMesh(100000, 100000, shaderProgram);
             dynamicMesh.submit(mesh, new MeshUploaderWithTransform(0));
             scene.registerDynamicMesh(dynamicMesh);
 
