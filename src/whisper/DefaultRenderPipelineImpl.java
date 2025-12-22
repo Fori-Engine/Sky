@@ -283,21 +283,21 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
         shadowMapGenPass = Pass.newGraphicsPass(renderGraph, "ShadowMapGen", renderer.getMaxFramesInFlight());
         {
-            shadowMapGenPass.addResourceDependencies(
-                    new ResourceDependency(
+            shadowMapGenPass.addDependencies(
+                    new Dependency(
                             "OutputShadowMaps",
                             null,
-                            ResourceDependencyTypes.RenderTargetWrite
+                            DependencyTypes.RenderTargetWrite
                     )
             );
         }
         scenePass = Pass.newGraphicsPass(renderGraph, "Scene", renderer.getMaxFramesInFlight());
         {
-            scenePass.addResourceDependencies(
-                    new ResourceDependency(
+            scenePass.addDependencies(
+                    new Dependency(
                             "OutputColorTextures",
                             sceneColorTextures,
-                            ResourceDependencyTypes.RenderTargetWrite
+                            DependencyTypes.RenderTargetWrite
                     )
             );
 
@@ -306,43 +306,43 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
         shadowMapPass = Pass.newComputePass(renderer, "ShadowMap", renderer.getMaxFramesInFlight());
         {
-            shadowMapPass.addResourceDependencies(
+            shadowMapPass.addDependencies(
 
-                    new ResourceDependency(
+                    new Dependency(
                             "InputTextures",
                             sceneColorTextures,
-                            ResourceDependencyTypes.ComputeShaderRead
+                            DependencyTypes.ComputeShaderRead
                     ),
-                    new ResourceDependency(
+                    new Dependency(
                             "InputShadowMaps",
                             null,
-                            ResourceDependencyTypes.ComputeShaderRead
+                            DependencyTypes.ComputeShaderRead
                     ),
-                    new ResourceDependency(
+                    new Dependency(
                             "OutputTextures",
                             shadowMapPassColorTextures,
-                            ResourceDependencyTypes.ComputeShaderWrite
+                            DependencyTypes.ComputeShaderWrite
                     )
             );
         }
         swapchainPass = Pass.newGraphicsPass(renderGraph, "Swapchain", renderer.getMaxFramesInFlight());
         {
-            swapchainPass.addResourceDependencies(
+            swapchainPass.addDependencies(
 
-                    new ResourceDependency(
+                    new Dependency(
                             "InputTextures",
                             shadowMapPassColorTextures,
-                            ResourceDependencyTypes.FragmentShaderRead
+                            DependencyTypes.FragmentShaderRead
                     ),
-                    new ResourceDependency(
+                    new Dependency(
                             "SwapchainColorTextures",
                             swapchainColorTextures,
-                            ResourceDependencyTypes.RenderTargetWrite
+                            DependencyTypes.RenderTargetWrite
                     ),
-                    new ResourceDependency(
-                            "SwapchainColorTextures",
+                    new Dependency(
+                            "SwapchainColorTexturesPresent",
                             swapchainColorTextures,
-                            ResourceDependencyTypes.Present
+                            DependencyTypes.Present
                     )
             );
         }
@@ -381,6 +381,17 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
             swapchainRT = renderer.getSwapchainRenderTarget();
             RenderTargetAttachment colorAttachment = swapchainRT.getAttachment(RenderTargetAttachmentTypes.Color);
             swapchainColorTextures = new Resource<>(colorAttachment.getTextures());
+
+            swapchainPass.getDependencyByNameAndType(
+                    "SwapchainColorTextures",
+                    DependencyTypes.RenderTargetWrite
+            ).setDependency(swapchainColorTextures);
+
+            swapchainPass.getDependencyByNameAndType(
+                    "SwapchainColorTexturesPresent",
+                    DependencyTypes.Present
+            ).setDependency(swapchainColorTextures);
+
         }
 
         scene.getEngine().findEntitiesWith(CameraComponent.class).stream().forEach(components1 -> {
@@ -410,14 +421,14 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
             Resource<Texture[]> shadowMapTexturesResource = new Resource<>(shadowMapTextures);
 
-            shadowMapGenPass.getResourceDependencyByNameAndType(
+            shadowMapGenPass.getDependencyByNameAndType(
                     "OutputShadowMaps",
-                    ResourceDependencyTypes.RenderTargetWrite
+                    DependencyTypes.RenderTargetWrite
             ).setDependency(shadowMapTexturesResource);
 
-            shadowMapPass.getResourceDependencyByNameAndType(
+            shadowMapPass.getDependencyByNameAndType(
                     "InputShadowMaps",
-                    ResourceDependencyTypes.ComputeShaderRead
+                    DependencyTypes.ComputeShaderRead
             ).setDependency(shadowMapTexturesResource);
         }
 
@@ -569,7 +580,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                             "inputTexture",
                             0,
                             0,
-                            ((Texture[]) shadowMapPass.getResourceDependencyByNameAndType("InputTextures", ResourceDependencyTypes.ComputeShaderRead).getDependency().get())[renderer.getFrameIndex()]
+                            ((Texture[]) shadowMapPass.getDependencyByNameAndType("InputTextures", DependencyTypes.ComputeShaderRead).getDependency().get())[renderer.getFrameIndex()]
                     )
             );
 
@@ -579,14 +590,14 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                             "outputTexture",
                             0,
                             1,
-                            ((Texture[]) shadowMapPass.getResourceDependencyByNameAndType("OutputTextures", ResourceDependencyTypes.ComputeShaderWrite).getDependency().get())[renderer.getFrameIndex()]
+                            ((Texture[]) shadowMapPass.getDependencyByNameAndType("OutputTextures", DependencyTypes.ComputeShaderWrite).getDependency().get())[renderer.getFrameIndex()]
                     )
             );
 
 
             //Update shadow maps
             {
-                Texture[] shadowMapTextures = ((Texture[]) shadowMapPass.getResourceDependencyByNameAndType("InputShadowMaps", ResourceDependencyTypes.ComputeShaderRead).getDependency().get());
+                Texture[] shadowMapTextures = ((Texture[]) shadowMapPass.getDependencyByNameAndType("InputShadowMaps", DependencyTypes.ComputeShaderRead).getDependency().get());
 
                 for (int i = 0; i < shadowMapTextures.length; i++) {
                     shadowMapPassShaderProgram.updateTextures(
@@ -619,7 +630,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                             "inputTexture",
                             0,
                             1,
-                            ((Texture[]) swapchainPass.getResourceDependencyByNameAndType("InputTextures", ResourceDependencyTypes.FragmentShaderRead).getDependency().get())[renderer.getFrameIndex()])
+                            ((Texture[]) swapchainPass.getDependencyByNameAndType("InputTextures", DependencyTypes.FragmentShaderRead).getDependency().get())[renderer.getFrameIndex()])
             );
 
             swapchainPass.startRecording(renderer.getFrameIndex());

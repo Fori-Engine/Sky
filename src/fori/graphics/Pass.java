@@ -15,7 +15,7 @@ public abstract class Pass extends Disposable {
     protected Semaphore[] finishedSemaphores;
     protected BarrierCallback barrierCallback;
     protected PassExecuteCallback passExecuteCallback;
-    protected List<ResourceDependency> resourceDependencyList = new ArrayList<>();
+    protected List<Dependency> dependencyList = new ArrayList<>();
     protected String name;
 
 
@@ -26,12 +26,12 @@ public abstract class Pass extends Disposable {
         this.framesInFlight = framesInFlight;
     }
 
-    public void addResourceDependencies(ResourceDependency... resourceDependencies) {
-        resourceDependencyList.addAll(Arrays.asList(resourceDependencies));
+    public void addDependencies(Dependency... deps) {
+        dependencyList.addAll(Arrays.asList(deps));
     }
 
-    public List<ResourceDependency> getResourceDependencies() {
-        return resourceDependencyList;
+    public List<Dependency> getDependencies() {
+        return dependencyList;
     }
 
     public static GraphicsPass newGraphicsPass(Disposable disposable, String name, int framesInFlight) {
@@ -44,8 +44,8 @@ public abstract class Pass extends Disposable {
         return null;
     }
 
-    public ResourceDependency getResourceDependencyByNameAndType(String name, int type) {
-        for(ResourceDependency rd : resourceDependencyList) {
+    public Dependency getDependencyByNameAndType(String name, int type) {
+        for(Dependency rd : dependencyList) {
             if(rd.getName().equals(name) && rd.getType() == type) return rd;
         }
         return null;

@@ -41,17 +41,17 @@ public class RenderGraph extends Disposable {
     }
 
 
-    private List<Pass> getAllDependencyWriters(Pass thisPass, ResourceDependency resourceDependency) {
+    private List<Pass> getAllDependencyWriters(Pass thisPass, Dependency dependency) {
 
         List<Pass> writers = new ArrayList<>();
 
         for(Pass otherPass : passes) {
             if(otherPass != thisPass) {
-                for (ResourceDependency otherResourceDependency : otherPass.getResourceDependencies()) {
-                    if((otherResourceDependency.getType() & ResourceDependencyTypes.RenderTargetWrite) != 0 ||
-                        (otherResourceDependency.getType() & ResourceDependencyTypes.FragmentShaderWrite) != 0 ||
-                        (otherResourceDependency.getType() & ResourceDependencyTypes.ComputeShaderWrite) != 0) {
-                        if(otherResourceDependency.getDependency() == resourceDependency.getDependency()) {
+                for (Dependency otherDependency : otherPass.getDependencies()) {
+                    if((otherDependency.getType() & DependencyTypes.RenderTargetWrite) != 0 ||
+                        (otherDependency.getType() & DependencyTypes.FragmentShaderWrite) != 0 ||
+                        (otherDependency.getType() & DependencyTypes.ComputeShaderWrite) != 0) {
+                        if(otherDependency.getDependency() == dependency.getDependency()) {
                             writers.add(otherPass);
                             break;
                         }
@@ -65,13 +65,13 @@ public class RenderGraph extends Disposable {
         return writers;
     }
     private void tracePasses(LinkedList<Pass> passes, Pass thisPass) {
-        for(ResourceDependency resourceDependency : thisPass.getResourceDependencies()) {
+        for(Dependency dependency : thisPass.getDependencies()) {
 
-            if((resourceDependency.getType() & ResourceDependencyTypes.RenderTargetRead) != 0 ||
-                    (resourceDependency.getType() & ResourceDependencyTypes.FragmentShaderRead) != 0 ||
-                    (resourceDependency.getType() & ResourceDependencyTypes.ComputeShaderRead) != 0) {
+            if((dependency.getType() & DependencyTypes.RenderTargetRead) != 0 ||
+                    (dependency.getType() & DependencyTypes.FragmentShaderRead) != 0 ||
+                    (dependency.getType() & DependencyTypes.ComputeShaderRead) != 0) {
 
-                List<Pass> writers = getAllDependencyWriters(thisPass, resourceDependency);
+                List<Pass> writers = getAllDependencyWriters(thisPass, dependency);
 
                 for(Pass writer : writers) {
                     if(!passes.contains(writer)) {

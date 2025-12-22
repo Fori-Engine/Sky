@@ -588,7 +588,7 @@ public class VulkanRenderer extends Renderer {
 
                         VkCommandBuffer commandBuffer = (VkCommandBuffer) object;
 
-                        for(ResourceDependency rd : pass.getResourceDependencies()) {
+                        for(Dependency rd : pass.getDependencies()) {
                             Resource resource = rd.getDependency();
                             if(rd.getDependency().get() instanceof Texture[]) {
                                 Texture[] textures = (Texture[]) rd.getDependency().get();
@@ -613,7 +613,7 @@ public class VulkanRenderer extends Renderer {
                                     }
 
 
-                                    if ((rd.getType() & ResourceDependencyTypes.FragmentShaderRead) != 0) {
+                                    if ((rd.getType() & DependencyTypes.FragmentShaderRead) != 0) {
 
 
                                         VulkanUtil.transitionImages(
@@ -626,9 +626,9 @@ public class VulkanRenderer extends Renderer {
                                                 srcStageMask,
                                                 VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
                                         );
-                                    } else if ((rd.getType() & ResourceDependencyTypes.FragmentShaderWrite) != 0) {
+                                    } else if ((rd.getType() & DependencyTypes.FragmentShaderWrite) != 0) {
                                         Logger.todo(VulkanRenderer.class, "FragmentShaderWrite transitions are not supported");
-                                    } else if ((rd.getType() & ResourceDependencyTypes.ComputeShaderRead) != 0) {
+                                    } else if ((rd.getType() & DependencyTypes.ComputeShaderRead) != 0) {
                                         VulkanUtil.transitionImages(
                                                 image,
                                                 commandBuffer,
@@ -639,7 +639,7 @@ public class VulkanRenderer extends Renderer {
                                                 srcStageMask,
                                                 VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
                                         );
-                                    } else if ((rd.getType() & ResourceDependencyTypes.ComputeShaderWrite) != 0) {
+                                    } else if ((rd.getType() & DependencyTypes.ComputeShaderWrite) != 0) {
                                         VulkanUtil.transitionImages(
                                                 image,
                                                 commandBuffer,
@@ -650,7 +650,7 @@ public class VulkanRenderer extends Renderer {
                                                 srcStageMask,
                                                 VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
                                         );
-                                    } else if ((rd.getType() & ResourceDependencyTypes.Present) != 0) {
+                                    } else if ((rd.getType() & DependencyTypes.Present) != 0) {
                                         VulkanUtil.transitionImages(
                                                 image,
                                                 commandBuffer,
@@ -661,9 +661,9 @@ public class VulkanRenderer extends Renderer {
                                                 srcStageMask,
                                                 VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
                                         );
-                                    } else if ((rd.getType() & ResourceDependencyTypes.RenderTargetRead) != 0) {
+                                    } else if ((rd.getType() & DependencyTypes.RenderTargetRead) != 0) {
                                         Logger.todo(VulkanRenderer.class, "RenderTargetRead transitions are not supported");
-                                    } else if ((rd.getType() & ResourceDependencyTypes.RenderTargetWrite) != 0) {
+                                    } else if ((rd.getType() & DependencyTypes.RenderTargetWrite) != 0) {
                                         VulkanUtil.transitionImages(
                                                 image,
                                                 commandBuffer,

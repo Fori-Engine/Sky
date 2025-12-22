@@ -1,12 +1,12 @@
 package fori.graphics;
 
-public class ResourceDependency {
+public class Dependency {
     private String name;
     private Resource dependency;
     private int type;
 
 
-    public ResourceDependency(String name, Resource dependency, int type) {
+    public Dependency(String name, Resource dependency, int type) {
         this.name = name;
         this.dependency = dependency;
         this.type = type;
