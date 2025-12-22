@@ -445,7 +445,6 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
         }
 
         shadowMapGenPassLightIndex = 0;
-
         shadowMapGenPass.setPassExecuteCallback(() -> {
             shadowMapGenPass.startRecording(renderer.getFrameIndex());
             {
@@ -486,7 +485,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                                 shadowMapGenPass.setShaderProgram(
                                         staticMeshComponent.staticMeshBatch().getShaderProgram()
                                 );
-                                shadowMapGenPass.drawIndexed(staticMeshComponent.staticMeshBatch().getIndexCount(), new int[]{mode, 0});
+                                shadowMapGenPass.drawIndexed(staticMeshComponent.staticMeshBatch().getIndexCount(), new int[]{mode, shadowMapGenPassLightIndex});
                             });
                             scene.getEngine().findEntitiesWith(TransformComponent.class, DynamicMeshComponent.class).stream().forEach(components -> {
                                 DynamicMeshComponent dynamicMeshComponent = components.comp2();
@@ -498,7 +497,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                                 shadowMapGenPass.setShaderProgram(
                                         dynamicMeshComponent.dynamicMesh().getShaderProgram()
                                 );
-                                shadowMapGenPass.drawIndexed(dynamicMeshComponent.dynamicMesh().getIndexCount(), new int[]{mode, 0});
+                                shadowMapGenPass.drawIndexed(dynamicMeshComponent.dynamicMesh().getIndexCount(), new int[]{mode, shadowMapGenPassLightIndex});
                             });
                         }
                         shadowMapGenPass.endRendering();
