@@ -27,6 +27,8 @@ layout(std140, set = 0, binding = 0) readonly buffer SceneDesc {
 layout(set = 0, binding = 1) uniform sampler2D inputTexture;
 layout(set = 0, binding = 2, rgba32f) writeonly uniform image2D outputTexture;
 layout(set = 0, binding = 3) uniform sampler2D[] inputShadowMaps;
+layout(set = 0, binding = 4) uniform sampler2D inputPosTexture;
+
 
 layout(push_constant) uniform PushConstants {
     int mode[1];
@@ -34,8 +36,8 @@ layout(push_constant) uniform PushConstants {
 
 /*
 We need access to the SceneDesc [-]
+We need an attachment from Scene that contains only gl_FragCoord [-]
 We need the inverse camera view and inverse camera projection
-We need an attachment from Scene that contains only gl_FragCoord
 */
 
 void main() {

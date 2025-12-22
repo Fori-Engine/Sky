@@ -54,6 +54,7 @@ void main() {
 #version 460
 layout(location = 0) in vec4 inputColor;
 layout(location = 0) out vec4 outputColor;
+layout(location = 1) out vec4 outputPos;
 
 
 layout(push_constant) uniform PushConstants {
@@ -63,9 +64,12 @@ layout(push_constant) uniform PushConstants {
 void main() {
     if(shaderMode.mode[0] == 0) {
         outputColor = inputColor;
+        outputPos = gl_FragCoord;
     }
     else {
         float depth = gl_FragCoord.z;
         outputColor = vec4(depth, depth, depth, 1.0);
     }
+
+
 }

@@ -26,6 +26,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
     private GraphicsPass scenePass;
     private RenderTarget scenePassRT;
     private Resource<Texture[]> sceneColorTextures;
+    private Resource<Texture[]> scenePosTextures;
 
     private ComputePass shadowMapPass;
     private RenderTarget shadowMapPassRT;
@@ -62,8 +63,17 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                     Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8, Texture.Filter.Nearest, Texture.Filter.Nearest)
             });
 
+            scenePosTextures = new Resource<>(new Texture[]{
+                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8, Texture.Filter.Nearest, Texture.Filter.Nearest),
+                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8, Texture.Filter.Nearest, Texture.Filter.Nearest)
+            });
+
             scenePassRT.addAttachment(
                     new RenderTargetAttachment(RenderTargetAttachmentTypes.Color, sceneColorTextures.get())
+            );
+
+            scenePassRT.addAttachment(
+                    new RenderTargetAttachment(RenderTargetAttachmentTypes.Pos, scenePosTextures.get())
             );
 
             scenePassRT.addAttachment(
@@ -122,7 +132,13 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                                     3,
                                     CombinedSampler,
                                     ComputeStage
-                            ).count(2)
+                            ).count(2),
+                            new ShaderRes(
+                                    "inputPosTexture",
+                                    4,
+                                    CombinedSampler,
+                                    ComputeStage
+                            ).count(1)
                     )
 
             );
@@ -315,6 +331,11 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                             "OutputColorTextures",
                             sceneColorTextures,
                             DependencyTypes.RenderTargetWrite
+                    ),
+                    new Dependency(
+                            "OutputPosTextures",
+                            scenePosTextures,
+                            DependencyTypes.RenderTargetWrite
                     )
             );
 
@@ -339,6 +360,11 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                             "OutputTextures",
                             shadowMapPassColorTextures,
                             DependencyTypes.ComputeShaderWrite
+                    ),
+                    new Dependency(
+                            "InputPosTextures",
+                            scenePosTextures,
+                            DependencyTypes.ComputeShaderRead
                     )
             );
         }
@@ -624,6 +650,16 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                             0,
                             2,
                             ((Texture[]) shadowMapPass.getDependency("OutputTextures").getDependency().get())[renderer.getFrameIndex()]
+                    )
+            );
+
+            shadowMapPassShaderProgram.updateTextures(
+                    renderer.getFrameIndex(),
+                    new ShaderUpdate<>(
+                            "inputPosTexture",
+                            0,
+                            4,
+                            ((Texture[]) shadowMapPass.getDependency("InputPosTextures").getDependency().get())[renderer.getFrameIndex()]
                     )
             );
 

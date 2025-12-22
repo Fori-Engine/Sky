@@ -151,7 +151,7 @@ public class WhisperStage extends Stage {
             shaderProgram.addShader(
                     ShaderType.Fragment,
                     Shader.newShader(shaderProgram, ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
-                            .setAttachmentTextureFormatTypes(TextureFormatType.ColorR8G8B8A8)
+                            .setAttachmentTextureFormatTypes(TextureFormatType.ColorR8G8B8A8, TextureFormatType.ColorR8G8B8A8)
                             .setDepthAttachmentTextureFormatType(TextureFormatType.Depth32)
             );
 
@@ -241,7 +241,7 @@ public class WhisperStage extends Stage {
                 shaderProgram.addShader(
                         ShaderType.Fragment,
                         Shader.newShader(shaderProgram, ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
-                                .setAttachmentTextureFormatTypes(TextureFormatType.ColorR8G8B8A8)
+                                .setAttachmentTextureFormatTypes(TextureFormatType.ColorR8G8B8A8, TextureFormatType.ColorR8G8B8A8)
                                 .setDepthAttachmentTextureFormatType(TextureFormatType.Depth32)
                 );
 
@@ -327,6 +327,29 @@ public class WhisperStage extends Stage {
                     )
             );
             lightRT.addAttachment(
+                    new RenderTargetAttachment(
+                            RenderTargetAttachmentTypes.Pos,
+                            new Texture[]{
+                                    Texture.newColorTexture(
+                                            lightRT,
+                                            640,
+                                            480,
+                                            TextureFormatType.ColorR8G8B8A8,
+                                            Texture.Filter.Nearest,
+                                            Texture.Filter.Nearest
+                                    ),
+                                    Texture.newColorTexture(
+                                            lightRT,
+                                            640,
+                                            480,
+                                            TextureFormatType.ColorR8G8B8A8,
+                                            Texture.Filter.Nearest,
+                                            Texture.Filter.Nearest
+                                    )
+                            }
+                    )
+            );
+            lightRT.addAttachment(
                     new RenderTargetAttachment(RenderTargetAttachmentTypes.Depth, new Texture[]{
                             Texture.newDepthTexture(lightRT, 640, 480, TextureFormatType.Depth32, Texture.Filter.Nearest, Texture.Filter.Nearest)
                     })
@@ -379,7 +402,7 @@ public class WhisperStage extends Stage {
                 shaderProgram.addShader(
                         ShaderType.Fragment,
                         Shader.newShader(shaderProgram, ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
-                                .setAttachmentTextureFormatTypes(TextureFormatType.ColorR8G8B8A8)
+                                .setAttachmentTextureFormatTypes(TextureFormatType.ColorR8G8B8A8, TextureFormatType.ColorR8G8B8A8)
                                 .setDepthAttachmentTextureFormatType(TextureFormatType.Depth32)
                 );
 
