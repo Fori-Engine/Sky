@@ -41,9 +41,8 @@ public class RenderGraph extends Disposable {
     }
 
 
-    private List<Pass> getAllDependencyWriters(Pass thisPass, Dependency dependency) {
+    private Pass getWriter(Pass thisPass, Dependency dependency) {
 
-        List<Pass> writers = new ArrayList<>();
 
         for(Pass otherPass : passes) {
             if(otherPass != thisPass) {
@@ -52,8 +51,7 @@ public class RenderGraph extends Disposable {
                         (otherDependency.getType() & DependencyTypes.FragmentShaderWrite) != 0 ||
                         (otherDependency.getType() & DependencyTypes.ComputeShaderWrite) != 0) {
                         if(otherDependency.getDependency() == dependency.getDependency()) {
-                            writers.add(otherPass);
-                            break;
+                            return otherPass;
                         }
                     }
                 }
@@ -62,7 +60,7 @@ public class RenderGraph extends Disposable {
             }
         }
 
-        return writers;
+        return null;
     }
     private void tracePasses(LinkedList<Pass> passes, Pass thisPass) {
         for(Dependency dependency : thisPass.getDependencies()) {
@@ -71,17 +69,15 @@ public class RenderGraph extends Disposable {
                     (dependency.getType() & DependencyTypes.FragmentShaderRead) != 0 ||
                     (dependency.getType() & DependencyTypes.ComputeShaderRead) != 0) {
 
-                List<Pass> writers = getAllDependencyWriters(thisPass, dependency);
+                Pass writer = getWriter(thisPass, dependency);
 
-                for(Pass writer : writers) {
-                    if(!passes.contains(writer)) {
-                        tracePasses(passes, writer);
-                        passes.add(writer);
-                    }
-                    else {
-                        passes.remove(writer);
-                        passes.add(writer);
-                    }
+                if(!passes.contains(writer)) {
+                    tracePasses(passes, writer);
+                    passes.add(writer);
+                }
+                else {
+                    passes.remove(writer);
+                    passes.add(writer);
                 }
 
 
