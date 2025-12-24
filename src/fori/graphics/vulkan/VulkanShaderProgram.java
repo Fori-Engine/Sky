@@ -214,9 +214,6 @@ public class VulkanShaderProgram extends ShaderProgram {
             VkPipelineColorBlendAttachmentState.Buffer colorBlendAttachments = VkPipelineColorBlendAttachmentState.calloc(attachmentCount, stack);
             {
                 for(VkPipelineColorBlendAttachmentState colorBlendAttachment : colorBlendAttachments) {
-
-                    colorBlendAttachment.colorWriteMask(VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT);
-                    colorBlendAttachment.blendEnable(false);
                     colorBlendAttachment.colorWriteMask(VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT);
                     colorBlendAttachment.blendEnable(true);
                     colorBlendAttachment.srcColorBlendFactor(VK_BLEND_FACTOR_SRC_ALPHA);
@@ -634,6 +631,9 @@ public class VulkanShaderProgram extends ShaderProgram {
             }
             case ComputeStage -> {
                 return VK_SHADER_STAGE_COMPUTE_BIT;
+            }
+            case AllStages -> {
+                return VK_SHADER_STAGE_ALL;
             }
         }
 

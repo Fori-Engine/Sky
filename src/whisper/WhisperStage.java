@@ -20,9 +20,8 @@ import java.io.File;
 import java.lang.Math;
 import java.util.*;
 
+import static fori.graphics.ShaderRes.ShaderStage.*;
 import static fori.graphics.VertexAttributes.Type.*;
-import static fori.graphics.ShaderRes.ShaderStage.FragmentStage;
-import static fori.graphics.ShaderRes.ShaderStage.VertexStage;
 import static fori.graphics.ShaderRes.Type.*;
 
 public class WhisperStage extends Stage {
@@ -125,6 +124,7 @@ public class WhisperStage extends Stage {
 
 
 
+        /*
         //Shop
         {
             ShaderProgram shaderProgram;
@@ -207,12 +207,15 @@ public class WhisperStage extends Stage {
             shopEntity = scene.createEntity(
                     new StaticMeshComponent(shopStaticMeshBatch, mesh),
                     new ShaderComponent(shaderProgram),
-                    new TransformComponent(0, new Matrix4f().identity()),
+                    new TransformComponent(0, new Matrix4f().identity().translate(1, 0, 0).rotate((float) Math.toRadians(-90), 1.0f, 0.0f, 0.0f)),
                     new NVPhysXComponent(new BoxCollider(1.5f, 1.5f, 1.5f), new Material(0.05f, 0.05f, 0.99f), ActorType.Dynamic)
             );
 
 
         }
+
+         */
+
 
 
 
@@ -252,7 +255,7 @@ public class WhisperStage extends Stage {
                                         "sceneDesc",
                                         0,
                                         ShaderStorageBuffer,
-                                        VertexStage
+                                        AllStages
                                 ).sizeBytes(SizeUtil.SCENE_DESC_SIZE_BYTES),
                                 new ShaderRes(
                                         "transforms",
@@ -283,7 +286,7 @@ public class WhisperStage extends Stage {
             playerEntity = scene.createEntity(
                     new DynamicMeshComponent(dynamicMesh, mesh),
                     new ShaderComponent(shaderProgram),
-                    new TransformComponent(new Matrix4f().identity().translate(0, 0, 1).rotate((float) Math.toRadians(45.0f), 1, 0, 1)),
+                    new TransformComponent(new Matrix4f().identity().translate(1, 10, 0).rotate((float) Math.toRadians(45.0f), 1, 0, 1)),
                     new NVPhysXComponent(new BoxCollider(1.0f, 1.0f, 1.0f), new Material(0.05f, 0.05f, 0.99f), ActorType.Dynamic),
                     new ScriptComponent(new Script() {
                         @Override
@@ -300,6 +303,8 @@ public class WhisperStage extends Stage {
             );
         }
 
+
+
         //Spotlight
         {
             RenderTarget lightRT = new RenderTarget(renderer);
@@ -309,16 +314,16 @@ public class WhisperStage extends Stage {
                             new Texture[]{
                                     Texture.newColorTexture(
                                             lightRT,
-                                            640,
-                                            480,
+                                            960,
+                                            540,
                                             TextureFormatType.ColorR8G8B8A8,
                                             Texture.Filter.Nearest,
                                             Texture.Filter.Nearest
                                     ),
                                     Texture.newColorTexture(
                                             lightRT,
-                                            640,
-                                            480,
+                                            960,
+                                            540,
                                             TextureFormatType.ColorR8G8B8A8,
                                             Texture.Filter.Nearest,
                                             Texture.Filter.Nearest
@@ -332,16 +337,16 @@ public class WhisperStage extends Stage {
                             new Texture[]{
                                     Texture.newColorTexture(
                                             lightRT,
-                                            640,
-                                            480,
+                                            960,
+                                            540,
                                             TextureFormatType.ColorR8G8B8A8,
                                             Texture.Filter.Nearest,
                                             Texture.Filter.Nearest
                                     ),
                                     Texture.newColorTexture(
                                             lightRT,
-                                            640,
-                                            480,
+                                            960,
+                                            540,
                                             TextureFormatType.ColorR8G8B8A8,
                                             Texture.Filter.Nearest,
                                             Texture.Filter.Nearest
@@ -351,7 +356,7 @@ public class WhisperStage extends Stage {
             );
             lightRT.addAttachment(
                     new RenderTargetAttachment(RenderTargetAttachmentTypes.Depth, new Texture[]{
-                            Texture.newDepthTexture(lightRT, 640, 480, TextureFormatType.Depth32, Texture.Filter.Nearest, Texture.Filter.Nearest)
+                            Texture.newDepthTexture(lightRT, 960, 540, TextureFormatType.Depth32, Texture.Filter.Nearest, Texture.Filter.Nearest)
                     })
             );
 
@@ -360,13 +365,13 @@ public class WhisperStage extends Stage {
             spotlightEntity = scene.createEntity(
                     new LightComponent(
                             new Matrix4f().lookAt(
-                                    new Vector3f(0.0f, 6.0f, 6.0f),
+                                    new Vector3f(0.0f, 4.0f, 6.0f),
                                     new Vector3f(0, 0, 0),
                                     new Vector3f(0.0f, 1.0f, 0.0f)
                             ),
                             new Matrix4f().perspective(
-                                    (float) Math.toRadians(45.0f),
-                                    (float) 640 / 480,
+                                    (float) Math.toRadians(90.0f),
+                                    (float) 960 / 540,
                                     0.01f,
                                     100.0f,
                                     true
@@ -413,7 +418,7 @@ public class WhisperStage extends Stage {
                                         "sceneDesc",
                                         0,
                                         ShaderStorageBuffer,
-                                        VertexStage
+                                        AllStages
                                 ).sizeBytes(SizeUtil.SCENE_DESC_SIZE_BYTES),
                                 new ShaderRes(
                                         "transforms",
@@ -444,7 +449,7 @@ public class WhisperStage extends Stage {
             levelEntity = scene.createEntity(
                     new DynamicMeshComponent(dynamicMesh, mesh),
                     new ShaderComponent(shaderProgram),
-                    new TransformComponent(new Matrix4f().identity().translate(-5.3f, -2, 0).rotate((float) Math.toRadians(180), 0, 0, 1)),
+                    new TransformComponent(new Matrix4f().identity().translate(0, -2, 0).rotate((float) Math.toRadians(180), 0, 0, 1)),
                     new NVPhysXComponent(new BoxCollider(10f, 1f, 10f), new Material(0.05f, 0.05f, 0.99f), ActorType.Static)
             );
         }

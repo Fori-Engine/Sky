@@ -44,7 +44,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
     private Buffer swapchainPassVertexBuffer, swapchainPassIndexBuffer;
     private Buffer[] swapchainPassCameraBuffers;
 
-
+    private int lightCount = 0;
 
 
     private RenderGraph renderGraph;
@@ -113,7 +113,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                                     "sceneDesc",
                                     0,
                                     ShaderStorageBuffer,
-                                    VertexStage
+                                    ComputeStage
                             ).sizeBytes(SizeUtil.SCENE_DESC_SIZE_BYTES),
                             new ShaderRes(
                                     "inputTexture",
@@ -132,7 +132,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                                     3,
                                     CombinedSampler,
                                     ComputeStage
-                            ).count(2),
+                            ).count(1),
                             new ShaderRes(
                                     "inputPosTexture",
                                     4,
@@ -413,8 +413,11 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
         for(Iterator<Results.With1<LightComponent>> iterator = scene.getEngine().findEntitiesWith(LightComponent.class).stream().iterator(); iterator.hasNext();){
             LightComponent lightComponent = iterator.next().comp();
 
-            lightComponent.view.get(offset + ((2 * lightIndex) * SizeUtil.MATRIX_SIZE_BYTES), sceneDescData);
-            lightComponent.proj.get(offset + ((2 * lightIndex) + 1) * SizeUtil.MATRIX_SIZE_BYTES, sceneDescData);
+            lightComponent.view.get(offset + ((4 * lightIndex) * SizeUtil.MATRIX_SIZE_BYTES), sceneDescData);
+            lightComponent.proj.get(offset + ((4 * lightIndex) + 1) * SizeUtil.MATRIX_SIZE_BYTES, sceneDescData);
+            lightComponent.invView.get(offset + ((4 * lightIndex) + 2) * SizeUtil.MATRIX_SIZE_BYTES, sceneDescData);
+            lightComponent.invProj.get(offset + ((4 * lightIndex) + 3) * SizeUtil.MATRIX_SIZE_BYTES, sceneDescData);
+
             lightIndex++;
         }
     }
@@ -449,16 +452,20 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
         //ShadowMapGen and ShadowMap pass Dynamic Resource Dependencies
         {
 
-            int lightCount = (int) scene.getEngine().findEntitiesWith(LightComponent.class).stream().count();
-            Texture[] shadowMapTextures = new Texture[lightCount];
+            lightCount = (int) scene.getEngine().findEntitiesWith(LightComponent.class).stream().count();
+            Texture[] shadowMapTextures = new Texture[lightCount * renderer.getMaxFramesInFlight()];
 
             int lightIndex = 0;
             for(Iterator<Results.With1<LightComponent>> iterator = scene.getEngine().findEntitiesWith(LightComponent.class).stream().iterator(); iterator.hasNext();){
                 LightComponent lightComponent = iterator.next().comp();
 
-                shadowMapTextures[lightIndex] = lightComponent.renderTarget
+                shadowMapTextures[renderer.getMaxFramesInFlight() * lightIndex] = lightComponent.renderTarget
                         .getAttachment(RenderTargetAttachmentTypes.Color)
-                        .getTextures()[renderer.getFrameIndex()];
+                        .getTextures()[0];
+
+                shadowMapTextures[(renderer.getMaxFramesInFlight() * lightIndex) + 1] = lightComponent.renderTarget
+                        .getAttachment(RenderTargetAttachmentTypes.Color)
+                        .getTextures()[1];
 
                 lightIndex++;
             }
@@ -586,7 +593,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                 {
                     int mode = 0;
 
-                    scenePass.startRendering(scenePassRT, renderer.getWidth(), renderer.getHeight(), true, Color.BLACK);
+                    scenePass.startRendering(scenePassRT, renderer.getWidth(), renderer.getHeight(), true, Color.LIGHT_GRAY);
                     {
                         scene.getEngine().findEntitiesWith(TransformComponent.class, StaticMeshComponent.class).stream().forEach(components -> {
                             StaticMeshComponent staticMeshComponent = components.comp2();
@@ -672,14 +679,14 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
             {
                 Texture[] shadowMapTextures = ((Texture[]) shadowMapPass.getDependency("InputShadowMaps").getDependency().get());
 
-                for (int i = 0; i < shadowMapTextures.length; i++) {
+                for (int i = 0; i < lightCount; i++) {
                     shadowMapPassShaderProgram.updateTextures(
                             renderer.getFrameIndex(),
                             new ShaderUpdate<>(
                                     "inputShadowMaps",
                                     0,
                                     3,
-                                    shadowMapTextures[i]
+                                    shadowMapTextures[renderer.getMaxFramesInFlight() * i + renderer.getFrameIndex()]
                             ).arrayIndex(i)
                     );
                 }

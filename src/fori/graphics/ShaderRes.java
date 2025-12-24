@@ -20,7 +20,8 @@ public class ShaderRes {
     public enum ShaderStage {
         VertexStage,
         FragmentStage,
-        ComputeStage
+        ComputeStage,
+        AllStages
     }
 
     public Type type;

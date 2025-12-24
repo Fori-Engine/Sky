@@ -20,6 +20,9 @@ struct Camera {
 struct Light {
     mat4 view;
     mat4 proj;
+
+    mat4 invView;
+    mat4 invProj;
 };
 
 struct Scene {
@@ -65,6 +68,34 @@ layout(location = 0) out vec4 outputColor;
 layout(location = 1) out vec4 outputPos;
 
 
+#define MAX_LIGHTS 10
+
+struct Camera {
+    mat4 view;
+    mat4 proj;
+
+    mat4 invView;
+    mat4 invProj;
+};
+
+struct Light {
+    mat4 view;
+    mat4 proj;
+
+    mat4 invView;
+    mat4 invProj;
+};
+
+struct Scene {
+    Camera camera;
+    Light lights[MAX_LIGHTS];
+};
+
+layout(std140, set = 0, binding = 0) readonly buffer SceneDesc {
+    Scene scene;
+} sceneDesc;
+
+
 layout(set = 0, binding = 2) uniform sampler2D[] textures;
 
 layout(push_constant) uniform PushConstants {
@@ -72,15 +103,28 @@ layout(push_constant) uniform PushConstants {
 } shaderMode;
 
 
+vec4 getWorldSpacePos(vec4 windowPos, mat4 invView, mat4 invProj, int width, int height) {
+    //Window to clip space
+    vec4 worldSpacePos = vec4(vec3(windowPos.xy / vec2(width, height), windowPos.z) * 2.0 - 1.0, windowPos.w);
+    //Perspective divide
+    worldSpacePos.xyz /= worldSpacePos.w;
+    //Clip to view space
+    worldSpacePos *= invProj;
+    //View to world space
+    worldSpacePos *= invView;
+
+    return vec4(worldSpacePos.xyz, 1.0);
+}
 
 void main() {
-    if(shaderMode.mode[0] == 0) {
-        outputColor = texture(textures[0], inputUV);
-        outputPos = gl_FragCoord;
-    }
-    else {
-        float depth = gl_FragCoord.z;
-        outputColor = vec4(depth, depth, depth, 1.0);
-    }
+    int renderMode = shaderMode.mode[0];
+    int lightIndex = shaderMode.mode[1];
 
+    if(renderMode == 0) {
+        outputColor = texture(textures[0], inputUV);
+        outputPos = getWorldSpacePos(gl_FragCoord, sceneDesc.scene.camera.invView, sceneDesc.scene.camera.invProj, 1920, 1080);
+    }
+    else if(renderMode == 1) {
+        outputColor = getWorldSpacePos(gl_FragCoord, sceneDesc.scene.lights[lightIndex].invView, sceneDesc.scene.lights[lightIndex].invProj, 960, 540);
+    }
 }
