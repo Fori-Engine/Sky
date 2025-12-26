@@ -35,6 +35,9 @@ public class WhisperStage extends Stage {
     private Entity spotlightEntity;
     private Renderer renderer;
 
+    float x = 0, y = 6, z = -0.5f;
+
+
 
 
     public void init(String[] cliArgs, Surface surface){
@@ -102,7 +105,7 @@ public class WhisperStage extends Stage {
 
         Camera camera = new Camera(
                 new Matrix4f().lookAt(
-                        new Vector3f(0.0f, 0.0f, 6.0f),
+                        new Vector3f(0.0f, 6.0f, 0.5f),
                         new Vector3f(0, 0, 0),
                         new Vector3f(0.0f, 1.0f, 0.0f)
                 ),
@@ -244,7 +247,7 @@ public class WhisperStage extends Stage {
                 shaderProgram.addShader(
                         ShaderType.Fragment,
                         Shader.newShader(shaderProgram, ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
-                                .setAttachmentTextureFormatTypes(TextureFormatType.ColorR8G8B8A8, TextureFormatType.ColorR8G8B8A8)
+                                .setAttachmentTextureFormatTypes(TextureFormatType.ColorR32G32B32A32, TextureFormatType.ColorR32G32B32A32)
                                 .setDepthAttachmentTextureFormatType(TextureFormatType.Depth32)
                 );
 
@@ -314,17 +317,17 @@ public class WhisperStage extends Stage {
                             new Texture[]{
                                     Texture.newColorTexture(
                                             lightRT,
-                                            960,
-                                            540,
-                                            TextureFormatType.ColorR8G8B8A8,
+                                            1920,
+                                            1080,
+                                            TextureFormatType.ColorR32G32B32A32,
                                             Texture.Filter.Nearest,
                                             Texture.Filter.Nearest
                                     ),
                                     Texture.newColorTexture(
                                             lightRT,
-                                            960,
-                                            540,
-                                            TextureFormatType.ColorR8G8B8A8,
+                                            1920,
+                                            1080,
+                                            TextureFormatType.ColorR32G32B32A32,
                                             Texture.Filter.Nearest,
                                             Texture.Filter.Nearest
                                     )
@@ -337,17 +340,17 @@ public class WhisperStage extends Stage {
                             new Texture[]{
                                     Texture.newColorTexture(
                                             lightRT,
-                                            960,
-                                            540,
-                                            TextureFormatType.ColorR8G8B8A8,
+                                            1920,
+                                            1080,
+                                            TextureFormatType.ColorR32G32B32A32,
                                             Texture.Filter.Nearest,
                                             Texture.Filter.Nearest
                                     ),
                                     Texture.newColorTexture(
                                             lightRT,
-                                            960,
-                                            540,
-                                            TextureFormatType.ColorR8G8B8A8,
+                                            1920,
+                                            1080,
+                                            TextureFormatType.ColorR32G32B32A32,
                                             Texture.Filter.Nearest,
                                             Texture.Filter.Nearest
                                     )
@@ -356,7 +359,7 @@ public class WhisperStage extends Stage {
             );
             lightRT.addAttachment(
                     new RenderTargetAttachment(RenderTargetAttachmentTypes.Depth, new Texture[]{
-                            Texture.newDepthTexture(lightRT, 960, 540, TextureFormatType.Depth32, Texture.Filter.Nearest, Texture.Filter.Nearest)
+                            Texture.newDepthTexture(lightRT, 1920, 1080, TextureFormatType.Depth32, Texture.Filter.Nearest, Texture.Filter.Nearest)
                     })
             );
 
@@ -365,21 +368,45 @@ public class WhisperStage extends Stage {
             spotlightEntity = scene.createEntity(
                     new LightComponent(
                             new Matrix4f().lookAt(
-                                    new Vector3f(0.0f, 4.0f, 6.0f),
+                                    new Vector3f(x, y, z),
                                     new Vector3f(0, 0, 0),
                                     new Vector3f(0.0f, 1.0f, 0.0f)
                             ),
                             new Matrix4f().perspective(
-                                    (float) Math.toRadians(90.0f),
-                                    (float) 960 / 540,
+                                    (float) Math.toRadians(45),
+                                    (float) 1920 / 1080,
                                     0.01f,
                                     100.0f,
                                     true
                             ),
+
                             true,
                             lightRT
-                    )
+                    ),
+                    new ScriptComponent(new Script() {
+                        @Override
+                        public void init(Entity entity) {
+
+                        }
+
+                        @Override
+                        public void update(Entity entity) {
+                            LightComponent lightComponent = entity.get(LightComponent.class);
+                            if(surface.getKeyPressed(Input.KEY_W)) z -= 1 * Time.deltaTime();
+                            if(surface.getKeyPressed(Input.KEY_A)) x -= 1 * Time.deltaTime();
+                            if(surface.getKeyPressed(Input.KEY_S)) z += 1 * Time.deltaTime();
+                            if(surface.getKeyPressed(Input.KEY_D)) x += 1 * Time.deltaTime();
+
+                            lightComponent.setView(new Matrix4f().lookAt(
+                                    new Vector3f(x, y, z),
+                                    new Vector3f(0, 0, 0),
+                                    new Vector3f(0.0f, 1.0f, 0.0f)
+                            ));
+
+                        }
+                    })
             );
+
 
         }
 
@@ -407,7 +434,7 @@ public class WhisperStage extends Stage {
                 shaderProgram.addShader(
                         ShaderType.Fragment,
                         Shader.newShader(shaderProgram, ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
-                                .setAttachmentTextureFormatTypes(TextureFormatType.ColorR8G8B8A8, TextureFormatType.ColorR8G8B8A8)
+                                .setAttachmentTextureFormatTypes(TextureFormatType.ColorR32G32B32A32, TextureFormatType.ColorR32G32B32A32)
                                 .setDepthAttachmentTextureFormatType(TextureFormatType.Depth32)
                 );
 

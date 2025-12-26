@@ -59,13 +59,13 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
         {
             scenePassRT = new RenderTarget(renderer);
             sceneColorTextures = new Resource<>(new Texture[]{
-                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8, Texture.Filter.Nearest, Texture.Filter.Nearest),
-                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8, Texture.Filter.Nearest, Texture.Filter.Nearest)
+                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32, Texture.Filter.Nearest, Texture.Filter.Nearest),
+                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32, Texture.Filter.Nearest, Texture.Filter.Nearest)
             });
 
             scenePosTextures = new Resource<>(new Texture[]{
-                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8, Texture.Filter.Nearest, Texture.Filter.Nearest),
-                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR8G8B8A8, Texture.Filter.Nearest, Texture.Filter.Nearest)
+                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32, Texture.Filter.Nearest, Texture.Filter.Nearest),
+                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32, Texture.Filter.Nearest, Texture.Filter.Nearest)
             });
 
             scenePassRT.addAttachment(
@@ -460,11 +460,11 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                 LightComponent lightComponent = iterator.next().comp();
 
                 shadowMapTextures[renderer.getMaxFramesInFlight() * lightIndex] = lightComponent.renderTarget
-                        .getAttachment(RenderTargetAttachmentTypes.Color)
+                        .getAttachment(RenderTargetAttachmentTypes.Pos)
                         .getTextures()[0];
 
                 shadowMapTextures[(renderer.getMaxFramesInFlight() * lightIndex) + 1] = lightComponent.renderTarget
-                        .getAttachment(RenderTargetAttachmentTypes.Color)
+                        .getAttachment(RenderTargetAttachmentTypes.Pos)
                         .getTextures()[1];
 
                 lightIndex++;
@@ -593,7 +593,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                 {
                     int mode = 0;
 
-                    scenePass.startRendering(scenePassRT, renderer.getWidth(), renderer.getHeight(), true, Color.LIGHT_GRAY);
+                    scenePass.startRendering(scenePassRT, renderer.getWidth(), renderer.getHeight(), true, Color.BLACK);
                     {
                         scene.getEngine().findEntitiesWith(TransformComponent.class, StaticMeshComponent.class).stream().forEach(components -> {
                             StaticMeshComponent staticMeshComponent = components.comp2();

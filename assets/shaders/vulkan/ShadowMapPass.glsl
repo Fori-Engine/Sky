@@ -40,55 +40,27 @@ layout(push_constant) uniform PushConstants {
     int mode[1];
 } shaderMode;
 
-vec4 getWorldSpacePos(vec4 windowPos, mat4 invView, mat4 invProj, int width, int height) {
-    //Window to clip space
-    vec4 worldSpacePos = vec4(vec3(windowPos.xy / vec2(width, height), windowPos.z) * 2.0 - 1.0, windowPos.w);
-    //Perspective divide
-    worldSpacePos.xyz /= worldSpacePos.w;
-    //Clip to view space
-    worldSpacePos *= invProj;
-    //View to world space
-    worldSpacePos *= invView;
 
-    return vec4(worldSpacePos.xyz, 1.0);
-}
+
 
 void main() {
     ivec2 inputTextureUV = ivec2(gl_WorkGroupID.x, gl_WorkGroupID.y);
-    vec4 inputColor = texelFetch(inputShadowMaps[0], inputTextureUV, 0);
-    vec4 windowPosFromCamera = texelFetch(inputPosTexture, inputTextureUV, 0);
-    vec4 worldSpacePosFromCamera = getWorldSpacePos(windowPosFromCamera, sceneDesc.scene.camera.invView, sceneDesc.scene.camera.invProj, 1920, 1080);
+    vec4 color = texelFetch(inputTexture, inputTextureUV, 0);
+    vec4 wpFromCamera = sceneDesc.scene.camera.invView * texelFetch(inputPosTexture, inputTextureUV, 0);
+
+    Light light = sceneDesc.scene.lights[0];
+    vec4 shadowMapUV = light.proj * light.view * wpFromCamera;
+    shadowMapUV /= shadowMapUV.w;
+    shadowMapUV = shadowMapUV * 0.5 + 0.5;
+
+    vec4 lpFromShadowMap = texture(inputShadowMaps[0], shadowMapUV.xy);
+    vec4 wpFromShadowMap = light.invView * lpFromShadowMap;
 
 
-
-
-    {
-        Light light = sceneDesc.scene.lights[0];
-        vec4 shadowMapUV = light.proj * light.view * worldSpacePosFromCamera;
-        shadowMapUV.xyz /= shadowMapUV.w;
-
-
-        shadowMapUV = shadowMapUV * 0.5 + 0.5;
-
-        vec4 shadowMapPos = texture(inputShadowMaps[0], shadowMapUV.xy);
-
-        if(shadowMapPos.z > worldSpacePosFromCamera.z) {
-            for(int y = 0; y < 5; y++) {
-                for(int x = 0; x < 5; x++) {
-                    imageStore(outputTexture, ivec2(x, y), vec4(1.0, 0.0, 0.0, 1.0));
-                }
-            }
-
-
-        }
-
-
-
-
-
+    if(wpFromShadowMap.z < wpFromCamera.z - 0.005) {
+        color.xyz *= 0.1;
     }
 
 
-    vec4 outputColor = inputColor;
-    imageStore(outputTexture, inputTextureUV, outputColor);
+    imageStore(outputTexture, inputTextureUV, color);
 }
