@@ -127,7 +127,7 @@ public class WhisperStage extends Stage {
 
 
 
-        /*
+
         //Shop
         {
             ShaderProgram shaderProgram;
@@ -217,7 +217,7 @@ public class WhisperStage extends Stage {
 
         }
 
-         */
+
 
 
 
@@ -289,7 +289,7 @@ public class WhisperStage extends Stage {
             playerEntity = scene.createEntity(
                     new DynamicMeshComponent(dynamicMesh, mesh),
                     new ShaderComponent(shaderProgram),
-                    new TransformComponent(new Matrix4f().identity().translate(1, 10, 0).rotate((float) Math.toRadians(45.0f), 1, 0, 1)),
+                    new TransformComponent(new Matrix4f().identity().translate(-1, 10, 0).rotate((float) Math.toRadians(45.0f), 1, 0, 1)),
                     new NVPhysXComponent(new BoxCollider(1.0f, 1.0f, 1.0f), new Material(0.05f, 0.05f, 0.99f), ActorType.Dynamic),
                     new ScriptComponent(new Script() {
                         @Override

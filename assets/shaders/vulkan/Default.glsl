@@ -6,6 +6,7 @@ layout(location = 1) in float inputTransformIndex;
 layout(location = 2) in vec2 inputUV;
 
 layout(location = 0) out vec2 outputUV;
+layout(location = 1) out vec4 outputPos;
 
 #define MAX_LIGHTS 10
 
@@ -44,15 +45,21 @@ layout(push_constant) uniform PushConstants {
 
 void main() {
 
-    mat4 m;
+    mat4 view, proj;
     int renderMode = shaderMode.mode[0];
 
-    if(renderMode == 0) m = sceneDesc.scene.camera.proj * sceneDesc.scene.camera.view;
+    if(renderMode == 0) {
+        view = sceneDesc.scene.camera.view;
+        proj = sceneDesc.scene.camera.proj;
+    }
     if(renderMode == 1) {
         int lightIndex = shaderMode.mode[1];
-        m = sceneDesc.scene.lights[lightIndex].proj * sceneDesc.scene.lights[lightIndex].view;
+        view = sceneDesc.scene.lights[lightIndex].view;
+        proj = sceneDesc.scene.lights[lightIndex].proj;
     }
-    gl_Position = m * transforms.models[int(inputTransformIndex)] * vec4(inputPos.xyz, 1.0);
+
+    outputPos = view * transforms.models[int(inputTransformIndex)] * vec4(inputPos.xyz, 1.0);
+    gl_Position = proj * outputPos;
     outputUV = inputUV;
 
 }
@@ -62,6 +69,7 @@ void main() {
 #version 460
 
 layout(location = 0) in vec2 inputUV;
+layout(location = 1) in vec4 inputPos;
 layout(location = 0) out vec4 attachment0;
 layout(location = 1) out vec4 attachment1;
 
@@ -105,13 +113,13 @@ layout(push_constant) uniform PushConstants {
 
 void main() {
     int renderMode = shaderMode.mode[0];
-    int lightIndex = shaderMode.mode[1];
 
     if(renderMode == 0) {
         attachment0 = texture(textures[0], inputUV);
-        attachment1 = vec4(gl_FragCoord.xyz, 1.0);
+        attachment1 = vec4(inputPos.xyz, 1.0);
     }
     else if(renderMode == 1) {
-        attachment0 = vec4(gl_FragCoord.xyz, 1.0);
+        attachment0 = vec4(0.0);
+        attachment1 = vec4(inputPos.xyz, 1.0);
     }
 }
