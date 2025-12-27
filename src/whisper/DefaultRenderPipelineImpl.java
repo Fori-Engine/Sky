@@ -485,23 +485,23 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
         {
             //Update entity shaders
             {
-                scene.getEngine().findEntitiesWith(TransformComponent.class, StaticMeshComponent.class).stream().forEach(components -> {
+                scene.getEngine().findEntitiesWith(TransformComponent.class, EnvironmentMeshComponent.class).stream().forEach(components -> {
 
                     TransformComponent transformComponent = components.comp1();
-                    StaticMeshComponent staticMeshComponent = components.comp2();
+                    EnvironmentMeshComponent environmentMeshComponent = components.comp2();
 
-                    ByteBuffer transformsData = staticMeshComponent.staticMeshBatch().getTransformsBuffers()[renderer.getFrameIndex()].get();
+                    ByteBuffer transformsData = environmentMeshComponent.transformsBuffers[renderer.getFrameIndex()].get();
                     transformComponent.transform().get(transformComponent.transformIndex() * SizeUtil.MATRIX_SIZE_BYTES, transformsData);
-                    ByteBuffer sceneDescData = staticMeshComponent.staticMeshBatch().getSceneDescBuffers()[renderer.getFrameIndex()].get();
+                    ByteBuffer sceneDescData = environmentMeshComponent.sceneDescBuffers[renderer.getFrameIndex()].get();
                     updateSceneDesc(sceneDescData, sceneCamera, scene);
                 });
-                scene.getEngine().findEntitiesWith(TransformComponent.class, DynamicMeshComponent.class).stream().forEach(components -> {
+                scene.getEngine().findEntitiesWith(TransformComponent.class, ActorMeshComponent.class).stream().forEach(components -> {
                     TransformComponent transformComponent = components.comp1();
-                    DynamicMeshComponent dynamicMeshComponent = components.comp2();
+                    ActorMeshComponent actorMeshComponent = components.comp2();
 
-                    ByteBuffer transformsData = dynamicMeshComponent.dynamicMesh().getTransformsBuffers()[renderer.getFrameIndex()].get();
+                    ByteBuffer transformsData = actorMeshComponent.transformsBuffers[renderer.getFrameIndex()].get();
                     transformComponent.transform().get(0, transformsData);
-                    ByteBuffer sceneDescData = dynamicMeshComponent.dynamicMesh().getSceneDescBuffers()[renderer.getFrameIndex()].get();
+                    ByteBuffer sceneDescData = actorMeshComponent.sceneDescBuffers[renderer.getFrameIndex()].get();
                     updateSceneDesc(sceneDescData, sceneCamera, scene);
                 });
             }
@@ -546,29 +546,29 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
 
 
-                            scene.getEngine().findEntitiesWith(TransformComponent.class, StaticMeshComponent.class).stream().forEach(components -> {
+                            scene.getEngine().findEntitiesWith(TransformComponent.class, EnvironmentMeshComponent.class).stream().forEach(components -> {
 
-                                StaticMeshComponent staticMeshComponent = components.comp2();
+                                EnvironmentMeshComponent environmentMeshComponent = components.comp2();
                                 shadowMapGenPass.setDrawBuffers(
-                                        staticMeshComponent.staticMeshBatch().getVertexBuffer(),
-                                        staticMeshComponent.staticMeshBatch().getIndexBuffer()
+                                        environmentMeshComponent.vertexBuffer,
+                                        environmentMeshComponent.indexBuffer
                                 );
                                 shadowMapGenPass.setShaderProgram(
-                                        staticMeshComponent.staticMeshBatch().getShaderProgram()
+                                        environmentMeshComponent.shaderProgram
                                 );
-                                shadowMapGenPass.drawIndexed(staticMeshComponent.staticMeshBatch().getIndexCount(), new int[]{mode, shadowMapGenPassLightIndex});
+                                shadowMapGenPass.drawIndexed(environmentMeshComponent.indexCount, new int[]{mode, shadowMapGenPassLightIndex});
                             });
-                            scene.getEngine().findEntitiesWith(TransformComponent.class, DynamicMeshComponent.class).stream().forEach(components -> {
-                                DynamicMeshComponent dynamicMeshComponent = components.comp2();
+                            scene.getEngine().findEntitiesWith(TransformComponent.class, ActorMeshComponent.class).stream().forEach(components -> {
+                                ActorMeshComponent actorMeshComponent = components.comp2();
 
                                 shadowMapGenPass.setDrawBuffers(
-                                        dynamicMeshComponent.dynamicMesh().getVertexBuffer(),
-                                        dynamicMeshComponent.dynamicMesh().getIndexBuffer()
+                                        actorMeshComponent.vertexBuffer,
+                                        actorMeshComponent.indexBuffer
                                 );
                                 shadowMapGenPass.setShaderProgram(
-                                        dynamicMeshComponent.dynamicMesh().getShaderProgram()
+                                        actorMeshComponent.shaderProgram
                                 );
-                                shadowMapGenPass.drawIndexed(dynamicMeshComponent.dynamicMesh().getIndexCount(), new int[]{mode, shadowMapGenPassLightIndex});
+                                shadowMapGenPass.drawIndexed(actorMeshComponent.indexCount, new int[]{mode, shadowMapGenPassLightIndex});
                             });
                         }
                         shadowMapGenPass.endRendering();
@@ -595,29 +595,29 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
                     scenePass.startRendering(scenePassRT, renderer.getWidth(), renderer.getHeight(), true, Color.BLACK);
                     {
-                        scene.getEngine().findEntitiesWith(TransformComponent.class, StaticMeshComponent.class).stream().forEach(components -> {
-                            StaticMeshComponent staticMeshComponent = components.comp2();
+                        scene.getEngine().findEntitiesWith(TransformComponent.class, EnvironmentMeshComponent.class).stream().forEach(components -> {
+                            EnvironmentMeshComponent environmentMeshComponent = components.comp2();
 
                             scenePass.setDrawBuffers(
-                                    staticMeshComponent.staticMeshBatch().getVertexBuffer(),
-                                    staticMeshComponent.staticMeshBatch().getIndexBuffer()
+                                    environmentMeshComponent.vertexBuffer,
+                                    environmentMeshComponent.indexBuffer
                             );
                             scenePass.setShaderProgram(
-                                    staticMeshComponent.staticMeshBatch().getShaderProgram()
+                                    environmentMeshComponent.shaderProgram
                             );
-                            scenePass.drawIndexed(staticMeshComponent.staticMeshBatch().getIndexCount(), new int[]{mode, -1});
+                            scenePass.drawIndexed(environmentMeshComponent.indexCount, new int[]{mode, -1});
                         });
-                        scene.getEngine().findEntitiesWith(TransformComponent.class, DynamicMeshComponent.class).stream().forEach(components -> {
+                        scene.getEngine().findEntitiesWith(TransformComponent.class, ActorMeshComponent.class).stream().forEach(components -> {
 
-                            DynamicMeshComponent dynamicMeshComponent = components.comp2();
+                            ActorMeshComponent actorMeshComponent = components.comp2();
                             scenePass.setDrawBuffers(
-                                    dynamicMeshComponent.dynamicMesh().getVertexBuffer(),
-                                    dynamicMeshComponent.dynamicMesh().getIndexBuffer()
+                                    actorMeshComponent.vertexBuffer,
+                                    actorMeshComponent.indexBuffer
                             );
                             scenePass.setShaderProgram(
-                                    dynamicMeshComponent.dynamicMesh().getShaderProgram()
+                                    actorMeshComponent.shaderProgram
                             );
-                            scenePass.drawIndexed(dynamicMeshComponent.dynamicMesh().getIndexCount(), new int[]{mode, -1});
+                            scenePass.drawIndexed(actorMeshComponent.indexCount, new int[]{mode, -1});
                         });
                     }
                     scenePass.endRendering();

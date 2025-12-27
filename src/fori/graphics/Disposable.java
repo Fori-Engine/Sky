@@ -1,5 +1,6 @@
 package fori.graphics;
 
+import fori.Internal;
 import fori.Logger;
 
 import java.util.ArrayList;
@@ -51,6 +52,10 @@ public abstract class Disposable {
         disposable.dispose();
     }
 
+
+    @Internal("Game code should never call dispose() directly, " +
+            "it is always safer to use disposeAll() instead " +
+            "to ensure proper resource disposal ordering")
     public abstract void dispose();
 
     private String getDepthString(Disposable ref){

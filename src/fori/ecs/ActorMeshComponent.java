@@ -1,17 +1,26 @@
-package fori.graphics.vulkan;
+package fori.ecs;
 
 import fori.graphics.*;
-import fori.graphics.DynamicMesh;
+
 import java.nio.ByteBuffer;
 
-public class VulkanDynamicMesh extends DynamicMesh {
-    public VulkanDynamicMesh(Disposable parent,
-                             ShaderProgram shaderProgram,
-                             int framesInFlight,
-                             int maxVertexCount,
-                             int maxIndexCount) {
+public class ActorMeshComponent {
+    public Buffer[] transformsBuffers;
+    public Buffer[] sceneDescBuffers;
+    public ShaderProgram shaderProgram;
+    public int maxVertexCount;
+    public int maxIndexCount;
+    public int vertexCount;
+    public int indexCount;
+    public Buffer vertexBuffer;
+    public Buffer indexBuffer;
+    public boolean finalized;
 
-        super(maxVertexCount, maxIndexCount, shaderProgram);
+    public ActorMeshComponent(Disposable parent, Renderer renderer, int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram) {
+        this.maxVertexCount = maxVertexCount;
+        this.maxIndexCount = maxIndexCount;
+        this.shaderProgram = shaderProgram;
+
         vertexBuffer = Buffer.newBuffer(
                 parent,
                 VertexAttributes.getSize(shaderProgram.getShaderMap().get(ShaderType.Vertex).getVertexAttributes()) * Float.BYTES * this.maxVertexCount,
@@ -27,10 +36,10 @@ public class VulkanDynamicMesh extends DynamicMesh {
                 false
         );
 
-        transformsBuffers = new Buffer[framesInFlight];
-        sceneDescBuffers = new Buffer[framesInFlight];
+        transformsBuffers = new Buffer[renderer.getMaxFramesInFlight()];
+        sceneDescBuffers = new Buffer[renderer.getMaxFramesInFlight()];
 
-        for (int i = 0; i < framesInFlight; i++) {
+        for (int i = 0; i < renderer.getMaxFramesInFlight(); i++) {
             transformsBuffers[i] = Buffer.newBuffer(
                     parent,
                     SizeUtil.MATRIX_SIZE_BYTES,
@@ -47,19 +56,15 @@ public class VulkanDynamicMesh extends DynamicMesh {
                     false
             );
         }
-
-
     }
 
 
-    @Override
-    public void submit(Mesh mesh, MeshUploader meshUploader) {
 
-
-        ByteBuffer vertexBufferData = getVertexBuffer().get();
+    public void setMesh(Mesh mesh, MeshUploader meshUploader) {
+        ByteBuffer vertexBufferData = vertexBuffer.get();
         vertexBufferData.clear();
 
-        ByteBuffer indexBufferData = getIndexBuffer().get();
+        ByteBuffer indexBufferData = indexBuffer.get();
         indexBufferData.clear();
 
         mesh.put(
@@ -70,13 +75,10 @@ public class VulkanDynamicMesh extends DynamicMesh {
                 indexBufferData
         );
 
-        updateMesh(mesh.getVertexCount(), mesh.getIndexCount());
+        this.vertexCount = mesh.getVertexCount();
+        this.indexCount = mesh.getIndexCount();
+        finalized = true;
     }
 
-    @Override
-    public void updateMesh(int vertexCount, int indexCount) {
-        super.updateMesh(vertexCount, indexCount);
-        this.vertexCount = vertexCount;
-        this.indexCount = indexCount;
-    }
+
 }

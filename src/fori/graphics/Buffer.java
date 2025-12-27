@@ -26,6 +26,7 @@ public abstract class Buffer extends Disposable {
     protected boolean mapped;
     protected boolean staging;
     protected ByteBuffer data;
+    protected Fence copyFence;
 
     public Buffer(Disposable parent, int sizeBytes, Usage usage, Type type, boolean staging){
         super(parent);
@@ -61,6 +62,8 @@ public abstract class Buffer extends Disposable {
 
         return null;
     }
+
+    public abstract void copyTo(Buffer target, int srcOffset, int dstOffset, int size);
 
     public boolean isMapped() {
         return mapped;

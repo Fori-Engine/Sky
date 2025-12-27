@@ -1,17 +1,21 @@
 package fori.graphics.vulkan;
 
+import fori.Logger;
 import fori.graphics.Buffer;
 import fori.graphics.Disposable;
+import fori.graphics.ShaderType;
+import fori.graphics.VertexAttributes;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.util.vma.VmaAllocationCreateInfo;
 import org.lwjgl.util.vma.VmaAllocationInfo;
-import org.lwjgl.vulkan.VkBufferCreateInfo;
+import org.lwjgl.vulkan.*;
 
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 
+import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.util.vma.Vma.*;
 import static org.lwjgl.vulkan.VK10.*;
 
@@ -26,6 +30,8 @@ public class VulkanBuffer extends Buffer {
     private VmaAllocationCreateInfo allocationCreateInfo;
     private long memory;
     private PointerBuffer mappedMemory;
+    private VkCommandBuffer commandBuffer;
+    private VulkanCommandPool commandPool;
 
     public VulkanBuffer(Disposable parent, int sizeBytes, Usage usage, Type type, boolean staging){
         super(parent, sizeBytes, usage, type, staging);
@@ -58,6 +64,29 @@ public class VulkanBuffer extends Buffer {
             memory = allocationInfo.deviceMemory();
 
             handle = pBuffer.get();
+
+            //Resources for copying data between buffers
+            {
+                commandPool = new VulkanCommandPool(this, VulkanRuntime.getCurrentDevice(), VulkanRuntime.getGraphicsFamilyIndex());
+
+
+                VkCommandBufferAllocateInfo allocInfo = VkCommandBufferAllocateInfo.calloc(stack);
+                allocInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
+                allocInfo.commandPool(commandPool.getHandle());
+                allocInfo.level(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+                allocInfo.commandBufferCount(1);
+
+
+                PointerBuffer pCommandBuffers = stack.mallocPointer(1);
+
+                if(vkAllocateCommandBuffers(VulkanRuntime.getCurrentDevice(), allocInfo, pCommandBuffers) != VK_SUCCESS) {
+                    throw new RuntimeException(Logger.error(VulkanBuffer.class, "Failed to create command buffer"));
+                }
+
+                commandBuffer = new VkCommandBuffer(pCommandBuffers.get(0), VulkanRuntime.getCurrentDevice());
+
+                copyFence = new VulkanFence(this, VulkanRuntime.getCurrentDevice(), 0);
+            }
         }
 
     }
@@ -106,6 +135,43 @@ public class VulkanBuffer extends Buffer {
     }
 
 
+    @Override
+    public void copyTo(Buffer dst, int srcOffset, int dstOffset, int size) {
+        vkResetFences(VulkanRuntime.getCurrentDevice(), ((VulkanFence) copyFence).getHandle());
+
+        try (MemoryStack stack = stackPush()) {
+            VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.calloc(stack);
+            beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
+
+            if (vkBeginCommandBuffer(commandBuffer, beginInfo) != VK_SUCCESS) {
+                throw new RuntimeException(Logger.error(VulkanBuffer.class, "Failed to start recording copy command buffer"));
+            }
+
+
+            VkBufferCopy.Buffer copyInfo = VkBufferCopy.calloc(1, stack);
+            copyInfo.size(size);
+            copyInfo.srcOffset(srcOffset);
+            copyInfo.dstOffset(dstOffset);
+
+            vkCmdCopyBuffer(commandBuffer, this.getHandle(), ((VulkanBuffer) dst).getHandle(), copyInfo);
+
+            if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+                throw new RuntimeException(Logger.error(VulkanBuffer.class, "Failed to finish recording command buffer"));
+            }
+
+            VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
+            submitInfo.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
+            submitInfo.pCommandBuffers(stack.pointers(commandBuffer));
+
+            if (vkQueueSubmit(VulkanRuntime.getGraphicsQueue(), submitInfo, ((VulkanFence) copyFence).getHandle()) != VK_SUCCESS) {
+                throw new RuntimeException(Logger.error(VulkanBuffer.class, "Failed to submit command buffer"));
+            }
+
+            vkWaitForFences(VulkanRuntime.getCurrentDevice(), ((VulkanFence) copyFence).getHandle(), true, VulkanUtil.UINT64_MAX);
+
+        }
+    }
+
 
     public void unmap(){
         super.unmap();
@@ -124,6 +190,8 @@ public class VulkanBuffer extends Buffer {
 
     @Override
     public void dispose() {
+
+
         if(mapped) unmap();
         vkDeviceWaitIdle(VulkanRuntime.getCurrentDevice());
         vmaDestroyBuffer(VulkanAllocator.getAllocator().getId(), handle, allocation);

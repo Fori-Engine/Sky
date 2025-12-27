@@ -86,7 +86,7 @@ public class VulkanTexture extends Texture {
                 PointerBuffer pCommandBuffers = stack.mallocPointer(1);
 
                 if (vkAllocateCommandBuffers(VulkanRuntime.getCurrentDevice(), allocInfo, pCommandBuffers) != VK_SUCCESS) {
-                    throw new RuntimeException(Logger.error(VulkanStaticMeshBatch.class, "Failed to create command buffer"));
+                    throw new RuntimeException(Logger.error(VulkanTexture.class, "Failed to create command buffer"));
                 }
 
                 commandBuffer = new VkCommandBuffer(pCommandBuffers.get(0), VulkanRuntime.getCurrentDevice());
@@ -100,7 +100,7 @@ public class VulkanTexture extends Texture {
                 beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
 
                 if (vkBeginCommandBuffer(commandBuffer, beginInfo) != VK_SUCCESS) {
-                    throw new RuntimeException(Logger.error(VulkanStaticMeshBatch.class, "Failed to start recording command buffer"));
+                    throw new RuntimeException(Logger.error(VulkanTexture.class, "Failed to start recording command buffer"));
                 }
 
 

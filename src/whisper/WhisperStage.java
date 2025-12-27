@@ -7,7 +7,6 @@ import fori.asset.AssetPacks;
 
 import fori.graphics.*;
 
-import fori.graphics.StaticMeshBatch;
 import fori.ecs.*;
 import fori.physx.ActorType;
 import fori.physx.BoxCollider;
@@ -128,6 +127,8 @@ public class WhisperStage extends Stage {
 
 
 
+
+
         //Shop
         {
             ShaderProgram shaderProgram;
@@ -154,7 +155,7 @@ public class WhisperStage extends Stage {
             shaderProgram.addShader(
                     ShaderType.Fragment,
                     Shader.newShader(shaderProgram, ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
-                            .setAttachmentTextureFormatTypes(TextureFormatType.ColorR8G8B8A8, TextureFormatType.ColorR8G8B8A8)
+                            .setAttachmentTextureFormatTypes(TextureFormatType.ColorR32G32B32A32, TextureFormatType.ColorR32G32B32A32)
                             .setDepthAttachmentTextureFormatType(TextureFormatType.Depth32)
             );
 
@@ -185,30 +186,27 @@ public class WhisperStage extends Stage {
 
 
             mesh = Mesh.newMesh(shaderProgram.getShaderMap().get(ShaderType.Vertex).getVertexAttributes(), AssetPacks.getAsset("core:assets/models/viking_room.obj"));
-            StaticMeshBatch shopStaticMeshBatch = renderer.newStaticMeshBatch(100000, 100000, 1, shaderProgram);
 
-            shopStaticMeshBatch.submitMesh(mesh, new MeshUploaderWithTransform(0));
-            shopStaticMeshBatch.finish();
-
-
-            scene.registerStaticMeshBatch("Shops", shopStaticMeshBatch);
+            EnvironmentMeshComponent environmentMeshComponent = new EnvironmentMeshComponent(renderer, renderer, 100000, 100000, 1, shaderProgram);
+            environmentMeshComponent.addMesh(mesh, new MeshUploaderWithTransform(0));
+            environmentMeshComponent.close();
 
             Texture texture = Texture.newColorTextureFromAsset(renderer, AssetPacks.getAsset("core:assets/textures/viking_room.png"), TextureFormatType.ColorR8G8B8A8, Texture.Filter.Linear, Texture.Filter.Linear);
 
 
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                shopStaticMeshBatch.getShaderProgram().updateTextures(frameIndex, new ShaderUpdate<>("textures", 0, 2, texture).arrayIndex(0));
+                environmentMeshComponent.shaderProgram.updateTextures(frameIndex, new ShaderUpdate<>("textures", 0, 2, texture).arrayIndex(0));
 
-                shopStaticMeshBatch.getShaderProgram().updateBuffers(
+                environmentMeshComponent.shaderProgram.updateBuffers(
                         frameIndex,
-                        new ShaderUpdate<>("sceneDesc", 0, 0, shopStaticMeshBatch.getSceneDescBuffers()[frameIndex]),
-                        new ShaderUpdate<>("transforms", 0, 1, shopStaticMeshBatch.getTransformsBuffers()[frameIndex])
+                        new ShaderUpdate<>("sceneDesc", 0, 0, environmentMeshComponent.sceneDescBuffers[frameIndex]),
+                        new ShaderUpdate<>("transforms", 0, 1, environmentMeshComponent.transformsBuffers[frameIndex])
                 );
             }
 
 
             shopEntity = scene.createEntity(
-                    new StaticMeshComponent(shopStaticMeshBatch, mesh),
+                    environmentMeshComponent,
                     new ShaderComponent(shaderProgram),
                     new TransformComponent(0, new Matrix4f().identity().translate(1, 0, 0).rotate((float) Math.toRadians(-90), 1.0f, 0.0f, 0.0f)),
                     new NVPhysXComponent(new BoxCollider(1.5f, 1.5f, 1.5f), new Material(0.05f, 0.05f, 0.99f), ActorType.Dynamic)
@@ -216,6 +214,9 @@ public class WhisperStage extends Stage {
 
 
         }
+
+
+
 
 
 
@@ -273,36 +274,24 @@ public class WhisperStage extends Stage {
 
 
             Mesh mesh = MeshGenerator.newBox(1.0f, 1.0f, 1.0f);
-            DynamicMesh dynamicMesh = renderer.newDynamicMesh(100000, 100000, shaderProgram);
-            dynamicMesh.submit(mesh, new MeshUploaderWithTransform(0));
-            scene.registerDynamicMesh(dynamicMesh);
+
+            ActorMeshComponent actorMeshComponent = new ActorMeshComponent(renderer, renderer, 100000, 100000, shaderProgram);
+            actorMeshComponent.setMesh(mesh, new MeshUploaderWithTransform(0));
 
 
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                dynamicMesh.getShaderProgram().updateBuffers(
+                actorMeshComponent.shaderProgram.updateBuffers(
                         frameIndex,
-                        new ShaderUpdate<>("sceneDesc", 0, 0, dynamicMesh.getSceneDescBuffers()[frameIndex]),
-                        new ShaderUpdate<>("transforms", 0, 1, dynamicMesh.getTransformsBuffers()[frameIndex])
+                        new ShaderUpdate<>("sceneDesc", 0, 0, actorMeshComponent.sceneDescBuffers[frameIndex]),
+                        new ShaderUpdate<>("transforms", 0, 1, actorMeshComponent.transformsBuffers[frameIndex])
                 );
             }
 
             playerEntity = scene.createEntity(
-                    new DynamicMeshComponent(dynamicMesh, mesh),
+                    actorMeshComponent,
                     new ShaderComponent(shaderProgram),
                     new TransformComponent(new Matrix4f().identity().translate(-1, 10, 0).rotate((float) Math.toRadians(45.0f), 1, 0, 1)),
-                    new NVPhysXComponent(new BoxCollider(1.0f, 1.0f, 1.0f), new Material(0.05f, 0.05f, 0.99f), ActorType.Dynamic),
-                    new ScriptComponent(new Script() {
-                        @Override
-                        public void init(Entity entity) {
-
-                        }
-
-                        @Override
-                        public void update(Entity entity) {
-
-
-                        }
-                    })
+                    new NVPhysXComponent(new BoxCollider(1.0f, 1.0f, 1.0f), new Material(0.05f, 0.05f, 0.99f), ActorType.Dynamic)
             );
         }
 
@@ -460,21 +449,19 @@ public class WhisperStage extends Stage {
 
 
             Mesh mesh = MeshGenerator.newBox(10.0f, 1.0f, 10.0f);
-            DynamicMesh dynamicMesh = renderer.newDynamicMesh(100000, 100000, shaderProgram);
-            dynamicMesh.submit(mesh, new MeshUploaderWithTransform(0));
-            scene.registerDynamicMesh(dynamicMesh);
-
+            ActorMeshComponent actorMeshComponent = new ActorMeshComponent(renderer, renderer, 100000, 100000, shaderProgram);
+            actorMeshComponent.setMesh(mesh, new MeshUploaderWithTransform(0));
 
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                dynamicMesh.getShaderProgram().updateBuffers(
+                actorMeshComponent.shaderProgram.updateBuffers(
                         frameIndex,
-                        new ShaderUpdate<>("sceneDesc", 0, 0, dynamicMesh.getSceneDescBuffers()[frameIndex]),
-                        new ShaderUpdate<>("transforms", 0, 1, dynamicMesh.getTransformsBuffers()[frameIndex])
+                        new ShaderUpdate<>("sceneDesc", 0, 0, actorMeshComponent.sceneDescBuffers[frameIndex]),
+                        new ShaderUpdate<>("transforms", 0, 1, actorMeshComponent.transformsBuffers[frameIndex])
                 );
             }
 
             levelEntity = scene.createEntity(
-                    new DynamicMeshComponent(dynamicMesh, mesh),
+                    actorMeshComponent,
                     new ShaderComponent(shaderProgram),
                     new TransformComponent(new Matrix4f().identity().translate(0, -2, 0).rotate((float) Math.toRadians(180), 0, 0, 1)),
                     new NVPhysXComponent(new BoxCollider(10f, 1f, 10f), new Material(0.05f, 0.05f, 0.99f), ActorType.Static)
@@ -506,6 +493,61 @@ public class WhisperStage extends Stage {
 
     @Override
     public void closing() {
+
+
+        //Explicitly free all Actors and Environments
+        scene.getEngine().findEntitiesWith(ActorMeshComponent.class).stream().forEach(components -> {
+            ActorMeshComponent actorMeshComponent = components.comp();
+
+            for(int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
+                Buffer sceneDescBuffer = actorMeshComponent.sceneDescBuffers[frameIndex];
+                Buffer transformsBuffer = actorMeshComponent.transformsBuffers[frameIndex];
+
+                sceneDescBuffer.disposeAll();
+                transformsBuffer.disposeAll();
+
+                renderer.remove(sceneDescBuffer);
+                renderer.remove(transformsBuffer);
+            }
+
+
+            actorMeshComponent.vertexBuffer.disposeAll();
+            actorMeshComponent.indexBuffer.disposeAll();
+            actorMeshComponent.shaderProgram.disposeAll();
+
+            renderer.remove(actorMeshComponent.vertexBuffer);
+            renderer.remove(actorMeshComponent.indexBuffer);
+            renderer.remove(actorMeshComponent.shaderProgram);
+        });
+
+        scene.getEngine().findEntitiesWith(EnvironmentMeshComponent.class).stream().forEach(components -> {
+            EnvironmentMeshComponent environmentMeshComponent = components.comp();
+
+            for(int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
+                Buffer sceneDescBuffer = environmentMeshComponent.sceneDescBuffers[frameIndex];
+                Buffer transformsBuffer = environmentMeshComponent.transformsBuffers[frameIndex];
+
+                sceneDescBuffer.disposeAll();
+                transformsBuffer.disposeAll();
+
+
+                renderer.remove(sceneDescBuffer);
+                renderer.remove(transformsBuffer);
+            }
+
+
+            environmentMeshComponent.vertexBuffer.disposeAll();
+            environmentMeshComponent.indexBuffer.disposeAll();
+            environmentMeshComponent.shaderProgram.disposeAll();
+
+            renderer.remove(environmentMeshComponent.vertexBuffer);
+            renderer.remove(environmentMeshComponent.indexBuffer);
+            renderer.remove(environmentMeshComponent.shaderProgram);
+        });
+
+
+
+
         scene.getEngine().findEntitiesWith(NVPhysXComponent.class).stream().forEach(components -> {
             NVPhysXComponent nvPhysXComponent = components.comp();
             nvPhysXComponent.release();

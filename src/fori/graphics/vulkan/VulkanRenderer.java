@@ -3,8 +3,6 @@ package fori.graphics.vulkan;
 import fori.Logger;
 import fori.Surface;
 import fori.graphics.*;
-import fori.graphics.DynamicMesh;
-import fori.graphics.StaticMeshBatch;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
@@ -440,88 +438,8 @@ public class VulkanRenderer extends Renderer {
 
         return extent;
     }
-
-
-
-
-
-
-
-
-
     public VkDevice getDevice() {
         return device;
-    }
-
-
-    @Override
-    public StaticMeshBatch newStaticMeshBatch(int maxVertexCount, int maxIndexCount, int maxTransformCount, ShaderProgram shaderProgram) {
-
-        return new VulkanStaticMeshBatch(this, shaderProgram, getMaxFramesInFlight(), commandPool, graphicsQueue, device, maxVertexCount, maxIndexCount, maxTransformCount);
-    }
-
-
-
-    @Override
-    public void destroyStaticMeshBatch(StaticMeshBatch staticMeshBatch) {
-        VulkanStaticMeshBatch vulkanStaticMeshBatch = (VulkanStaticMeshBatch) staticMeshBatch;
-
-        for(int frameIndex = 0; frameIndex < getMaxFramesInFlight(); frameIndex++) {
-            Buffer transformsBuffer = vulkanStaticMeshBatch.getTransformsBuffers()[frameIndex];
-            Buffer cameraBuffer = vulkanStaticMeshBatch.getSceneDescBuffers()[frameIndex];
-
-            transformsBuffer.dispose();
-            cameraBuffer.dispose();
-
-            this.remove(transformsBuffer);
-            this.remove(cameraBuffer);
-
-        }
-
-        vulkanStaticMeshBatch.getVertexBuffer().dispose();
-        vulkanStaticMeshBatch.getIndexBuffer().dispose();
-
-        this.remove(vulkanStaticMeshBatch.getVertexBuffer());
-        this.remove(vulkanStaticMeshBatch.getIndexBuffer());
-    }
-
-    @Override
-    public void destroyDynamicMesh(DynamicMesh dynamicMesh) {
-        VulkanDynamicMesh vulkanDynamicMesh = (VulkanDynamicMesh) dynamicMesh;
-
-        for(int frameIndex = 0; frameIndex < getMaxFramesInFlight(); frameIndex++) {
-            Buffer transformsBuffer = vulkanDynamicMesh.getTransformsBuffers()[frameIndex];
-            Buffer cameraBuffer = vulkanDynamicMesh.getSceneDescBuffers()[frameIndex];
-
-            transformsBuffer.dispose();
-            cameraBuffer.dispose();
-
-            this.remove(transformsBuffer);
-            this.remove(cameraBuffer);
-
-        }
-
-
-        vulkanDynamicMesh.getVertexBuffer().dispose();
-        vulkanDynamicMesh.getIndexBuffer().dispose();
-
-        this.remove(vulkanDynamicMesh.getVertexBuffer());
-        this.remove(vulkanDynamicMesh.getIndexBuffer());
-    }
-
-    @Override
-    public DynamicMesh newDynamicMesh(int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram) {
-
-        VulkanDynamicMesh vulkanDynamicMesh = new VulkanDynamicMesh(
-                this,
-                shaderProgram,
-                getMaxFramesInFlight(),
-                maxVertexCount,
-                maxIndexCount
-        );
-
-
-        return vulkanDynamicMesh;
     }
 
     @Override
@@ -570,9 +488,7 @@ public class VulkanRenderer extends Renderer {
             List<Pass> passes = renderGraph.walk(renderGraph.getTargetPass());
 
             int passCount = 0;
-            System.out.println();
             for(Pass pass : passes) {
-                System.out.println(pass.getName());
 
                 pass.setWaitSemaphores(waitSemaphores);
                 waitSemaphores = pass.getFinishedSemaphores();

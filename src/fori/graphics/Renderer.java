@@ -39,11 +39,6 @@ public abstract class Renderer extends Disposable {
         return settings;
     }
 
-    public abstract StaticMeshBatch newStaticMeshBatch(int maxVertices, int maxIndices, int maxTransformCount, ShaderProgram shaderProgram);
-    public abstract void destroyStaticMeshBatch(StaticMeshBatch staticMeshBatch);
-
-    public abstract DynamicMesh newDynamicMesh(int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram);
-    public abstract void destroyDynamicMesh(DynamicMesh dynamicMesh);
 
     public abstract void updateRenderer(boolean surfaceInvalidated);
     public abstract void render(RenderGraph renderGraph);
