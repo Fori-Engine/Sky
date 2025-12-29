@@ -1,0 +1,34 @@
+plugins {
+    id 'base'
+}
+apply from: 'metadata.gradle'
+
+def outputDir = project.property('assetpack')
+
+shaders.each { shaderFileName, stages ->
+
+    stages.each { stage ->
+
+        def outputName = outputDir + File.separator + shaderFileName + "_" + stage + ".spv"
+
+
+
+        def t = tasks.register("compile_${shaderFileName}_${stage}", Exec) {
+
+            inputs.file("${shaderFileName}.slang")
+            outputs.file(outputName)
+
+            commandLine 'slangc', "${shaderFileName}.slang",
+                    '-profile', 'glsl_450',
+                    '-target', 'spirv',
+                    '-o', outputName,
+                    '-stage', stage,
+                    '-entry', "${stage}Main"
+        }
+    }
+}
+
+task compile {
+    dependsOn tasks.matching { it.name.startsWith('compile_') }
+
+}
