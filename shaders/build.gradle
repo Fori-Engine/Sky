@@ -19,11 +19,15 @@ shaders.each { shaderFileName, stages ->
             outputs.file(outputName)
 
             commandLine 'slangc', "${shaderFileName}.slang",
-                    '-profile', 'glsl_450',
+                    '-profile', 'glsl_460',
                     '-target', 'spirv',
+                    '-matrix-layout-column-major',
                     '-o', outputName,
                     '-stage', stage,
                     '-entry', "${stage}Main"
+
+            standardOutput = System.out
+            errorOutput = System.err
         }
     }
 }

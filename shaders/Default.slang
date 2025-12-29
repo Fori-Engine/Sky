@@ -1,20 +1,69 @@
+#define MAX_LIGHTS 10
+#define MAX_TRANSFORMS 10
+
+struct Camera {
+    float4x4 view;
+    float4x4 proj;
+
+    float4x4 invView;
+    float4x4 invProj;
+}
+
+struct Light {
+    float4x4 view;
+    float4x4 proj;
+
+    float4x4 invView;
+    float4x4 invProj;
+}
+
+struct Scene {
+    Camera camera;
+    Light lights[MAX_LIGHTS];
+}
+
+struct Transforms {
+    float4x4 transforms[MAX_TRANSFORMS];
+}
+
+StructuredBuffer<Scene> sceneDesc;
+StructuredBuffer<Transforms> transforms;
+
 struct VSOutput {
-    float2 uv;
-    float4 pos;
+    float2 uv : TEXCOORD0;
+    float4 pos : SV_POSITION;
+    float4 posViewSpace;
 }
 
 struct Vertex
 {
     float3 pos : POSITION;
     float1 transformIndex;
-    float2 uv;
+    float2 uv : TEXCOORD0;
 }
 
-[shader("vertex")]
-VSOutput vertexMain(Vertex vertex) {
-    VSOutput output;
 
-    output.pos = float4(vertex.pos, 1.0);
+
+[shader("vertex")]
+VSOutput vertexMain(Vertex vertex, uniform int renderMode, uniform int lightIndex) {
+    VSOutput output;
+    float4x4 view, proj;
+
+    
+    if(renderMode == 0) {
+        view = sceneDesc[0].camera.view;
+        proj = sceneDesc[0].camera.proj;
+    }
+    if(renderMode == 1) {
+        view = sceneDesc[0].lights[lightIndex].view;
+        proj = sceneDesc[0].lights[lightIndex].proj;
+    }
+    
+    float4x4 transform = transforms[0].transforms[int(vertex.transformIndex)];
+
+    output.posViewSpace = mul(view, mul(transform, float4(vertex.pos, 1.0)));
+    output.pos = mul(proj, output.posViewSpace);
+    output.uv = vertex.uv;
 
     return output;
 }
@@ -24,12 +73,24 @@ struct FSOutput {
     float4 color1 : SV_Target1;
 }
 
+Texture2D textures[1];
+SamplerState samplerStates[1];
+
+
 [shader("fragment")]
-FSOutput fragmentMain(VSOutput vsOutput) {
+FSOutput fragmentMain(VSOutput vsOutput, uniform int renderMode, uniform int lightIndex) {
     FSOutput output;
 
-    output.color0 = float4(1.0, 0.0, 0.0, 1.0);
-    output.color1 = float4(0.0, 1.0, 0.0, 1.0);
+    if(renderMode == 0) {
+        output.color0 = textures[0].Sample(samplerStates[0], vsOutput.uv);
+        output.color1 = float4(vsOutput.posViewSpace.xyz, 1.0);
+    }
+    if(renderMode == 1) {
+        output.color0 = float4(0.0, 0.0, 0.0, 0.0);
+        output.color1 = float4(vsOutput.posViewSpace.xyz, 1.0);
+    }
+
+
 
     return output;
 }
