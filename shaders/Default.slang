@@ -38,8 +38,8 @@ struct VSOutput {
 struct Vertex
 {
     float3 pos : POSITION;
-    float1 transformIndex;
-    float2 uv : TEXCOORD0;
+    float1 entityIndex;
+    float2 uv : TEXCOORD;
 }
 
 
@@ -59,7 +59,7 @@ VSOutput vertexMain(Vertex vertex, uniform int renderMode, uniform int lightInde
         proj = sceneDesc[0].lights[lightIndex].proj;
     }
     
-    float4x4 transform = transforms[0].transforms[int(vertex.transformIndex)];
+    float4x4 transform = transforms[0].transforms[int(vertex.entityIndex)];
 
     output.posViewSpace = mul(view, mul(transform, float4(vertex.pos, 1.0)));
     output.pos = mul(proj, output.posViewSpace);
@@ -73,16 +73,18 @@ struct FSOutput {
     float4 color1 : SV_Target1;
 }
 
-Texture2D textures[1];
-SamplerState samplerStates[1];
+Texture2D texture;
+SamplerState samplerState;
+
 
 
 [shader("fragment")]
 FSOutput fragmentMain(VSOutput vsOutput, uniform int renderMode, uniform int lightIndex) {
     FSOutput output;
+    
 
     if(renderMode == 0) {
-        output.color0 = textures[0].Sample(samplerStates[0], vsOutput.uv);
+        output.color0 = texture.Sample(samplerState, vsOutput.uv);
         output.color1 = float4(vsOutput.posViewSpace.xyz, 1.0);
     }
     if(renderMode == 1) {

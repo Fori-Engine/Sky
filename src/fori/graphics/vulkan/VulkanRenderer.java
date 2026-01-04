@@ -34,7 +34,7 @@ public class VulkanRenderer extends Renderer {
     private VkPhysicalDevice physicalDevice;
     private VkPhysicalDeviceProperties physicalDeviceProperties;
     private VulkanQueueFamilies queueFamilies;
-    private static final Set<String> DEVICE_EXTENSIONS = Stream.of(VK_KHR_SWAPCHAIN_EXTENSION_NAME, KHRDynamicRendering.VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME)
+    private static final Set<String> DEVICE_EXTENSIONS = Stream.of(VK_KHR_SWAPCHAIN_EXTENSION_NAME, KHRDynamicRendering.VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME, KHRComputeShaderDerivatives.VK_KHR_COMPUTE_SHADER_DERIVATIVES_EXTENSION_NAME)
             .collect(toSet());
 
     private VkDevice device;
@@ -316,20 +316,20 @@ public class VulkanRenderer extends Renderer {
 
 
             //Bindless Setup
-            VkPhysicalDeviceDescriptorIndexingFeatures deviceDescriptorIndexingFeatures = VkPhysicalDeviceDescriptorIndexingFeatures.calloc(stack);
+            VkPhysicalDeviceDescriptorIndexingFeatures physicalDeviceDescriptorIndexingFeatures = VkPhysicalDeviceDescriptorIndexingFeatures.calloc(stack);
             {
-                deviceDescriptorIndexingFeatures.sType(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES);
+                physicalDeviceDescriptorIndexingFeatures.sType(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES);
 
-                deviceDescriptorIndexingFeatures.runtimeDescriptorArray(true);
-                deviceDescriptorIndexingFeatures.descriptorBindingPartiallyBound(true);
-                deviceDescriptorIndexingFeatures.shaderStorageBufferArrayNonUniformIndexing(true);
-                deviceDescriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing(true);
-                deviceDescriptorIndexingFeatures.shaderStorageImageArrayNonUniformIndexing(true);
-                deviceDescriptorIndexingFeatures.descriptorBindingUniformBufferUpdateAfterBind(true);
+                physicalDeviceDescriptorIndexingFeatures.runtimeDescriptorArray(true);
+                physicalDeviceDescriptorIndexingFeatures.descriptorBindingPartiallyBound(true);
+                physicalDeviceDescriptorIndexingFeatures.shaderStorageBufferArrayNonUniformIndexing(true);
+                physicalDeviceDescriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing(true);
+                physicalDeviceDescriptorIndexingFeatures.shaderStorageImageArrayNonUniformIndexing(true);
+                physicalDeviceDescriptorIndexingFeatures.descriptorBindingUniformBufferUpdateAfterBind(true);
 
-                deviceDescriptorIndexingFeatures.descriptorBindingStorageBufferUpdateAfterBind(true);
-                deviceDescriptorIndexingFeatures.descriptorBindingSampledImageUpdateAfterBind(true);
-                deviceDescriptorIndexingFeatures.descriptorBindingStorageImageUpdateAfterBind(true);
+                physicalDeviceDescriptorIndexingFeatures.descriptorBindingStorageBufferUpdateAfterBind(true);
+                physicalDeviceDescriptorIndexingFeatures.descriptorBindingSampledImageUpdateAfterBind(true);
+                physicalDeviceDescriptorIndexingFeatures.descriptorBindingStorageImageUpdateAfterBind(true);
             }
 
             //Dynamic Rendering
@@ -337,15 +337,23 @@ public class VulkanRenderer extends Renderer {
             {
                 physicalDeviceDynamicRenderingFeaturesKHR.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR);
                 physicalDeviceDynamicRenderingFeaturesKHR.dynamicRendering(true);
+            }
 
-
+            //Compute Shader Derivatives
+            VkPhysicalDeviceComputeShaderDerivativesFeaturesKHR physicalDeviceComputeShaderDerivativesFeaturesKHR = VkPhysicalDeviceComputeShaderDerivativesFeaturesKHR.calloc(stack);
+            {
+                physicalDeviceComputeShaderDerivativesFeaturesKHR.sType(KHRComputeShaderDerivatives.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_SHADER_DERIVATIVES_FEATURES_KHR);
+                physicalDeviceComputeShaderDerivativesFeaturesKHR.computeDerivativeGroupQuads(true);
             }
 
             VkDeviceCreateInfo createInfo = VkDeviceCreateInfo.calloc(stack);
 
             createInfo.sType(VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO);
             createInfo.pQueueCreateInfos(queueCreateInfos);
-            createInfo.pNext(deviceDescriptorIndexingFeatures).pNext(physicalDeviceDynamicRenderingFeaturesKHR);
+            createInfo
+                    .pNext(physicalDeviceDescriptorIndexingFeatures)
+                    .pNext(physicalDeviceDynamicRenderingFeaturesKHR)
+                    .pNext(physicalDeviceComputeShaderDerivativesFeaturesKHR);
 
 
             createInfo.pEnabledFeatures(deviceFeatures);

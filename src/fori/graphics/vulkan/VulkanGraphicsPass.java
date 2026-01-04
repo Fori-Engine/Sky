@@ -5,6 +5,7 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
+import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 import java.util.Optional;
 
@@ -78,19 +79,22 @@ public class VulkanGraphicsPass extends GraphicsPass {
             VulkanPipeline pipeline = ((VulkanShaderProgram) shaderProgram).getPipeline();
             vkCmdBindPipeline(commandBuffers[frameIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getHandle());
             vkCmdBindDescriptorSets(commandBuffers[frameIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    pipeline.getLayoutHandle(), 0, stack.longs(((VulkanShaderProgram) shaderProgram).getDescriptorSets(frameIndex)), null);
+                    pipeline.getLayoutHandle(), 0, stack.longs(((VulkanShaderProgram) shaderProgram).getDescriptorSetsHandles(frameIndex)), null);
 
         }
     }
 
     @Override
-    public void drawIndexed(int indexCount, int[] shaderMode) {
-        VkCommandBuffer commandBuffer = commandBuffers[frameIndex];
-
+    public void setPushConstants(ByteBuffer pPushConstants) {
+        pPushConstants.rewind();
         long pipelineLayoutHandle = ((VulkanShaderProgram) shaderProgram).getPipeline().getLayoutHandle();
-        vkCmdPushConstants(commandBuffer, pipelineLayoutHandle, VK_SHADER_STAGE_ALL, 0, shaderMode);
+        vkCmdPushConstants(commandBuffers[frameIndex], pipelineLayoutHandle, VK_SHADER_STAGE_ALL, 0, pPushConstants);
+    }
+
+    @Override
+    public void drawIndexed(int indexCount) {
         vkCmdDrawIndexed(
-                commandBuffer,
+                commandBuffers[frameIndex],
                 indexCount,
                 1,
                 0,

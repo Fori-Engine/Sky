@@ -26,19 +26,15 @@ StructuredBuffer<Scene> sceneDesc;
 
 
 Texture2D inputTexture;
-SamplerState inputTextureSamplerState;
-
 Texture2D inputShadowMaps[1];
 SamplerState inputShadowMapsSamplerStates[1];
 
 Texture2D inputPosTexture;
-SamplerState inputPosTextureSamplerState;
-
 RWTexture2D outputTexture;
 
 
-[numthreads(2, 2, 1)]
-void computeMain(uniform int mode, int3 dispatchThreadID : SV_DispatchThreadID) {
+[numthreads(2, 2, 2)]
+void computeMain(int3 dispatchThreadID : SV_DispatchThreadID) {
     int3 inputTextureUV = int3(dispatchThreadID.x, dispatchThreadID.y, 0);
     float4 color = inputTexture.Load(inputTextureUV, 0);
     float4 wpFromCamera = mul(sceneDesc[0].camera.invView, inputPosTexture.Load(inputTextureUV, 0));

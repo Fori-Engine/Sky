@@ -1,7 +1,7 @@
 package fori.graphics;
 
 public enum ShaderType {
-    Vertex,
-    Fragment,
-    Compute
+    VertexShader,
+    FragmentShader,
+    ComputeShader
 }

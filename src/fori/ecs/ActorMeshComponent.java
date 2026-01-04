@@ -23,7 +23,7 @@ public class ActorMeshComponent {
 
         vertexBuffer = Buffer.newBuffer(
                 parent,
-                VertexAttributes.getSize(shaderProgram.getShaderMap().get(ShaderType.Vertex).getVertexAttributes()) * Float.BYTES * this.maxVertexCount,
+                shaderProgram.getVertexAttributesSize() * Float.BYTES * this.maxVertexCount,
                 Buffer.Usage.VertexBuffer,
                 Buffer.Type.CPUGPUShared,
                 false
@@ -50,7 +50,7 @@ public class ActorMeshComponent {
 
             sceneDescBuffers[i] = Buffer.newBuffer(
                     parent,
-                    SizeUtil.SCENE_DESC_SIZE_BYTES,
+                    shaderProgram.getDescriptorByName("sceneDesc").getSizeBytes(),
                     Buffer.Usage.ShaderStorageBuffer,
                     Buffer.Type.CPUGPUShared,
                     false
@@ -60,23 +60,17 @@ public class ActorMeshComponent {
 
 
 
-    public void setMesh(Mesh mesh, MeshUploader meshUploader) {
+    public void setMesh(MeshData meshData, EntityShaderIndex entityShaderIndex) {
         ByteBuffer vertexBufferData = vertexBuffer.get();
         vertexBufferData.clear();
 
         ByteBuffer indexBufferData = indexBuffer.get();
         indexBufferData.clear();
 
-        mesh.put(
-                meshUploader,
-                0,
-                shaderProgram,
-                vertexBufferData,
-                indexBufferData
-        );
+        entityShaderIndex.upload(meshData, shaderProgram, vertexBufferData, indexBufferData, 0);
 
-        this.vertexCount = mesh.getVertexCount();
-        this.indexCount = mesh.getIndexCount();
+        this.vertexCount = meshData.getVertexCount();
+        this.indexCount = meshData.getIndexCount();
         finalized = true;
     }
 

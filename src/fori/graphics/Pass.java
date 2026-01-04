@@ -34,6 +34,8 @@ public abstract class Pass extends Disposable {
         return dependencyList;
     }
 
+
+
     public static GraphicsPass newGraphicsPass(Disposable disposable, String name, int framesInFlight) {
         if(Renderer.getRenderAPI() == RenderAPI.Vulkan) return new VulkanGraphicsPass(disposable, name, framesInFlight);
         return null;

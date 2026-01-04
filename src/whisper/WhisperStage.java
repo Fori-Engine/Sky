@@ -19,10 +19,6 @@ import java.io.File;
 import java.lang.Math;
 import java.util.*;
 
-import static fori.graphics.ShaderRes.ShaderStage.*;
-import static fori.graphics.VertexAttributes.Type.*;
-import static fori.graphics.ShaderRes.Type.*;
-
 public class WhisperStage extends Stage {
 
     private float startTime;
@@ -34,7 +30,6 @@ public class WhisperStage extends Stage {
     private Entity spotlightEntity;
     private Renderer renderer;
 
-    float x = 0, y = 6, z = -0.5f;
 
 
 
@@ -132,75 +127,36 @@ public class WhisperStage extends Stage {
         //Shop
         {
             ShaderProgram shaderProgram;
-            Mesh mesh;
-
-            ShaderReader.ShaderSources shaderSources = ShaderReader.read(
-                    AssetPacks.<String>getAsset("core:assets/shaders/vulkan/Default.glsl").asset
-            );
+            MeshData meshData;
 
 
-            shaderProgram = ShaderProgram.newGraphicsShaderProgram(renderer, 2);
-            shaderProgram.addShader(
-                    ShaderType.Vertex,
-                    Shader.newShader(shaderProgram, ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex))
-                            .setVertexAttributes(
-                                    new VertexAttributes.Type[]{
-                                            PositionFloat3,
-                                            TransformIndexFloat1,
-                                            UVFloat2,
-                                    }
-                            )
-
-            );
-            shaderProgram.addShader(
-                    ShaderType.Fragment,
-                    Shader.newShader(shaderProgram, ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
-                            .setAttachmentTextureFormatTypes(TextureFormatType.ColorR32G32B32A32, TextureFormatType.ColorR32G32B32A32)
-                            .setDepthAttachmentTextureFormatType(TextureFormatType.Depth32)
-            );
+            shaderProgram = ShaderProgram.newShaderProgram(renderer);
+            shaderProgram.add(AssetPacks.getAsset("core:assets/shaders/Default_vertex.spv"), ShaderType.VertexShader);
+            shaderProgram.add(AssetPacks.getAsset("core:assets/shaders/Default_fragment.spv"), ShaderType.FragmentShader);
+            shaderProgram.assemble();
 
 
-            shaderProgram.bind(
-                    new ShaderResSet(
-                            0,
-                            new ShaderRes(
-                                    "sceneDesc",
-                                    0,
-                                    ShaderStorageBuffer,
-                                    VertexStage
-                            ).sizeBytes(SizeUtil.SCENE_DESC_SIZE_BYTES),
-                            new ShaderRes(
-                                    "transforms",
-                                    1,
-                                    ShaderStorageBuffer,
-                                    VertexStage
-                            ).sizeBytes(1 * SizeUtil.MATRIX_SIZE_BYTES),
-                            new ShaderRes(
-                                    "textures",
-                                    2,
-                                    CombinedSampler,
-                                    FragmentStage
-                            ).count(1)
-                    )
-            );
 
 
-            mesh = Mesh.newMesh(shaderProgram.getShaderMap().get(ShaderType.Vertex).getVertexAttributes(), AssetPacks.getAsset("core:assets/models/viking_room.obj"));
+
+
+
+
+            meshData = MeshData.newMeshFromObj(AssetPacks.getAsset("core:assets/models/viking_room.obj"));
 
             EnvironmentMeshComponent environmentMeshComponent = new EnvironmentMeshComponent(renderer, renderer, 100000, 100000, 1, shaderProgram);
-            environmentMeshComponent.addMesh(mesh, new MeshUploaderWithTransform(0));
+            environmentMeshComponent.addMesh(meshData, new EntityShaderIndex(0));
             environmentMeshComponent.close();
 
             Texture texture = Texture.newColorTextureFromAsset(renderer, AssetPacks.getAsset("core:assets/textures/viking_room.png"), TextureFormatType.ColorR8G8B8A8, Texture.Filter.Linear, Texture.Filter.Linear);
 
 
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                environmentMeshComponent.shaderProgram.updateTextures(frameIndex, new ShaderUpdate<>("textures", 0, 2, texture).arrayIndex(0));
-
+                environmentMeshComponent.shaderProgram.updateTextures(frameIndex, new DescriptorUpdate<>("texture", texture));
                 environmentMeshComponent.shaderProgram.updateBuffers(
                         frameIndex,
-                        new ShaderUpdate<>("sceneDesc", 0, 0, environmentMeshComponent.sceneDescBuffers[frameIndex]),
-                        new ShaderUpdate<>("transforms", 0, 1, environmentMeshComponent.transformsBuffers[frameIndex])
+                        new DescriptorUpdate<>("sceneDesc", environmentMeshComponent.sceneDescBuffers[frameIndex]),
+                        new DescriptorUpdate<>("transforms", environmentMeshComponent.transformsBuffers[frameIndex])
                 );
             }
 
@@ -223,6 +179,7 @@ public class WhisperStage extends Stage {
 
 
 
+        /*
         //Player
         {
 
@@ -467,6 +424,8 @@ public class WhisperStage extends Stage {
                     new NVPhysXComponent(new BoxCollider(10f, 1f, 10f), new Material(0.05f, 0.05f, 0.99f), ActorType.Static)
             );
         }
+
+         */
 
 
 

@@ -148,6 +148,7 @@ public class GLFWSurface extends Surface {
                     public int invoke(int messageSeverity, int messageTypes, long pCallbackData, long pUserData) {
                         VkDebugUtilsMessengerCallbackDataEXT callbackData = VkDebugUtilsMessengerCallbackDataEXT.create(pCallbackData);
                         Logger.info(VulkanRenderer.class, callbackData.pMessageString());
+                        System.out.println();
 
                         return VK_FALSE;
                     }

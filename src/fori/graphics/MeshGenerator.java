@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 public class MeshGenerator {
-    public static Mesh newBox(float width, float height, float depth) {
+    public static MeshData newBox(float width, float height, float depth) {
 
 
         float hw = width / 2.0f;
@@ -111,11 +111,11 @@ public class MeshGenerator {
             index += 4;
         }
 
-        Map<VertexAttributes.Type, List<Float>> vertexData = new HashMap<>();
-        vertexData.put(VertexAttributes.Type.PositionFloat3, vertices);
-        vertexData.put(VertexAttributes.Type.UVFloat2, textureUVs);
-        vertexData.put(VertexAttributes.Type.ColorFloat4, colors);
+        Map<String, List<Float>> vertexData = new HashMap<>();
+        vertexData.put("Positions", vertices);
+        vertexData.put("TextureUVs", textureUVs);
+        vertexData.put("Colors", colors);
 
-        return new Mesh(vertexData, indices, 24);
+        return new MeshData(vertexData, indices, 24);
     }
 }

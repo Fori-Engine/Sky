@@ -1,5 +1,7 @@
 package fori.graphics;
 
+import java.nio.ByteBuffer;
+
 public abstract class GraphicsPass extends Pass {
     protected RenderTarget renderTarget;
     protected ShaderProgram shaderProgram;
@@ -17,5 +19,6 @@ public abstract class GraphicsPass extends Pass {
 
     public abstract void setDrawBuffers(Buffer vertexBuffer, Buffer indexBuffer);
     public abstract void setShaderProgram(ShaderProgram shaderProgram);
-    public abstract void drawIndexed(int indexCount, int[] shaderMode);
+    public abstract void setPushConstants(ByteBuffer pPushConstants);
+    public abstract void drawIndexed(int indexCount);
 }

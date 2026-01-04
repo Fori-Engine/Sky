@@ -28,7 +28,7 @@ public class EnvironmentMeshComponent {
 
         stagingVertexBuffer = Buffer.newBuffer(
                 parent,
-                VertexAttributes.getSize(this.shaderProgram.getShaderMap().get(ShaderType.Vertex).getVertexAttributes()) * Float.BYTES * this.maxVertexCount,
+                shaderProgram.getVertexAttributesSize() * Float.BYTES * this.maxVertexCount,
                 Buffer.Usage.VertexBuffer,
                 Buffer.Type.CPUGPUShared,
                 true
@@ -43,7 +43,7 @@ public class EnvironmentMeshComponent {
 
         vertexBuffer = Buffer.newBuffer(
                 parent,
-                VertexAttributes.getSize(shaderProgram.getShaderMap().get(ShaderType.Vertex).getVertexAttributes()) * Float.BYTES * this.maxVertexCount,
+                shaderProgram.getVertexAttributesSize() * Float.BYTES * this.maxVertexCount,
                 Buffer.Usage.VertexBuffer,
                 Buffer.Type.GPULocal,
                 false
@@ -70,7 +70,7 @@ public class EnvironmentMeshComponent {
 
             sceneDescBuffers[i] = Buffer.newBuffer(
                     parent,
-                    SizeUtil.SCENE_DESC_SIZE_BYTES,
+                    shaderProgram.getDescriptorByName("sceneDesc").getSizeBytes(),
                     Buffer.Usage.ShaderStorageBuffer,
                     Buffer.Type.CPUGPUShared,
                     false
@@ -80,22 +80,16 @@ public class EnvironmentMeshComponent {
 
 
 
-    public void addMesh(Mesh mesh, MeshUploader meshUploader) {
+    public void addMesh(MeshData meshData, EntityShaderIndex entityShaderIndex) {
 
         stagingVertexBuffer.get().clear();
         stagingIndexBuffer.get().clear();
 
-        mesh.put(
-                meshUploader,
-                vertexCount,
-                shaderProgram,
-                stagingVertexBuffer.get(),
-                stagingIndexBuffer.get()
-        );
+        entityShaderIndex.upload(meshData, shaderProgram, stagingVertexBuffer.get(), stagingIndexBuffer.get(), vertexCount);
 
         commitMesh(
-                mesh.getVertexCount(),
-                mesh.getIndexCount()
+                meshData.getVertexCount(),
+                meshData.getIndexCount()
         );
     }
 
@@ -104,8 +98,8 @@ public class EnvironmentMeshComponent {
             stagingVertexBuffer.copyTo(
                     vertexBuffer,
                     0,
-                    this.vertexCount * VertexAttributes.getSize(shaderProgram.getShaderMap().get(ShaderType.Vertex).getVertexAttributes()) * Float.BYTES,
-                    vertexCount * VertexAttributes.getSize(shaderProgram.getShaderMap().get(ShaderType.Vertex).getVertexAttributes()) * Float.BYTES
+                    this.vertexCount * shaderProgram.getVertexAttributesSize() * Float.BYTES,
+                    vertexCount * shaderProgram.getVertexAttributesSize() * Float.BYTES
             );
 
             stagingIndexBuffer.copyTo(

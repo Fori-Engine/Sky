@@ -19,7 +19,6 @@ shaders.each { shaderFileName, stages ->
             outputs.file(outputName)
 
             commandLine 'slangc', "${shaderFileName}.slang",
-                    '-profile', 'glsl_460',
                     '-target', 'spirv',
                     '-matrix-layout-column-major',
                     '-o', outputName,

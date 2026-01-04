@@ -1,19 +1,18 @@
 package fori.graphics.vulkan;
 
-import fori.graphics.Renderer;
-import fori.graphics.TextureFormatType;
+import fori.Logger;
+import fori.graphics.*;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.vulkan.EXTDebugUtils.vkSetDebugUtilsObjectNameEXT;
 import static org.lwjgl.vulkan.VK10.*;
 
 public class VulkanUtil {
     public static final int UINT64_MAX = 0xFFFFFFFF;
 
 
-    public static int toVkImageFormatEnum(TextureFormatType textureFormatType) {
+    public static int getVulkanImageFormat(TextureFormatType textureFormatType) {
         switch (textureFormatType) {
             case ColorR8G8B8A8 -> {
                 return VK_FORMAT_R8G8B8A8_SRGB;
@@ -26,6 +25,32 @@ public class VulkanUtil {
             }
         }
         return -1;
+    }
+
+    public static int getVulkanDepthTestType(DepthTestType depthTestType) {
+        if(depthTestType == null) return -1;
+        switch(depthTestType) {
+            case LessThan -> {
+                return VK_COMPARE_OP_LESS;
+            }
+            case GreaterThan -> {
+                return VK_COMPARE_OP_GREATER;
+            }
+            case LessOrEqualTo -> {
+                return VK_COMPARE_OP_LESS_OR_EQUAL;
+            }
+            case GreaterOrEqualTo -> {
+                return VK_COMPARE_OP_GREATER_OR_EQUAL;
+            }
+            case Always -> {
+                return VK_COMPARE_OP_ALWAYS;
+            }
+            case Never -> {
+                return VK_COMPARE_OP_NEVER;
+            }
+        }
+
+        throw new RuntimeException(Logger.error(VulkanRenderer.class, "The depth operation for this pipeline is an invalid value [" + depthTestType + "]"));
     }
 
     public static void transitionImages(VulkanImage image,
@@ -71,6 +96,60 @@ public class VulkanUtil {
 
             image.setCurrentLayout(newLayout);
         }
+    }
+
+    public static int getVulkanShaderStage(ShaderType shaderType) {
+        int shaderStage = 0;
+
+        switch(shaderType) {
+            case VertexShader -> {
+                shaderStage = VK_SHADER_STAGE_VERTEX_BIT;
+            }
+            case FragmentShader -> {
+                shaderStage = VK_SHADER_STAGE_FRAGMENT_BIT;
+            }
+            case ComputeShader -> {
+                shaderStage = VK_SHADER_STAGE_COMPUTE_BIT;
+            }
+        }
+
+        return shaderStage;
+    }
+
+    public static int getVulkanVertexAttributeType(int size) {
+        switch(size){
+            case 1: return VK_FORMAT_R32_SFLOAT;
+            case 2: return VK_FORMAT_R32G32_SFLOAT;
+            case 3: return VK_FORMAT_R32G32B32_SFLOAT;
+            case 4: return VK_FORMAT_R32G32B32A32_SFLOAT;
+        }
+        return 0;
+    };
+
+    public static int getVulkanDescriptorType(Descriptor.Type type) {
+
+        switch (type) {
+            case UniformBuffer -> {
+                return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            }
+            case ShaderStorageBuffer -> {
+                return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            }
+            case CombinedSampler -> {
+                return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            }
+            case SeparateImage -> {
+                return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+            }
+            case SeparateSampler -> {
+                return VK_DESCRIPTOR_TYPE_SAMPLER;
+            }
+            case StorageImage -> {
+                return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+            }
+        }
+
+        return 0;
     }
 
 }

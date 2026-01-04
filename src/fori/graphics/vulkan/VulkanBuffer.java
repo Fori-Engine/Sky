@@ -3,8 +3,6 @@ package fori.graphics.vulkan;
 import fori.Logger;
 import fori.graphics.Buffer;
 import fori.graphics.Disposable;
-import fori.graphics.ShaderType;
-import fori.graphics.VertexAttributes;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;

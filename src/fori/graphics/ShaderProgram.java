@@ -1,54 +1,62 @@
 package fori.graphics;
 
-import fori.Logger;
+import fori.asset.Asset;
 import fori.graphics.vulkan.VulkanShaderProgram;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public abstract class ShaderProgram extends Disposable {
 
-    protected Map<ShaderType, Shader> shaderMap = new HashMap<>();
-    protected ShaderResSet[] resourcesSets;
-    protected ShaderProgramType type;
-    protected int shaderContextSize;
+    protected List<DescriptorSet> descriptorSetsSpec = new ArrayList<>();
+    protected ShaderPipelineType programType;
+    protected List<TextureFormatType> attachmentTextureFormatTypes = new ArrayList<>();
+    protected TextureFormatType depthAttachmentTextureFormatType = TextureFormatType.Depth32;
+    protected List<VertexAttribute> vertexAttributes = new ArrayList<>();
+    protected int pushConstantsSizeBytes;
 
 
-    public ShaderProgram(Disposable parent, ShaderProgramType type, int shaderContextSize){
+    public ShaderProgram(Disposable parent){
         super(parent);
-        this.type = type;
-        this.shaderContextSize = shaderContextSize;
+
     }
 
+    public abstract void updateBuffers(int frameIndex, DescriptorUpdate<Buffer>... bufferUpdates);
+    public abstract void updateTextures(int frameIndex, DescriptorUpdate<Texture>... textureUpdates);
 
-    public abstract void addShader(ShaderType shaderType, Shader shader);
-    public abstract void updateBuffers(int frameIndex, ShaderUpdate<Buffer>... bufferUpdates);
-    public abstract void updateTextures(int frameIndex, ShaderUpdate<Texture>... textureUpdates);
-
-    public abstract void bind(ShaderResSet... resourceSets);
-
-    public ShaderResSet[] getShaderResSets(){
-        return resourcesSets;
+    public List<DescriptorSet> getDescriptorSetsSpec(){
+        return descriptorSetsSpec;
     }
 
-    public Map<ShaderType, Shader> getShaderMap() {
-        return shaderMap;
+    public List<VertexAttribute> getVertexAttributes() {
+        return vertexAttributes;
     }
 
-    public static ShaderProgram newGraphicsShaderProgram(Disposable parent, int shaderContextSize){
-        if(Renderer.getRenderAPI() == RenderAPI.Vulkan){
-            return new VulkanShaderProgram(parent, ShaderProgramType.Graphics, shaderContextSize);
+    public int getVertexAttributesSize() {
+        int size = 0;
+        for(VertexAttribute vertexAttribute : vertexAttributes) {
+            size += vertexAttribute.getSize();
+        }
+        return size;
+    }
+
+    public Descriptor getDescriptorByName(String name) {
+        for(DescriptorSet descriptorSet : descriptorSetsSpec) {
+            for(Descriptor descriptor : descriptorSet.getDescriptors()) {
+                if(descriptor.getName().equals(name)) return descriptor;
+            }
         }
         return null;
     }
-    public static ShaderProgram newComputeShaderProgram(Disposable parent, int shaderContextSize) {
+
+    public static ShaderProgram newShaderProgram(Disposable parent){
         if(Renderer.getRenderAPI() == RenderAPI.Vulkan){
-            return new VulkanShaderProgram(parent, ShaderProgramType.Compute, shaderContextSize);
+            return new VulkanShaderProgram(parent);
         }
         return null;
     }
 
-
+    public abstract void add(Asset<byte[]> bytecode, ShaderType shaderType);
+    public abstract void assemble();
 }

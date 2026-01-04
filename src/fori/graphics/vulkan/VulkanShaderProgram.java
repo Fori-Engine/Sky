@@ -1,73 +1,101 @@
 package fori.graphics.vulkan;
 
 import fori.Logger;
+import fori.asset.Asset;
 import fori.graphics.*;
+import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
+import org.lwjgl.util.spvc.SpvcErrorCallback;
+import org.lwjgl.util.spvc.SpvcReflectedResource;
 import org.lwjgl.vulkan.*;
 
-import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.nio.LongBuffer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Function;
+import java.util.*;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.util.spvc.Spv.SpvDecorationBinding;
+import static org.lwjgl.util.spvc.Spv.SpvDecorationDescriptorSet;
+import static org.lwjgl.util.spvc.Spvc.*;
 import static org.lwjgl.vulkan.VK10.*;
 
 public class VulkanShaderProgram extends ShaderProgram {
 
-    private VkPipelineShaderStageCreateInfo.Buffer shaderStages;
+    /*
+    Design choices:
+    - [-] We need an intermediary form of shader resources, so ShaderResSet and ShaderRes can stay
+    instead of querying spvc every frame
+    - [-] Shader[VulkanShader] can go. The application will never need access to a single shader object,
+    they are entirely useless outside a ShaderProgram[VulkanShaderProgram]
+    - [-] Vertex attributes, as well as attachment information needs to stay in ShaderProgram[VulkanShaderProgram]
+    This will now be top level
+    - [-] Push constant resource types
+    - [?] SPIR-V supports combined image samplers and separate sampler descriptors, we want to support both,
+    but the descriptor update API needs to take this into consideration
+    - [*] Sometimes native crashes will cause the JVM to quit before validation layers print, you can work
+    around this by running in debug mode
 
-    private ArrayList<ArrayList<Long>> descriptorSetLayouts = new ArrayList<>(VulkanRenderer.FRAMES_IN_FLIGHT);
-    private ArrayList<ArrayList<Long>> descriptorSets = new ArrayList<>(VulkanRenderer.FRAMES_IN_FLIGHT);
-    private ArrayList<Long> descriptorPools = new ArrayList<>(VulkanRenderer.FRAMES_IN_FLIGHT);
-    private ByteBuffer entryPoint;
+
+     */
+
+
+    private VkPipelineShaderStageCreateInfo.Buffer shaderStageCreateInfos;
+    private int stageCount = 0;
+    private List<List<Long>> descriptorSetLayoutHandles = new ArrayList<>();
+    private List<List<Long>> descriptorSetHandles = new ArrayList<>();
+    private List<Long> descriptorPoolHandles = new ArrayList<>();
+    private HashMap<ShaderType, byte[]> shaders = new HashMap<>();
+    private List<Long> shaderModuleHandles = new ArrayList<>();
     private VulkanPipeline pipeline;
+    private long context;
 
 
-    public VulkanShaderProgram(Disposable parent, ShaderProgramType type, int shaderContextSize) {
-        super(parent, type, shaderContextSize);
-        entryPoint = MemoryUtil.memUTF8("main");
+    public VulkanShaderProgram(Disposable parent) {
+        super(parent);
+
+        try(MemoryStack stack = stackPush()) {
+            PointerBuffer pContext = stack.callocPointer(1);
+            spvc_context_create(pContext);
+            context = pContext.get(0);
+            spvc_context_set_error_callback(context, new SpvcErrorCallback() {
+                @Override
+                public void invoke(long l, long l1) {
+                    String str = spvc_context_get_last_error_string(context);
+                    Logger.error(VulkanShaderProgram.class, str);
+                }
+            }, 0);
+
+        }
     }
-
-    @Override
-    public void addShader(ShaderType shaderType, Shader shader) {
-        shaderMap.put(shaderType, shader);
-    }
-
-
-
 
     private VulkanPipeline createComputePipeline(VkDevice device) {
-        createStages();
-
-        Shader computeShader = shaderMap.get(ShaderType.Compute);
 
         long pipelineLayoutHandle;
         long computePipelineHandle = 0;
 
         try(MemoryStack stack = stackPush()) {
 
-            VkPushConstantRange.Buffer pushConstantRanges = VkPushConstantRange.calloc(1, stack);
-            {
-                VkPushConstantRange shaderModePushConstantRange = pushConstantRanges.get(0);
-                {
-                    shaderModePushConstantRange.offset(0);
-                    shaderModePushConstantRange.size(Integer.BYTES * shaderContextSize);
-                    shaderModePushConstantRange.stageFlags(VK_SHADER_STAGE_ALL);
-                }
-            }
-
 
             VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.calloc(stack);
             {
                 pipelineLayoutInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
-                pipelineLayoutInfo.setLayoutCount(getShaderResSets().length);
-                pipelineLayoutInfo.pSetLayouts(stack.longs(getAllDescriptorSetLayouts()));
+                pipelineLayoutInfo.setLayoutCount(getDescriptorSetsSpec().size());
+                pipelineLayoutInfo.pSetLayouts(stack.longs(getAllDescriptorSetLayoutHandles()));
+
+            }
+            if(pushConstantsSizeBytes > 0) {
+                VkPushConstantRange.Buffer pushConstantRanges = VkPushConstantRange.calloc(1, stack);
+                {
+                    VkPushConstantRange shaderModePushConstantRange = pushConstantRanges.get(0);
+                    {
+                        shaderModePushConstantRange.offset(0);
+                        shaderModePushConstantRange.size(pushConstantsSizeBytes);
+                        shaderModePushConstantRange.stageFlags(VK_SHADER_STAGE_ALL);
+                    }
+                }
                 pipelineLayoutInfo.pPushConstantRanges(pushConstantRanges);
             }
+
             LongBuffer pPipelineLayout = stack.longs(VK_NULL_HANDLE);
             if(vkCreatePipelineLayout(device, pipelineLayoutInfo, null, pPipelineLayout) != VK_SUCCESS) {
                 throw new RuntimeException("Failed to create pipeline layout");
@@ -79,9 +107,7 @@ public class VulkanShaderProgram extends ShaderProgram {
             {
                 pipelineInfo.sType(VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO);
                 pipelineInfo.layout(pipelineLayoutHandle);
-                pipelineInfo.stage(shaderStages.get(0));
-
-
+                pipelineInfo.stage(shaderStageCreateInfos.get(0));
             }
 
 
@@ -89,7 +115,7 @@ public class VulkanShaderProgram extends ShaderProgram {
 
 
             if(vkCreateComputePipelines(device, VK_NULL_HANDLE, pipelineInfo, null, pComputePipeline) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create graphics pipeline");
+                throw new RuntimeException("Failed to create compute pipeline");
             }
 
 
@@ -101,14 +127,6 @@ public class VulkanShaderProgram extends ShaderProgram {
         return new VulkanPipeline(this, pipelineLayoutHandle, computePipelineHandle);
     }
     private VulkanPipeline createGraphicsPipeline(VkDevice device) {
-        createStages();
-
-        Shader vertexShader = shaderMap.get(ShaderType.Vertex);
-        Shader fragmentShader = shaderMap.get(ShaderType.Fragment);
-
-
-
-
         long pipelineLayoutHandle;
         long graphicsPipelineHandle = 0;
 
@@ -118,19 +136,11 @@ public class VulkanShaderProgram extends ShaderProgram {
             vertexInputInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO);
             {
 
-                Function<Integer, Integer> attributeSizeToVulkanParam = attributeSize -> {
-                    switch(attributeSize){
-                        case 1: return VK_FORMAT_R32_SFLOAT;
-                        case 2: return VK_FORMAT_R32G32_SFLOAT;
-                        case 3: return VK_FORMAT_R32G32B32_SFLOAT;
-                        case 4: return VK_FORMAT_R32G32B32A32_SFLOAT;
-                    }
-                    return 0;
-                };
+
 
                 int vertexSize = 0;
-                for(VertexAttributes.Type attribute : vertexShader.getVertexAttributes()){
-                    vertexSize += attribute.size;
+                for(VertexAttribute vertexAttribute : vertexAttributes){
+                    vertexSize += vertexAttribute.getSize();
                 }
 
 
@@ -145,28 +155,22 @@ public class VulkanShaderProgram extends ShaderProgram {
 
 
 
-                VkVertexInputAttributeDescription.Buffer attributeDescriptions =
-                        VkVertexInputAttributeDescription.calloc(vertexShader.getVertexAttributes().length, stack);
+                VkVertexInputAttributeDescription.Buffer attributeDescriptions = VkVertexInputAttributeDescription.calloc(vertexAttributes.size(), stack);
 
                 int offset = 0;
 
-                for (int i = 0; i < vertexShader.getVertexAttributes().length; i++) {
+                for (int i = 0; i < vertexAttributes.size(); i++) {
+                    VertexAttribute vertexAttribute = vertexAttributes.get(i);
                     VkVertexInputAttributeDescription attribute = attributeDescriptions.get(i);
                     attribute.binding(0);
                     attribute.location(i);
-                    attribute.format(attributeSizeToVulkanParam.apply(vertexShader.getVertexAttributes()[i].size));
+                    attribute.format(VulkanUtil.getVulkanVertexAttributeType(vertexAttribute.getSize()));
                     attribute.offset(offset);
 
-                    offset += vertexShader.getVertexAttributes()[i].size * Float.BYTES;
+                    offset += vertexAttribute.getSize() * Float.BYTES;
                 }
 
-
-
-
                 vertexInputInfo.pVertexAttributeDescriptions(attributeDescriptions.rewind());
-
-
-
             }
 
             VkPipelineInputAssemblyStateCreateInfo inputAssembly = VkPipelineInputAssemblyStateCreateInfo.calloc(stack);
@@ -209,7 +213,7 @@ public class VulkanShaderProgram extends ShaderProgram {
                 multisampling.rasterizationSamples(VK_SAMPLE_COUNT_1_BIT);
             }
 
-            int attachmentCount = fragmentShader.getAttachmentTextureFormatTypes().length;
+            int attachmentCount = attachmentTextureFormatTypes.size();
 
             VkPipelineColorBlendAttachmentState.Buffer colorBlendAttachments = VkPipelineColorBlendAttachmentState.calloc(attachmentCount, stack);
             {
@@ -242,7 +246,7 @@ public class VulkanShaderProgram extends ShaderProgram {
                 depthStencil.sType(VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO);
                 depthStencil.depthTestEnable(true);
                 depthStencil.depthWriteEnable(true);
-                depthStencil.depthCompareOp(toVkDepthCompareOpEnum(DepthTestType.LessThan));
+                depthStencil.depthCompareOp(VulkanUtil.getVulkanDepthTestType(DepthTestType.LessThan));
                 depthStencil.minDepthBounds(0f);
                 depthStencil.maxDepthBounds(1f);
 
@@ -252,27 +256,31 @@ public class VulkanShaderProgram extends ShaderProgram {
 
             }
 
-            VkPushConstantRange.Buffer pushConstantRanges = VkPushConstantRange.calloc(1, stack);
-            {
-                VkPushConstantRange shaderModePushConstantRange = pushConstantRanges.get(0);
-                {
-                    shaderModePushConstantRange.offset(0);
-                    shaderModePushConstantRange.size(Integer.BYTES * shaderContextSize);
-                    shaderModePushConstantRange.stageFlags(VK_SHADER_STAGE_ALL);
-                }
-            }
+
 
 
 
             VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.calloc(stack);
             {
                 pipelineLayoutInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
-                pipelineLayoutInfo.setLayoutCount(getShaderResSets().length);
-                pipelineLayoutInfo.pSetLayouts(stack.longs(getAllDescriptorSetLayouts()));
-                pipelineLayoutInfo.pPushConstantRanges(pushConstantRanges);
-
-
+                pipelineLayoutInfo.setLayoutCount(getDescriptorSetsSpec().size());
+                pipelineLayoutInfo.pSetLayouts(stack.longs(getAllDescriptorSetLayoutHandles()));
             }
+
+            if(pushConstantsSizeBytes > 0) {
+                VkPushConstantRange.Buffer pushConstantRanges = VkPushConstantRange.calloc(1, stack);
+                {
+                    VkPushConstantRange shaderModePushConstantRange = pushConstantRanges.get(0);
+                    {
+                        shaderModePushConstantRange.offset(0);
+                        shaderModePushConstantRange.size(pushConstantsSizeBytes);
+                        shaderModePushConstantRange.stageFlags(VK_SHADER_STAGE_ALL);
+                    }
+                }
+                pipelineLayoutInfo.pPushConstantRanges(pushConstantRanges);
+            }
+
+
             LongBuffer pPipelineLayout = stack.longs(VK_NULL_HANDLE);
 
             if(vkCreatePipelineLayout(device, pipelineLayoutInfo, null, pPipelineLayout) != VK_SUCCESS) {
@@ -282,20 +290,16 @@ public class VulkanShaderProgram extends ShaderProgram {
             pipelineLayoutHandle = pPipelineLayout.get(0);
 
             VkPipelineRenderingCreateInfoKHR pipelineRenderingCreateInfoKHR = VkPipelineRenderingCreateInfoKHR.calloc(stack);
-            pipelineRenderingCreateInfoKHR.colorAttachmentCount(fragmentShader.getAttachmentTextureFormatTypes().length);
+            pipelineRenderingCreateInfoKHR.colorAttachmentCount(attachmentCount);
             pipelineRenderingCreateInfoKHR.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR);
 
-            int[] vkImageFormatEnums = new int[fragmentShader.getAttachmentTextureFormatTypes().length];
-            for (int i = 0; i < vkImageFormatEnums.length; i++) {
-                vkImageFormatEnums[i] = VulkanUtil.toVkImageFormatEnum(fragmentShader.getAttachmentTextureFormatTypes()[i]);
+            int[] vulkanAttachmentImageTypes = new int[attachmentCount];
+            for (int i = 0; i < vulkanAttachmentImageTypes.length; i++) {
+                vulkanAttachmentImageTypes[i] = VulkanUtil.getVulkanImageFormat(attachmentTextureFormatTypes.get(i));
             }
 
-            pipelineRenderingCreateInfoKHR.pColorAttachmentFormats(stack.ints(vkImageFormatEnums));
-
-
-
-            pipelineRenderingCreateInfoKHR.depthAttachmentFormat(VulkanUtil.toVkImageFormatEnum(fragmentShader.getDepthAttachmentTextureFormatType()));
-
+            pipelineRenderingCreateInfoKHR.pColorAttachmentFormats(stack.ints(vulkanAttachmentImageTypes));
+            pipelineRenderingCreateInfoKHR.depthAttachmentFormat(VulkanUtil.getVulkanImageFormat(depthAttachmentTextureFormatType));
 
 
             VkGraphicsPipelineCreateInfo.Buffer pipelineInfo = VkGraphicsPipelineCreateInfo.calloc(1, stack);
@@ -309,8 +313,8 @@ public class VulkanShaderProgram extends ShaderProgram {
                 pipelineInfo.pViewportState(viewportState);
                 pipelineInfo.pDepthStencilState(depthStencil);
                 pipelineInfo.pDynamicState(dynamicState);
-                pipelineInfo.stageCount(getShaderStages().capacity());
-                pipelineInfo.pStages(getShaderStages());
+                pipelineInfo.stageCount(stageCount);
+                pipelineInfo.pStages(shaderStageCreateInfos);
                 pipelineInfo.pVertexInputState(vertexInputInfo);
                 pipelineInfo.pNext(pipelineRenderingCreateInfoKHR);
             }
@@ -332,127 +336,269 @@ public class VulkanShaderProgram extends ShaderProgram {
         return new VulkanPipeline(this, pipelineLayoutHandle, graphicsPipelineHandle);
     }
 
-    private void createStages() {
-        shaderStages = VkPipelineShaderStageCreateInfo.calloc(shaderMap.size());
+    private ReflectedResourcesInfo getResources(int type, long shaderResourcesHandle) {
+        try(MemoryStack stack = stackPush()) {
+            PointerBuffer pResourceList = stack.callocPointer(1), pResourceCount = stack.callocPointer(1);
 
-        int shaderIndex = 0;
-        for(Shader shader : shaderMap.values()) {
-            VulkanShader vulkanShader = (VulkanShader) shader;
-
-            VkPipelineShaderStageCreateInfo stageInfo = shaderStages.get(shaderIndex);
-            stageInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
-            stageInfo.stage(vulkanShader.getStage());
-            stageInfo.module(vulkanShader.getModule());
-            stageInfo.pName(entryPoint);
-
-            shaderIndex++;
+            spvc_resources_get_resource_list_for_type(shaderResourcesHandle, type, pResourceList, pResourceCount);
+            return new ReflectedResourcesInfo((int) pResourceCount.get(0), pResourceList.get(0), type);
         }
     }
 
+    private static int getBufferSize(long compiler, long structTypeHandle) {
 
-    private int toVkDepthCompareOpEnum(DepthTestType depthTestType) {
-        if(depthTestType == null) return -1;
-        switch(depthTestType) {
-            case LessThan -> {
-                return VK_COMPARE_OP_LESS;
-            }
-            case GreaterThan -> {
-                return VK_COMPARE_OP_GREATER;
-            }
-            case LessOrEqualTo -> {
-                return VK_COMPARE_OP_LESS_OR_EQUAL;
-            }
-            case GreaterOrEqualTo -> {
-                return VK_COMPARE_OP_GREATER_OR_EQUAL;
-            }
-            case Always -> {
-                return VK_COMPARE_OP_ALWAYS;
-            }
-            case Never -> {
-                return VK_COMPARE_OP_NEVER;
+        int memberCount = spvc_type_get_num_member_types(structTypeHandle);
+
+        long size = 0;
+
+        try(MemoryStack stack = stackPush()) {
+            for (int i = 0; i < memberCount; i++) {
+                IntBuffer pOffset = stack.callocInt(1);
+                spvc_compiler_type_struct_member_offset(compiler, structTypeHandle, i, pOffset);
+
+                PointerBuffer pSize = stack.callocPointer(1);
+                spvc_compiler_get_declared_struct_member_size(compiler, structTypeHandle, i, pSize);
+                size += pSize.get(0);
+
             }
         }
 
-        throw new RuntimeException(Logger.error(VulkanRenderer.class, "The depth operation for this pipeline is an invalid value [" + depthTestType + "]"));
+        if(size == 0) size = spvc_type_get_vector_size(structTypeHandle);
+
+
+        return (int) size;
     }
 
+    private class ReflectedResourcesInfo {
+        public int count;
+        public long start;
+        public int type;
 
-    public VulkanPipeline getPipeline() {
-        return pipeline;
+        public ReflectedResourcesInfo(int count, long start, int type) {
+            this.count = count;
+            this.start = start;
+            this.type = type;
+        }
+    }
+    @Override
+    public void add(Asset<byte[]> bytecode, ShaderType shaderType) {
+        shaders.put(shaderType, bytecode.asset);
+        try(MemoryStack stack = stackPush()) {
+
+            long compiler;
+            long shaderResourcesHandle;
+
+            {
+                IntBuffer spirvData = stack.bytes(bytecode.asset).asIntBuffer();
+
+                PointerBuffer pIR = stack.callocPointer(1);
+                PointerBuffer pCompiler = stack.callocPointer(1);
+
+                spvc_context_parse_spirv(context, spirvData, bytecode.asset.length / Integer.BYTES, pIR);
+                spvc_context_create_compiler(context, SPVC_BACKEND_HLSL, pIR.get(0), SPVC_CAPTURE_MODE_COPY, pCompiler);
+
+                compiler = pCompiler.get(0);
+
+                PointerBuffer pCompilerOptions = stack.callocPointer(1);
+                spvc_compiler_create_compiler_options(compiler, pCompilerOptions);
+
+                long compilerOptions = pCompilerOptions.get(0);
+
+                spvc_compiler_options_set_uint(compilerOptions, SPVC_COMPILER_OPTION_HLSL_SHADER_MODEL, 51);
+                spvc_compiler_install_compiler_options(compiler, compilerOptions);
+
+
+                PointerBuffer pShaderResources = stack.callocPointer(1);
+                spvc_compiler_create_shader_resources(compiler, pShaderResources);
+
+                shaderResourcesHandle = pShaderResources.get(0);
+            }
+
+            //Generate all descriptor spec information including sets and bindings
+            {
+
+                ReflectedResourcesInfo[] resourcesInfos = {
+                    getResources(SPVC_RESOURCE_TYPE_STORAGE_BUFFER, shaderResourcesHandle),
+                    getResources(SPVC_RESOURCE_TYPE_UNIFORM_BUFFER, shaderResourcesHandle),
+                    getResources(SPVC_RESOURCE_TYPE_SAMPLED_IMAGE, shaderResourcesHandle),
+                    getResources(SPVC_RESOURCE_TYPE_STORAGE_IMAGE, shaderResourcesHandle),
+                    getResources(SPVC_RESOURCE_TYPE_PUSH_CONSTANT, shaderResourcesHandle),
+                    getResources(SPVC_RESOURCE_TYPE_SEPARATE_IMAGE, shaderResourcesHandle),
+                    getResources(SPVC_RESOURCE_TYPE_SEPARATE_SAMPLERS, shaderResourcesHandle)
+                };
+
+                for (ReflectedResourcesInfo resourcesInfo : resourcesInfos) {
+                    SpvcReflectedResource.Buffer spvcReflectedResources = SpvcReflectedResource.create(resourcesInfo.start, resourcesInfo.count);
+
+                    for (int i = 0; i < resourcesInfo.count; i++) {
+                        SpvcReflectedResource spvcReflectedResource = spvcReflectedResources.get(i);
+
+                        int set = spvc_compiler_get_decoration(compiler, spvcReflectedResource.id(), SpvDecorationDescriptorSet);
+                        int binding = spvc_compiler_get_decoration(compiler, spvcReflectedResource.id(), SpvDecorationBinding);
+                        String name = spvc_compiler_get_name(compiler, spvcReflectedResource.id());
+
+                        DescriptorSet descriptorSet = getDescriptorSetSpecBySetNum(set);
+                        if (descriptorSet == null) {
+                            descriptorSet = new DescriptorSet(set);
+                            descriptorSetsSpec.add(descriptorSet);
+                        }
+
+                        Descriptor descriptor = getDescriptorSpecByBindingNum(binding, descriptorSet);
+                        if (descriptor == null) {
+                            //TODO(Shayan): All stages? Bleh. Might be worth looking into specializing this every time a shader uses an existing descriptor
+                            descriptor = new Descriptor(name, binding, getDescriptorType(resourcesInfo.type), Descriptor.ShaderStage.AllStages);
+                            descriptorSet.addDescriptor(descriptor);
+                        }
+
+                        if(resourcesInfo.type == SPVC_RESOURCE_TYPE_STORAGE_BUFFER || resourcesInfo.type == SPVC_RESOURCE_TYPE_UNIFORM_BUFFER) {
+                            long typeHandle = spvc_compiler_get_type_handle(compiler, spvcReflectedResource.type_id());
+                            //The first entry in the buffer is used to read
+                            long bufferStructTypeHandle = spvc_compiler_get_type_handle(
+                                    compiler,
+                                    spvc_type_get_member_type(typeHandle, 0)
+                            );
+                            descriptor.sizeBytes(getBufferSize(compiler, bufferStructTypeHandle));
+                        }
+                        else if(resourcesInfo.type == SPVC_RESOURCE_TYPE_SEPARATE_IMAGE ||
+                                resourcesInfo.type == SPVC_RESOURCE_TYPE_SEPARATE_SAMPLERS ||
+                                resourcesInfo.type == SPVC_RESOURCE_TYPE_STORAGE_IMAGE ||
+                                resourcesInfo.type == SPVC_RESOURCE_TYPE_SAMPLED_IMAGE) {
+                            long typeHandle = spvc_compiler_get_type_handle(
+                                    compiler,
+                                    spvcReflectedResource.type_id()
+                            );
+
+
+                            //Only one dimensional arrays are supported rn
+                            if(spvc_type_get_num_array_dimensions(typeHandle) == 1)
+                                descriptor.count(spvc_type_get_array_dimension(typeHandle, 0));
+                        }
+                        else if(resourcesInfo.type == SPVC_RESOURCE_TYPE_PUSH_CONSTANT) {
+                            long typeHandle = spvc_compiler_get_type_handle(compiler, spvcReflectedResource.base_type_id());
+                            PointerBuffer pSize = stack.callocPointer(1);
+                            spvc_compiler_get_declared_struct_size(compiler, typeHandle, pSize);
+                            pushConstantsSizeBytes = (int) pSize.get(0);
+                        }
+
+                    }
+                }
+            }
+
+            //Get stage specific information (vertex attributes/attachment count/etc)
+            {
+
+                if(shaderType == ShaderType.VertexShader) {
+                    ReflectedResourcesInfo stageInputsInfo = getResources(SPVC_RESOURCE_TYPE_STAGE_INPUT, shaderResourcesHandle);
+                    SpvcReflectedResource.Buffer spvcReflectedResources = SpvcReflectedResource.create(stageInputsInfo.start, stageInputsInfo.count);
+
+                    for (int i = 0; i < stageInputsInfo.count; i++) {
+                        SpvcReflectedResource spvcReflectedResource = spvcReflectedResources.get(i);
+                        long resourceTypeHandle = spvc_compiler_get_type_handle(compiler, spvcReflectedResource.type_id());
+                        long baseType = spvc_type_get_basetype(resourceTypeHandle);
+                        int columnCount = spvc_type_get_vector_size(resourceTypeHandle);
+
+                        if(baseType == SPVC_BASETYPE_FP32) {
+                            vertexAttributes.add(new VertexAttribute(spvcReflectedResource.nameString(), columnCount));
+                        }
+                    }
+
+
+                }
+                else if(shaderType == ShaderType.FragmentShader) {
+                    ReflectedResourcesInfo stageOutputsInfo = getResources(SPVC_RESOURCE_TYPE_STAGE_OUTPUT, shaderResourcesHandle);
+                    SpvcReflectedResource.Buffer spvcReflectedResources = SpvcReflectedResource.create(stageOutputsInfo.start, stageOutputsInfo.count);
+
+                    for (int i = 0; i < stageOutputsInfo.count; i++) {
+                        SpvcReflectedResource spvcReflectedResource = spvcReflectedResources.get(i);
+                        long resourceTypeHandle = spvc_compiler_get_type_handle(compiler, spvcReflectedResource.type_id());
+                        long baseType = spvc_type_get_basetype(resourceTypeHandle);
+                        int columnCount = spvc_type_get_vector_size(resourceTypeHandle);
+
+                        if(baseType == SPVC_BASETYPE_FP32) {
+                            if(columnCount == 4) attachmentTextureFormatTypes.add(i, TextureFormatType.ColorR32G32B32A32);
+                        }
+                    }
+                }
+
+
+            }
+
+
+            stageCount++;
+        }
     }
 
     @Override
-    public void bind(ShaderResSet... resourceSets) {
-        this.resourcesSets = resourceSets;
-
+    public void assemble() {
         try(MemoryStack stack = stackPush()) {
 
-            int frameDescriptorCount = 0;
-
-            for (ShaderResSet set : resourceSets) {
-                frameDescriptorCount += set.getShaderResources().size();
+            descriptorSetsSpec.sort(Comparator.comparingInt(DescriptorSet::getSetNum));
+            for(DescriptorSet descriptorSet : descriptorSetsSpec) {
+                descriptorSet.getDescriptors().sort(Comparator.comparingInt(Descriptor::getBinding));
             }
 
-            //Create the pool
+            VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = VkDescriptorPoolCreateInfo.calloc(stack);
+
+            //Configure the descriptor pools
             {
 
-                //Create a Descriptor Pool Layout for a frame
-                VkDescriptorPoolSize.Buffer descriptorPoolSizes = VkDescriptorPoolSize.calloc(frameDescriptorCount, stack);
+
+                int totalDescriptorCountPerFrame = 0;
+
+                for (DescriptorSet descriptorSet : descriptorSetsSpec) {
+                    totalDescriptorCountPerFrame += descriptorSet.getDescriptors().size();
+                }
+
+
+
+
+                VkDescriptorPoolSize.Buffer descriptorPoolSizes = VkDescriptorPoolSize.calloc(totalDescriptorCountPerFrame, stack);
+
 
                 int poolSizeIndex = 0;
-                for (ShaderResSet set : resourceSets) {
+                for (DescriptorSet descriptorSet : descriptorSetsSpec) {
 
-                    for (int shaderResIndex = 0; shaderResIndex < set.getShaderResources().size(); shaderResIndex++) {
-                        ShaderRes res = set.getShaderResources().get(shaderResIndex);
-
+                    for (Descriptor descriptor : descriptorSet.getDescriptors()) {
                         VkDescriptorPoolSize poolSize = descriptorPoolSizes.get(poolSizeIndex);
-
-                        int vkDescriptorType = toVkDescriptorType(res.type);
-
-                        poolSize.type(vkDescriptorType);
-                        poolSize.descriptorCount(res.count);
+                        poolSize.type(VulkanUtil.getVulkanDescriptorType(descriptor.getType()));
+                        poolSize.descriptorCount(descriptor.getCount());
 
                         poolSizeIndex++;
                     }
                 }
 
-                VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = VkDescriptorPoolCreateInfo.calloc(stack);
                 descriptorPoolCreateInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO);
                 descriptorPoolCreateInfo.pPoolSizes(descriptorPoolSizes);
-                descriptorPoolCreateInfo.maxSets(resourceSets.length);
-
+                descriptorPoolCreateInfo.maxSets(descriptorSetsSpec.size());
 
                 for (int i = 0; i < VulkanRenderer.FRAMES_IN_FLIGHT; i++) {
                     LongBuffer pDescriptorPool = stack.callocLong(1);
                     if (vkCreateDescriptorPool(VulkanRuntime.getCurrentDevice(), descriptorPoolCreateInfo, null, pDescriptorPool) != VK_SUCCESS) {
                         throw new RuntimeException("Failed to create descriptor pool");
                     }
-                    descriptorPools.add(i, pDescriptorPool.get(0));
+                    descriptorPoolHandles.add(i, pDescriptorPool.get(0));
                 }
 
             }
 
-            //Create the sets
+            //Configure descriptor set layout bindings and layouts
             {
-
-
-                for (ShaderResSet set : resourceSets) {
-                    VkDescriptorSetLayoutBinding.Buffer descriptorSetLayoutBindings = VkDescriptorSetLayoutBinding.calloc(set.getShaderResources().size(), stack);
-
-                    ArrayList<ShaderRes> shaderResources = set.getShaderResources();
-                    for (int i = 0; i < shaderResources.size(); i++) {
-                        ShaderRes res = shaderResources.get(i);
+                for(DescriptorSet descriptorSet : descriptorSetsSpec) {
+                    VkDescriptorSetLayoutBinding.Buffer descriptorSetLayoutBindings = VkDescriptorSetLayoutBinding.calloc(descriptorSet.getDescriptors().size(), stack);
+                    List<Descriptor> descriptors = descriptorSet.getDescriptors();
+                    for (int i = 0; i < descriptors.size(); i++) {
+                        Descriptor descriptor = descriptors.get(i);
 
                         VkDescriptorSetLayoutBinding binding = descriptorSetLayoutBindings.get(i);
-                        binding.descriptorType(toVkDescriptorType(res.type));
-                        binding.stageFlags(toVkShaderStage(res.shaderStage));
-                        binding.binding(res.binding);
-                        binding.descriptorCount(res.count);
+                        binding.descriptorType(VulkanUtil.getVulkanDescriptorType(descriptor.getType()));
+                        binding.stageFlags(VK_SHADER_STAGE_ALL);
+                        binding.binding(descriptor.getBinding());
+                        binding.descriptorCount(descriptor.getCount());
                     }
 
-                    for (int i = 0; i < VulkanRenderer.FRAMES_IN_FLIGHT; i++) {
-                        descriptorSetLayouts.add(new ArrayList<>());
-                        descriptorSets.add(new ArrayList<>());
+                    for (int frameIndex = 0; frameIndex < VulkanRenderer.FRAMES_IN_FLIGHT; frameIndex++) {
+                        descriptorSetLayoutHandles.add(new ArrayList<>());
+                        descriptorSetHandles.add(new ArrayList<>());
 
 
                         LongBuffer pDescriptorSetLayout = stack.callocLong(1);
@@ -468,120 +614,132 @@ public class VulkanShaderProgram extends ShaderProgram {
 
                         long descriptorSetLayout = pDescriptorSetLayout.get(0);
 
-                        descriptorSetLayouts.get(i).add(descriptorSetLayout);
-
+                        descriptorSetLayoutHandles.get(frameIndex).add(descriptorSetLayout);
 
                         VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = VkDescriptorSetAllocateInfo.calloc(stack);
                         descriptorSetAllocateInfo.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO);
-                        descriptorSetAllocateInfo.descriptorPool(descriptorPools.get(i));
+                        descriptorSetAllocateInfo.descriptorPool(descriptorPoolHandles.get(frameIndex));
                         descriptorSetAllocateInfo.pSetLayouts(pDescriptorSetLayout);
 
                         LongBuffer pDescriptorSet = stack.callocLong(1);
                         if (vkAllocateDescriptorSets(VulkanRuntime.getCurrentDevice(), descriptorSetAllocateInfo, pDescriptorSet) != VK_SUCCESS) {
                             throw new RuntimeException("Failed to allocate descriptor set");
                         }
-                        long descriptorSet = pDescriptorSet.get(0);
-
-                        descriptorSets.get(i).add(descriptorSet);
+                        descriptorSetHandles.get(frameIndex).add(pDescriptorSet.get(0));
                     }
+
                 }
 
 
+
+
+            }
+
+            //Generate shader stages
+            {
+                shaderStageCreateInfos = VkPipelineShaderStageCreateInfo.calloc(stageCount, stack);
+
+                int stageIndex = 0;
+
+                for(ShaderType shaderType : shaders.keySet()) {
+                    byte[] bytecode = shaders.get(shaderType);
+
+                    VkShaderModuleCreateInfo createInfo = VkShaderModuleCreateInfo.calloc(stack);
+
+                    createInfo.sType(VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO);
+                    createInfo.pCode(stack.bytes(bytecode));
+
+                    LongBuffer pShaderModule = stack.mallocLong(1);
+
+                    if(vkCreateShaderModule(VulkanRuntime.getCurrentDevice(), createInfo, null, pShaderModule) != VK_SUCCESS) {
+                        throw new RuntimeException(Logger.error(VulkanShaderProgram.class, "Failed to create " + shaderType + " shader module"));
+                    }
+
+                    long shaderModule = pShaderModule.get(0);
+                    shaderModuleHandles.add(shaderModule);
+
+                    VkPipelineShaderStageCreateInfo shaderStageCreateInfo = shaderStageCreateInfos.get(stageIndex);
+
+                    shaderStageCreateInfo.sType(VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
+                    shaderStageCreateInfo.stage(VulkanUtil.getVulkanShaderStage(shaderType));
+                    shaderStageCreateInfo.module(shaderModule);
+                    shaderStageCreateInfo.pName(stack.UTF8("main"));
+
+                    stageIndex++;
+                }
+                programType = shaders.containsKey(ShaderType.ComputeShader) ? ShaderPipelineType.ComputePipeline : ShaderPipelineType.GraphicsPipeline;
+
+                if(programType == ShaderPipelineType.GraphicsPipeline)
+                    pipeline = createGraphicsPipeline(VulkanRuntime.getCurrentDevice());
+                else
+                    pipeline = createComputePipeline(VulkanRuntime.getCurrentDevice());
             }
         }
-
-        if(type == ShaderProgramType.Graphics) pipeline = createGraphicsPipeline(VulkanRuntime.getCurrentDevice());
-        else if(type == ShaderProgramType.Compute) pipeline = createComputePipeline(VulkanRuntime.getCurrentDevice());
     }
 
-    public void updateBuffers(int frameIndex, ShaderUpdate<Buffer>... bufferUpdates){
+
+
+    public void updateBuffers(int frameIndex, DescriptorUpdate<Buffer>... bufferUpdates){
         try(MemoryStack stack = stackPush()) {
 
             VkWriteDescriptorSet.Buffer descriptorSetsWrites = VkWriteDescriptorSet.calloc(bufferUpdates.length, stack);
-
-
             for (int i = 0; i < bufferUpdates.length; i++) {
-                ShaderUpdate<Buffer> bufferUpdate = bufferUpdates[i];
-                VulkanBuffer buffer = (VulkanBuffer) bufferUpdate.update;
+                DescriptorUpdate<Buffer> bufferUpdate = bufferUpdates[i];
+                VulkanBuffer buffer = (VulkanBuffer) bufferUpdate.getResource();
+
                 VkDescriptorBufferInfo.Buffer bufferInfo = VkDescriptorBufferInfo.calloc(1, stack);
                 bufferInfo.buffer(buffer.getHandle());
                 bufferInfo.offset(0);
                 bufferInfo.range(buffer.getSizeBytes());
 
-                ShaderRes targetRes = null;
-
-                for(ShaderResSet set : resourcesSets){
-                    for(ShaderRes res : set.getShaderResources()){
-                        if(set.set == bufferUpdate.set && res.binding == bufferUpdate.binding)
-                            targetRes = res;
-                    }
-                }
-
-
+                Descriptor descriptor = getDescriptorByName(bufferUpdate.getName());
                 VkWriteDescriptorSet descriptorSetsWrite = descriptorSetsWrites.get(i);
 
-                descriptorSetsWrite.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
-                int descriptorSetIndex = findShaderResSetFromIndex(bufferUpdate.set);
-                long descriptorSet = descriptorSets.get(frameIndex).get(descriptorSetIndex);
+                long descriptorSetHandle = descriptorSetHandles.get(frameIndex).get(descriptor.getDescriptorSet().getSetNum());
 
-                descriptorSetsWrite.dstSet(descriptorSet);
-                descriptorSetsWrite.dstBinding(bufferUpdate.binding);
+                descriptorSetsWrite.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
+                descriptorSetsWrite.dstSet(descriptorSetHandle);
+                descriptorSetsWrite.dstBinding(descriptor.getBinding());
                 descriptorSetsWrite.dstArrayElement(0);
-                descriptorSetsWrite.descriptorType(toVkDescriptorType(targetRes.type));
+                descriptorSetsWrite.descriptorType(VulkanUtil.getVulkanDescriptorType(descriptor.getType()));
                 descriptorSetsWrite.pBufferInfo(bufferInfo);
-                descriptorSetsWrite.descriptorCount(bufferUpdate.updateCount);
+                descriptorSetsWrite.descriptorCount(bufferUpdate.getUpdateCount());
             }
 
             vkUpdateDescriptorSets(VulkanRuntime.getCurrentDevice(), descriptorSetsWrites, null);
         }
     }
-    public void updateTextures(int frameIndex, ShaderUpdate<Texture>... textureUpdates){
+    public void updateTextures(int frameIndex, DescriptorUpdate<Texture>... textureUpdates){
         try(MemoryStack stack = stackPush()) {
 
-
             VkWriteDescriptorSet.Buffer descriptorSetsWrites = VkWriteDescriptorSet.calloc(textureUpdates.length, stack);
-
-
             for (int i = 0; i < textureUpdates.length; i++) {
-                ShaderUpdate<Texture> textureUpdate = textureUpdates[i];
-
-
-                ShaderRes targetRes = null;
-
-                for(ShaderResSet set : resourcesSets){
-                    for(ShaderRes res : set.getShaderResources()){
-                        if(set.set == textureUpdate.set && res.binding == textureUpdate.binding)
-                            targetRes = res;
-                    }
-                }
-
+                DescriptorUpdate<Texture> textureUpdate = textureUpdates[i];
+                VulkanTexture texture = (VulkanTexture) textureUpdate.getResource();
 
                 VkDescriptorImageInfo.Buffer descriptorImageInfo = VkDescriptorImageInfo.calloc(1, stack);
-
 
                 //todo(shayan) Sometimes fragment shaders in the rendergraph
                 // will want to use VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL on a storage image
                 // but our descriptor update doesn't know that and will still use VK_IMAGE_LAYOUT_GENERAL
                 // which throws a validation error, maybe update descriptors after the graph has processed resources?
                 // maybe in a separate graphFinished() function
-
                 descriptorImageInfo.imageLayout(VK_IMAGE_LAYOUT_GENERAL);
-                descriptorImageInfo.imageView(((VulkanTexture) textureUpdate.update).getImageView().getHandle());
-                descriptorImageInfo.sampler(((VulkanTexture) textureUpdate.update).getSampler().getHandle());
+                descriptorImageInfo.imageView(texture.getImageView().getHandle());
+                descriptorImageInfo.sampler(texture.getSampler().getHandle());
 
-
+                Descriptor descriptor = getDescriptorByName(textureUpdate.getName());
                 VkWriteDescriptorSet descriptorSetsWrite = descriptorSetsWrites.get(i);
 
-                descriptorSetsWrite.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
-                int descriptorSetIndex = findShaderResSetFromIndex(textureUpdate.set);
-                long descriptorSet = descriptorSets.get(frameIndex).get(descriptorSetIndex);
+                long descriptorSetHandle = descriptorSetHandles.get(frameIndex).get(descriptor.getDescriptorSet().getSetNum());
 
-                descriptorSetsWrite.dstSet(descriptorSet);
-                descriptorSetsWrite.dstBinding(textureUpdate.binding);
-                descriptorSetsWrite.dstArrayElement(textureUpdate.arrayIndex);
-                descriptorSetsWrite.descriptorType(toVkDescriptorType(targetRes.type));
+                descriptorSetsWrite.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
+                descriptorSetsWrite.dstSet(descriptorSetHandle);
+                descriptorSetsWrite.dstBinding(descriptor.getBinding());
+                descriptorSetsWrite.dstArrayElement(textureUpdate.getArrayIndex());
+                descriptorSetsWrite.descriptorType(VulkanUtil.getVulkanDescriptorType(descriptor.getType()));
                 descriptorSetsWrite.pImageInfo(descriptorImageInfo);
-                descriptorSetsWrite.descriptorCount(textureUpdate.updateCount);
+                descriptorSetsWrite.descriptorCount(textureUpdate.getUpdateCount());
             }
 
             vkUpdateDescriptorSets(VulkanRuntime.getCurrentDevice(), descriptorSetsWrites, null);
@@ -589,97 +747,72 @@ public class VulkanShaderProgram extends ShaderProgram {
         }
     }
 
-
-    private int findShaderResSetFromIndex(int id) {
-        for (int i = 0; i < resourcesSets.length; i++) {
-            ShaderResSet resourceSet = resourcesSets[i];
-            if (resourceSet.set == id) return i;
+    private Descriptor.Type getDescriptorType(int spvcResourceType) {
+        switch (spvcResourceType) {
+            case SPVC_RESOURCE_TYPE_STORAGE_BUFFER -> { return Descriptor.Type.ShaderStorageBuffer; }
+            case SPVC_RESOURCE_TYPE_UNIFORM_BUFFER -> { return Descriptor.Type.UniformBuffer; }
+            case SPVC_RESOURCE_TYPE_SAMPLED_IMAGE -> { return Descriptor.Type.CombinedSampler; }
+            case SPVC_RESOURCE_TYPE_STORAGE_IMAGE -> { return Descriptor.Type.StorageImage; }
+            case SPVC_RESOURCE_TYPE_SEPARATE_IMAGE -> { return Descriptor.Type.SeparateImage; }
+            case SPVC_RESOURCE_TYPE_SEPARATE_SAMPLERS -> { return Descriptor.Type.SeparateSampler; }
         }
 
-        return 0;
+        return null;
     }
-
-    private int toVkDescriptorType(ShaderRes.Type type) {
-
-        switch (type) {
-            case UniformBuffer -> {
-                return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            }
-            case ShaderStorageBuffer -> {
-                return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-            }
-            case CombinedSampler -> {
-                return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            }
-            case StorageImage -> {
-                return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+    public VulkanPipeline getPipeline() {
+        return pipeline;
+    }
+    private Descriptor getDescriptorSpecByBindingNum(int binding, DescriptorSet descriptorSet) {
+        for(Descriptor descriptor : descriptorSet.getDescriptors()) {
+            if(descriptor.getBinding() == binding) {
+                return descriptor;
             }
         }
-
-        return 0;
+        return null;
     }
-
-
-    private int toVkShaderStage(ShaderRes.ShaderStage stage) {
-
-        switch (stage) {
-            case VertexStage -> {
-                return VK_SHADER_STAGE_VERTEX_BIT;
-            }
-            case FragmentStage -> {
-                return VK_SHADER_STAGE_FRAGMENT_BIT;
-            }
-            case ComputeStage -> {
-                return VK_SHADER_STAGE_COMPUTE_BIT;
-            }
-            case AllStages -> {
-                return VK_SHADER_STAGE_ALL;
-            }
+    private DescriptorSet getDescriptorSetSpecBySetNum(int set) {
+        for (DescriptorSet descriptorSet : descriptorSetsSpec) {
+            if (descriptorSet.getSetNum() == set) return descriptorSet;
         }
 
-        return 0;
+        return null;
     }
-
-    public long[] getDescriptorSets(int frameIndex) {
-        return descriptorSets.get(frameIndex).stream().mapToLong(i -> i).toArray();
+    public long[] getDescriptorSetsHandles(int frameIndex) {
+        return descriptorSetHandles.get(frameIndex).stream().mapToLong(i -> i).toArray();
     }
-
-    public long[] getDescriptorSetLayouts(int frameIndex){
-        return descriptorSetLayouts.get(frameIndex).stream().mapToLong(i -> i).toArray();
+    public long[] getDescriptorSetLayoutHandles(int frameIndex){
+        return descriptorSetLayoutHandles.get(frameIndex).stream().mapToLong(i -> i).toArray();
     }
+    public long[] getAllDescriptorSetLayoutHandles(){
+        List<Long> allDescriptorSetLayouts = new ArrayList<>();
 
-    public long[] getAllDescriptorSetLayouts(){
-        ArrayList<Long> allDescriptorSetLayouts = new ArrayList<>();
-
-        for(ArrayList<Long> descriptorSetLayouts : descriptorSetLayouts){
+        for(List<Long> descriptorSetLayouts : descriptorSetLayoutHandles){
             allDescriptorSetLayouts.addAll(descriptorSetLayouts);
         }
 
         return allDescriptorSetLayouts.stream().mapToLong(i -> i).toArray();
     }
 
-    public VkPipelineShaderStageCreateInfo.Buffer getShaderStages() {
-        return shaderStages;
-    }
+
 
     @Override
     public void dispose() {
+
         vkDeviceWaitIdle(VulkanRuntime.getCurrentDevice());
 
+        for(long shaderModuleHandle : shaderModuleHandles) {
+            vkDestroyShaderModule(VulkanRuntime.getCurrentDevice(), shaderModuleHandle, null);
+        }
 
-
-        MemoryUtil.memFree(entryPoint);
-        shaderStages.free();
-
-        for(List<Long> frameDescriptorSetLayouts : descriptorSetLayouts){
+        for(List<Long> frameDescriptorSetLayouts : descriptorSetLayoutHandles){
             for(long descriptorSetLayouts : frameDescriptorSetLayouts)
                 vkDestroyDescriptorSetLayout(VulkanRuntime.getCurrentDevice(), descriptorSetLayouts, null);
         }
 
-        for(long descriptorPool : descriptorPools)
-            vkDestroyDescriptorPool(VulkanRuntime.getCurrentDevice(), descriptorPool, null);
+        for(long descriptorPoolHandle : descriptorPoolHandles)
+            vkDestroyDescriptorPool(VulkanRuntime.getCurrentDevice(), descriptorPoolHandle, null);
 
-
+        spvc_context_destroy(context);
     }
 
 }

@@ -5,14 +5,13 @@ import fori.asset.AssetPacks;
 import fori.ecs.*;
 import fori.graphics.*;
 import org.joml.Matrix4f;
+import org.lwjgl.system.MemoryStack;
+
+import static org.lwjgl.system.MemoryStack.*;
 
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 
-import static fori.graphics.ShaderRes.ShaderStage.*;
-import static fori.graphics.ShaderRes.Type.*;
-import static fori.graphics.ShaderRes.Type.CombinedSampler;
-import static fori.graphics.VertexAttributes.Type.*;
 
 public class DefaultRenderPipelineImpl extends RenderPipeline {
 
@@ -95,65 +94,20 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                     new RenderTargetAttachment(RenderTargetAttachmentTypes.Color, shadowMapPassColorTextures.get())
             );
 
-            ShaderReader.ShaderSources shaderSources = ShaderReader.read(
-                    AssetPacks.<String>getAsset("core:assets/shaders/vulkan/ShadowMapPass.glsl").asset
-            );
-
-            shadowMapPassShaderProgram = ShaderProgram.newComputeShaderProgram(renderer, 2);
-            shadowMapPassShaderProgram.addShader(
-                    ShaderType.Compute,
-                    Shader.newShader(shadowMapPassShaderProgram, ShaderType.Compute, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Compute), ShaderType.Compute))
-            );
-
-
-            shadowMapPassShaderProgram.bind(
-                    new ShaderResSet(
-                            0,
-                            new ShaderRes(
-                                    "sceneDesc",
-                                    0,
-                                    ShaderStorageBuffer,
-                                    ComputeStage
-                            ).sizeBytes(SizeUtil.SCENE_DESC_SIZE_BYTES),
-                            new ShaderRes(
-                                    "inputTexture",
-                                    1,
-                                    CombinedSampler,
-                                    ComputeStage
-                            ).count(1),
-                            new ShaderRes(
-                                    "outputTexture",
-                                    2,
-                                    StorageImage,
-                                    ComputeStage
-                            ).count(1),
-                            new ShaderRes(
-                                    "inputShadowMaps",
-                                    3,
-                                    CombinedSampler,
-                                    ComputeStage
-                            ).count(1),
-                            new ShaderRes(
-                                    "inputPosTexture",
-                                    4,
-                                    CombinedSampler,
-                                    ComputeStage
-                            ).count(1)
-                    )
-
-            );
+            shadowMapPassShaderProgram = ShaderProgram.newShaderProgram(renderer);
+            shadowMapPassShaderProgram.add(AssetPacks.getAsset("core:assets/shaders/ShadowMapPass_compute.spv"), ShaderType.ComputeShader);
+            shadowMapPassShaderProgram.assemble();
 
             shadowMapPassSceneDescBuffers = new Buffer[renderer.getMaxFramesInFlight()];
             for (int i = 0; i < renderer.getMaxFramesInFlight(); i++) {
                 shadowMapPassSceneDescBuffers[i] = Buffer.newBuffer(
                         renderer,
-                        SizeUtil.SCENE_DESC_SIZE_BYTES,
+                        shadowMapPassShaderProgram.getDescriptorByName("sceneDesc").getSizeBytes(),
                         Buffer.Usage.ShaderStorageBuffer,
                         Buffer.Type.CPUGPUShared,
                         false
                 );
             }
-
 
         }
 
@@ -170,52 +124,15 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                     false
             );
 
-            ShaderReader.ShaderSources shaderSources = ShaderReader.read(
-                    AssetPacks.<String>getAsset("core:assets/shaders/vulkan/SwapchainPass.glsl").asset
-            );
 
-
-            swapchainPassShaderProgram = ShaderProgram.newGraphicsShaderProgram(renderer, 1);
-            swapchainPassShaderProgram.addShader(
-                    ShaderType.Vertex,
-                    Shader.newShader(swapchainPassShaderProgram, ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex))
-                            .setVertexAttributes(new VertexAttributes.Type[]{
-                                    PositionFloat2,
-                                    ColorFloat4,
-                                    UVFloat2
-                            })
-            );
-            swapchainPassShaderProgram.addShader(
-                    ShaderType.Fragment,
-                    Shader.newShader(swapchainPassShaderProgram, ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
-                            .setAttachmentTextureFormatTypes(TextureFormatType.ColorR8G8B8A8)
-                            .setDepthAttachmentTextureFormatType(TextureFormatType.Depth32)
-            );
-
-
-            swapchainPassShaderProgram.bind(
-                    new ShaderResSet(
-                            0,
-                            new ShaderRes(
-                                    "camera",
-                                    0,
-                                    UniformBuffer,
-                                    VertexStage
-                            ).sizeBytes(SizeUtil.MATRIX_SIZE_BYTES),
-                            new ShaderRes(
-                                    "inputTexture",
-                                    1,
-                                    CombinedSampler,
-                                    FragmentStage
-                            ).count(1)
-
-                    )
-
-            );
+            swapchainPassShaderProgram = ShaderProgram.newShaderProgram(renderer);
+            swapchainPassShaderProgram.add(AssetPacks.getAsset("core:assets/shaders/SwapchainPass_vertex.spv"), ShaderType.VertexShader);
+            swapchainPassShaderProgram.add(AssetPacks.getAsset("core:assets/shaders/SwapchainPass_fragment.spv"), ShaderType.FragmentShader);
+            swapchainPassShaderProgram.assemble();
 
             swapchainPassVertexBuffer = Buffer.newBuffer(
                     renderer,
-                    VertexAttributes.getSize(swapchainPassShaderProgram.getShaderMap().get(ShaderType.Vertex).getVertexAttributes()) * Float.BYTES * 4,
+                    swapchainPassShaderProgram.getVertexAttributesSize() * Float.BYTES * 4,
                     Buffer.Usage.VertexBuffer,
                     Buffer.Type.CPUGPUShared,
                     false
@@ -232,7 +149,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
             for (int i = 0; i < renderer.getMaxFramesInFlight(); i++) {
                 swapchainPassCameraBuffers[i] = Buffer.newBuffer(
                         renderer,
-                        SizeUtil.MATRIX_SIZE_BYTES,
+                        swapchainPassShaderProgram.getDescriptorByName("cameraProj").getSizeBytes(),
                         Buffer.Usage.UniformBuffer,
                         Buffer.Type.CPUGPUShared,
                         false
@@ -244,11 +161,9 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                 ByteBuffer swapchainPassCameraBufferData = swapchainPassCameraBuffers[frameIndex].get();
 
                 swapchainPassCamera.getProj().get(0, swapchainPassCameraBufferData);
-
-
                 swapchainPassShaderProgram.updateBuffers(
                         frameIndex,
-                        new ShaderUpdate<>("camera", 0, 0, swapchainPassCameraBuffers[frameIndex])
+                        new DescriptorUpdate<>("cameraProj", swapchainPassCameraBuffers[frameIndex])
                 );
             }
 
@@ -556,7 +471,13 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                                 shadowMapGenPass.setShaderProgram(
                                         environmentMeshComponent.shaderProgram
                                 );
-                                shadowMapGenPass.drawIndexed(environmentMeshComponent.indexCount, new int[]{mode, shadowMapGenPassLightIndex});
+                                try(MemoryStack stack = stackPush()) {
+                                    ByteBuffer pPushConstants = stack.calloc(2 * Integer.BYTES);
+                                    pPushConstants.putInt(mode);
+                                    pPushConstants.putInt(shadowMapGenPassLightIndex);
+                                    shadowMapGenPass.setPushConstants(pPushConstants);
+                                }
+                                shadowMapGenPass.drawIndexed(environmentMeshComponent.indexCount);
                             });
                             scene.getEngine().findEntitiesWith(TransformComponent.class, ActorMeshComponent.class).stream().forEach(components -> {
                                 ActorMeshComponent actorMeshComponent = components.comp2();
@@ -568,7 +489,13 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                                 shadowMapGenPass.setShaderProgram(
                                         actorMeshComponent.shaderProgram
                                 );
-                                shadowMapGenPass.drawIndexed(actorMeshComponent.indexCount, new int[]{mode, shadowMapGenPassLightIndex});
+                                try(MemoryStack stack = stackPush()) {
+                                    ByteBuffer pPushConstants = stack.calloc(2 * Integer.BYTES);
+                                    pPushConstants.putInt(mode);
+                                    pPushConstants.putInt(shadowMapGenPassLightIndex);
+                                    shadowMapGenPass.setPushConstants(pPushConstants);
+                                }
+                                shadowMapGenPass.drawIndexed(actorMeshComponent.indexCount);
                             });
                         }
                         shadowMapGenPass.endRendering();
@@ -605,7 +532,13 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                             scenePass.setShaderProgram(
                                     environmentMeshComponent.shaderProgram
                             );
-                            scenePass.drawIndexed(environmentMeshComponent.indexCount, new int[]{mode, -1});
+                            try(MemoryStack stack = stackPush()) {
+                                ByteBuffer pPushConstants = stack.calloc(2 * Integer.BYTES);
+                                pPushConstants.putInt(mode);
+                                pPushConstants.putInt(-1);
+                                scenePass.setPushConstants(pPushConstants);
+                            }
+                            scenePass.drawIndexed(environmentMeshComponent.indexCount);
                         });
                         scene.getEngine().findEntitiesWith(TransformComponent.class, ActorMeshComponent.class).stream().forEach(components -> {
 
@@ -617,7 +550,13 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                             scenePass.setShaderProgram(
                                     actorMeshComponent.shaderProgram
                             );
-                            scenePass.drawIndexed(actorMeshComponent.indexCount, new int[]{mode, -1});
+                            try(MemoryStack stack = stackPush()) {
+                                ByteBuffer pPushConstants = stack.calloc(2 * Integer.BYTES);
+                                pPushConstants.putInt(mode);
+                                pPushConstants.putInt(-1);
+                                scenePass.setPushConstants(pPushConstants);
+                            }
+                            scenePass.drawIndexed(actorMeshComponent.indexCount);
                         });
                     }
                     scenePass.endRendering();
@@ -635,40 +574,32 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
             shadowMapPassShaderProgram.updateBuffers(
                     renderer.getFrameIndex(),
-                    new ShaderUpdate<>(
+                    new DescriptorUpdate<>(
                             "sceneDesc",
-                            0,
-                            0,
                             shadowMapPassSceneDescBuffers[renderer.getFrameIndex()]
                     )
             );
 
             shadowMapPassShaderProgram.updateTextures(
                     renderer.getFrameIndex(),
-                    new ShaderUpdate<>(
+                    new DescriptorUpdate<>(
                             "inputTexture",
-                            0,
-                            1,
                             ((Texture[]) shadowMapPass.getDependency("InputTextures").getDependency().get())[renderer.getFrameIndex()]
                     )
             );
 
             shadowMapPassShaderProgram.updateTextures(
                     renderer.getFrameIndex(),
-                    new ShaderUpdate<>(
+                    new DescriptorUpdate<>(
                             "outputTexture",
-                            0,
-                            2,
                             ((Texture[]) shadowMapPass.getDependency("OutputTextures").getDependency().get())[renderer.getFrameIndex()]
                     )
             );
 
             shadowMapPassShaderProgram.updateTextures(
                     renderer.getFrameIndex(),
-                    new ShaderUpdate<>(
+                    new DescriptorUpdate<>(
                             "inputPosTexture",
-                            0,
-                            4,
                             ((Texture[]) shadowMapPass.getDependency("InputPosTextures").getDependency().get())[renderer.getFrameIndex()]
                     )
             );
@@ -682,10 +613,8 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                 for (int i = 0; i < lightCount; i++) {
                     shadowMapPassShaderProgram.updateTextures(
                             renderer.getFrameIndex(),
-                            new ShaderUpdate<>(
+                            new DescriptorUpdate<>(
                                     "inputShadowMaps",
-                                    0,
-                                    3,
                                     shadowMapTextures[renderer.getMaxFramesInFlight() * i + renderer.getFrameIndex()]
                             ).arrayIndex(i)
                     );
@@ -696,7 +625,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
             {
                 shadowMapPass.resolveBarriers();
                 shadowMapPass.setShaderProgram(shadowMapPassShaderProgram);
-                shadowMapPass.dispatch(1920, 1080, 1, new int[]{1, -1});
+                shadowMapPass.dispatch(1920, 1080, 1);
             }
             shadowMapPass.endRecording();
         });
@@ -706,10 +635,8 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
             swapchainPassShaderProgram.updateTextures(
                     renderer.getFrameIndex(),
-                    new ShaderUpdate<>(
+                    new DescriptorUpdate<>(
                             "inputTexture",
-                            0,
-                            1,
                             ((Texture[]) swapchainPass.getDependency("InputTextures").getDependency().get())[renderer.getFrameIndex()])
             );
 
@@ -722,7 +649,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                 {
                     swapchainPass.setDrawBuffers(swapchainPassVertexBuffer, swapchainPassIndexBuffer);
                     swapchainPass.setShaderProgram(swapchainPassShaderProgram);
-                    swapchainPass.drawIndexed(6, new int[]{1});
+                    swapchainPass.drawIndexed(6);
                 }
                 swapchainPass.endRendering();
 
