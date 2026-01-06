@@ -1,5 +1,6 @@
 package fori.graphics;
 
+import fori.Pair;
 import fori.asset.Asset;
 import fori.graphics.vulkan.VulkanShaderProgram;
 
@@ -22,8 +23,11 @@ public abstract class ShaderProgram extends Disposable {
 
     }
 
-    public abstract void updateBuffers(int frameIndex, DescriptorUpdate<Buffer>... bufferUpdates);
-    public abstract void updateTextures(int frameIndex, DescriptorUpdate<Texture>... textureUpdates);
+    public abstract void setBuffers(int frameIndex, DescriptorUpdate<Buffer>... bufferUpdates);
+    public abstract void setCombinedTextureSamplers(int frameIndex, DescriptorUpdate<Pair<Texture, Sampler>>... textureUpdates);
+    public abstract void setTextures(int frameIndex, DescriptorUpdate<Texture>... textureUpdates);
+    public abstract void setSamplers(int frameIndex, DescriptorUpdate<Sampler>... samplerUpdates);
+
 
     public List<DescriptorSet> getDescriptorSetsSpec(){
         return descriptorSetsSpec;
@@ -47,7 +51,7 @@ public abstract class ShaderProgram extends Disposable {
                 if(descriptor.getName().equals(name)) return descriptor;
             }
         }
-        return null;
+        throw new RuntimeException("Unable to find descriptor " + name);
     }
 
     public static ShaderProgram newShaderProgram(Disposable parent){

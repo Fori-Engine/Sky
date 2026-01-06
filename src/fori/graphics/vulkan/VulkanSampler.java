@@ -2,6 +2,7 @@ package fori.graphics.vulkan;
 
 import fori.Logger;
 import fori.graphics.Disposable;
+import fori.graphics.Sampler;
 import fori.graphics.Texture;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkSamplerCreateInfo;
@@ -12,11 +13,11 @@ import static fori.graphics.Texture.Filter.Linear;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
-public class VulkanSampler extends Disposable {
+public class VulkanSampler extends Sampler {
     private long handle;
 
     public VulkanSampler(Disposable parent, Texture.Filter minFilter, Texture.Filter magFilter, boolean anisotropy) {
-        super(parent);
+        super(parent, minFilter, magFilter, anisotropy);
 
         try (MemoryStack stack = stackPush()) {
             VkSamplerCreateInfo samplerCreateInfo = VkSamplerCreateInfo.calloc(stack);

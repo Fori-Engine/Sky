@@ -74,7 +74,7 @@ struct FSOutput {
 }
 
 Texture2D texture;
-SamplerState samplerState;
+SamplerState textureSampler;
 
 
 
@@ -84,7 +84,7 @@ FSOutput fragmentMain(VSOutput vsOutput, uniform int renderMode, uniform int lig
     
 
     if(renderMode == 0) {
-        output.color0 = texture.Sample(samplerState, vsOutput.uv);
+        output.color0 = texture.Sample(textureSampler, vsOutput.uv);
         output.color1 = float4(vsOutput.posViewSpace.xyz, 1.0);
     }
     if(renderMode == 1) {

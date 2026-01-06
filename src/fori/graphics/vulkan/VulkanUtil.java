@@ -135,16 +135,16 @@ public class VulkanUtil {
             case ShaderStorageBuffer -> {
                 return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
             }
-            case CombinedSampler -> {
+            case CombinedTextureSampler -> {
                 return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
             }
-            case SeparateImage -> {
+            case SeparateTexture -> {
                 return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
             }
             case SeparateSampler -> {
                 return VK_DESCRIPTOR_TYPE_SAMPLER;
             }
-            case StorageImage -> {
+            case StorageTexture -> {
                 return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
             }
         }

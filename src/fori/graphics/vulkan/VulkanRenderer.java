@@ -1,6 +1,7 @@
 package fori.graphics.vulkan;
 
 import fori.Logger;
+import fori.Pair;
 import fori.Surface;
 import fori.graphics.*;
 import org.lwjgl.PointerBuffer;
@@ -159,18 +160,16 @@ public class VulkanRenderer extends Renderer {
             );
         }
 
-        RenderTargetAttachment colorAttachment = new RenderTargetAttachment(RenderTargetAttachmentTypes.Color, colorTextures);
+        RenderTargetAttachment colorAttachment = new RenderTargetAttachment(RenderTargetAttachmentTypes.Color, colorTextures, null);
 
         Texture depthTexture = Texture.newDepthTexture(
             swapchainRenderTarget,
             swapchain.getExtent().width(),
             swapchain.getExtent().height(),
-            TextureFormatType.Depth32,
-            Texture.Filter.Nearest,
-            Texture.Filter.Nearest
+            TextureFormatType.Depth32
         );
 
-        RenderTargetAttachment depthAttachment = new RenderTargetAttachment(RenderTargetAttachmentTypes.Depth, new Texture[]{depthTexture});
+        RenderTargetAttachment depthAttachment = new RenderTargetAttachment(RenderTargetAttachmentTypes.Depth, new Texture[]{depthTexture}, null);
 
         swapchainRenderTarget.addAttachment(colorAttachment);
         swapchainRenderTarget.addAttachment(depthAttachment);
@@ -397,6 +396,7 @@ public class VulkanRenderer extends Renderer {
     private VkSurfaceFormatKHR chooseSwapSurfaceFormat(VkSurfaceFormatKHR.Buffer availableFormats) {
 
         for(VkSurfaceFormatKHR availableFormat : availableFormats){
+            //My guess is that the presentation engine does not like 32 bit images being drawn to the screen in SwapchainPass, when the swapchain images are only 8 bit
             if(availableFormat.format() == VK_FORMAT_R8G8B8A8_SRGB && availableFormat.colorSpace() == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR){
                 return availableFormat;
             }
@@ -512,99 +512,104 @@ public class VulkanRenderer extends Renderer {
                         VkCommandBuffer commandBuffer = (VkCommandBuffer) object;
 
                         for(Dependency rd : pass.getDependencies()) {
-                            Resource resource = rd.getDependency();
-                            if(rd.getDependency().get() instanceof Texture[]) {
-                                Texture[] textures = (Texture[]) rd.getDependency().get();
+                            Resource resource = rd.getResource();
 
-                                int texturePairs = textures.length / maxFramesInFlight;
-                                for (int i = 0; i < texturePairs; i++) {
-                                    Texture texture = textures[i * maxFramesInFlight + frameIndex];
-                                    VulkanImage image = ((VulkanTexture) texture).getImage();
+                            assert resource != null : "All resource dependencies must be fully realized by the time the graph is submitted to the renderer";
 
-
-                                    int srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-
-                                    //All writes have to wait on reads
-                                    int writeSrcAccessMask = VK_ACCESS_NONE;
-                                    //All reads have to wait on writes
-                                    int readSrcAccessMask = VK_ACCESS_NONE;
-
-                                    if (resource.getOutboundFrom() != null) {
-                                        srcStageMask = resource.getOutboundFrom() instanceof GraphicsPass ? VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT : VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-                                        writeSrcAccessMask = resource.getOutboundFrom() instanceof GraphicsPass ? VK_ACCESS_COLOR_ATTACHMENT_READ_BIT : VK_ACCESS_SHADER_READ_BIT;
-                                        readSrcAccessMask = resource.getOutboundFrom() instanceof GraphicsPass ? VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT : VK_ACCESS_SHADER_WRITE_BIT;
-                                    }
-
-
-                                    if ((rd.getType() & DependencyTypes.FragmentShaderRead) != 0) {
-
-
-                                        VulkanUtil.transitionImages(
-                                                image,
-                                                commandBuffer,
-                                                VK_IMAGE_LAYOUT_GENERAL,
-                                                readSrcAccessMask,
-                                                VK_ACCESS_SHADER_READ_BIT,
-                                                VK_IMAGE_ASPECT_COLOR_BIT,
-                                                srcStageMask,
-                                                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
-                                        );
-                                    } else if ((rd.getType() & DependencyTypes.FragmentShaderWrite) != 0) {
-                                        Logger.todo(VulkanRenderer.class, "FragmentShaderWrite transitions are not supported");
-                                    } else if ((rd.getType() & DependencyTypes.ComputeShaderRead) != 0) {
-                                        VulkanUtil.transitionImages(
-                                                image,
-                                                commandBuffer,
-                                                VK_IMAGE_LAYOUT_GENERAL,
-                                                readSrcAccessMask,
-                                                VK_ACCESS_SHADER_READ_BIT,
-                                                VK_IMAGE_ASPECT_COLOR_BIT,
-                                                srcStageMask,
-                                                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
-                                        );
-                                    } else if ((rd.getType() & DependencyTypes.ComputeShaderWrite) != 0) {
-                                        VulkanUtil.transitionImages(
-                                                image,
-                                                commandBuffer,
-                                                VK_IMAGE_LAYOUT_GENERAL,
-                                                writeSrcAccessMask,
-                                                VK_ACCESS_SHADER_WRITE_BIT,
-                                                VK_IMAGE_ASPECT_COLOR_BIT,
-                                                srcStageMask,
-                                                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
-                                        );
-                                    } else if ((rd.getType() & DependencyTypes.Present) != 0) {
-                                        VulkanUtil.transitionImages(
-                                                image,
-                                                commandBuffer,
-                                                VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-                                                writeSrcAccessMask,
-                                                VK_ACCESS_NONE,
-                                                VK_IMAGE_ASPECT_COLOR_BIT,
-                                                srcStageMask,
-                                                VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
-                                        );
-                                    } else if ((rd.getType() & DependencyTypes.RenderTargetRead) != 0) {
-                                        Logger.todo(VulkanRenderer.class, "RenderTargetRead transitions are not supported");
-                                    } else if ((rd.getType() & DependencyTypes.RenderTargetWrite) != 0) {
-                                        VulkanUtil.transitionImages(
-                                                image,
-                                                commandBuffer,
-                                                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                                                writeSrcAccessMask,
-                                                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-                                                VK_IMAGE_ASPECT_COLOR_BIT,
-                                                srcStageMask,
-                                                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
-                                        );
-                                    }
-                                }
-
-                                resource.setOutboundFrom(pass);
-
-
+                            Texture[] textures = null;
+                            if(resource.get() instanceof Texture[]) {
+                                textures = ((Texture[]) resource.get());
+                            }
+                            else if(resource.get() instanceof Pair) {
+                                textures = ((Pair<Texture[], Sampler[]>) resource.get()).key;
                             }
 
+
+                            int texturePairs = textures.length / maxFramesInFlight;
+                            for (int i = 0; i < texturePairs; i++) {
+                                Texture texture = textures[i * maxFramesInFlight + frameIndex];
+                                VulkanImage image = ((VulkanTexture) texture).getImage();
+
+
+                                int srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+
+                                //All writes have to wait on reads
+                                int writeSrcAccessMask = VK_ACCESS_NONE;
+                                //All reads have to wait on writes
+                                int readSrcAccessMask = VK_ACCESS_NONE;
+
+                                if (resource.getOutboundFrom() != null) {
+                                    srcStageMask = resource.getOutboundFrom() instanceof GraphicsPass ? VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT : VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+                                    writeSrcAccessMask = resource.getOutboundFrom() instanceof GraphicsPass ? VK_ACCESS_COLOR_ATTACHMENT_READ_BIT : VK_ACCESS_SHADER_READ_BIT;
+                                    readSrcAccessMask = resource.getOutboundFrom() instanceof GraphicsPass ? VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT : VK_ACCESS_SHADER_WRITE_BIT;
+                                }
+
+
+                                if ((rd.getType() & DependencyTypes.FragmentShaderRead) != 0) {
+
+
+                                    VulkanUtil.transitionImages(
+                                            image,
+                                            commandBuffer,
+                                            VK_IMAGE_LAYOUT_GENERAL,
+                                            readSrcAccessMask,
+                                            VK_ACCESS_SHADER_READ_BIT,
+                                            VK_IMAGE_ASPECT_COLOR_BIT,
+                                            srcStageMask,
+                                            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
+                                    );
+                                } else if ((rd.getType() & DependencyTypes.FragmentShaderWrite) != 0) {
+                                    Logger.todo(VulkanRenderer.class, "FragmentShaderWrite transitions are not supported");
+                                } else if ((rd.getType() & DependencyTypes.ComputeShaderRead) != 0) {
+                                    VulkanUtil.transitionImages(
+                                            image,
+                                            commandBuffer,
+                                            VK_IMAGE_LAYOUT_GENERAL,
+                                            readSrcAccessMask,
+                                            VK_ACCESS_SHADER_READ_BIT,
+                                            VK_IMAGE_ASPECT_COLOR_BIT,
+                                            srcStageMask,
+                                            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
+                                    );
+                                } else if ((rd.getType() & DependencyTypes.ComputeShaderWrite) != 0) {
+                                    VulkanUtil.transitionImages(
+                                            image,
+                                            commandBuffer,
+                                            VK_IMAGE_LAYOUT_GENERAL,
+                                            writeSrcAccessMask,
+                                            VK_ACCESS_SHADER_WRITE_BIT,
+                                            VK_IMAGE_ASPECT_COLOR_BIT,
+                                            srcStageMask,
+                                            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
+                                    );
+                                } else if ((rd.getType() & DependencyTypes.Present) != 0) {
+                                    VulkanUtil.transitionImages(
+                                            image,
+                                            commandBuffer,
+                                            VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+                                            writeSrcAccessMask,
+                                            VK_ACCESS_NONE,
+                                            VK_IMAGE_ASPECT_COLOR_BIT,
+                                            srcStageMask,
+                                            VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
+                                    );
+                                } else if ((rd.getType() & DependencyTypes.RenderTargetRead) != 0) {
+                                    Logger.todo(VulkanRenderer.class, "RenderTargetRead transitions are not supported");
+                                } else if ((rd.getType() & DependencyTypes.RenderTargetWrite) != 0) {
+                                    VulkanUtil.transitionImages(
+                                            image,
+                                            commandBuffer,
+                                            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                                            writeSrcAccessMask,
+                                            VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                                            VK_IMAGE_ASPECT_COLOR_BIT,
+                                            srcStageMask,
+                                            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+                                    );
+                                }
+                            }
+
+                            resource.setOutboundFrom(pass);
 
 
                         }

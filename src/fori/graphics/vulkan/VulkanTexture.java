@@ -20,7 +20,6 @@ public class VulkanTexture extends Texture {
 
     private VulkanImage image;
     private VulkanImageView imageView;
-    private VulkanSampler sampler;
     private Buffer imageData;
     private VkCommandBuffer commandBuffer;
     private VulkanFence fence;
@@ -28,7 +27,7 @@ public class VulkanTexture extends Texture {
 
 
     public VulkanTexture(Disposable parent, int width, int height, long imageHandle, int currentLayout, int usage, int imageFormat, int aspectMask) {
-        super(parent, width, height, null, toTextureFormatType(imageFormat), Nearest, Nearest);
+        super(parent, width, height, null, toTextureFormatType(imageFormat));
         image = new VulkanImage(
                 this,
                 imageHandle,
@@ -37,12 +36,11 @@ public class VulkanTexture extends Texture {
                 imageFormat
         );
         imageView = new VulkanImageView(image, VulkanRuntime.getCurrentDevice(), image, aspectMask);
-        sampler = new VulkanSampler(this, minFilter, magFilter, false);
         isStorageTexture = (usage & VK_IMAGE_USAGE_STORAGE_BIT) != 0;
     }
 
-    public VulkanTexture(Disposable parent, int width, int height, Asset<TextureData> textureData, Filter minFilter, Filter magFilter, int imageFormat, int usage, int tiling, int aspectMask) {
-        super(parent, width, height, textureData, toTextureFormatType(imageFormat), minFilter, magFilter);
+    public VulkanTexture(Disposable parent, int width, int height, Asset<TextureData> textureData, int imageFormat, int usage, int tiling, int aspectMask) {
+        super(parent, width, height, textureData, toTextureFormatType(imageFormat));
 
         image = new VulkanImage(
                 this,
@@ -57,7 +55,6 @@ public class VulkanTexture extends Texture {
         isStorageTexture = (usage & VK_IMAGE_USAGE_STORAGE_BIT) != 0;
 
         imageView = new VulkanImageView(image, VulkanRuntime.getCurrentDevice(), image, aspectMask);
-        sampler = new VulkanSampler(this, minFilter, magFilter, false);
 
         if(textureData != null) {
 
@@ -182,12 +179,6 @@ public class VulkanTexture extends Texture {
     public VulkanImageView getImageView() {
         return imageView;
     }
-
-    public VulkanSampler getSampler(){
-        return sampler;
-    }
-
-
 
     @Override
     public void dispose() {}

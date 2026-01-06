@@ -85,7 +85,7 @@ public class EnvironmentMeshComponent {
         stagingVertexBuffer.get().clear();
         stagingIndexBuffer.get().clear();
 
-        entityShaderIndex.upload(meshData, shaderProgram, stagingVertexBuffer.get(), stagingIndexBuffer.get(), vertexCount);
+        entityShaderIndex.upload(meshData, shaderProgram, stagingVertexBuffer.get(), stagingIndexBuffer.get(), this.vertexCount);
 
         commitMesh(
                 meshData.getVertexCount(),

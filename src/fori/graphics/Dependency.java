@@ -17,7 +17,7 @@ public class Dependency {
         return name;
     }
 
-    public Resource getDependency() {
+    public Resource getResource() {
         return dependency;
     }
 

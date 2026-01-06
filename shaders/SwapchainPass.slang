@@ -11,14 +11,19 @@ struct Vertex
     float2 uv : TEXCOORD0;
 }
 
-ConstantBuffer<float4x4> cameraProj;
+struct Camera
+{
+    float4x4 proj;
+}
+
+ConstantBuffer<Camera> camera;
 
 
 
 [shader("vertex")]
 VSOutput vertexMain(Vertex vertex) {
     VSOutput output;
-    output.pos = mul(cameraProj, float4(vertex.pos, 0, 1.0));
+    output.pos = mul(camera.proj, float4(vertex.pos, 0, 1.0));
     output.color = vertex.color;
     output.uv = vertex.uv;
 
@@ -30,12 +35,12 @@ struct FSOutput {
 }
 
 Texture2D inputTexture;
-SamplerState inputTextureSamplerState;
+SamplerState inputTextureSampler;
 
 
 [shader("fragment")]
 FSOutput fragmentMain(VSOutput vsOutput) {
     FSOutput output;
-    output.color0 = inputTexture.Sample(inputTextureSamplerState, vsOutput.uv);
+    output.color0 = inputTexture.Sample(inputTextureSampler, vsOutput.uv) * vsOutput.color;
     return output;
 }

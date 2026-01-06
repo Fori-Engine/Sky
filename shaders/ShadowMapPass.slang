@@ -26,11 +26,12 @@ StructuredBuffer<Scene> sceneDesc;
 
 
 Texture2D inputTexture;
-Texture2D inputShadowMaps[1];
-SamplerState inputShadowMapsSamplerStates[1];
-
-Texture2D inputPosTexture;
 RWTexture2D outputTexture;
+Texture2D inputPosTexture;
+
+Texture2D inputShadowMaps[1];
+SamplerState inputShadowMapsSamplers[1];
+
 
 
 [numthreads(2, 2, 2)]
@@ -45,7 +46,7 @@ void computeMain(int3 dispatchThreadID : SV_DispatchThreadID) {
     shadowMapUV /= shadowMapUV.w;
     shadowMapUV = shadowMapUV * 0.5 + 0.5;
 
-    float4 lpFromShadowMap = inputShadowMaps[0].Sample(inputShadowMapsSamplerStates[0], shadowMapUV.xy);
+    float4 lpFromShadowMap = inputShadowMaps[0].Sample(inputShadowMapsSamplers[0], shadowMapUV.xy);
     float4 wpFromShadowMap = mul(light.invView, lpFromShadowMap);
 
 

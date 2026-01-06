@@ -1,12 +1,14 @@
 package whisper;
 
 import dev.dominion.ecs.api.Results;
+import fori.Pair;
 import fori.asset.AssetPacks;
 import fori.ecs.*;
 import fori.graphics.*;
 import org.joml.Matrix4f;
 import org.lwjgl.system.MemoryStack;
 
+import static fori.graphics.Texture.Filter.Linear;
 import static org.lwjgl.system.MemoryStack.*;
 
 import java.nio.ByteBuffer;
@@ -24,12 +26,13 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
     private GraphicsPass scenePass;
     private RenderTarget scenePassRT;
-    private Resource<Texture[]> sceneColorTextures;
-    private Resource<Texture[]> scenePosTextures;
+    private Resource<Pair<Texture[], Sampler[]>> sceneColorTextures;
+    private Resource<Pair<Texture[], Sampler[]>> scenePosTextures;
+    private Resource<Texture> sceneDepthTexture;
 
     private ComputePass shadowMapPass;
     private RenderTarget shadowMapPassRT;
-    private Resource<Texture[]> shadowMapPassColorTextures;
+    private Resource<Pair<Texture[], Sampler[]>> shadowMapPassColorTextures;
     private ShaderProgram shadowMapPassShaderProgram;
     private Buffer[] shadowMapPassSceneDescBuffers;
 
@@ -57,41 +60,84 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
         //Scene Color Pass Resources
         {
             scenePassRT = new RenderTarget(renderer);
-            sceneColorTextures = new Resource<>(new Texture[]{
-                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32, Texture.Filter.Nearest, Texture.Filter.Nearest),
-                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32, Texture.Filter.Nearest, Texture.Filter.Nearest)
-            });
+            sceneColorTextures = new Resource<>(
+                    new Pair<>(
+                            new Texture[]{
+                                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32),
+                                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32)
+                            },
+                            new Sampler[]{
+                                    Sampler.newSampler(scenePassRT, Linear, Linear, true),
+                                    Sampler.newSampler(scenePassRT, Linear, Linear, true)
+                            }
+                    )
+            );
 
-            scenePosTextures = new Resource<>(new Texture[]{
-                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32, Texture.Filter.Nearest, Texture.Filter.Nearest),
-                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32, Texture.Filter.Nearest, Texture.Filter.Nearest)
-            });
+            scenePosTextures = new Resource<>(
+                    new Pair<>(
+                            new Texture[]{
+                                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32),
+                                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32)
+                            },
+                            new Sampler[]{
+                                    Sampler.newSampler(scenePassRT, Linear, Linear, true),
+                                    Sampler.newSampler(scenePassRT, Linear, Linear, true)
+                            }
+                    )
+            );
 
-            scenePassRT.addAttachment(
-                    new RenderTargetAttachment(RenderTargetAttachmentTypes.Color, sceneColorTextures.get())
+            sceneDepthTexture = new Resource<>(
+                    Texture.newDepthTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.Depth32)
             );
 
             scenePassRT.addAttachment(
-                    new RenderTargetAttachment(RenderTargetAttachmentTypes.Pos, scenePosTextures.get())
+                    new RenderTargetAttachment(
+                            RenderTargetAttachmentTypes.Color,
+                            sceneColorTextures.get().key,
+                            sceneColorTextures.get().value
+                    )
             );
 
             scenePassRT.addAttachment(
-                    new RenderTargetAttachment(RenderTargetAttachmentTypes.Depth, new Texture[]{
-                            Texture.newDepthTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.Depth32, Texture.Filter.Nearest, Texture.Filter.Nearest)
-                    })
+                    new RenderTargetAttachment(
+                            RenderTargetAttachmentTypes.Pos,
+                            scenePosTextures.get().key,
+                            scenePosTextures.get().value
+
+                    )
+            );
+
+            scenePassRT.addAttachment(
+                    new RenderTargetAttachment(
+                            RenderTargetAttachmentTypes.Depth,
+                            new Texture[]{ sceneDepthTexture.get() },
+                            null
+                    )
             );
         }
 
         //Shadow Pass Resources
         {
             shadowMapPassRT = new RenderTarget(renderer);
-            shadowMapPassColorTextures = new Resource<>(new Texture[]{
-                    Texture.newStorageTexture(shadowMapPassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32, Texture.Filter.Nearest, Texture.Filter.Nearest),
-                    Texture.newStorageTexture(shadowMapPassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32, Texture.Filter.Nearest, Texture.Filter.Nearest)
-            });
+            shadowMapPassColorTextures = new Resource<>(
+                    new Pair<>(
+                            new Texture[]{
+                                    Texture.newStorageTexture(shadowMapPassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32),
+                                    Texture.newStorageTexture(shadowMapPassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32)
+                            },
+                            new Sampler[]{
+                                    Sampler.newSampler(shadowMapPassRT, Linear, Linear, true),
+                                    Sampler.newSampler(shadowMapPassRT, Linear, Linear, true)
+                            }
+                    )
+            );
 
             shadowMapPassRT.addAttachment(
-                    new RenderTargetAttachment(RenderTargetAttachmentTypes.Color, shadowMapPassColorTextures.get())
+                    new RenderTargetAttachment(
+                            RenderTargetAttachmentTypes.Color,
+                            shadowMapPassColorTextures.get().key,
+                            shadowMapPassColorTextures.get().value
+                    )
             );
 
             shadowMapPassShaderProgram = ShaderProgram.newShaderProgram(renderer);
@@ -149,7 +195,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
             for (int i = 0; i < renderer.getMaxFramesInFlight(); i++) {
                 swapchainPassCameraBuffers[i] = Buffer.newBuffer(
                         renderer,
-                        swapchainPassShaderProgram.getDescriptorByName("cameraProj").getSizeBytes(),
+                        swapchainPassShaderProgram.getDescriptorByName("camera").getSizeBytes(),
                         Buffer.Usage.UniformBuffer,
                         Buffer.Type.CPUGPUShared,
                         false
@@ -161,9 +207,9 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                 ByteBuffer swapchainPassCameraBufferData = swapchainPassCameraBuffers[frameIndex].get();
 
                 swapchainPassCamera.getProj().get(0, swapchainPassCameraBufferData);
-                swapchainPassShaderProgram.updateBuffers(
+                swapchainPassShaderProgram.setBuffers(
                         frameIndex,
-                        new DescriptorUpdate<>("cameraProj", swapchainPassCameraBuffers[frameIndex])
+                        new DescriptorUpdate<>("camera", swapchainPassCameraBuffers[frameIndex])
                 );
             }
 
@@ -267,11 +313,6 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                             DependencyTypes.ComputeShaderRead
                     ),
                     new Dependency(
-                            "InputShadowMaps",
-                            null,
-                            DependencyTypes.ComputeShaderRead
-                    ),
-                    new Dependency(
                             "OutputTextures",
                             shadowMapPassColorTextures,
                             DependencyTypes.ComputeShaderWrite
@@ -279,6 +320,11 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                     new Dependency(
                             "InputPosTextures",
                             scenePosTextures,
+                            DependencyTypes.ComputeShaderRead
+                    ),
+                    new Dependency(
+                            "InputShadowMaps",
+                            null,
                             DependencyTypes.ComputeShaderRead
                     )
             );
@@ -340,6 +386,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
     @Override
     public void render(Renderer renderer, Scene scene) {
+        //TODO(Shayan) This entire pipeline needs to be updated to use sampler descriptors
 
         if(swapchainRT != renderer.getSwapchainRenderTarget()) {
             swapchainRT = renderer.getSwapchainRenderTarget();
@@ -369,23 +416,35 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
             lightCount = (int) scene.getEngine().findEntitiesWith(LightComponent.class).stream().count();
             Texture[] shadowMapTextures = new Texture[lightCount * renderer.getMaxFramesInFlight()];
+            Sampler[] shadowMapSamplers = new Sampler[shadowMapTextures.length];
 
             int lightIndex = 0;
-            for(Iterator<Results.With1<LightComponent>> iterator = scene.getEngine().findEntitiesWith(LightComponent.class).stream().iterator(); iterator.hasNext();){
+            for (Iterator<Results.With1<LightComponent>> iterator = scene.getEngine().findEntitiesWith(LightComponent.class).stream().iterator(); iterator.hasNext(); ) {
                 LightComponent lightComponent = iterator.next().comp();
 
-                shadowMapTextures[renderer.getMaxFramesInFlight() * lightIndex] = lightComponent.renderTarget
+                int i1 = renderer.getMaxFramesInFlight() * lightIndex;
+                int i2 = renderer.getMaxFramesInFlight() * lightIndex + 1;
+
+                shadowMapTextures[i1] = lightComponent.renderTarget
                         .getAttachment(RenderTargetAttachmentTypes.Pos)
                         .getTextures()[0];
 
-                shadowMapTextures[(renderer.getMaxFramesInFlight() * lightIndex) + 1] = lightComponent.renderTarget
+                shadowMapSamplers[i1] = lightComponent.renderTarget
+                        .getAttachment(RenderTargetAttachmentTypes.Pos)
+                        .getSamplers()[0];
+
+                shadowMapTextures[i2] = lightComponent.renderTarget
                         .getAttachment(RenderTargetAttachmentTypes.Pos)
                         .getTextures()[1];
+
+                shadowMapSamplers[i2] = lightComponent.renderTarget
+                        .getAttachment(RenderTargetAttachmentTypes.Pos)
+                        .getSamplers()[1];
 
                 lightIndex++;
             }
 
-            Resource<Texture[]> shadowMapTexturesResource = new Resource<>(shadowMapTextures);
+            Resource<Pair<Texture[], Sampler[]>> shadowMapTexturesResource = new Resource<>(new Pair<>(shadowMapTextures, shadowMapSamplers));
 
             shadowMapGenPass.getDependency(
                     "OutputShadowMaps"
@@ -508,8 +567,6 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
             shadowMapGenPass.endRecording();
 
         });
-
-
         scenePass.setPassExecuteCallback(() -> {
             scenePass.startRecording(renderer.getFrameIndex());
             {
@@ -520,7 +577,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                 {
                     int mode = 0;
 
-                    scenePass.startRendering(scenePassRT, renderer.getWidth(), renderer.getHeight(), true, Color.BLACK);
+                    scenePass.startRendering(scenePassRT, renderer.getWidth(), renderer.getHeight(), true, Color.LIGHT_GRAY);
                     {
                         scene.getEngine().findEntitiesWith(TransformComponent.class, EnvironmentMeshComponent.class).stream().forEach(components -> {
                             EnvironmentMeshComponent environmentMeshComponent = components.comp2();
@@ -568,11 +625,9 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
         });
 
 
-
-
         shadowMapPass.setPassExecuteCallback(() -> {
 
-            shadowMapPassShaderProgram.updateBuffers(
+            shadowMapPassShaderProgram.setBuffers(
                     renderer.getFrameIndex(),
                     new DescriptorUpdate<>(
                             "sceneDesc",
@@ -580,27 +635,26 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
                     )
             );
 
-            shadowMapPassShaderProgram.updateTextures(
+            Resource<Pair<Texture[], Sampler[]>> inputTexturesDependency = shadowMapPass.getDependency("InputTextures").getResource();
+            Resource<Pair<Texture[], Sampler[]>> outputTexturesDependency = shadowMapPass.getDependency("OutputTextures").getResource();
+            Resource<Pair<Texture[], Sampler[]>> inputPosTexturesDependency = shadowMapPass.getDependency("InputPosTextures").getResource();
+
+
+
+
+            shadowMapPassShaderProgram.setTextures(
                     renderer.getFrameIndex(),
                     new DescriptorUpdate<>(
                             "inputTexture",
-                            ((Texture[]) shadowMapPass.getDependency("InputTextures").getDependency().get())[renderer.getFrameIndex()]
-                    )
-            );
-
-            shadowMapPassShaderProgram.updateTextures(
-                    renderer.getFrameIndex(),
+                            inputTexturesDependency.get().key[renderer.getFrameIndex()]
+                    ),
                     new DescriptorUpdate<>(
                             "outputTexture",
-                            ((Texture[]) shadowMapPass.getDependency("OutputTextures").getDependency().get())[renderer.getFrameIndex()]
-                    )
-            );
-
-            shadowMapPassShaderProgram.updateTextures(
-                    renderer.getFrameIndex(),
+                            outputTexturesDependency.get().key[renderer.getFrameIndex()]
+                    ),
                     new DescriptorUpdate<>(
                             "inputPosTexture",
-                            ((Texture[]) shadowMapPass.getDependency("InputPosTextures").getDependency().get())[renderer.getFrameIndex()]
+                            inputPosTexturesDependency.get().key[renderer.getFrameIndex()]
                     )
             );
 
@@ -608,16 +662,25 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
             //Update shadow maps
             {
-                Texture[] shadowMapTextures = ((Texture[]) shadowMapPass.getDependency("InputShadowMaps").getDependency().get());
+                Resource<Pair<Texture[], Sampler[]>> shadowMapTexturesResource = shadowMapPass.getDependency("InputShadowMaps").getResource();
+
 
                 for (int i = 0; i < lightCount; i++) {
-                    shadowMapPassShaderProgram.updateTextures(
+                    shadowMapPassShaderProgram.setTextures(
                             renderer.getFrameIndex(),
                             new DescriptorUpdate<>(
                                     "inputShadowMaps",
-                                    shadowMapTextures[renderer.getMaxFramesInFlight() * i + renderer.getFrameIndex()]
+                                    shadowMapTexturesResource.get().key[renderer.getMaxFramesInFlight() * i + renderer.getFrameIndex()]
                             ).arrayIndex(i)
                     );
+                    shadowMapPassShaderProgram.setSamplers(
+                            renderer.getFrameIndex(),
+                            new DescriptorUpdate<>(
+                                    "inputShadowMapsSamplers",
+                                    shadowMapTexturesResource.get().value[renderer.getMaxFramesInFlight() * i + renderer.getFrameIndex()]
+                            ).arrayIndex(i)
+                    );
+
                 }
             }
 
@@ -633,11 +696,20 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
         swapchainPass.setPassExecuteCallback(() -> {
 
-            swapchainPassShaderProgram.updateTextures(
+            Resource<Pair<Texture[], Sampler[]>> inputTexturesResource = swapchainPass.getDependency("InputTextures").getResource();
+
+            swapchainPassShaderProgram.setTextures(
                     renderer.getFrameIndex(),
                     new DescriptorUpdate<>(
                             "inputTexture",
-                            ((Texture[]) swapchainPass.getDependency("InputTextures").getDependency().get())[renderer.getFrameIndex()])
+                            inputTexturesResource.get().key[renderer.getFrameIndex()])
+            );
+
+            swapchainPassShaderProgram.setSamplers(
+                    renderer.getFrameIndex(),
+                    new DescriptorUpdate<>(
+                            "inputTextureSampler",
+                            inputTexturesResource.get().value[renderer.getFrameIndex()])
             );
 
             swapchainPass.startRecording(renderer.getFrameIndex());
@@ -645,6 +717,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
 
                 swapchainPass.resolveBarriers();
 
+                //The format type of the swapchain RT does not match what the shader program infers from the SPIRV
                 swapchainPass.startRendering(renderer.getSwapchainRenderTarget(), renderer.getWidth(), renderer.getHeight(), true, Color.BLACK);
                 {
                     swapchainPass.setDrawBuffers(swapchainPassVertexBuffer, swapchainPassIndexBuffer);
