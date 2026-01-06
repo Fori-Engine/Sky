@@ -8,16 +8,16 @@ StructuredBuffer<Scene> sceneDesc;
 StructuredBuffer<Transforms> transforms;
 
 struct VSOutput {
-    float2 uv : TEXCOORD0;
     float4 pos : SV_POSITION;
     float4 posViewSpace;
+    float4 color;
 }
 
 struct Vertex
 {
-    float3 pos : POSITION;
+    float3 pos;
     float1 entityIndex;
-    float2 uv : TEXCOORD;
+    float4 color;
 }
 
 
@@ -26,6 +26,7 @@ struct Vertex
 VSOutput vertexMain(Vertex vertex, uniform int renderMode, uniform int lightIndex) {
     VSOutput output;
     float4x4 view, proj;
+
 
     
     if(renderMode == 0) {
@@ -41,7 +42,7 @@ VSOutput vertexMain(Vertex vertex, uniform int renderMode, uniform int lightInde
 
     output.posViewSpace = mul(view, mul(transform, float4(vertex.pos, 1.0)));
     output.pos = mul(proj, output.posViewSpace);
-    output.uv = vertex.uv;
+    output.color = vertex.color;
 
     return output;
 }
@@ -51,18 +52,13 @@ struct FSOutput {
     float4 color1 : SV_Target1;
 }
 
-Texture2D texture;
-SamplerState textureSampler;
-
-
-
 [shader("fragment")]
 FSOutput fragmentMain(VSOutput vsOutput, uniform int renderMode, uniform int lightIndex) {
     FSOutput output;
     
 
     if(renderMode == 0) {
-        output.color0 = texture.Sample(textureSampler, vsOutput.uv);
+        output.color0 = vsOutput.color;
         output.color1 = float4(vsOutput.posViewSpace.xyz, 1.0);
     }
     if(renderMode == 1) {

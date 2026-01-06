@@ -1,26 +1,4 @@
-#define MAX_LIGHTS 10
-#define MAX_TRANSFORMS 10
-
-struct Camera {
-    float4x4 view;
-    float4x4 proj;
-
-    float4x4 invView;
-    float4x4 invProj;
-}
-
-struct Light {
-    float4x4 view;
-    float4x4 proj;
-
-    float4x4 invView;
-    float4x4 invProj;
-}
-
-struct Scene {
-    Camera camera;
-    Light lights[MAX_LIGHTS];
-}
+#include "SceneDesc.slang"
 
 StructuredBuffer<Scene> sceneDesc;
 
@@ -33,7 +11,7 @@ Texture2D inputShadowMaps[1];
 SamplerState inputShadowMapsSamplers[1];
 
 
-
+//Bruh this needs to be fixed BADLY
 [numthreads(2, 2, 2)]
 void computeMain(int3 dispatchThreadID : SV_DispatchThreadID) {
     int3 inputTextureUV = int3(dispatchThreadID.x, dispatchThreadID.y, 0);

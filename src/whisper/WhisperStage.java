@@ -205,8 +205,8 @@ public class WhisperStage extends Stage {
             defaultCubeEntity = scene.createEntity(
                     actorMeshComponent,
                     new ShaderComponent(shaderProgram),
-                    new TransformComponent(new Matrix4f().identity().translate(-1, 10, 0).rotate((float) Math.toRadians(45.0f), 1, 0, 1)),
-                    new NVPhysXComponent(new BoxCollider(1.0f, 1.0f, 1.0f), new Material(0.05f, 0.05f, 0.99f), ActorType.Dynamic)
+                    new TransformComponent(new Matrix4f().identity().translate(0.2f, 10, 0).rotate((float) Math.toRadians(45.0f), 1, 0, 1)),
+                    new NVPhysXComponent(new BoxCollider(1.0f, 1.0f, 1.0f), new Material(0.05f, 0.05f, 0.3f), ActorType.Dynamic)
             );
         }
 
@@ -239,7 +239,7 @@ public class WhisperStage extends Stage {
                     actorMeshComponent,
                     new ShaderComponent(shaderProgram),
                     new TransformComponent(new Matrix4f().identity().translate(0, -2, 0).rotate((float) Math.toRadians(0), 0, 0, 1)),
-                    new NVPhysXComponent(new BoxCollider(10.0f, 1.0f, 10.0f), new Material(0.05f, 0.05f, 0.99f), ActorType.Dynamic)
+                    new NVPhysXComponent(new BoxCollider(10.0f, 1.0f, 10.0f), new Material(0.05f, 0.05f, 0.99f), ActorType.Static)
             );
         }
 
