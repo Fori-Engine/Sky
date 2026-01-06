@@ -23,10 +23,10 @@ public class WhisperStage extends Stage {
 
     private float startTime;
     private Scene scene;
-    private Entity shopEntity;
+    private Entity modelEntity;
     private Entity cameraEntity;
-    private Entity playerEntity;
-    private Entity levelEntity;
+    private Entity defaultCubeEntity;
+    private Entity floorEntity;
     private Entity spotlightEntity;
     private Renderer renderer;
 
@@ -123,7 +123,7 @@ public class WhisperStage extends Stage {
 
 
 
-        //Shop
+        //Model
         {
             ShaderProgram shaderProgram;
             MeshData meshData;
@@ -133,13 +133,6 @@ public class WhisperStage extends Stage {
             shaderProgram.add(AssetPacks.getAsset("core:assets/shaders/Default_vertex.spv"), ShaderType.VertexShader);
             shaderProgram.add(AssetPacks.getAsset("core:assets/shaders/Default_fragment.spv"), ShaderType.FragmentShader);
             shaderProgram.assemble();
-
-
-
-
-
-
-
 
             meshData = MeshData.newMeshFromObj(AssetPacks.getAsset("core:assets/models/viking_room.obj"));
 
@@ -163,7 +156,7 @@ public class WhisperStage extends Stage {
             }
 
 
-            shopEntity = scene.createEntity(
+            modelEntity = scene.createEntity(
                     environmentMeshComponent,
                     new ShaderComponent(shaderProgram),
                     new TransformComponent(0, new Matrix4f().identity().translate(1, 0, 0).rotate((float) Math.toRadians(-90), 1.0f, 0.0f, 0.0f)),
@@ -181,79 +174,75 @@ public class WhisperStage extends Stage {
 
 
 
-        /*
-        //Player
+
+        //Default Cube
         {
 
 
-            ShaderProgram shaderProgram;
-            {
-                ShaderReader.ShaderSources shaderSources = ShaderReader.read(
-                        AssetPacks.<String>getAsset("core:assets/shaders/vulkan/PhysXTest.glsl").asset
-                );
+            ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(renderer);
+            shaderProgram.add(AssetPacks.getAsset("core:assets/shaders/DefaultCube_vertex.spv"), ShaderType.VertexShader);
+            shaderProgram.add(AssetPacks.getAsset("core:assets/shaders/DefaultCube_fragment.spv"), ShaderType.FragmentShader);
+            shaderProgram.assemble();
 
 
-                shaderProgram = ShaderProgram.newGraphicsShaderProgram(renderer, 2);
-                shaderProgram.addShader(
-                        ShaderType.Vertex,
-                        Shader.newShader(shaderProgram, ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex))
-                                .setVertexAttributes(
-                                        new VertexAttributes.Type[]{
-                                        PositionFloat3,
-                                        TransformIndexFloat1,
-                                        ColorFloat4
-                                })
-                );
-                shaderProgram.addShader(
-                        ShaderType.Fragment,
-                        Shader.newShader(shaderProgram, ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
-                                .setAttachmentTextureFormatTypes(TextureFormatType.ColorR32G32B32A32, TextureFormatType.ColorR32G32B32A32)
-                                .setDepthAttachmentTextureFormatType(TextureFormatType.Depth32)
-                );
 
-                shaderProgram.bind(
-                        new ShaderResSet(
-                                0,
-                                new ShaderRes(
-                                        "sceneDesc",
-                                        0,
-                                        ShaderStorageBuffer,
-                                        AllStages
-                                ).sizeBytes(SizeUtil.SCENE_DESC_SIZE_BYTES),
-                                new ShaderRes(
-                                        "transforms",
-                                        1,
-                                        ShaderStorageBuffer,
-                                        VertexStage
-                                ).sizeBytes(1 * SizeUtil.MATRIX_SIZE_BYTES)
-                        )
-                );
-
-            }
-
-
-            Mesh mesh = MeshGenerator.newBox(1.0f, 1.0f, 1.0f);
+            MeshData meshData = MeshGenerator.newBox(1.0f, 1.0f, 1.0f);
 
             ActorMeshComponent actorMeshComponent = new ActorMeshComponent(renderer, renderer, 100000, 100000, shaderProgram);
-            actorMeshComponent.setMesh(mesh, new MeshUploaderWithTransform(0));
+            actorMeshComponent.setMesh(meshData, new EntityShaderIndex(0));
+
+
 
 
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                actorMeshComponent.shaderProgram.updateBuffers(
+                actorMeshComponent.shaderProgram.setBuffers(
                         frameIndex,
-                        new ShaderUpdate<>("sceneDesc", 0, 0, actorMeshComponent.sceneDescBuffers[frameIndex]),
-                        new ShaderUpdate<>("transforms", 0, 1, actorMeshComponent.transformsBuffers[frameIndex])
+                        new DescriptorUpdate<>("sceneDesc", actorMeshComponent.sceneDescBuffers[frameIndex]),
+                        new DescriptorUpdate<>("transforms", actorMeshComponent.transformsBuffers[frameIndex])
                 );
             }
 
-            playerEntity = scene.createEntity(
+            defaultCubeEntity = scene.createEntity(
                     actorMeshComponent,
                     new ShaderComponent(shaderProgram),
                     new TransformComponent(new Matrix4f().identity().translate(-1, 10, 0).rotate((float) Math.toRadians(45.0f), 1, 0, 1)),
                     new NVPhysXComponent(new BoxCollider(1.0f, 1.0f, 1.0f), new Material(0.05f, 0.05f, 0.99f), ActorType.Dynamic)
             );
         }
-        */
+
+        //Floor Cube
+        {
+
+
+            ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(renderer);
+            shaderProgram.add(AssetPacks.getAsset("core:assets/shaders/DefaultCube_vertex.spv"), ShaderType.VertexShader);
+            shaderProgram.add(AssetPacks.getAsset("core:assets/shaders/DefaultCube_fragment.spv"), ShaderType.FragmentShader);
+            shaderProgram.assemble();
+
+
+
+            MeshData meshData = MeshGenerator.newBox(10.0f, 1.0f, 10.0f);
+
+            ActorMeshComponent actorMeshComponent = new ActorMeshComponent(renderer, renderer, 100000, 100000, shaderProgram);
+            actorMeshComponent.setMesh(meshData, new EntityShaderIndex(0));
+
+
+            for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
+                actorMeshComponent.shaderProgram.setBuffers(
+                        frameIndex,
+                        new DescriptorUpdate<>("sceneDesc", actorMeshComponent.sceneDescBuffers[frameIndex]),
+                        new DescriptorUpdate<>("transforms", actorMeshComponent.transformsBuffers[frameIndex])
+                );
+            }
+
+            floorEntity = scene.createEntity(
+                    actorMeshComponent,
+                    new ShaderComponent(shaderProgram),
+                    new TransformComponent(new Matrix4f().identity().translate(0, -2, 0).rotate((float) Math.toRadians(0), 0, 0, 1)),
+                    new NVPhysXComponent(new BoxCollider(10.0f, 1.0f, 10.0f), new Material(0.05f, 0.05f, 0.99f), ActorType.Dynamic)
+            );
+        }
+
 
 
 
@@ -347,83 +336,6 @@ public class WhisperStage extends Stage {
 
 
         }
-
-        /*
-        //Level
-        {
-
-
-            ShaderProgram shaderProgram;
-            {
-                ShaderReader.ShaderSources shaderSources = ShaderReader.read(
-                        AssetPacks.<String>getAsset("core:assets/shaders/vulkan/PhysXTest.glsl").asset
-                );
-
-
-                shaderProgram = ShaderProgram.newGraphicsShaderProgram(renderer, 2);
-                shaderProgram.addShader(
-                        ShaderType.Vertex,
-                        Shader.newShader(shaderProgram, ShaderType.Vertex, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Vertex), ShaderType.Vertex))
-                                .setVertexAttributes(new VertexAttributes.Type[]{
-                                        PositionFloat3,
-                                        TransformIndexFloat1,
-                                        ColorFloat4
-                                })
-                );
-                shaderProgram.addShader(
-                        ShaderType.Fragment,
-                        Shader.newShader(shaderProgram, ShaderType.Fragment, ShaderCompiler.compile(shaderSources.getShaderSource(ShaderType.Fragment), ShaderType.Fragment))
-                                .setAttachmentTextureFormatTypes(TextureFormatType.ColorR32G32B32A32, TextureFormatType.ColorR32G32B32A32)
-                                .setDepthAttachmentTextureFormatType(TextureFormatType.Depth32)
-                );
-
-                shaderProgram.bind(
-                        new ShaderResSet(
-                                0,
-                                new ShaderRes(
-                                        "sceneDesc",
-                                        0,
-                                        ShaderStorageBuffer,
-                                        AllStages
-                                ).sizeBytes(SizeUtil.SCENE_DESC_SIZE_BYTES),
-                                new ShaderRes(
-                                        "transforms",
-                                        1,
-                                        ShaderStorageBuffer,
-                                        VertexStage
-                                ).sizeBytes(1 * SizeUtil.MATRIX_SIZE_BYTES)
-                        )
-                );
-
-            }
-
-
-            Mesh mesh = MeshGenerator.newBox(10.0f, 1.0f, 10.0f);
-            ActorMeshComponent actorMeshComponent = new ActorMeshComponent(renderer, renderer, 100000, 100000, shaderProgram);
-            actorMeshComponent.setMesh(mesh, new MeshUploaderWithTransform(0));
-
-            for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                actorMeshComponent.shaderProgram.updateBuffers(
-                        frameIndex,
-                        new ShaderUpdate<>("sceneDesc", 0, 0, actorMeshComponent.sceneDescBuffers[frameIndex]),
-                        new ShaderUpdate<>("transforms", 0, 1, actorMeshComponent.transformsBuffers[frameIndex])
-                );
-            }
-
-            levelEntity = scene.createEntity(
-                    actorMeshComponent,
-                    new ShaderComponent(shaderProgram),
-                    new TransformComponent(new Matrix4f().identity().translate(0, -2, 0).rotate((float) Math.toRadians(180), 0, 0, 1)),
-                    new NVPhysXComponent(new BoxCollider(10f, 1f, 10f), new Material(0.05f, 0.05f, 0.99f), ActorType.Static)
-            );
-        }
-
-         */
-
-
-
-
-
 
 
         startTime = (float) surface.getTime();

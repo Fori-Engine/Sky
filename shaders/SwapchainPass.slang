@@ -41,6 +41,6 @@ SamplerState inputTextureSampler;
 [shader("fragment")]
 FSOutput fragmentMain(VSOutput vsOutput) {
     FSOutput output;
-    output.color0 = inputTexture.Sample(inputTextureSampler, vsOutput.uv) * vsOutput.color;
+    output.color0 = inputTexture.Sample(inputTextureSampler, vsOutput.uv);
     return output;
 }

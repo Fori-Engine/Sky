@@ -16,7 +16,6 @@ public class MeshGenerator {
         float hd = depth / 2.0f;
 
         List<Float> vertices = new ArrayList<>();
-        List<Float> textureUVs = new ArrayList<>();
         List<Float> colors = new ArrayList<>();
         List<Integer> indices = new ArrayList<>();
 
@@ -66,14 +65,13 @@ public class MeshGenerator {
                 }
         };
 
-// Per-face unique RGBA colors
         float[][] faceColors = {
-                {1f, 0f, 0f, 1f}, // Red
-                {0f, 1f, 0f, 1f}, // Green
-                {0f, 0f, 1f, 1f}, // Blue
-                {1f, 1f, 0f, 1f}, // Yellow
-                {1f, 0f, 1f, 1f}, // Magenta
-                {0f, 1f, 1f, 1f}  // Cyan
+                {0.5f, 0.5f, 0.5f, 1f},
+                {0.6f, 0.6f, 0.6f, 1f},
+                {0.7f, 0.7f, 0.7f, 1f},
+                {0.8f, 0.8f, 0.8f, 1f},
+                {0.9f, 0.9f, 0.9f, 1f},
+                {0.5f, 0.5f, 0.5f, 1f}
         };
 
         int index = 0;
@@ -88,10 +86,6 @@ public class MeshGenerator {
                 vertices.add(v.x);
                 vertices.add(v.y);
                 vertices.add(v.z);
-
-                // UVs (all 0)
-                textureUVs.add(0f);
-                textureUVs.add(0f);
 
                 // Color
                 colors.add(color[0]);
@@ -113,7 +107,6 @@ public class MeshGenerator {
 
         Map<String, List<Float>> vertexData = new HashMap<>();
         vertexData.put("Positions", vertices);
-        vertexData.put("TextureUVs", textureUVs);
         vertexData.put("Colors", colors);
 
         return new MeshData(vertexData, indices, 24);

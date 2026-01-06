@@ -1,6 +1,7 @@
 package fori.graphics;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.lwjgl.vulkan.VK10.VK_FORMAT_D32_SFLOAT;
@@ -15,8 +16,9 @@ public class EntityShaderIndex {
 
     public void upload(MeshData meshData, ShaderProgram shaderProgram, ByteBuffer vertexBufferData, ByteBuffer indexBufferData, int vertexOffset) {
 
-        List<Float> positions = meshData.getData().get("Positions");
-        List<Float> textureUVs = meshData.getData().get("TextureUVs");
+        List<Float> positions = meshData.getData().getOrDefault("Positions", new ArrayList<>());
+        List<Float> textureUVs = meshData.getData().getOrDefault("TextureUVs", new ArrayList<>());
+        List<Float> colors = meshData.getData().getOrDefault("Colors", new ArrayList<>());
 
         for (int vertexIndex = 0; vertexIndex < meshData.getVertexCount(); vertexIndex++) {
 
@@ -40,7 +42,17 @@ public class EntityShaderIndex {
 
                         vertexBufferData.putFloat(u);
                         vertexBufferData.putFloat(v);
+                    }
+                    case "vertex.color" -> {
+                        float r = colors.get(4 * vertexIndex + 0);
+                        float g = colors.get(4 * vertexIndex + 1);
+                        float b = colors.get(4 * vertexIndex + 2);
+                        float a = colors.get(4 * vertexIndex + 3);
 
+                        vertexBufferData.putFloat(r);
+                        vertexBufferData.putFloat(g);
+                        vertexBufferData.putFloat(b);
+                        vertexBufferData.putFloat(a);
                     }
                 }
             }
