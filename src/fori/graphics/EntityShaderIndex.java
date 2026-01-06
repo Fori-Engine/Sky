@@ -13,15 +13,12 @@ public class EntityShaderIndex {
     }
 
 
-    public void upload(MeshData meshData, ShaderProgram shaderProgram, ByteBuffer vertexBufferData, ByteBuffer indexBufferData, int vertexCount) {
+    public void upload(MeshData meshData, ShaderProgram shaderProgram, ByteBuffer vertexBufferData, ByteBuffer indexBufferData, int vertexOffset) {
 
         List<Float> positions = meshData.getData().get("Positions");
         List<Float> textureUVs = meshData.getData().get("TextureUVs");
 
-        int vertexSize = shaderProgram.getVertexAttributesSize();
         for (int vertexIndex = 0; vertexIndex < meshData.getVertexCount(); vertexIndex++) {
-
-            int vertexCursor = 0;
 
             for(VertexAttribute vertexAttribute : shaderProgram.getVertexAttributes()) {
                 switch (vertexAttribute.getName()) {
@@ -30,27 +27,28 @@ public class EntityShaderIndex {
                         float y = positions.get(3 * vertexIndex + 1);
                         float z = positions.get(3 * vertexIndex + 2);
 
-                        vertexBufferData.putFloat(vertexCount * vertexSize + vertexCursor++, x);
-                        vertexBufferData.putFloat(vertexCount * vertexSize + vertexCursor++, y);
-                        vertexBufferData.putFloat(vertexCount * vertexSize + vertexCursor++, z);
+                        vertexBufferData.putFloat(x);
+                        vertexBufferData.putFloat(y);
+                        vertexBufferData.putFloat(z);
                     }
                     case "vertex.entityIndex" -> {
-                        vertexBufferData.putFloat(vertexCount * vertexSize + vertexCursor++, entityIndex);
+                        vertexBufferData.putFloat(entityIndex);
                     }
                     case "vertex.uv" -> {
                         float u = textureUVs.get(2 * vertexIndex);
                         float v = textureUVs.get(2 * vertexIndex + 1);
 
-                        vertexBufferData.putFloat(vertexCount * vertexSize + vertexCursor++, u);
-                        vertexBufferData.putFloat(vertexCount * vertexSize + vertexCursor++, v);
+                        vertexBufferData.putFloat(u);
+                        vertexBufferData.putFloat(v);
 
                     }
                 }
             }
+
         }
 
         for(int index : meshData.getIndices()) {
-            indexBufferData.putInt(vertexCount + index);
+            indexBufferData.putInt(vertexOffset + index);
         }
     }
 

@@ -10,7 +10,6 @@ import static org.lwjgl.vulkan.VK10.VK_IMAGE_ASPECT_DEPTH_BIT;
 
 public abstract class Texture extends Disposable {
     protected int width, height;
-    protected Filter minFilter, magFilter;
     protected byte[] textureData;
     protected TextureFormatType formatType;
     protected boolean isStorageTexture;
@@ -24,17 +23,14 @@ public abstract class Texture extends Disposable {
         return textureData;
     }
 
-    public Texture(Disposable parent, int width, int height, Asset<TextureData> textureData, TextureFormatType formatType, Filter minFilter, Filter magFilter){
+    public Texture(Disposable parent, int width, int height, Asset<TextureData> textureData, TextureFormatType formatType){
         super(parent);
         if(textureData != null) {
             this.textureData = textureData.asset.data;
         }
         this.width = width;
         this.height = height;
-        this.minFilter = minFilter;
-        this.magFilter = magFilter;
         this.formatType = formatType;
-
     }
 
     public TextureFormatType getFormatType() {
@@ -62,15 +58,13 @@ public abstract class Texture extends Disposable {
     }
 
 
-    public static Texture newColorTextureFromAsset(Disposable parent, Asset<TextureData> textureData, TextureFormatType textureFormatType, Filter minFilter, Filter magFilter){
+    public static Texture newColorTextureFromAsset(Disposable parent, Asset<TextureData> textureData, TextureFormatType textureFormatType){
         if(Renderer.getRenderAPI() == RenderAPI.Vulkan) {
             return new VulkanTexture(
                     parent,
                     textureData.asset.width,
                     textureData.asset.height,
                     textureData,
-                    minFilter,
-                    magFilter,
                     VulkanUtil.getVulkanImageFormat(textureFormatType),
                     VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                     VK_IMAGE_TILING_OPTIMAL,
@@ -80,15 +74,13 @@ public abstract class Texture extends Disposable {
         return null;
     }
 
-    public static Texture newColorTexture(Disposable parent, int width, int height, TextureFormatType textureFormatType, Filter minFilter, Filter magFilter){
+    public static Texture newColorTexture(Disposable parent, int width, int height, TextureFormatType textureFormatType){
         if(Renderer.getRenderAPI() == RenderAPI.Vulkan) {
             return new VulkanTexture(
                     parent,
                     width,
                     height,
                     null,
-                    minFilter,
-                    magFilter,
                     VulkanUtil.getVulkanImageFormat(textureFormatType),
                     VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                     VK_IMAGE_TILING_OPTIMAL,
@@ -98,15 +90,13 @@ public abstract class Texture extends Disposable {
         return null;
     }
 
-    public static Texture newStorageTexture(Disposable parent, int width, int height, TextureFormatType textureFormatType, Filter minFilter, Filter magFilter){
+    public static Texture newStorageTexture(Disposable parent, int width, int height, TextureFormatType textureFormatType){
         if(Renderer.getRenderAPI() == RenderAPI.Vulkan) {
             return new VulkanTexture(
                     parent,
                     width,
                     height,
                     null,
-                    minFilter,
-                    magFilter,
                     VulkanUtil.getVulkanImageFormat(textureFormatType),
                     VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT,
                     VK_IMAGE_TILING_OPTIMAL,
@@ -116,15 +106,13 @@ public abstract class Texture extends Disposable {
         return null;
     }
 
-    public static Texture newDepthTexture(Disposable parent, int width, int height, TextureFormatType textureFormatType, Filter minFilter, Filter magFilter){
+    public static Texture newDepthTexture(Disposable parent, int width, int height, TextureFormatType textureFormatType){
         if(Renderer.getRenderAPI() == RenderAPI.Vulkan) {
             return new VulkanTexture(
                     parent,
                     width,
                     height,
                     null,
-                    minFilter,
-                    magFilter,
                     VulkanUtil.getVulkanImageFormat(textureFormatType),
                     VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
                     VK_IMAGE_TILING_OPTIMAL,

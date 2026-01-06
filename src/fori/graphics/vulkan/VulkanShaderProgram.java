@@ -1,6 +1,7 @@
 package fori.graphics.vulkan;
 
 import fori.Logger;
+import fori.Pair;
 import fori.asset.Asset;
 import fori.graphics.*;
 import org.lwjgl.PointerBuffer;
@@ -20,24 +21,6 @@ import static org.lwjgl.util.spvc.Spvc.*;
 import static org.lwjgl.vulkan.VK10.*;
 
 public class VulkanShaderProgram extends ShaderProgram {
-
-    /*
-    Design choices:
-    - [-] We need an intermediary form of shader resources, so ShaderResSet and ShaderRes can stay
-    instead of querying spvc every frame
-    - [-] Shader[VulkanShader] can go. The application will never need access to a single shader object,
-    they are entirely useless outside a ShaderProgram[VulkanShaderProgram]
-    - [-] Vertex attributes, as well as attachment information needs to stay in ShaderProgram[VulkanShaderProgram]
-    This will now be top level
-    - [-] Push constant resource types
-    - [?] SPIR-V supports combined image samplers and separate sampler descriptors, we want to support both,
-    but the descriptor update API needs to take this into consideration
-    - [*] Sometimes native crashes will cause the JVM to quit before validation layers print, you can work
-    around this by running in debug mode
-
-
-     */
-
 
     private VkPipelineShaderStageCreateInfo.Buffer shaderStageCreateInfos;
     private int stageCount = 0;
@@ -679,7 +662,7 @@ public class VulkanShaderProgram extends ShaderProgram {
 
 
 
-    public void updateBuffers(int frameIndex, DescriptorUpdate<Buffer>... bufferUpdates){
+    public void setBuffers(int frameIndex, DescriptorUpdate<Buffer>... bufferUpdates){
         try(MemoryStack stack = stackPush()) {
 
             VkWriteDescriptorSet.Buffer descriptorSetsWrites = VkWriteDescriptorSet.calloc(bufferUpdates.length, stack);
@@ -709,13 +692,15 @@ public class VulkanShaderProgram extends ShaderProgram {
             vkUpdateDescriptorSets(VulkanRuntime.getCurrentDevice(), descriptorSetsWrites, null);
         }
     }
-    public void updateTextures(int frameIndex, DescriptorUpdate<Texture>... textureUpdates){
+    public void setCombinedTextureSamplers(int frameIndex, DescriptorUpdate<Pair<Texture, Sampler>>... combinedTextureSamplerUpdates){
         try(MemoryStack stack = stackPush()) {
 
-            VkWriteDescriptorSet.Buffer descriptorSetsWrites = VkWriteDescriptorSet.calloc(textureUpdates.length, stack);
-            for (int i = 0; i < textureUpdates.length; i++) {
-                DescriptorUpdate<Texture> textureUpdate = textureUpdates[i];
-                VulkanTexture texture = (VulkanTexture) textureUpdate.getResource();
+            VkWriteDescriptorSet.Buffer descriptorSetsWrites = VkWriteDescriptorSet.calloc(combinedTextureSamplerUpdates.length, stack);
+            for (int i = 0; i < combinedTextureSamplerUpdates.length; i++) {
+                DescriptorUpdate<Pair<Texture, Sampler>> combinedTextureSamplerUpdate = combinedTextureSamplerUpdates[i];
+
+                VulkanTexture texture = ((VulkanTexture) combinedTextureSamplerUpdate.getResource().key);
+                VulkanSampler sampler = ((VulkanSampler) combinedTextureSamplerUpdate.getResource().value);
 
                 VkDescriptorImageInfo.Buffer descriptorImageInfo = VkDescriptorImageInfo.calloc(1, stack);
 
@@ -726,7 +711,50 @@ public class VulkanShaderProgram extends ShaderProgram {
                 // maybe in a separate graphFinished() function
                 descriptorImageInfo.imageLayout(VK_IMAGE_LAYOUT_GENERAL);
                 descriptorImageInfo.imageView(texture.getImageView().getHandle());
-                descriptorImageInfo.sampler(texture.getSampler().getHandle());
+                descriptorImageInfo.sampler(sampler.getHandle());
+
+                Descriptor descriptor = getDescriptorByName(combinedTextureSamplerUpdate.getName());
+
+                assert descriptor.getType() == Descriptor.Type.CombinedTextureSampler
+                        : "Descriptor of type " + descriptor.getType() + " is not a combined image sampler";
+
+                VkWriteDescriptorSet descriptorSetsWrite = descriptorSetsWrites.get(i);
+
+                long descriptorSetHandle = descriptorSetHandles.get(frameIndex).get(descriptor.getDescriptorSet().getSetNum());
+
+                descriptorSetsWrite.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
+                descriptorSetsWrite.dstSet(descriptorSetHandle);
+                descriptorSetsWrite.dstBinding(descriptor.getBinding());
+                descriptorSetsWrite.dstArrayElement(combinedTextureSamplerUpdate.getArrayIndex());
+                descriptorSetsWrite.descriptorType(VulkanUtil.getVulkanDescriptorType(descriptor.getType()));
+                descriptorSetsWrite.pImageInfo(descriptorImageInfo);
+                descriptorSetsWrite.descriptorCount(combinedTextureSamplerUpdate.getUpdateCount());
+            }
+
+            vkUpdateDescriptorSets(VulkanRuntime.getCurrentDevice(), descriptorSetsWrites, null);
+
+        }
+    }
+
+    @Override
+    public void setTextures(int frameIndex, DescriptorUpdate<Texture>... textureUpdates) {
+        try(MemoryStack stack = stackPush()) {
+
+            VkWriteDescriptorSet.Buffer descriptorSetsWrites = VkWriteDescriptorSet.calloc(textureUpdates.length, stack);
+            for (int i = 0; i < textureUpdates.length; i++) {
+                DescriptorUpdate<Texture> textureUpdate = textureUpdates[i];
+
+                VulkanTexture texture = ((VulkanTexture) textureUpdate.getResource());
+
+                VkDescriptorImageInfo.Buffer descriptorImageInfo = VkDescriptorImageInfo.calloc(1, stack);
+
+                //todo(shayan) Sometimes fragment shaders in the rendergraph
+                // will want to use VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL on a storage image
+                // but our descriptor update doesn't know that and will still use VK_IMAGE_LAYOUT_GENERAL
+                // which throws a validation error, maybe update descriptors after the graph has processed resources?
+                // maybe in a separate graphFinished() function
+                descriptorImageInfo.imageLayout(VK_IMAGE_LAYOUT_GENERAL);
+                descriptorImageInfo.imageView(texture.getImageView().getHandle());
 
                 Descriptor descriptor = getDescriptorByName(textureUpdate.getName());
                 VkWriteDescriptorSet descriptorSetsWrite = descriptorSetsWrites.get(i);
@@ -747,13 +775,45 @@ public class VulkanShaderProgram extends ShaderProgram {
         }
     }
 
+    @Override
+    public void setSamplers(int frameIndex, DescriptorUpdate<Sampler>... samplerUpdates) {
+        try(MemoryStack stack = stackPush()) {
+
+            VkWriteDescriptorSet.Buffer descriptorSetsWrites = VkWriteDescriptorSet.calloc(samplerUpdates.length, stack);
+            for (int i = 0; i < samplerUpdates.length; i++) {
+                DescriptorUpdate<Sampler> samplerUpdate = samplerUpdates[i];
+
+                VulkanSampler sampler = (VulkanSampler) samplerUpdate.getResource();
+
+                VkDescriptorImageInfo.Buffer descriptorImageInfo = VkDescriptorImageInfo.calloc(1, stack);
+                descriptorImageInfo.sampler(sampler.getHandle());
+
+                Descriptor descriptor = getDescriptorByName(samplerUpdate.getName());
+                VkWriteDescriptorSet descriptorSetsWrite = descriptorSetsWrites.get(i);
+
+                long descriptorSetHandle = descriptorSetHandles.get(frameIndex).get(descriptor.getDescriptorSet().getSetNum());
+
+                descriptorSetsWrite.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
+                descriptorSetsWrite.dstSet(descriptorSetHandle);
+                descriptorSetsWrite.dstBinding(descriptor.getBinding());
+                descriptorSetsWrite.dstArrayElement(samplerUpdate.getArrayIndex());
+                descriptorSetsWrite.descriptorType(VulkanUtil.getVulkanDescriptorType(descriptor.getType()));
+                descriptorSetsWrite.pImageInfo(descriptorImageInfo);
+                descriptorSetsWrite.descriptorCount(samplerUpdate.getUpdateCount());
+            }
+
+            vkUpdateDescriptorSets(VulkanRuntime.getCurrentDevice(), descriptorSetsWrites, null);
+
+        }
+    }
+
     private Descriptor.Type getDescriptorType(int spvcResourceType) {
         switch (spvcResourceType) {
             case SPVC_RESOURCE_TYPE_STORAGE_BUFFER -> { return Descriptor.Type.ShaderStorageBuffer; }
             case SPVC_RESOURCE_TYPE_UNIFORM_BUFFER -> { return Descriptor.Type.UniformBuffer; }
-            case SPVC_RESOURCE_TYPE_SAMPLED_IMAGE -> { return Descriptor.Type.CombinedSampler; }
-            case SPVC_RESOURCE_TYPE_STORAGE_IMAGE -> { return Descriptor.Type.StorageImage; }
-            case SPVC_RESOURCE_TYPE_SEPARATE_IMAGE -> { return Descriptor.Type.SeparateImage; }
+            case SPVC_RESOURCE_TYPE_SAMPLED_IMAGE -> { return Descriptor.Type.CombinedTextureSampler; }
+            case SPVC_RESOURCE_TYPE_STORAGE_IMAGE -> { return Descriptor.Type.StorageTexture; }
+            case SPVC_RESOURCE_TYPE_SEPARATE_IMAGE -> { return Descriptor.Type.SeparateTexture; }
             case SPVC_RESOURCE_TYPE_SEPARATE_SAMPLERS -> { return Descriptor.Type.SeparateSampler; }
         }
 

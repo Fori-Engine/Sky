@@ -13,9 +13,9 @@ public class Descriptor {
     public enum Type {
         ShaderStorageBuffer,
         UniformBuffer,
-        CombinedSampler,
-        StorageImage,
-        SeparateImage,
+        CombinedTextureSampler,
+        StorageTexture,
+        SeparateTexture,
         SeparateSampler
     }
 

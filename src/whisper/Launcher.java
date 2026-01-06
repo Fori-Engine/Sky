@@ -7,8 +7,8 @@ import org.lwjgl.system.Configuration;
 
 public class Launcher {
     public static void main(String[] args) {
-        Configuration.DEBUG.set(true);
-        Configuration.DEBUG_MEMORY_ALLOCATOR.set(true);
+        //Configuration.DEBUG.set(true);
+        //Configuration.DEBUG_MEMORY_ALLOCATOR.set(true);
 
         Stage stage = new WhisperStage();
         Surface surface = Surface.newSurface(stage, "Runtime", 1920, 1080);

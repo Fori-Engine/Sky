@@ -113,7 +113,6 @@ public class WhisperStage extends Stage {
                 true
         );
 
-
         //Camera
         cameraEntity = scene.createEntity(new CameraComponent(camera));
 
@@ -148,12 +147,15 @@ public class WhisperStage extends Stage {
             environmentMeshComponent.addMesh(meshData, new EntityShaderIndex(0));
             environmentMeshComponent.close();
 
-            Texture texture = Texture.newColorTextureFromAsset(renderer, AssetPacks.getAsset("core:assets/textures/viking_room.png"), TextureFormatType.ColorR8G8B8A8, Texture.Filter.Linear, Texture.Filter.Linear);
-
+            Texture texture = Texture.newColorTextureFromAsset(renderer, AssetPacks.getAsset("core:assets/textures/viking_room.png"), TextureFormatType.ColorR8G8B8A8);
+            Sampler sampler = Sampler.newSampler(texture, Texture.Filter.Linear, Texture.Filter.Linear, true);
 
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                environmentMeshComponent.shaderProgram.updateTextures(frameIndex, new DescriptorUpdate<>("texture", texture));
-                environmentMeshComponent.shaderProgram.updateBuffers(
+                environmentMeshComponent.shaderProgram.setTextures(frameIndex, new DescriptorUpdate<>("texture", texture));
+                environmentMeshComponent.shaderProgram.setSamplers(frameIndex, new DescriptorUpdate<>("textureSampler", sampler));
+
+
+                environmentMeshComponent.shaderProgram.setBuffers(
                         frameIndex,
                         new DescriptorUpdate<>("sceneDesc", environmentMeshComponent.sceneDescBuffers[frameIndex]),
                         new DescriptorUpdate<>("transforms", environmentMeshComponent.transformsBuffers[frameIndex])
@@ -251,64 +253,76 @@ public class WhisperStage extends Stage {
                     new NVPhysXComponent(new BoxCollider(1.0f, 1.0f, 1.0f), new Material(0.05f, 0.05f, 0.99f), ActorType.Dynamic)
             );
         }
+        */
 
 
 
         //Spotlight
         {
             RenderTarget lightRT = new RenderTarget(renderer);
+
+            Texture[] colorTextures = new Texture[] {
+                    Texture.newColorTexture(
+                            lightRT,
+                            1920,
+                            1080,
+                            TextureFormatType.ColorR32G32B32A32
+                    ),
+                    Texture.newColorTexture(
+                            lightRT,
+                            1920,
+                            1080,
+                            TextureFormatType.ColorR32G32B32A32
+                    )
+            };
+
+            Texture[] posTextures = new Texture[] {
+                    Texture.newColorTexture(
+                            lightRT,
+                            1920,
+                            1080,
+                            TextureFormatType.ColorR32G32B32A32
+                    ),
+                    Texture.newColorTexture(
+                            lightRT,
+                            1920,
+                            1080,
+                            TextureFormatType.ColorR32G32B32A32
+                    )
+            };
+
+
+
+
             lightRT.addAttachment(
                     new RenderTargetAttachment(
                             RenderTargetAttachmentTypes.Color,
-                            new Texture[]{
-                                    Texture.newColorTexture(
-                                            lightRT,
-                                            1920,
-                                            1080,
-                                            TextureFormatType.ColorR32G32B32A32,
-                                            Texture.Filter.Nearest,
-                                            Texture.Filter.Nearest
-                                    ),
-                                    Texture.newColorTexture(
-                                            lightRT,
-                                            1920,
-                                            1080,
-                                            TextureFormatType.ColorR32G32B32A32,
-                                            Texture.Filter.Nearest,
-                                            Texture.Filter.Nearest
-                                    )
+                            colorTextures,
+                            new Sampler[]{
+                                    Sampler.newSampler(lightRT, Texture.Filter.Linear, Texture.Filter.Linear, true),
+                                    Sampler.newSampler(lightRT, Texture.Filter.Linear, Texture.Filter.Linear, true)
                             }
                     )
             );
             lightRT.addAttachment(
                     new RenderTargetAttachment(
                             RenderTargetAttachmentTypes.Pos,
-                            new Texture[]{
-                                    Texture.newColorTexture(
-                                            lightRT,
-                                            1920,
-                                            1080,
-                                            TextureFormatType.ColorR32G32B32A32,
-                                            Texture.Filter.Nearest,
-                                            Texture.Filter.Nearest
-                                    ),
-                                    Texture.newColorTexture(
-                                            lightRT,
-                                            1920,
-                                            1080,
-                                            TextureFormatType.ColorR32G32B32A32,
-                                            Texture.Filter.Nearest,
-                                            Texture.Filter.Nearest
-                                    )
+                            posTextures,
+                            new Sampler[]{
+                                    Sampler.newSampler(lightRT, Texture.Filter.Linear, Texture.Filter.Linear, true),
+                                    Sampler.newSampler(lightRT, Texture.Filter.Linear, Texture.Filter.Linear, true)
                             }
+
                     )
             );
             lightRT.addAttachment(
                     new RenderTargetAttachment(RenderTargetAttachmentTypes.Depth, new Texture[]{
-                            Texture.newDepthTexture(lightRT, 1920, 1080, TextureFormatType.Depth32, Texture.Filter.Nearest, Texture.Filter.Nearest)
-                    })
+                            Texture.newDepthTexture(lightRT, 1920, 1080, TextureFormatType.Depth32)
+                    }, null)
             );
 
+
+            float x = 0, y = 6, z = -0.5f;
 
 
             spotlightEntity = scene.createEntity(
@@ -328,34 +342,13 @@ public class WhisperStage extends Stage {
 
                             true,
                             lightRT
-                    ),
-                    new ScriptComponent(new Script() {
-                        @Override
-                        public void init(Entity entity) {
-
-                        }
-
-                        @Override
-                        public void update(Entity entity) {
-                            LightComponent lightComponent = entity.get(LightComponent.class);
-                            if(surface.getKeyPressed(Input.KEY_W)) z -= 1 * Time.deltaTime();
-                            if(surface.getKeyPressed(Input.KEY_A)) x -= 1 * Time.deltaTime();
-                            if(surface.getKeyPressed(Input.KEY_S)) z += 1 * Time.deltaTime();
-                            if(surface.getKeyPressed(Input.KEY_D)) x += 1 * Time.deltaTime();
-
-                            lightComponent.setView(new Matrix4f().lookAt(
-                                    new Vector3f(x, y, z),
-                                    new Vector3f(0, 0, 0),
-                                    new Vector3f(0.0f, 1.0f, 0.0f)
-                            ));
-
-                        }
-                    })
+                    )
             );
 
 
         }
 
+        /*
         //Level
         {
 
