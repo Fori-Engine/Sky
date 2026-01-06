@@ -94,7 +94,7 @@ public class NVPhysXSystem extends EcsSystem {
                     {
                         PxQuat quat = PxQuat.createAt(stack, MemoryStack::nmalloc);
                         Quaternionf rotation = new Quaternionf();
-                        transformComponent.transform().getUnnormalizedRotation(rotation);
+                        transformComponent.transform().getNormalizedRotation(rotation);
 
                         quat.setX(rotation.x);
                         quat.setY(rotation.y);
