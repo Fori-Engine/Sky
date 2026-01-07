@@ -47,6 +47,7 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
     private Buffer[] swapchainPassCameraBuffers;
 
     private int lightCount = 0;
+    private final int COMPUTE_THREAD_GROUP_SIZE = 32;
 
 
     private RenderGraph renderGraph;
@@ -688,7 +689,11 @@ public class DefaultRenderPipelineImpl extends RenderPipeline {
             {
                 shadowMapPass.resolveBarriers();
                 shadowMapPass.setShaderProgram(shadowMapPassShaderProgram);
-                shadowMapPass.dispatch(1920, 1080, 1);
+
+                int groupCountX = (int) Math.ceil((float) renderer.getWidth() / COMPUTE_THREAD_GROUP_SIZE);
+                int groupCountY = (int) Math.ceil((float) renderer.getHeight() / COMPUTE_THREAD_GROUP_SIZE);
+
+                shadowMapPass.dispatch(groupCountX, groupCountY, 1);
             }
             shadowMapPass.endRecording();
         });

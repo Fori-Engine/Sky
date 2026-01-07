@@ -1,5 +1,4 @@
 #include "SceneDesc.slang"
-
 StructuredBuffer<Scene> sceneDesc;
 
 
@@ -10,11 +9,14 @@ Texture2D inputPosTexture;
 Texture2D inputShadowMaps[1];
 SamplerState inputShadowMapsSamplers[1];
 
+[numthreads(32, 32, 1)]
+void computeMain(int3 dispatchID : SV_DispatchThreadID) {
 
-//Bruh this needs to be fixed BADLY
-[numthreads(2, 2, 2)]
-void computeMain(int3 dispatchThreadID : SV_DispatchThreadID) {
-    int3 inputTextureUV = int3(dispatchThreadID.x, dispatchThreadID.y, 0);
+
+    int3 inputTextureUV = int3(dispatchID.x, dispatchID.y, 0);
+
+
+    
     float4 color = inputTexture.Load(inputTextureUV, 0);
     float4 wpFromCamera = mul(sceneDesc[0].camera.invView, inputPosTexture.Load(inputTextureUV, 0));
 
@@ -28,7 +30,7 @@ void computeMain(int3 dispatchThreadID : SV_DispatchThreadID) {
     float4 wpFromShadowMap = mul(light.invView, lpFromShadowMap);
 
 
-    if(wpFromShadowMap.z < wpFromCamera.z - 0.005) {
+    if(wpFromShadowMap.z <= wpFromCamera.z - 0.005) {
         color.xyz *= 0.1;
     }
 
