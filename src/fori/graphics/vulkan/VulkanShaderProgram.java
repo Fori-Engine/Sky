@@ -413,50 +413,53 @@ public class VulkanShaderProgram extends ShaderProgram {
                 for (ReflectedResourcesInfo resourcesInfo : resourcesInfos) {
                     SpvcReflectedResource.Buffer spvcReflectedResources = SpvcReflectedResource.create(resourcesInfo.start, resourcesInfo.count);
 
+
                     for (int i = 0; i < resourcesInfo.count; i++) {
                         SpvcReflectedResource spvcReflectedResource = spvcReflectedResources.get(i);
 
-                        int set = spvc_compiler_get_decoration(compiler, spvcReflectedResource.id(), SpvDecorationDescriptorSet);
-                        int binding = spvc_compiler_get_decoration(compiler, spvcReflectedResource.id(), SpvDecorationBinding);
-                        String name = spvc_compiler_get_name(compiler, spvcReflectedResource.id());
+                        if (resourcesInfo.type != SPVC_RESOURCE_TYPE_PUSH_CONSTANT) {
 
-                        DescriptorSet descriptorSet = getDescriptorSetSpecBySetNum(set);
-                        if (descriptorSet == null) {
-                            descriptorSet = new DescriptorSet(set);
-                            descriptorSetsSpec.add(descriptorSet);
+                            int set = spvc_compiler_get_decoration(compiler, spvcReflectedResource.id(), SpvDecorationDescriptorSet);
+                            int binding = spvc_compiler_get_decoration(compiler, spvcReflectedResource.id(), SpvDecorationBinding);
+                            String name = spvc_compiler_get_name(compiler, spvcReflectedResource.id());
+
+                            DescriptorSet descriptorSet = getDescriptorSetSpecBySetNum(set);
+                            if (descriptorSet == null) {
+                                descriptorSet = new DescriptorSet(set);
+                                descriptorSetsSpec.add(descriptorSet);
+                            }
+
+                            Descriptor descriptor = getDescriptorSpecByBindingNum(binding, descriptorSet);
+                            if (descriptor == null) {
+                                //TODO(Shayan): All stages? Bleh. Might be worth looking into specializing this every time a shader uses an existing descriptor
+                                descriptor = new Descriptor(name, binding, getDescriptorType(resourcesInfo.type), Descriptor.ShaderStage.AllStages);
+                                descriptorSet.addDescriptor(descriptor);
+                            }
+
+                            if (resourcesInfo.type == SPVC_RESOURCE_TYPE_STORAGE_BUFFER || resourcesInfo.type == SPVC_RESOURCE_TYPE_UNIFORM_BUFFER) {
+                                long typeHandle = spvc_compiler_get_type_handle(compiler, spvcReflectedResource.type_id());
+                                //The first entry in the buffer is used to read
+                                long bufferStructTypeHandle = spvc_compiler_get_type_handle(
+                                        compiler,
+                                        spvc_type_get_member_type(typeHandle, 0)
+                                );
+                                descriptor.sizeBytes(getBufferSize(compiler, bufferStructTypeHandle));
+                            } else if (resourcesInfo.type == SPVC_RESOURCE_TYPE_SEPARATE_IMAGE ||
+                                    resourcesInfo.type == SPVC_RESOURCE_TYPE_SEPARATE_SAMPLERS ||
+                                    resourcesInfo.type == SPVC_RESOURCE_TYPE_STORAGE_IMAGE ||
+                                    resourcesInfo.type == SPVC_RESOURCE_TYPE_SAMPLED_IMAGE) {
+                                long typeHandle = spvc_compiler_get_type_handle(
+                                        compiler,
+                                        spvcReflectedResource.type_id()
+                                );
+
+
+                                //Only one dimensional arrays are supported rn
+                                if (spvc_type_get_num_array_dimensions(typeHandle) == 1)
+                                    descriptor.count(spvc_type_get_array_dimension(typeHandle, 0));
+                            }
                         }
-
-                        Descriptor descriptor = getDescriptorSpecByBindingNum(binding, descriptorSet);
-                        if (descriptor == null) {
-                            //TODO(Shayan): All stages? Bleh. Might be worth looking into specializing this every time a shader uses an existing descriptor
-                            descriptor = new Descriptor(name, binding, getDescriptorType(resourcesInfo.type), Descriptor.ShaderStage.AllStages);
-                            descriptorSet.addDescriptor(descriptor);
-                        }
-
-                        if(resourcesInfo.type == SPVC_RESOURCE_TYPE_STORAGE_BUFFER || resourcesInfo.type == SPVC_RESOURCE_TYPE_UNIFORM_BUFFER) {
-                            long typeHandle = spvc_compiler_get_type_handle(compiler, spvcReflectedResource.type_id());
-                            //The first entry in the buffer is used to read
-                            long bufferStructTypeHandle = spvc_compiler_get_type_handle(
-                                    compiler,
-                                    spvc_type_get_member_type(typeHandle, 0)
-                            );
-                            descriptor.sizeBytes(getBufferSize(compiler, bufferStructTypeHandle));
-                        }
-                        else if(resourcesInfo.type == SPVC_RESOURCE_TYPE_SEPARATE_IMAGE ||
-                                resourcesInfo.type == SPVC_RESOURCE_TYPE_SEPARATE_SAMPLERS ||
-                                resourcesInfo.type == SPVC_RESOURCE_TYPE_STORAGE_IMAGE ||
-                                resourcesInfo.type == SPVC_RESOURCE_TYPE_SAMPLED_IMAGE) {
-                            long typeHandle = spvc_compiler_get_type_handle(
-                                    compiler,
-                                    spvcReflectedResource.type_id()
-                            );
-
-
-                            //Only one dimensional arrays are supported rn
-                            if(spvc_type_get_num_array_dimensions(typeHandle) == 1)
-                                descriptor.count(spvc_type_get_array_dimension(typeHandle, 0));
-                        }
-                        else if(resourcesInfo.type == SPVC_RESOURCE_TYPE_PUSH_CONSTANT) {
+                        else {
                             long typeHandle = spvc_compiler_get_type_handle(compiler, spvcReflectedResource.base_type_id());
                             PointerBuffer pSize = stack.callocPointer(1);
                             spvc_compiler_get_declared_struct_size(compiler, typeHandle, pSize);
