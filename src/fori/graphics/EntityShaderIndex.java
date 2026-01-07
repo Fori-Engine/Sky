@@ -54,6 +54,10 @@ public class EntityShaderIndex {
                         vertexBufferData.putFloat(b);
                         vertexBufferData.putFloat(a);
                     }
+                    default -> {
+                        for(int i = 0; i < vertexAttribute.getSize(); i++)
+                            vertexBufferData.putFloat(0);
+                    }
                 }
             }
 
