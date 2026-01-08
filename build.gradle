@@ -65,7 +65,6 @@ project.ext.jomlVersion = "1.10.8"
 dependencies {
 
     implementation 'com.esotericsoftware:kryo:5.6.0'
-    implementation group: 'commons-cli', name: 'commons-cli', version: '1.9.0'
     implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
     implementation "org.lwjgl:lwjgl-assimp"
     implementation "org.lwjgl:lwjgl"

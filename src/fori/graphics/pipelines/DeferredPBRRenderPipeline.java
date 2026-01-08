@@ -1,4 +1,4 @@
-package whisper;
+package fori.graphics.pipelines;
 
 import dev.dominion.ecs.api.Results;
 import fori.Pair;
@@ -15,7 +15,7 @@ import java.nio.ByteBuffer;
 import java.util.Iterator;
 
 
-public class DefaultRenderPipelineImpl extends RenderPipeline {
+public class DeferredPBRRenderPipeline extends RenderPipeline {
 
 
 
