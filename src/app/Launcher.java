@@ -1,7 +1,7 @@
 package app;
 
-import fori.Stage;
-import fori.Surface;
+import engine.Stage;
+import engine.Surface;
 
 
 public class Launcher {
@@ -10,7 +10,7 @@ public class Launcher {
         //Configuration.DEBUG_MEMORY_ALLOCATOR.set(true);
 
         Stage stage = new ExampleStage();
-        Surface surface = Surface.newSurface(stage, "Fori", 1920, 1080);
+        Surface surface = Surface.newSurface(stage, "SkySOFT Engine", 1920, 1080);
 
         stage.launch(args, surface);
 

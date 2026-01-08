@@ -6,7 +6,7 @@ plugins {
     id 'application'
 }
 
-group 'fori.systems'
+group 'sky.soft'
 version '0.0.1'
 
 repositories {
@@ -30,7 +30,7 @@ jar {
     }
 
     manifest {
-        manifest.attributes["Main-Class"] = "whisper.Launcher"
+        manifest.attributes["Main-Class"] = "app.Launcher"
     }
 
 }

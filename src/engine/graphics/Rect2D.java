@@ -1,0 +1,63 @@
+package engine.graphics;
+
+
+public class Rect2D {
+    public float x, y, w, h;
+
+    public Rect2D(float x, float y, float w, float h) {
+        this.x = x;
+        this.y = y;
+        this.w = w;
+        this.h = h;
+    }
+
+    public Rect2D mul(float f){
+        x *= f;
+        y *= f;
+        w *= f;
+        h *= f;
+
+        return this;
+    }
+
+    public Rect2D getOverlap(Rect2D r1) {
+
+        Rect2D r2 = this;
+
+        float overlapX = Math.max(r1.x, r2.x);
+        float overlapY = Math.max(r1.y, r2.y);
+
+        float overlapWidth = Math.min(r1.x + r1.w, r2.x + r2.w) - overlapX;
+        float overlapHeight = Math.min(r1.y + r1.h, r2.y + r2.h) - overlapY;
+
+        if (overlapWidth <= 0 || overlapHeight <= 0) {
+            return null;
+        }
+
+        return new Rect2D(overlapX, overlapY, overlapWidth, overlapHeight);
+    }
+
+
+    public void set(float x, float y, float w, float h){
+        this.x = x;
+        this.y = y;
+        this.w = w;
+        this.h = h;
+    }
+
+    public boolean overlaps(Rect2D other){
+        return contains(other.x, other.y)
+                || contains(other.x + other.w, other.y)
+                || contains(other.x + other.w, other.y + other.h)
+                || contains(other.x, other.y + other.h);
+    }
+
+    public boolean contains(float x, float y){
+        return (x >= this.x && x <= this.x + this.w) && (y >= this.y && y <= this.y + this.h);
+    }
+
+    @Override
+    public String toString() {
+        return "Rect2D [" + x + " " + y + " " + w + " " + h + "]";
+    }
+}

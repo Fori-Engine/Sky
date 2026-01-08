@@ -1,17 +1,17 @@
 package app;
 
 import dev.dominion.ecs.api.Entity;
-import fori.*;
-import fori.asset.AssetPack;
-import fori.asset.AssetPacks;
+import engine.*;
+import engine.asset.AssetPack;
+import engine.asset.AssetPacks;
 
-import fori.graphics.*;
+import engine.graphics.*;
 
-import fori.ecs.*;
-import fori.graphics.pipelines.DeferredPBRRenderPipeline;
-import fori.physx.ActorType;
-import fori.physx.BoxCollider;
-import fori.physx.Material;
+import engine.ecs.*;
+import engine.graphics.pipelines.DeferredPBRRenderPipeline;
+import engine.physx.ActorType;
+import engine.physx.BoxCollider;
+import engine.physx.Material;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
