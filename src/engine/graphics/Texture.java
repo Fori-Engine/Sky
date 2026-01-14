@@ -26,7 +26,7 @@ public abstract class Texture extends Disposable {
     public Texture(Disposable parent, int width, int height, Asset<TextureData> textureData, TextureFormatType formatType){
         super(parent);
         if(textureData != null) {
-            this.textureData = textureData.asset.data;
+            this.textureData = textureData.getObject().data;
         }
         this.width = width;
         this.height = height;
@@ -62,8 +62,8 @@ public abstract class Texture extends Disposable {
         if(Renderer.getRenderAPI() == RenderAPI.Vulkan) {
             return new VulkanTexture(
                     parent,
-                    textureData.asset.width,
-                    textureData.asset.height,
+                    textureData.getObject().width,
+                    textureData.getObject().height,
                     textureData,
                     VulkanUtil.getVulkanImageFormat(textureFormatType),
                     VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,

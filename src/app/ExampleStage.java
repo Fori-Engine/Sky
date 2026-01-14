@@ -2,8 +2,8 @@ package app;
 
 import dev.dominion.ecs.api.Entity;
 import engine.*;
-import engine.asset.AssetPack;
-import engine.asset.AssetPacks;
+import engine.asset.AssetPackage;
+import engine.asset.AssetRegistry;
 
 import engine.graphics.*;
 
@@ -15,8 +15,8 @@ import engine.physx.Material;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
-import java.io.File;
 import java.lang.Math;
+import java.nio.file.Path;
 
 public class ExampleStage extends Stage {
 
@@ -33,7 +33,10 @@ public class ExampleStage extends Stage {
     public void init(String[] cliArgs, Surface surface){
         super.init(cliArgs, surface);
 
-        AssetPacks.open("core", AssetPack.openLocal(new File("assets")));
+        Path assetPackPath = Path.of("assets.pkg");
+
+        AssetPackage.createPackage(assetPackPath, AssetPackage.openLocal("core", Path.of("assets")));
+        AssetRegistry.addPackage(AssetPackage.openPackage("core", assetPackPath));
 
 
         surface.display();
@@ -80,6 +83,9 @@ public class ExampleStage extends Stage {
 
 
 
+
+
+        /*
         //Model
         {
             ShaderProgram shaderProgram;
@@ -87,22 +93,22 @@ public class ExampleStage extends Stage {
 
 
             shaderProgram = ShaderProgram.newShaderProgram(renderer);
-            shaderProgram.add(AssetPacks.getAsset("core:assets/shaders/Default_vertex.spv"), ShaderType.VertexShader);
-            shaderProgram.add(AssetPacks.getAsset("core:assets/shaders/Default_fragment.spv"), ShaderType.FragmentShader);
+            shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/DefaultPBR_vertex.spv"), ShaderType.VertexShader);
+            shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/DefaultPBR_fragment.spv"), ShaderType.FragmentShader);
             shaderProgram.assemble();
 
-            meshData = MeshData.newMeshFromObj(AssetPacks.getAsset("core:assets/models/viking_room.obj"));
+            meshData = MeshData.newMeshFromGLTF2(AssetRegistry.getAsset("core:assets/models/gltf_separate/Box.gltf"));
 
             EnvironmentMeshComponent environmentMeshComponent = new EnvironmentMeshComponent(renderer, renderer, 100000, 100000, 1, shaderProgram);
             environmentMeshComponent.addMesh(meshData, new EntityShaderIndex(0));
             environmentMeshComponent.close();
 
-            Texture texture = Texture.newColorTextureFromAsset(renderer, AssetPacks.getAsset("core:assets/textures/viking_room.png"), TextureFormatType.ColorR8G8B8A8);
-            Sampler sampler = Sampler.newSampler(texture, Texture.Filter.Linear, Texture.Filter.Linear, true);
+            //Texture texture = Texture.newColorTextureFromAsset(renderer, AssetPacks.getAsset("core:assets/textures/viking_room.png"), TextureFormatType.ColorR8G8B8A8);
+            //Sampler sampler = Sampler.newSampler(texture, Texture.Filter.Linear, Texture.Filter.Linear, true);
 
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                environmentMeshComponent.shaderProgram.setTextures(frameIndex, new DescriptorUpdate<>("texture", texture));
-                environmentMeshComponent.shaderProgram.setSamplers(frameIndex, new DescriptorUpdate<>("textureSampler", sampler));
+                //environmentMeshComponent.shaderProgram.setTextures(frameIndex, new DescriptorUpdate<>("texture", texture));
+                //environmentMeshComponent.shaderProgram.setSamplers(frameIndex, new DescriptorUpdate<>("textureSampler", sampler));
 
 
                 environmentMeshComponent.shaderProgram.setBuffers(
@@ -123,6 +129,8 @@ public class ExampleStage extends Stage {
 
         }
 
+         */
+
 
 
 
@@ -137,13 +145,16 @@ public class ExampleStage extends Stage {
 
 
             ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(renderer);
-            shaderProgram.add(AssetPacks.getAsset("core:assets/shaders/DefaultCube_vertex.spv"), ShaderType.VertexShader);
-            shaderProgram.add(AssetPacks.getAsset("core:assets/shaders/DefaultCube_fragment.spv"), ShaderType.FragmentShader);
+            shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/Default_vertex.spv"), ShaderType.VertexShader);
+            shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/Default_fragment.spv"), ShaderType.FragmentShader);
             shaderProgram.assemble();
 
 
 
             MeshData meshData = MeshGenerator.newBox(1.0f, 1.0f, 1.0f);
+
+
+
 
             ActorMeshComponent actorMeshComponent = new ActorMeshComponent(renderer, renderer, 100000, 100000, shaderProgram);
             actorMeshComponent.setMesh(meshData, new EntityShaderIndex(0));
@@ -167,13 +178,54 @@ public class ExampleStage extends Stage {
             );
         }
 
+        //Default Cube
+        {
+
+
+            ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(renderer);
+            shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/Default_vertex.spv"), ShaderType.VertexShader);
+            shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/Default_fragment.spv"), ShaderType.FragmentShader);
+            shaderProgram.assemble();
+
+
+
+            MeshData meshData = MeshGenerator.newBox(1.0f, 1.0f, 1.0f);
+
+
+
+
+            ActorMeshComponent actorMeshComponent = new ActorMeshComponent(renderer, renderer, 100000, 100000, shaderProgram);
+            actorMeshComponent.setMesh(meshData, new EntityShaderIndex(0));
+
+
+
+
+            for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
+                actorMeshComponent.shaderProgram.setBuffers(
+                        frameIndex,
+                        new DescriptorUpdate<>("sceneDesc", actorMeshComponent.sceneDescBuffers[frameIndex]),
+                        new DescriptorUpdate<>("transforms", actorMeshComponent.transformsBuffers[frameIndex])
+                );
+            }
+
+            defaultCubeEntity = scene.createEntity(
+                    actorMeshComponent,
+                    new ShaderComponent(shaderProgram),
+                    new TransformComponent(new Matrix4f().identity().translate(0.1f, 7, 0).rotate((float) Math.toRadians(45.0f), 1, 0, 1)),
+                    new NVPhysXComponent(new BoxCollider(1.0f, 1.0f, 1.0f), new Material(0.1f, 0.1f, 0.3f), ActorType.Dynamic)
+            );
+        }
+
+
+
+
         //Floor Cube
         {
 
 
             ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(renderer);
-            shaderProgram.add(AssetPacks.getAsset("core:assets/shaders/DefaultCube_vertex.spv"), ShaderType.VertexShader);
-            shaderProgram.add(AssetPacks.getAsset("core:assets/shaders/DefaultCube_fragment.spv"), ShaderType.FragmentShader);
+            shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/Default_vertex.spv"), ShaderType.VertexShader);
+            shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/Default_fragment.spv"), ShaderType.FragmentShader);
             shaderProgram.assemble();
 
 
@@ -196,9 +248,11 @@ public class ExampleStage extends Stage {
                     actorMeshComponent,
                     new ShaderComponent(shaderProgram),
                     new TransformComponent(new Matrix4f().identity().translate(0, -2, 0).rotate((float) Math.toRadians(0), 0, 0, 1)),
-                    new NVPhysXComponent(new BoxCollider(10.0f, 1.0f, 10.0f), new Material(0.05f, 0.05f, 0.99f), ActorType.Static)
+                    new NVPhysXComponent(new BoxCollider(10.0f, 1.0f, 10.0f), new Material(0.1f, 0.1f, 0.3f), ActorType.Static)
             );
         }
+
+
 
 
 

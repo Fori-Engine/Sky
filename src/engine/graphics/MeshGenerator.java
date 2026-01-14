@@ -1,5 +1,6 @@
 package engine.graphics;
 
+import org.joml.Vector3f;
 import org.joml.Vector4f;
 
 import java.util.ArrayList;
@@ -15,57 +16,57 @@ public class MeshGenerator {
         float hh = height / 2.0f;
         float hd = depth / 2.0f;
 
-        List<Float> vertices = new ArrayList<>();
-        List<Float> colors = new ArrayList<>();
-        List<Integer> indices = new ArrayList<>();
+        List<Float> verticesList = new ArrayList<>();
+        List<Float> colorsList = new ArrayList<>();
+        List<Integer> indicesList = new ArrayList<>();
 
 
-        Vector4f[][] faceVertices = {
+        Vector3f[][] vertices = {
                 // Front
                 {
-                        new Vector4f(-hw, -hh,  hd, 1),
-                        new Vector4f( hw, -hh,  hd, 1),
-                        new Vector4f( hw,  hh,  hd, 1),
-                        new Vector4f(-hw,  hh,  hd, 1)
+                        new Vector3f(-hw, -hh,  hd),
+                        new Vector3f( hw, -hh,  hd),
+                        new Vector3f( hw,  hh,  hd),
+                        new Vector3f(-hw,  hh,  hd)
                 },
                 // Back
                 {
-                        new Vector4f( hw, -hh, -hd, 1),
-                        new Vector4f(-hw, -hh, -hd, 1),
-                        new Vector4f(-hw,  hh, -hd, 1),
-                        new Vector4f( hw,  hh, -hd, 1)
+                        new Vector3f( hw, -hh, -hd),
+                        new Vector3f(-hw, -hh, -hd),
+                        new Vector3f(-hw,  hh, -hd),
+                        new Vector3f( hw,  hh, -hd)
                 },
                 // Left
                 {
-                        new Vector4f(-hw, -hh, -hd, 1),
-                        new Vector4f(-hw, -hh,  hd, 1),
-                        new Vector4f(-hw,  hh,  hd, 1),
-                        new Vector4f(-hw,  hh, -hd, 1)
+                        new Vector3f(-hw, -hh, -hd),
+                        new Vector3f(-hw, -hh,  hd),
+                        new Vector3f(-hw,  hh,  hd),
+                        new Vector3f(-hw,  hh, -hd)
                 },
                 // Right
                 {
-                        new Vector4f( hw, -hh,  hd, 1),
-                        new Vector4f( hw, -hh, -hd, 1),
-                        new Vector4f( hw,  hh, -hd, 1),
-                        new Vector4f( hw,  hh,  hd, 1)
+                        new Vector3f( hw, -hh,  hd),
+                        new Vector3f( hw, -hh, -hd),
+                        new Vector3f( hw,  hh, -hd),
+                        new Vector3f( hw,  hh,  hd)
                 },
                 // Top
                 {
-                        new Vector4f(-hw,  hh,  hd, 1),
-                        new Vector4f( hw,  hh,  hd, 1),
-                        new Vector4f( hw,  hh, -hd, 1),
-                        new Vector4f(-hw,  hh, -hd, 1)
+                        new Vector3f(-hw,  hh,  hd),
+                        new Vector3f( hw,  hh,  hd),
+                        new Vector3f( hw,  hh, -hd),
+                        new Vector3f(-hw,  hh, -hd)
                 },
                 // Bottom
                 {
-                        new Vector4f(-hw, -hh, -hd, 1),
-                        new Vector4f( hw, -hh, -hd, 1),
-                        new Vector4f( hw, -hh,  hd, 1),
-                        new Vector4f(-hw, -hh,  hd, 1)
+                        new Vector3f(-hw, -hh, -hd),
+                        new Vector3f( hw, -hh, -hd),
+                        new Vector3f( hw, -hh,  hd),
+                        new Vector3f(-hw, -hh,  hd)
                 }
         };
 
-        float[][] faceColors = {
+        float[][] colors = {
                 {0.5f, 0.5f, 0.5f, 1f},
                 {0.6f, 0.6f, 0.6f, 1f},
                 {0.7f, 0.7f, 0.7f, 1f},
@@ -75,40 +76,43 @@ public class MeshGenerator {
         };
 
         int index = 0;
-        for (int i = 0; i < 6; i++) {
-            Vector4f[] quad = faceVertices[i];
-            float[] color = faceColors[i];
+        for (int faceIndex = 0; faceIndex < 6; faceIndex++) {
+            Vector3f[] faceVertices = vertices[faceIndex];
+            float[] faceColors = colors[faceIndex];
+
+
 
             for (int j = 0; j < 4; j++) {
-                Vector4f v = quad[j];
+                Vector3f faceVertex = faceVertices[j];
 
                 // Position
-                vertices.add(v.x);
-                vertices.add(v.y);
-                vertices.add(v.z);
+                verticesList.add(faceVertex.x);
+                verticesList.add(faceVertex.y);
+                verticesList.add(faceVertex.z);
 
                 // Color
-                colors.add(color[0]);
-                colors.add(color[1]);
-                colors.add(color[2]);
-                colors.add(color[3]);
+                colorsList.add(faceColors[0]);
+                colorsList.add(faceColors[1]);
+                colorsList.add(faceColors[2]);
+                colorsList.add(faceColors[3]);
+
             }
 
             // Indices for the face (2 triangles)
-            indices.add(index);
-            indices.add(index + 1);
-            indices.add(index + 2);
-            indices.add(index);
-            indices.add(index + 2);
-            indices.add(index + 3);
+            indicesList.add(index);
+            indicesList.add(index + 1);
+            indicesList.add(index + 2);
+            indicesList.add(index);
+            indicesList.add(index + 2);
+            indicesList.add(index + 3);
 
             index += 4;
         }
 
         Map<String, List<Float>> vertexData = new HashMap<>();
-        vertexData.put("Positions", vertices);
-        vertexData.put("Colors", colors);
+        vertexData.put("Positions", verticesList);
+        vertexData.put("Colors", colorsList);
 
-        return new MeshData(vertexData, indices, 24);
+        return new MeshData(vertexData, indicesList, 24);
     }
 }

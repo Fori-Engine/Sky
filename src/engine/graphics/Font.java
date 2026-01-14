@@ -32,7 +32,7 @@ public class Font extends Disposable {
 
 
     public void createGlyphs(){
-        String text = fnt.asset;
+        String text = fnt.getObject();
 
         for (String line : text.split("\n")){
 

@@ -2,7 +2,7 @@ package engine.graphics.pipelines;
 
 import dev.dominion.ecs.api.Results;
 import engine.Pair;
-import engine.asset.AssetPacks;
+import engine.asset.AssetRegistry;
 import engine.ecs.*;
 import engine.graphics.*;
 import org.joml.Matrix4f;
@@ -142,7 +142,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
             );
 
             shadowMapPassShaderProgram = ShaderProgram.newShaderProgram(renderer);
-            shadowMapPassShaderProgram.add(AssetPacks.getAsset("core:assets/shaders/ShadowMapPass_compute.spv"), ShaderType.ComputeShader);
+            shadowMapPassShaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/ShadowMapPass_compute.spv"), ShaderType.ComputeShader);
             shadowMapPassShaderProgram.assemble();
 
             shadowMapPassSceneDescBuffers = new Buffer[renderer.getMaxFramesInFlight()];
@@ -173,8 +173,8 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
 
 
             swapchainPassShaderProgram = ShaderProgram.newShaderProgram(renderer);
-            swapchainPassShaderProgram.add(AssetPacks.getAsset("core:assets/shaders/SwapchainPass_vertex.spv"), ShaderType.VertexShader);
-            swapchainPassShaderProgram.add(AssetPacks.getAsset("core:assets/shaders/SwapchainPass_fragment.spv"), ShaderType.FragmentShader);
+            swapchainPassShaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/SwapchainPass_vertex.spv"), ShaderType.VertexShader);
+            swapchainPassShaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/SwapchainPass_fragment.spv"), ShaderType.FragmentShader);
             swapchainPassShaderProgram.assemble();
 
             swapchainPassVertexBuffer = Buffer.newBuffer(

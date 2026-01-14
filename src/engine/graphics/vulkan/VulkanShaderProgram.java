@@ -365,19 +365,19 @@ public class VulkanShaderProgram extends ShaderProgram {
     }
     @Override
     public void add(Asset<byte[]> bytecode, ShaderType shaderType) {
-        shaders.put(shaderType, bytecode.asset);
+        shaders.put(shaderType, bytecode.getObject());
         try(MemoryStack stack = stackPush()) {
 
             long compiler;
             long shaderResourcesHandle;
 
             {
-                IntBuffer spirvData = stack.bytes(bytecode.asset).asIntBuffer();
+                IntBuffer spirvData = stack.bytes(bytecode.getObject()).asIntBuffer();
 
                 PointerBuffer pIR = stack.callocPointer(1);
                 PointerBuffer pCompiler = stack.callocPointer(1);
 
-                spvc_context_parse_spirv(context, spirvData, bytecode.asset.length / Integer.BYTES, pIR);
+                spvc_context_parse_spirv(context, spirvData, bytecode.getObject().length / Integer.BYTES, pIR);
                 spvc_context_create_compiler(context, SPVC_BACKEND_HLSL, pIR.get(0), SPVC_CAPTURE_MODE_COPY, pCompiler);
 
                 compiler = pCompiler.get(0);

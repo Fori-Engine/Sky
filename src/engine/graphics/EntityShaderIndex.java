@@ -14,11 +14,12 @@ public class EntityShaderIndex {
 
     public void upload(MeshData meshData, ShaderProgram shaderProgram, ByteBuffer vertexBufferData, ByteBuffer indexBufferData, int vertexOffset) {
 
-        List<Float> positions = meshData.getData().getOrDefault("Positions", new ArrayList<>());
-        List<Float> textureUVs = meshData.getData().getOrDefault("TextureUVs", new ArrayList<>());
-        List<Float> colors = meshData.getData().getOrDefault("Colors", new ArrayList<>());
+        List<Float> positions = meshData.getData().get("Positions");
+        List<Float> textureUVs = meshData.getData().get("TextureUVs");
+        List<Float> colors = meshData.getData().get("Colors");
 
         for (int vertexIndex = 0; vertexIndex < meshData.getVertexCount(); vertexIndex++) {
+
 
             for(VertexAttribute vertexAttribute : shaderProgram.getVertexAttributes()) {
                 switch (vertexAttribute.getName()) {
@@ -35,7 +36,7 @@ public class EntityShaderIndex {
                         vertexBufferData.putFloat(entityIndex);
                     }
                     case "vertex.uv" -> {
-                        float u = textureUVs.get(2 * vertexIndex);
+                        float u = textureUVs.get(2 * vertexIndex + 0);
                         float v = textureUVs.get(2 * vertexIndex + 1);
 
                         vertexBufferData.putFloat(u);
@@ -60,6 +61,9 @@ public class EntityShaderIndex {
             }
 
         }
+
+        System.out.println();
+
 
         for(int index : meshData.getIndices()) {
             indexBufferData.putInt(vertexOffset + index);

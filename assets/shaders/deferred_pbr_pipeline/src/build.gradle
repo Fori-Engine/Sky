@@ -31,7 +31,7 @@ shaders.each { shaderFileName, stages ->
     }
 }
 
-task compile {
+task compileShaders {
     dependsOn tasks.matching { it.name.startsWith('compile_') }
 
 }
