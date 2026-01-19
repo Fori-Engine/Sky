@@ -501,7 +501,14 @@ public class VulkanShaderProgram extends ShaderProgram {
                         int columnCount = spvc_type_get_vector_size(resourceTypeHandle);
 
                         if(baseType == SPVC_BASETYPE_FP32) {
-                            if(columnCount == 4) attachmentTextureFormatTypes.add(i, TextureFormatType.ColorR32G32B32A32);
+                            if(columnCount == 4) {
+
+
+                                if(spvcReflectedResource.nameString().endsWith("SW"))
+                                    attachmentTextureFormatTypes.add(i, TextureFormatType.ColorR8G8B8A8);
+                                else
+                                    attachmentTextureFormatTypes.add(i, TextureFormatType.ColorR32G32B32A32);
+                            }
                         }
                     }
                 }

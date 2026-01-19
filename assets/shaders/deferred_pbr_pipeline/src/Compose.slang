@@ -31,7 +31,7 @@ VSOutput vertexMain(Vertex vertex) {
 }
 
 struct FSOutput {
-    float4 color0 : SV_Target0;
+    float4 color0SW : SV_Target0;
 }
 
 Texture2D inputColorTexture;
@@ -41,6 +41,6 @@ SamplerState inputColorTextureSampler;
 [shader("fragment")]
 FSOutput fragmentMain(VSOutput vsOutput) {
     FSOutput output;
-    output.color0 = inputColorTexture.Sample(inputColorTextureSampler, vsOutput.uv);
+    output.color0SW = inputColorTexture.Sample(inputColorTextureSampler, vsOutput.uv);
     return output;
 }
