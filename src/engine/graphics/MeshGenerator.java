@@ -18,6 +18,7 @@ public class MeshGenerator {
 
         List<Float> verticesList = new ArrayList<>();
         List<Float> colorsList = new ArrayList<>();
+        List<Float> normalsList = new ArrayList<>();
         List<Integer> indicesList = new ArrayList<>();
 
 
@@ -80,6 +81,10 @@ public class MeshGenerator {
             Vector3f[] faceVertices = vertices[faceIndex];
             float[] faceColors = colors[faceIndex];
 
+            Vector3f e0 = new Vector3f(faceVertices[1]).sub(faceVertices[0]);
+            Vector3f e1 = new Vector3f(faceVertices[2]).sub(faceVertices[0]);
+
+            Vector3f faceNormal = e0.cross(e1).normalize();
 
 
             for (int j = 0; j < 4; j++) {
@@ -95,6 +100,11 @@ public class MeshGenerator {
                 colorsList.add(faceColors[1]);
                 colorsList.add(faceColors[2]);
                 colorsList.add(faceColors[3]);
+
+                //Normals
+                normalsList.add(faceNormal.x);
+                normalsList.add(faceNormal.y);
+                normalsList.add(faceNormal.z);
 
             }
 
@@ -112,6 +122,7 @@ public class MeshGenerator {
         Map<String, List<Float>> vertexData = new HashMap<>();
         vertexData.put("Positions", verticesList);
         vertexData.put("Colors", colorsList);
+        vertexData.put("Normals", normalsList);
 
         return new MeshData(vertexData, indicesList, 24);
     }

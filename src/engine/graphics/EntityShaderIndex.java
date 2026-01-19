@@ -17,6 +17,7 @@ public class EntityShaderIndex {
         List<Float> positions = meshData.getData().get("Positions");
         List<Float> textureUVs = meshData.getData().get("TextureUVs");
         List<Float> colors = meshData.getData().get("Colors");
+        List<Float> normals = meshData.getData().get("Normals");
 
         for (int vertexIndex = 0; vertexIndex < meshData.getVertexCount(); vertexIndex++) {
 
@@ -52,6 +53,15 @@ public class EntityShaderIndex {
                         vertexBufferData.putFloat(g);
                         vertexBufferData.putFloat(b);
                         vertexBufferData.putFloat(a);
+                    }
+                    case "vertex.normal" -> {
+                        float nx = normals.get(3 * vertexIndex + 0);
+                        float ny = normals.get(3 * vertexIndex + 1);
+                        float nz = normals.get(3 * vertexIndex + 2);
+
+                        vertexBufferData.putFloat(nx);
+                        vertexBufferData.putFloat(ny);
+                        vertexBufferData.putFloat(nz);
                     }
                     default -> {
                         for(int i = 0; i < vertexAttribute.getSize(); i++)
