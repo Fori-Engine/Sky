@@ -1,7 +1,5 @@
 ext.shaders = [
         'Default': ['vertex', 'fragment'],
-        'DefaultPBR': ['vertex', 'fragment'],
-
         'ShadowMapPass': ['compute'],
         'SwapchainPass': ['vertex', 'fragment'],
 ]
