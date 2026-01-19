@@ -2,8 +2,8 @@
 StructuredBuffer<Scene> sceneDesc;
 
 
-Texture2D inputTexture;
-RWTexture2D outputTexture;
+Texture2D inputColorTexture;
+RWTexture2D outputColorTexture;
 Texture2D inputPosTexture;
 
 Texture2D inputShadowMaps[1];
@@ -12,11 +12,11 @@ SamplerState inputShadowMapsSamplers[1];
 [numthreads(32, 32, 1)]
 void computeMain(int3 dispatchID : SV_DispatchThreadID) {
 
-    int3 inputTextureUV = int3(dispatchID.x, dispatchID.y, 0);
+    int3 textureXY = int3(dispatchID.x, dispatchID.y, 0);
     
-    float4 outputColor = inputTexture.Load(inputTextureUV, 0);
+    float4 outputColor = inputColorTexture.Load(textureXY, 0);
 
-    float4 wpFromCamera = mul(sceneDesc[0].camera.invView, inputPosTexture.Load(inputTextureUV, 0));
+    float4 wpFromCamera = mul(sceneDesc[0].camera.invView, inputPosTexture.Load(textureXY, 0));
     
 
     Light light = sceneDesc[0].lights[0];
@@ -36,8 +36,7 @@ void computeMain(int3 dispatchID : SV_DispatchThreadID) {
             outputColor.xyz *= 0.1;
         }
     }
-   
 
 
-    outputTexture[inputTextureUV.xy] = outputColor;
+    outputColorTexture[textureXY.xy] = outputColor;
 }

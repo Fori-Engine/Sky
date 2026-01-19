@@ -30,21 +30,21 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
     private Resource<Pair<Texture[], Sampler[]>> scenePosTextures;
     private Resource<Texture> sceneDepthTexture;
 
-    private ComputePass shadowMapPass;
-    private RenderTarget shadowMapPassRT;
-    private Resource<Pair<Texture[], Sampler[]>> shadowMapPassColorTextures;
-    private ShaderProgram shadowMapPassShaderProgram;
-    private Buffer[] shadowMapPassSceneDescBuffers;
+    private ComputePass lightingPass;
+    private RenderTarget lightingPassRT;
+    private Resource<Pair<Texture[], Sampler[]>> lightingPassColorTextures;
+    private ShaderProgram lightingPassShaderProgram;
+    private Buffer[] lightingPassSceneDescBuffers;
 
 
-    private GraphicsPass swapchainPass;
-    private RenderTarget swapchainRT;
-    private Resource<Texture[]> swapchainColorTextures;
+    private GraphicsPass composePass;
+    private RenderTarget composePassRT;
+    private Resource<Texture[]> composeColorTextures;
 
-    private ShaderProgram swapchainPassShaderProgram;
-    private Camera swapchainPassCamera;
-    private Buffer swapchainPassVertexBuffer, swapchainPassIndexBuffer;
-    private Buffer[] swapchainPassCameraBuffers;
+    private ShaderProgram composePassShaderProgram;
+    private Camera composePassCamera;
+    private Buffer composePassVertexBuffer, composePassIndexBuffer;
+    private Buffer[] composePassCameraBuffers;
 
     private int lightCount = 0;
     private final int COMPUTE_THREAD_GROUP_SIZE = 32;
@@ -117,39 +117,39 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
             );
         }
 
-        //Shadow Pass Resources
+        //Lighting Pass Resources
         {
-            shadowMapPassRT = new RenderTarget(renderer);
-            shadowMapPassColorTextures = new Resource<>(
+            lightingPassRT = new RenderTarget(renderer);
+            lightingPassColorTextures = new Resource<>(
                     new Pair<>(
                             new Texture[]{
-                                    Texture.newStorageTexture(shadowMapPassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32),
-                                    Texture.newStorageTexture(shadowMapPassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32)
+                                    Texture.newStorageTexture(lightingPassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32),
+                                    Texture.newStorageTexture(lightingPassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32)
                             },
                             new Sampler[]{
-                                    Sampler.newSampler(shadowMapPassRT, Linear, Linear, true),
-                                    Sampler.newSampler(shadowMapPassRT, Linear, Linear, true)
+                                    Sampler.newSampler(lightingPassRT, Linear, Linear, true),
+                                    Sampler.newSampler(lightingPassRT, Linear, Linear, true)
                             }
                     )
             );
 
-            shadowMapPassRT.addAttachment(
+            lightingPassRT.addAttachment(
                     new RenderTargetAttachment(
                             RenderTargetAttachmentTypes.Color,
-                            shadowMapPassColorTextures.get().key,
-                            shadowMapPassColorTextures.get().value
+                            lightingPassColorTextures.get().key,
+                            lightingPassColorTextures.get().value
                     )
             );
 
-            shadowMapPassShaderProgram = ShaderProgram.newShaderProgram(renderer);
-            shadowMapPassShaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/ShadowMapPass_compute.spv"), ShaderType.ComputeShader);
-            shadowMapPassShaderProgram.assemble();
+            lightingPassShaderProgram = ShaderProgram.newShaderProgram(renderer);
+            lightingPassShaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/Lighting_compute.spv"), ShaderType.ComputeShader);
+            lightingPassShaderProgram.assemble();
 
-            shadowMapPassSceneDescBuffers = new Buffer[renderer.getMaxFramesInFlight()];
+            lightingPassSceneDescBuffers = new Buffer[renderer.getMaxFramesInFlight()];
             for (int i = 0; i < renderer.getMaxFramesInFlight(); i++) {
-                shadowMapPassSceneDescBuffers[i] = Buffer.newBuffer(
+                lightingPassSceneDescBuffers[i] = Buffer.newBuffer(
                         renderer,
-                        shadowMapPassShaderProgram.getDescriptorByName("sceneDesc").getSizeBytes(),
+                        lightingPassShaderProgram.getDescriptorByName("sceneDesc").getSizeBytes(),
                         Buffer.Usage.ShaderStorageBuffer,
                         Buffer.Type.CPUGPUShared,
                         false
@@ -160,31 +160,31 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
 
         //Swapchain Pass Resources
         {
-            swapchainRT = renderer.getSwapchainRenderTarget();
-            swapchainColorTextures = new Resource<>(
-                    swapchainRT.getAttachment(RenderTargetAttachmentTypes.Color).getTextures()
+            composePassRT = renderer.getSwapchainRenderTarget();
+            composeColorTextures = new Resource<>(
+                    composePassRT.getAttachment(RenderTargetAttachmentTypes.Color).getTextures()
             );
 
-            swapchainPassCamera = new Camera(
+            composePassCamera = new Camera(
                     new Matrix4f().identity(),
                     new Matrix4f().ortho(0, renderer.getWidth(), 0, renderer.getHeight(), 0, 1, true),
                     false
             );
 
 
-            swapchainPassShaderProgram = ShaderProgram.newShaderProgram(renderer);
-            swapchainPassShaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/SwapchainPass_vertex.spv"), ShaderType.VertexShader);
-            swapchainPassShaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/SwapchainPass_fragment.spv"), ShaderType.FragmentShader);
-            swapchainPassShaderProgram.assemble();
+            composePassShaderProgram = ShaderProgram.newShaderProgram(renderer);
+            composePassShaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/Compose_vertex.spv"), ShaderType.VertexShader);
+            composePassShaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/Compose_fragment.spv"), ShaderType.FragmentShader);
+            composePassShaderProgram.assemble();
 
-            swapchainPassVertexBuffer = Buffer.newBuffer(
+            composePassVertexBuffer = Buffer.newBuffer(
                     renderer,
-                    swapchainPassShaderProgram.getVertexAttributesSize() * Float.BYTES * 4,
+                    composePassShaderProgram.getVertexAttributesSize() * Float.BYTES * 4,
                     Buffer.Usage.VertexBuffer,
                     Buffer.Type.CPUGPUShared,
                     false
             );
-            swapchainPassIndexBuffer = Buffer.newBuffer(
+            composePassIndexBuffer = Buffer.newBuffer(
                     renderer,
                     6 * Integer.BYTES,
                     Buffer.Usage.IndexBuffer,
@@ -192,11 +192,11 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
                     false
             );
 
-            swapchainPassCameraBuffers = new Buffer[renderer.getMaxFramesInFlight()];
+            composePassCameraBuffers = new Buffer[renderer.getMaxFramesInFlight()];
             for (int i = 0; i < renderer.getMaxFramesInFlight(); i++) {
-                swapchainPassCameraBuffers[i] = Buffer.newBuffer(
+                composePassCameraBuffers[i] = Buffer.newBuffer(
                         renderer,
-                        swapchainPassShaderProgram.getDescriptorByName("camera").getSizeBytes(),
+                        composePassShaderProgram.getDescriptorByName("camera").getSizeBytes(),
                         Buffer.Usage.UniformBuffer,
                         Buffer.Type.CPUGPUShared,
                         false
@@ -205,24 +205,24 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
 
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
 
-                ByteBuffer swapchainPassCameraBufferData = swapchainPassCameraBuffers[frameIndex].get();
+                ByteBuffer swapchainPassCameraBufferData = composePassCameraBuffers[frameIndex].get();
 
-                swapchainPassCamera.getProj().get(0, swapchainPassCameraBufferData);
-                swapchainPassShaderProgram.setBuffers(
+                composePassCamera.getProj().get(0, swapchainPassCameraBufferData);
+                composePassShaderProgram.setBuffers(
                         frameIndex,
-                        new DescriptorUpdate<>("camera", swapchainPassCameraBuffers[frameIndex])
+                        new DescriptorUpdate<>("camera", composePassCameraBuffers[frameIndex])
                 );
             }
 
-            swapchainPassVertexBuffer.get().clear();
-            swapchainPassIndexBuffer.get().clear();
+            composePassVertexBuffer.get().clear();
+            composePassIndexBuffer.get().clear();
 
 
             {
                 float x = 0, y = 0, w = 1920, h = 1080;
 
-                ByteBuffer swapchainPassVertexBufferData = swapchainPassVertexBuffer.get();
-                ByteBuffer swapchainPassIndexBufferData = swapchainPassIndexBuffer.get();
+                ByteBuffer swapchainPassVertexBufferData = composePassVertexBuffer.get();
+                ByteBuffer swapchainPassIndexBufferData = composePassIndexBuffer.get();
 
 
                 swapchainPassVertexBufferData.putFloat(x);
@@ -304,19 +304,14 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
         }
 
 
-        shadowMapPass = Pass.newComputePass(renderer, "ShadowMap", renderer.getMaxFramesInFlight());
+        lightingPass = Pass.newComputePass(renderer, "Lighting", renderer.getMaxFramesInFlight());
         {
-            shadowMapPass.addDependencies(
+            lightingPass.addDependencies(
 
                     new Dependency(
-                            "InputTextures",
+                            "InputColorTextures",
                             sceneColorTextures,
                             DependencyTypes.ComputeShaderRead
-                    ),
-                    new Dependency(
-                            "OutputTextures",
-                            shadowMapPassColorTextures,
-                            DependencyTypes.ComputeShaderWrite
                     ),
                     new Dependency(
                             "InputPosTextures",
@@ -327,26 +322,31 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
                             "InputShadowMaps",
                             null,
                             DependencyTypes.ComputeShaderRead
+                    ),
+                    new Dependency(
+                            "OutputColorTextures",
+                            lightingPassColorTextures,
+                            DependencyTypes.ComputeShaderWrite
                     )
             );
         }
-        swapchainPass = Pass.newGraphicsPass(renderGraph, "Swapchain", renderer.getMaxFramesInFlight());
+        composePass = Pass.newGraphicsPass(renderGraph, "Compose", renderer.getMaxFramesInFlight());
         {
-            swapchainPass.addDependencies(
+            composePass.addDependencies(
 
                     new Dependency(
-                            "InputTextures",
-                            shadowMapPassColorTextures,
+                            "InputColorTextures",
+                            lightingPassColorTextures,
                             DependencyTypes.FragmentShaderRead
                     ),
                     new Dependency(
                             "SwapchainColorTextures",
-                            swapchainColorTextures,
+                            composeColorTextures,
                             DependencyTypes.RenderTargetWrite
                     ),
                     new Dependency(
                             "SwapchainColorTexturesPresent",
-                            swapchainColorTextures,
+                            composeColorTextures,
                             DependencyTypes.Present
                     )
             );
@@ -355,8 +355,8 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
         renderGraph.addPasses(
                 shadowMapGenPass,
                 scenePass,
-                shadowMapPass,
-                swapchainPass
+                lightingPass,
+                composePass
         );
     }
 
@@ -387,20 +387,19 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
 
     @Override
     public void render(Renderer renderer, Scene scene) {
-        //TODO(Shayan) This entire pipeline needs to be updated to use sampler descriptors
 
-        if(swapchainRT != renderer.getSwapchainRenderTarget()) {
-            swapchainRT = renderer.getSwapchainRenderTarget();
-            RenderTargetAttachment colorAttachment = swapchainRT.getAttachment(RenderTargetAttachmentTypes.Color);
-            swapchainColorTextures = new Resource<>(colorAttachment.getTextures());
+        if(composePassRT != renderer.getSwapchainRenderTarget()) {
+            composePassRT = renderer.getSwapchainRenderTarget();
+            RenderTargetAttachment colorAttachment = composePassRT.getAttachment(RenderTargetAttachmentTypes.Color);
+            composeColorTextures = new Resource<>(colorAttachment.getTextures());
 
-            swapchainPass.getDependency(
+            composePass.getDependency(
                     "SwapchainColorTextures"
-            ).setDependency(swapchainColorTextures);
+            ).setDependency(composeColorTextures);
 
-            swapchainPass.getDependency(
+            composePass.getDependency(
                     "SwapchainColorTexturesPresent"
-            ).setDependency(swapchainColorTextures);
+            ).setDependency(composeColorTextures);
 
         }
 
@@ -451,7 +450,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
                     "OutputShadowMaps"
             ).setDependency(shadowMapTexturesResource);
 
-            shadowMapPass.getDependency(
+            lightingPass.getDependency(
                     "InputShadowMaps"
             ).setDependency(shadowMapTexturesResource);
         }
@@ -483,7 +482,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
 
             //Update ShadowMapPass shaders
             {
-                ByteBuffer sceneDescData = shadowMapPassSceneDescBuffers[renderer.getFrameIndex()].get();
+                ByteBuffer sceneDescData = lightingPassSceneDescBuffers[renderer.getFrameIndex()].get();
                 updateSceneDesc(sceneDescData, sceneCamera, scene);
             }
 
@@ -626,36 +625,36 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
         });
 
 
-        shadowMapPass.setPassExecuteCallback(() -> {
+        lightingPass.setPassExecuteCallback(() -> {
 
-            shadowMapPassShaderProgram.setBuffers(
+            lightingPassShaderProgram.setBuffers(
                     renderer.getFrameIndex(),
                     new DescriptorUpdate<>(
                             "sceneDesc",
-                            shadowMapPassSceneDescBuffers[renderer.getFrameIndex()]
+                            lightingPassSceneDescBuffers[renderer.getFrameIndex()]
                     )
             );
 
-            Resource<Pair<Texture[], Sampler[]>> inputTexturesDependency = shadowMapPass.getDependency("InputTextures").getResource();
-            Resource<Pair<Texture[], Sampler[]>> outputTexturesDependency = shadowMapPass.getDependency("OutputTextures").getResource();
-            Resource<Pair<Texture[], Sampler[]>> inputPosTexturesDependency = shadowMapPass.getDependency("InputPosTextures").getResource();
+            Resource<Pair<Texture[], Sampler[]>> inputColorTexturesDependency = lightingPass.getDependency("InputColorTextures").getResource();
+            Resource<Pair<Texture[], Sampler[]>> outputColorTexturesDependency = lightingPass.getDependency("OutputColorTextures").getResource();
+            Resource<Pair<Texture[], Sampler[]>> inputPosTexturesDependency = lightingPass.getDependency("InputPosTextures").getResource();
 
 
 
 
-            shadowMapPassShaderProgram.setTextures(
+            lightingPassShaderProgram.setTextures(
                     renderer.getFrameIndex(),
                     new DescriptorUpdate<>(
-                            "inputTexture",
-                            inputTexturesDependency.get().key[renderer.getFrameIndex()]
-                    ),
-                    new DescriptorUpdate<>(
-                            "outputTexture",
-                            outputTexturesDependency.get().key[renderer.getFrameIndex()]
+                            "inputColorTexture",
+                            inputColorTexturesDependency.get().key[renderer.getFrameIndex()]
                     ),
                     new DescriptorUpdate<>(
                             "inputPosTexture",
                             inputPosTexturesDependency.get().key[renderer.getFrameIndex()]
+                    ),
+                    new DescriptorUpdate<>(
+                            "outputColorTexture",
+                            outputColorTexturesDependency.get().key[renderer.getFrameIndex()]
                     )
             );
 
@@ -663,18 +662,18 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
 
             //Update shadow maps
             {
-                Resource<Pair<Texture[], Sampler[]>> shadowMapTexturesResource = shadowMapPass.getDependency("InputShadowMaps").getResource();
+                Resource<Pair<Texture[], Sampler[]>> shadowMapTexturesResource = lightingPass.getDependency("InputShadowMaps").getResource();
 
 
                 for (int i = 0; i < lightCount; i++) {
-                    shadowMapPassShaderProgram.setTextures(
+                    lightingPassShaderProgram.setTextures(
                             renderer.getFrameIndex(),
                             new DescriptorUpdate<>(
                                     "inputShadowMaps",
                                     shadowMapTexturesResource.get().key[renderer.getMaxFramesInFlight() * i + renderer.getFrameIndex()]
                             ).arrayIndex(i)
                     );
-                    shadowMapPassShaderProgram.setSamplers(
+                    lightingPassShaderProgram.setSamplers(
                             renderer.getFrameIndex(),
                             new DescriptorUpdate<>(
                                     "inputShadowMapsSamplers",
@@ -685,60 +684,60 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
                 }
             }
 
-            shadowMapPass.startRecording(renderer.getFrameIndex());
+            lightingPass.startRecording(renderer.getFrameIndex());
             {
-                shadowMapPass.resolveBarriers();
-                shadowMapPass.setShaderProgram(shadowMapPassShaderProgram);
+                lightingPass.resolveBarriers();
+                lightingPass.setShaderProgram(lightingPassShaderProgram);
 
                 int groupCountX = (int) Math.ceil((float) renderer.getWidth() / COMPUTE_THREAD_GROUP_SIZE);
                 int groupCountY = (int) Math.ceil((float) renderer.getHeight() / COMPUTE_THREAD_GROUP_SIZE);
 
-                shadowMapPass.dispatch(groupCountX, groupCountY, 1);
+                lightingPass.dispatch(groupCountX, groupCountY, 1);
             }
-            shadowMapPass.endRecording();
+            lightingPass.endRecording();
         });
 
 
-        swapchainPass.setPassExecuteCallback(() -> {
+        composePass.setPassExecuteCallback(() -> {
 
-            Resource<Pair<Texture[], Sampler[]>> inputTexturesResource = swapchainPass.getDependency("InputTextures").getResource();
+            Resource<Pair<Texture[], Sampler[]>> inputTexturesResource = composePass.getDependency("InputColorTextures").getResource();
 
-            swapchainPassShaderProgram.setTextures(
+            composePassShaderProgram.setTextures(
                     renderer.getFrameIndex(),
                     new DescriptorUpdate<>(
-                            "inputTexture",
+                            "inputColorTexture",
                             inputTexturesResource.get().key[renderer.getFrameIndex()])
             );
 
-            swapchainPassShaderProgram.setSamplers(
+            composePassShaderProgram.setSamplers(
                     renderer.getFrameIndex(),
                     new DescriptorUpdate<>(
-                            "inputTextureSampler",
+                            "inputColorTextureSampler",
                             inputTexturesResource.get().value[renderer.getFrameIndex()])
             );
 
-            swapchainPass.startRecording(renderer.getFrameIndex());
+            composePass.startRecording(renderer.getFrameIndex());
             {
 
-                swapchainPass.resolveBarriers();
+                composePass.resolveBarriers();
 
                 //The format type of the swapchain RT does not match what the shader program infers from the SPIRV
-                swapchainPass.startRendering(renderer.getSwapchainRenderTarget(), renderer.getWidth(), renderer.getHeight(), true, Color.BLACK);
+                composePass.startRendering(renderer.getSwapchainRenderTarget(), renderer.getWidth(), renderer.getHeight(), true, Color.BLACK);
                 {
-                    swapchainPass.setDrawBuffers(swapchainPassVertexBuffer, swapchainPassIndexBuffer);
-                    swapchainPass.setShaderProgram(swapchainPassShaderProgram);
-                    swapchainPass.drawIndexed(6);
+                    composePass.setDrawBuffers(composePassVertexBuffer, composePassIndexBuffer);
+                    composePass.setShaderProgram(composePassShaderProgram);
+                    composePass.drawIndexed(6);
                 }
-                swapchainPass.endRendering();
+                composePass.endRendering();
 
 
 
             }
-            swapchainPass.endRecording();
+            composePass.endRecording();
         });
 
 
-        renderGraph.setTargetPass(swapchainPass);
+        renderGraph.setTargetPass(composePass);
         renderer.render(renderGraph);
     }
 }

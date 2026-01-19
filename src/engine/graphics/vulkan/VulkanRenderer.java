@@ -396,8 +396,7 @@ public class VulkanRenderer extends Renderer {
     private VkSurfaceFormatKHR chooseSwapSurfaceFormat(VkSurfaceFormatKHR.Buffer availableFormats) {
 
         for(VkSurfaceFormatKHR availableFormat : availableFormats){
-            //My guess is that the presentation engine does not like 32 bit images being drawn to the screen in SwapchainPass, when the swapchain images are only 8 bit
-            if(availableFormat.format() == VK_FORMAT_R8G8B8A8_SRGB && availableFormat.colorSpace() == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR){
+            if(availableFormat.format() == VK_FORMAT_R8G8B8A8_SRGB){
                 return availableFormat;
             }
         }

@@ -34,13 +34,13 @@ struct FSOutput {
     float4 color0 : SV_Target0;
 }
 
-Texture2D inputTexture;
-SamplerState inputTextureSampler;
+Texture2D inputColorTexture;
+SamplerState inputColorTextureSampler;
 
 
 [shader("fragment")]
 FSOutput fragmentMain(VSOutput vsOutput) {
     FSOutput output;
-    output.color0 = inputTexture.Sample(inputTextureSampler, vsOutput.uv);
+    output.color0 = inputColorTexture.Sample(inputColorTextureSampler, vsOutput.uv);
     return output;
 }
