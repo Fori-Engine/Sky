@@ -721,7 +721,6 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
 
                 composePass.resolveBarriers();
 
-                //The format type of the swapchain RT does not match what the shader program infers from the SPIRV
                 composePass.startRendering(renderer.getSwapchainRenderTarget(), 0, renderer.getWidth(), renderer.getHeight(), true, Color.BLACK);
                 {
                     composePass.setDrawBuffers(composePassVertexBuffer, composePassIndexBuffer);
