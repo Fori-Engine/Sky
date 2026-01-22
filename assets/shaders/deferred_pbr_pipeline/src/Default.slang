@@ -65,8 +65,7 @@ FSOutput fragmentMain(VSOutput vsOutput, uniform int renderMode, uniform int lig
         output.color1 = float4(vsOutput.posViewSpace.xyz, 1.0);
     }
     if(renderMode == 1) {
-        output.color0 = float4(0.0, 0.0, 0.0, 0.0);
-        output.color1 = float4(vsOutput.posViewSpace.xyz, 1.0);
+        output.color0 = float4(vsOutput.posViewSpace.xyz, 1.0);
     }
 
 

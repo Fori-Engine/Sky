@@ -261,21 +261,6 @@ public class ExampleStage extends Stage {
         {
             RenderTarget lightRT = new RenderTarget(renderer);
 
-            Texture[] colorTextures = new Texture[] {
-                    Texture.newColorTexture(
-                            lightRT,
-                            1920,
-                            1080,
-                            TextureFormatType.ColorR32G32B32A32
-                    ),
-                    Texture.newColorTexture(
-                            lightRT,
-                            1920,
-                            1080,
-                            TextureFormatType.ColorR32G32B32A32
-                    )
-            };
-
             Texture[] posTextures = new Texture[] {
                     Texture.newColorTexture(
                             lightRT,
@@ -293,17 +278,6 @@ public class ExampleStage extends Stage {
 
 
 
-
-            lightRT.addAttachment(
-                    new RenderTargetAttachment(
-                            RenderTargetAttachmentTypes.Color,
-                            colorTextures,
-                            new Sampler[]{
-                                    Sampler.newSampler(lightRT, Texture.Filter.Linear, Texture.Filter.Linear, true),
-                                    Sampler.newSampler(lightRT, Texture.Filter.Linear, Texture.Filter.Linear, true)
-                            }
-                    )
-            );
             lightRT.addAttachment(
                     new RenderTargetAttachment(
                             RenderTargetAttachmentTypes.Pos,

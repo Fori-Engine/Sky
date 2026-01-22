@@ -514,7 +514,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
                         }
 
 
-                        shadowMapGenPass.startRendering(lightComponent.renderTarget, width, height, true, Color.BLACK);
+                        shadowMapGenPass.startRendering(lightComponent.renderTarget, 1, width, height, true, Color.BLACK);
                         {
 
 
@@ -577,7 +577,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
                 {
                     int mode = 0;
 
-                    scenePass.startRendering(scenePassRT, renderer.getWidth(), renderer.getHeight(), true, Color.LIGHT_GRAY);
+                    scenePass.startRendering(scenePassRT, 0, renderer.getWidth(), renderer.getHeight(), true, Color.LIGHT_GRAY);
                     {
                         scene.getEngine().findEntitiesWith(TransformComponent.class, EnvironmentMeshComponent.class).stream().forEach(components -> {
                             EnvironmentMeshComponent environmentMeshComponent = components.comp2();
@@ -722,7 +722,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
                 composePass.resolveBarriers();
 
                 //The format type of the swapchain RT does not match what the shader program infers from the SPIRV
-                composePass.startRendering(renderer.getSwapchainRenderTarget(), renderer.getWidth(), renderer.getHeight(), true, Color.BLACK);
+                composePass.startRendering(renderer.getSwapchainRenderTarget(), 0, renderer.getWidth(), renderer.getHeight(), true, Color.BLACK);
                 {
                     composePass.setDrawBuffers(composePassVertexBuffer, composePassIndexBuffer);
                     composePass.setShaderProgram(composePassShaderProgram);

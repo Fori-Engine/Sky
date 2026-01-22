@@ -122,7 +122,7 @@ public class VulkanGraphicsPass extends GraphicsPass {
     }
 
     @Override
-    public void startRendering(RenderTarget renderTarget, int width, int height, boolean clear, Color color) {
+    public void startRendering(RenderTarget renderTarget, int unusedAttachmentCount, int width, int height, boolean clear, Color color) {
         this.renderTarget = renderTarget;
 
         int loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
@@ -136,7 +136,7 @@ public class VulkanGraphicsPass extends GraphicsPass {
 
 
 
-            int attachmentCount = renderTarget.getAttachmentCountExcludingDepth();
+            int attachmentCount = renderTarget.getAttachmentCountExcludingDepth() + unusedAttachmentCount;
 
 
 
@@ -144,15 +144,25 @@ public class VulkanGraphicsPass extends GraphicsPass {
             {
                 for (int i = 0; i < attachmentCount; i++) {
 
-                    VulkanTexture texture = (VulkanTexture) renderTarget.getAttachmentByIndex(i).getTextures()[frameIndex];
-
                     VkRenderingAttachmentInfoKHR renderingAttachmentInfoKHR = (VkRenderingAttachmentInfoKHR) renderingAttachmentInfoKHRs.get(i);
                     renderingAttachmentInfoKHR.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR);
-                    renderingAttachmentInfoKHR.imageView(texture.getImageView().getHandle());
-                    renderingAttachmentInfoKHR.imageLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-                    renderingAttachmentInfoKHR.loadOp(loadOp);
-                    renderingAttachmentInfoKHR.storeOp(VK_ATTACHMENT_STORE_OP_STORE);
-                    renderingAttachmentInfoKHR.clearValue(colorClearValue);
+
+                    if(i > renderTarget.getAttachmentCountExcludingDepth() - 1) {
+                        renderingAttachmentInfoKHR.imageView(VK_NULL_HANDLE);
+                        renderingAttachmentInfoKHR.imageLayout(VK_IMAGE_LAYOUT_UNDEFINED);
+                        renderingAttachmentInfoKHR.loadOp(VK_ATTACHMENT_LOAD_OP_DONT_CARE);
+                        renderingAttachmentInfoKHR.storeOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
+                    }
+                    else {
+
+                        VulkanTexture texture = (VulkanTexture) renderTarget.getAttachmentByIndex(i).getTextures()[frameIndex];
+
+                        renderingAttachmentInfoKHR.imageView(texture.getImageView().getHandle());
+                        renderingAttachmentInfoKHR.imageLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+                        renderingAttachmentInfoKHR.loadOp(loadOp);
+                        renderingAttachmentInfoKHR.storeOp(VK_ATTACHMENT_STORE_OP_STORE);
+                        renderingAttachmentInfoKHR.clearValue(colorClearValue);
+                    }
 
                 }
 

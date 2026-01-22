@@ -14,7 +14,7 @@ public abstract class GraphicsPass extends Pass {
         return renderTarget;
     }
 
-    public abstract void startRendering(RenderTarget renderTarget, int width, int height, boolean clear, Color clearColor);
+    public abstract void startRendering(RenderTarget renderTarget, int unusedAttachmentCount, int width, int height, boolean clear, Color clearColor);
     public abstract void endRendering();
 
     public abstract void setDrawBuffers(Buffer vertexBuffer, Buffer indexBuffer);

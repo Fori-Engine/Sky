@@ -35,7 +35,11 @@ public class VulkanRenderer extends Renderer {
     private VkPhysicalDevice physicalDevice;
     private VkPhysicalDeviceProperties physicalDeviceProperties;
     private VulkanQueueFamilies queueFamilies;
-    private static final Set<String> DEVICE_EXTENSIONS = Stream.of(VK_KHR_SWAPCHAIN_EXTENSION_NAME, KHRDynamicRendering.VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME, KHRComputeShaderDerivatives.VK_KHR_COMPUTE_SHADER_DERIVATIVES_EXTENSION_NAME)
+    private static final Set<String> DEVICE_EXTENSIONS = Stream.of(
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+            KHRDynamicRendering.VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
+            KHRComputeShaderDerivatives.VK_KHR_COMPUTE_SHADER_DERIVATIVES_EXTENSION_NAME,
+            EXTDynamicRenderingUnusedAttachments.VK_EXT_DYNAMIC_RENDERING_UNUSED_ATTACHMENTS_EXTENSION_NAME)
             .collect(toSet());
 
     private VkDevice device;
@@ -345,6 +349,13 @@ public class VulkanRenderer extends Renderer {
                 physicalDeviceComputeShaderDerivativesFeaturesKHR.computeDerivativeGroupQuads(true);
             }
 
+            //Unused Attachments
+            VkPhysicalDeviceDynamicRenderingUnusedAttachmentsFeaturesEXT physicalDeviceDynamicRenderingUnusedAttachmentsFeaturesEXT = VkPhysicalDeviceDynamicRenderingUnusedAttachmentsFeaturesEXT.calloc(stack);
+            {
+                physicalDeviceDynamicRenderingUnusedAttachmentsFeaturesEXT.sType(EXTDynamicRenderingUnusedAttachments.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_UNUSED_ATTACHMENTS_FEATURES_EXT);
+                physicalDeviceDynamicRenderingUnusedAttachmentsFeaturesEXT.dynamicRenderingUnusedAttachments(true);
+            }
+
             VkDeviceCreateInfo createInfo = VkDeviceCreateInfo.calloc(stack);
 
             createInfo.sType(VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO);
@@ -352,7 +363,8 @@ public class VulkanRenderer extends Renderer {
             createInfo
                     .pNext(physicalDeviceDescriptorIndexingFeatures)
                     .pNext(physicalDeviceDynamicRenderingFeaturesKHR)
-                    .pNext(physicalDeviceComputeShaderDerivativesFeaturesKHR);
+                    .pNext(physicalDeviceComputeShaderDerivativesFeaturesKHR)
+                    .pNext(physicalDeviceDynamicRenderingUnusedAttachmentsFeaturesEXT);
 
 
             createInfo.pEnabledFeatures(deviceFeatures);
@@ -544,7 +556,9 @@ public class VulkanRenderer extends Renderer {
                                 }
 
 
+
                                 if ((rd.getType() & DependencyTypes.FragmentShaderRead) != 0) {
+
 
 
                                     VulkanUtil.transitionImages(
@@ -606,7 +620,9 @@ public class VulkanRenderer extends Renderer {
                                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
                                     );
                                 }
+
                             }
+
 
                             resource.setOutboundFrom(pass);
 
