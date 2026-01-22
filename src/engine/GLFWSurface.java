@@ -111,38 +111,51 @@ public class GLFWSurface extends Surface {
             appInfo.engineVersion(VK_MAKE_VERSION(1, 0, 0));
             appInfo.apiVersion(VK_API_VERSION_1_3);
 
-            VkInstanceCreateInfo createInfo = VkInstanceCreateInfo.calloc(stack);
+            VkInstanceCreateInfo instanceCreateInfo = VkInstanceCreateInfo.calloc(stack);
 
-            createInfo.sType(VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO);
-            createInfo.pApplicationInfo(appInfo);
-
-
-
-
-            PointerBuffer totalRequiredInstanceExtensions = null;
-            PointerBuffer windowInstanceExtensions = getVulkanInstanceExtensions();
+            instanceCreateInfo.sType(VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO);
+            instanceCreateInfo.pApplicationInfo(appInfo);
 
 
 
 
-            //System.exit(1);
+            PointerBuffer pInstanceExtensions;
+            PointerBuffer pWindowingExtensions = getVulkanInstanceExtensions();
 
-            int instanceExtensionCount = windowInstanceExtensions.capacity();
+
+            int instanceExtensionCount = pWindowingExtensions.capacity();
             if(validation) instanceExtensionCount++;
 
 
-            totalRequiredInstanceExtensions = stack.mallocPointer(instanceExtensionCount);
+            pInstanceExtensions = stack.mallocPointer(instanceExtensionCount);
+            pInstanceExtensions.put(pWindowingExtensions);
 
 
-            totalRequiredInstanceExtensions.put(windowInstanceExtensions);
-            if(validation) totalRequiredInstanceExtensions.put(stack.UTF8(VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
+            if(validation)
+                pInstanceExtensions.put(stack.UTF8(VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
 
 
-            createInfo.ppEnabledExtensionNames(totalRequiredInstanceExtensions.rewind());
+            instanceCreateInfo.ppEnabledExtensionNames(pInstanceExtensions.rewind());
+
+
+
+
             VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = null;
 
+
+
+
             if (validation) {
-                createInfo.ppEnabledLayerNames(validationLayersAsPointerBuffer(validationLayers, stack));
+
+                PointerBuffer pEnabledLayerNames = stack.mallocPointer(validationLayers.size());
+
+                for(String validationLayerName : validationLayers){
+                    System.out.println(validationLayerName);
+                    pEnabledLayerNames.put(stack.UTF8(validationLayerName));
+                }
+
+                instanceCreateInfo.ppEnabledLayerNames(pEnabledLayerNames.rewind());
+
                 vkDebugUtilsMessengerCallbackEXT = new VkDebugUtilsMessengerCallbackEXT() {
                     @Override
                     public int invoke(int messageSeverity, int messageTypes, long pCallbackData, long pUserData) {
@@ -162,17 +175,21 @@ public class GLFWSurface extends Surface {
                 debugCreateInfo.messageType(VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT);
                 debugCreateInfo.pfnUserCallback(vkDebugUtilsMessengerCallbackEXT);
 
-                createInfo.pNext(debugCreateInfo.address());
-
+                instanceCreateInfo.pNext(debugCreateInfo.address());
             }
+
+
+
+
 
             PointerBuffer instancePtr = stack.mallocPointer(1);
 
-            if (vkCreateInstance(createInfo, null, instancePtr) != VK_SUCCESS) {
+            if (vkCreateInstance(instanceCreateInfo, null, instancePtr) != VK_SUCCESS) {
                 throw new RuntimeException("Failed to create instance");
             }
 
-            instance = new VkInstance(instancePtr.get(0), createInfo);
+            instance = new VkInstance(instancePtr.get(0), instanceCreateInfo);
+
 
 
             if(validation) {
@@ -197,16 +214,7 @@ public class GLFWSurface extends Surface {
         return instance;
     }
 
-    private static PointerBuffer validationLayersAsPointerBuffer(List<String> validationLayers, MemoryStack stack) {
 
-        PointerBuffer buffer = stack.mallocPointer(validationLayers.size());
-
-        validationLayers.stream()
-                .map(stack::UTF8)
-                .forEach(buffer::put);
-
-        return buffer.rewind();
-    }
     @Override
     public boolean supportsRenderAPI(RenderAPI api) {
         if(api == RenderAPI.Vulkan) return glfwVulkanSupported();
