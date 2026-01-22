@@ -47,7 +47,6 @@ public class VulkanRenderer extends Renderer {
     private VulkanSwapchain swapchain;
     private VulkanSwapchainSupportInfo swapchainSupportDetails;
 
-    private VulkanCommandPool commandPool;
     private long vkSurface;
     private VkInstance instance;
 
@@ -80,7 +79,6 @@ public class VulkanRenderer extends Renderer {
         presentQueue = getPresentQueue(device);
         VulkanRuntime.setGraphicsFamilyIndex(queueFamilies.graphicsFamily);
 
-        commandPool = new VulkanCommandPool(this, device, VulkanRuntime.getGraphicsFamilyIndex());
         swapchainRenderTarget = createSwapchainRenderTarget(rendererSettings);
 
         frameStartSemaphores = new VulkanSemaphore[maxFramesInFlight];
