@@ -5,6 +5,7 @@ StructuredBuffer<Scene> sceneDesc;
 Texture2D inputColorTexture;
 RWTexture2D outputColorTexture;
 Texture2D inputPosTexture;
+Texture2D inputNormalTexture;
 
 Texture2D inputShadowMaps[1];
 SamplerState inputShadowMapsSamplers[1];
@@ -35,6 +36,16 @@ void computeMain(int3 dispatchID : SV_DispatchThreadID) {
         if(wpFromShadowMap.z <= wpFromCamera.z - 0.005) {
             outputColor.xyz *= 0.1;
         }
+    }
+
+    //Lighting
+    {
+        float3 lightPos = float3(light.invView[0][3], light.invView[1][3], light.invView[2][3]);
+        float3 lightDir = lightPos - wpFromCamera.xyz;
+        float3 normal = inputNormalTexture.Load(textureXY, 0).xyz;
+
+        float intensity = 0.1 + max(dot(lightDir, normal), 0.0);
+        outputColor *= intensity;
     }
 
 

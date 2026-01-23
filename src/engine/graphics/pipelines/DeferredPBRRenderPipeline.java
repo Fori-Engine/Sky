@@ -28,6 +28,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
     private RenderTarget scenePassRT;
     private Resource<Pair<Texture[], Sampler[]>> sceneColorTextures;
     private Resource<Pair<Texture[], Sampler[]>> scenePosTextures;
+    private Resource<Pair<Texture[], Sampler[]>> sceneNormalTextures;
     private Resource<Texture> sceneDepthTexture;
 
     private ComputePass lightingPass;
@@ -87,6 +88,19 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
                     )
             );
 
+            sceneNormalTextures = new Resource<>(
+                    new Pair<>(
+                            new Texture[]{
+                                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32),
+                                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32)
+                            },
+                            new Sampler[]{
+                                    Sampler.newSampler(scenePassRT, Linear, Linear, true),
+                                    Sampler.newSampler(scenePassRT, Linear, Linear, true)
+                            }
+                    )
+            );
+
             sceneDepthTexture = new Resource<>(
                     Texture.newDepthTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.Depth32)
             );
@@ -104,6 +118,15 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
                             RenderTargetAttachmentTypes.Pos,
                             scenePosTextures.get().key,
                             scenePosTextures.get().value
+
+                    )
+            );
+
+            scenePassRT.addAttachment(
+                    new RenderTargetAttachment(
+                            RenderTargetAttachmentTypes.Normal,
+                            sceneNormalTextures.get().key,
+                            sceneNormalTextures.get().value
 
                     )
             );
@@ -298,6 +321,11 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
                             "OutputPosTextures",
                             scenePosTextures,
                             DependencyTypes.RenderTargetWrite
+                    ),
+                    new Dependency(
+                            "OutputNormalTextures",
+                            sceneNormalTextures,
+                            DependencyTypes.RenderTargetWrite
                     )
             );
 
@@ -316,6 +344,11 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
                     new Dependency(
                             "InputPosTextures",
                             scenePosTextures,
+                            DependencyTypes.ComputeShaderRead
+                    ),
+                    new Dependency(
+                            "InputNormalTextures",
+                            sceneNormalTextures,
                             DependencyTypes.ComputeShaderRead
                     ),
                     new Dependency(
@@ -514,7 +547,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
                         }
 
 
-                        shadowMapGenPass.startRendering(lightComponent.renderTarget, 1, width, height, true, Color.BLACK);
+                        shadowMapGenPass.startRendering(lightComponent.renderTarget, 2, width, height, true, Color.BLACK);
                         {
 
 
@@ -638,6 +671,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
             Resource<Pair<Texture[], Sampler[]>> inputColorTexturesDependency = lightingPass.getDependency("InputColorTextures").getResource();
             Resource<Pair<Texture[], Sampler[]>> outputColorTexturesDependency = lightingPass.getDependency("OutputColorTextures").getResource();
             Resource<Pair<Texture[], Sampler[]>> inputPosTexturesDependency = lightingPass.getDependency("InputPosTextures").getResource();
+            Resource<Pair<Texture[], Sampler[]>> inputNormalTexturesDependency = lightingPass.getDependency("InputNormalTextures").getResource();
 
 
 
@@ -651,6 +685,10 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
                     new DescriptorUpdate<>(
                             "inputPosTexture",
                             inputPosTexturesDependency.get().key[renderer.getFrameIndex()]
+                    ),
+                    new DescriptorUpdate<>(
+                            "inputNormalTexture",
+                            inputNormalTexturesDependency.get().key[renderer.getFrameIndex()]
                     ),
                     new DescriptorUpdate<>(
                             "outputColorTexture",

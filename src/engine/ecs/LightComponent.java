@@ -10,6 +10,8 @@ public class LightComponent {
     public RenderTarget renderTarget;
     public LightComponent(Matrix4f view, Matrix4f proj, boolean invertY, RenderTarget renderTarget) {
         setView(view);
+
+
         setProj(proj);
         this.invertY = invertY;
         this.renderTarget = renderTarget;

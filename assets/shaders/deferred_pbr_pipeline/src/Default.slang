@@ -53,6 +53,7 @@ VSOutput vertexMain(Vertex vertex, uniform int renderMode, uniform int lightInde
 struct FSOutput {
     float4 color0 : SV_Target0;
     float4 color1 : SV_Target1;
+    float4 color2 : SV_Target2;
 }
 
 [shader("fragment")]
@@ -61,8 +62,9 @@ FSOutput fragmentMain(VSOutput vsOutput, uniform int renderMode, uniform int lig
     
 
     if(renderMode == 0) {
-        output.color0 = float4(vsOutput.color.xyz * vsOutput.normal, 1.0);
+        output.color0 = float4(vsOutput.color.xyz, 1.0);
         output.color1 = float4(vsOutput.posViewSpace.xyz, 1.0);
+        output.color2 = float4(vsOutput.normal.xyz, 1.0);
     }
     if(renderMode == 1) {
         output.color0 = float4(vsOutput.posViewSpace.xyz, 1.0);
