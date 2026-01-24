@@ -68,12 +68,12 @@ public class MeshGenerator {
         };
 
         float[][] colors = {
-                {1f, 1f, 1f, 1f}, // Warm red
-                {1f, 1f, 1f, 1f}, // Soft green
-                {1f, 1f, 1f, 1f}, // Calm blue
-                {1f, 1f, 1f, 1f}, // Muted yellow
-                {1f, 1f, 1f, 1f}, // Cyan (replaces orange)
-                {1f, 1f, 1f, 1f}  // Violet
+                {0.95f, 0.22f, 0.30f, 1f}, // Rich red
+                {0.18f, 0.85f, 0.35f, 1f}, // Vibrant green
+                {0.18f, 0.60f, 0.95f, 1f}, // Vibrant blue
+                {1f, 0.82f, 0.18f, 1f}, // Warm yellow
+                {0.12f, 0.90f, 0.88f, 1f}, // Soft cyan
+                {0.68f, 0.28f, 1f, 1f}  // Deep violet
         };
 
         int index = 0;
