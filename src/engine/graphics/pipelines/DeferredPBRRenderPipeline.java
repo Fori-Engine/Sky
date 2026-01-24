@@ -233,7 +233,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
 
 
             {
-                float x = 0, y = 0, w = 1920, h = 1080;
+                float x = 100, y = 50, w = 1920 / 2f, h = 1080 / 2f;
 
                 ByteBuffer swapchainPassVertexBufferData = composePassVertexBuffer.get();
                 ByteBuffer swapchainPassIndexBufferData = composePassIndexBuffer.get();
@@ -750,7 +750,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
 
                 composePass.resolveBarriers();
 
-                composePass.startRendering(renderer.getSwapchainRenderTarget(), 0, renderer.getWidth(), renderer.getHeight(), true, Color.BLACK);
+                composePass.startRendering(renderer.getSwapchainRenderTarget(), 0, renderer.getWidth(), renderer.getHeight(), true, Color.LIGHT_GRAY);
                 {
                     composePass.setDrawBuffers(composePassVertexBuffer, composePassIndexBuffer);
                     composePass.setShaderProgram(composePassShaderProgram);
