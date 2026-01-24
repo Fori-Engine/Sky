@@ -51,7 +51,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
     private final int COMPUTE_THREAD_GROUP_SIZE = 32;
 
 
-    private RenderGraph renderGraph;
+
 
 
     @Override
