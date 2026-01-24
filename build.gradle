@@ -2,6 +2,7 @@ import org.gradle.internal.os.OperatingSystem
 
 
 
+
 plugins {
     id 'application'
 }
@@ -12,6 +13,7 @@ version '0.0.1'
 repositories {
     mavenCentral()
 }
+
 sourceSets {
     main {
         java {
@@ -19,22 +21,28 @@ sourceSets {
         }
     }
 }
+
 jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-
     from {
         configurations.runtimeClasspath.collect {
             it.isDirectory() ? it : zipTree(it)
         }
     }
-
     manifest {
         manifest.attributes["Main-Class"] = "app.Launcher"
     }
-
 }
 
+
+
+
+
+project.ext.lwjglVersion = "3.3.6"
+project.ext.jomlVersion = "1.10.8"
+project.ext.physxVersion = "2.6.0"
+project.ext.dominionVersion = "0.9.0"
+project.ext.kryoVersion = "5.6.0"
 
 switch (OperatingSystem.current()) {
     case OperatingSystem.LINUX:
@@ -59,46 +67,41 @@ switch (OperatingSystem.current()) {
         break
 }
 
-project.ext.lwjglVersion = "3.3.6"
-project.ext.jomlVersion = "1.10.8"
-
 dependencies {
 
-    implementation 'com.esotericsoftware:kryo:5.6.0'
-    implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
-    implementation "org.lwjgl:lwjgl-assimp"
-    implementation "org.lwjgl:lwjgl"
-    implementation "org.lwjgl:lwjgl-glfw"
-    implementation "org.lwjgl:lwjgl-stb"
-    implementation "org.lwjgl:lwjgl-vma"
-    implementation "org.lwjgl:lwjgl-vulkan"
-    implementation "org.lwjgl:lwjgl-spvc"
+    //JARs
+    {
+        implementation "com.esotericsoftware:kryo:$kryoVersion"
+        implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
+        implementation "org.lwjgl:lwjgl-assimp"
+        implementation "org.lwjgl:lwjgl"
+        implementation "org.lwjgl:lwjgl-glfw"
+        implementation "org.lwjgl:lwjgl-stb"
+        implementation "org.lwjgl:lwjgl-vma"
+        implementation "org.lwjgl:lwjgl-vulkan"
+        implementation "org.lwjgl:lwjgl-spvc"
+        implementation "dev.dominion.ecs:dominion-ecs-engine:$dominionVersion"
+        implementation "de.fabmax:physx-jni:$physxVersion"
+        implementation "org.joml:joml:$jomlVersion"
 
+    }
 
-    implementation 'dev.dominion.ecs:dominion-ecs-engine:0.9.0'
+    //Natives
+    {
+        runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
+        runtimeOnly "org.lwjgl:lwjgl-glfw::$lwjglNatives"
+        runtimeOnly "org.lwjgl:lwjgl-stb::$lwjglNatives"
+        runtimeOnly "org.lwjgl:lwjgl-vma::$lwjglNatives"
 
+        if (lwjglNatives == "natives-macos" || lwjglNatives == "natives-macos-arm64")
+            runtimeOnly "org.lwjgl:lwjgl-vulkan::$lwjglNatives"
 
+        runtimeOnly "org.lwjgl:lwjgl-assimp::$lwjglNatives"
+        runtimeOnly "org.lwjgl:lwjgl-spvc::$lwjglNatives"
+        runtimeOnly "de.fabmax:physx-jni:2.6.0:$lwjglNatives"
 
-    runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
-    runtimeOnly "org.lwjgl:lwjgl-glfw::$lwjglNatives"
-    runtimeOnly "org.lwjgl:lwjgl-stb::$lwjglNatives"
-    runtimeOnly "org.lwjgl:lwjgl-vma::$lwjglNatives"
-    runtimeOnly "org.lwjgl:lwjgl-assimp::$lwjglNatives"
-    implementation "org.lwjgl:lwjgl-spvc::$lwjglNatives"
+    }
 
-
-    // java bindings
-    implementation("de.fabmax:physx-jni:2.6.0")
-
-    // native libraries - you can add the one matching your system or all
-    runtimeOnly("de.fabmax:physx-jni:2.6.0:natives-windows")
-    runtimeOnly("de.fabmax:physx-jni:2.6.0:natives-linux")
-    runtimeOnly("de.fabmax:physx-jni:2.6.0:natives-macos")
-    runtimeOnly("de.fabmax:physx-jni:2.6.0:natives-macos-arm64")
-
-
-    if (lwjglNatives == "natives-macos" || lwjglNatives == "natives-macos-arm64") runtimeOnly "org.lwjgl:lwjgl-vulkan::$lwjglNatives"
-    implementation "org.joml:joml:${jomlVersion}"
 }
 
 
