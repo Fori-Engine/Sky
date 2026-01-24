@@ -58,13 +58,13 @@ void computeMain(int3 dispatchID : SV_DispatchThreadID) {
             float3 cameraDir = normalize(cameraPos - wpFromCamera.xyz);
             float3 halfwayDir = normalize(lightDir + cameraDir);
 
-            float specular = 0.9 * pow(max(dot(halfwayDir, normal), 0.0), 256);
+            float specular = 0.9 * pow(dot(halfwayDir, normal), 256);
             
             intensity = ambient + diffuse + specular;
         }
 
 
-        outputColor *= intensity;
+        outputColor.xyz *= intensity;
     }
 
 
