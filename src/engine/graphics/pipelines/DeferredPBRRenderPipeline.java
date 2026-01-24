@@ -68,10 +68,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
                                     Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32),
                                     Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32)
                             },
-                            new Sampler[]{
-                                    Sampler.newSampler(scenePassRT, Linear, Linear, true),
-                                    Sampler.newSampler(scenePassRT, Linear, Linear, true)
-                            }
+                            null
                     )
             );
 
@@ -81,10 +78,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
                                     Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32),
                                     Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32)
                             },
-                            new Sampler[]{
-                                    Sampler.newSampler(scenePassRT, Linear, Linear, true),
-                                    Sampler.newSampler(scenePassRT, Linear, Linear, true)
-                            }
+                            null
                     )
             );
 
@@ -94,10 +88,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
                                     Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32),
                                     Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32)
                             },
-                            new Sampler[]{
-                                    Sampler.newSampler(scenePassRT, Linear, Linear, true),
-                                    Sampler.newSampler(scenePassRT, Linear, Linear, true)
-                            }
+                            null
                     )
             );
 
