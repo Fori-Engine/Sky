@@ -21,9 +21,18 @@ void computeMain(int3 dispatchID : SV_DispatchThreadID) {
     
 
     Light light = sceneDesc[0].lights[0];
+    Camera camera = sceneDesc[0].camera;
+
     float4 shadowMapUV = mul(light.proj, mul(light.view, wpFromCamera));
     shadowMapUV /= shadowMapUV.w;
     shadowMapUV = shadowMapUV * 0.5 + 0.5;
+
+    float3 lightPos = float3(light.invView[0][3], light.invView[1][3], light.invView[2][3]);
+    float3 cameraPos = float3(camera.invView[0][3], camera.invView[1][3], camera.invView[2][3]);
+
+    float3 lightDir = normalize(lightPos - wpFromCamera.xyz);
+    float3 normal = inputNormalTexture.Load(textureXY, 0).xyz;
+
 
 
     //Shadows
@@ -38,13 +47,23 @@ void computeMain(int3 dispatchID : SV_DispatchThreadID) {
         }
     }
 
-    //Lighting
+    //Lighting BRDF
     {
-        float3 lightPos = float3(light.invView[0][3], light.invView[1][3], light.invView[2][3]);
-        float3 lightDir = lightPos - wpFromCamera.xyz;
-        float3 normal = inputNormalTexture.Load(textureXY, 0).xyz;
 
-        float intensity = 0.1 + max(dot(lightDir, normal), 0.0);
+        float intensity = 0;
+        {
+            float ambient = 0.1;
+            float diffuse = 0.20 * max(dot(lightDir, normal), 0.0);
+
+            float3 cameraDir = normalize(cameraPos - wpFromCamera.xyz);
+            float3 halfwayDir = normalize(lightDir + cameraDir);
+
+            float specular = 0.9 * pow(max(dot(halfwayDir, normal), 0.0), 256);
+            
+            intensity = ambient + diffuse + specular;
+        }
+
+
         outputColor *= intensity;
     }
 
