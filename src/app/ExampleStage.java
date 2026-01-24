@@ -83,69 +83,6 @@ public class ExampleStage extends Stage {
         cameraEntity = scene.createEntity(new CameraComponent(camera));
 
 
-
-
-
-
-
-
-
-
-        /*
-        //Model
-        {
-            ShaderProgram shaderProgram;
-            MeshData meshData;
-
-
-            shaderProgram = ShaderProgram.newShaderProgram(renderer);
-            shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/DefaultPBR_vertex.spv"), ShaderType.VertexShader);
-            shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/DefaultPBR_fragment.spv"), ShaderType.FragmentShader);
-            shaderProgram.assemble();
-
-            meshData = MeshData.newMeshFromGLTF2(AssetRegistry.getAsset("core:assets/models/gltf_separate/Box.gltf"));
-
-            EnvironmentMeshComponent environmentMeshComponent = new EnvironmentMeshComponent(renderer, renderer, 100000, 100000, 1, shaderProgram);
-            environmentMeshComponent.addMesh(meshData, new EntityShaderIndex(0));
-            environmentMeshComponent.close();
-
-            //Texture texture = Texture.newColorTextureFromAsset(renderer, AssetPacks.getAsset("core:assets/textures/viking_room.png"), TextureFormatType.ColorR8G8B8A8);
-            //Sampler sampler = Sampler.newSampler(texture, Texture.Filter.Linear, Texture.Filter.Linear, true);
-
-            for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                //environmentMeshComponent.shaderProgram.setTextures(frameIndex, new DescriptorUpdate<>("texture", texture));
-                //environmentMeshComponent.shaderProgram.setSamplers(frameIndex, new DescriptorUpdate<>("textureSampler", sampler));
-
-
-                environmentMeshComponent.shaderProgram.setBuffers(
-                        frameIndex,
-                        new DescriptorUpdate<>("sceneDesc", environmentMeshComponent.sceneDescBuffers[frameIndex]),
-                        new DescriptorUpdate<>("transforms", environmentMeshComponent.transformsBuffers[frameIndex])
-                );
-            }
-
-
-            modelEntity = scene.createEntity(
-                    environmentMeshComponent,
-                    new ShaderComponent(shaderProgram),
-                    new TransformComponent(0, new Matrix4f().identity().translate(1, 0, 0).rotate((float) Math.toRadians(-90), 1.0f, 0.0f, 0.0f)),
-                    new NVPhysXComponent(new BoxCollider(1.5f, 1.5f, 1.5f), new Material(0.05f, 0.05f, 0.99f), ActorType.Dynamic)
-            );
-
-
-        }
-
-         */
-
-
-
-
-
-
-
-
-
-
         //Default Cube
         {
 
