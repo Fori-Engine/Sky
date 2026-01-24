@@ -8,7 +8,9 @@ import engine.asset.AssetRegistry;
 import engine.graphics.*;
 
 import engine.ecs.*;
+import engine.graphics.pipelines.ComposeFeatures;
 import engine.graphics.pipelines.DeferredPBRRenderPipeline;
+import engine.graphics.pipelines.SceneFeatures;
 import engine.physx.ActorType;
 import engine.physx.BoxCollider;
 import engine.physx.Material;
@@ -16,6 +18,7 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import java.lang.Math;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 
 public class ExampleStage extends Stage {
@@ -27,6 +30,7 @@ public class ExampleStage extends Stage {
     private Entity defaultCubeEntity;
     private Entity floorEntity;
     private Entity spotlightEntity;
+    private RenderPipeline renderPipeline;
     private Renderer renderer;
 
 
@@ -49,9 +53,11 @@ public class ExampleStage extends Stage {
                         .validation(true)
                         .vsync(true)
         );
+        renderPipeline = new DeferredPBRRenderPipeline();
+
 
         scene = new Scene("Example_Scene");
-        scene.addSystem(new RenderSystem(renderer, scene, new DeferredPBRRenderPipeline()));
+        scene.addSystem(new RenderSystem(renderer, renderPipeline));
         scene.addSystem(new NVPhysXSystem(scene, 4, 1f/60f));
         scene.addSystem(new ScriptSystem(scene));
 
@@ -328,6 +334,183 @@ public class ExampleStage extends Stage {
 
 
     public boolean update(){
+        renderPipeline.getFeatures(SceneFeatures.class).setScene(scene);
+
+        //UI Rendering
+        {
+            ComposeFeatures composeFeatures = renderPipeline.getFeatures(ComposeFeatures.class);
+            ByteBuffer vertexBufferData = composeFeatures.getVertexBuffer().get();
+            vertexBufferData.clear();
+            ByteBuffer indexBufferData = composeFeatures.getIndexBuffer().get();
+            indexBufferData.clear();
+
+            int quadIndex = 0;
+
+            {
+                float x = surface.getMousePos().x, y = surface.getMousePos().y, w = 1920 / 2f, h = 1080 / 2f;
+
+                vertexBufferData.putFloat(x);
+                vertexBufferData.putFloat(y);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(0f);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(0);
+                vertexBufferData.putFloat(0);
+                vertexBufferData.putFloat(0);
+
+                vertexBufferData.putFloat(x);
+                vertexBufferData.putFloat(y + h);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(0f);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(0);
+                vertexBufferData.putFloat(1);
+                vertexBufferData.putFloat(0);
+
+
+                vertexBufferData.putFloat(x + w);
+                vertexBufferData.putFloat(y + h);
+                vertexBufferData.putFloat(0f);
+                vertexBufferData.putFloat(0f);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(1);
+                vertexBufferData.putFloat(1);
+                vertexBufferData.putFloat(0);
+
+
+                vertexBufferData.putFloat(x + w);
+                vertexBufferData.putFloat(y);
+                vertexBufferData.putFloat(0f);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(1);
+                vertexBufferData.putFloat(0);
+                vertexBufferData.putFloat(0);
+
+
+                indexBufferData.putInt(0 + (4 * quadIndex));
+                indexBufferData.putInt(1 + (4 * quadIndex));
+                indexBufferData.putInt(2 + (4 * quadIndex));
+                indexBufferData.putInt(2 + (4 * quadIndex));
+                indexBufferData.putInt(3 + (4 * quadIndex));
+                indexBufferData.putInt(0 + (4 * quadIndex));
+                quadIndex++;
+            }
+
+            {
+                float x = 100, y = 600, w = 300, h = 300;
+
+                vertexBufferData.putFloat(x);
+                vertexBufferData.putFloat(y);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(0f);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(0);
+                vertexBufferData.putFloat(0);
+                vertexBufferData.putFloat(-1);
+
+                vertexBufferData.putFloat(x);
+                vertexBufferData.putFloat(y + h);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(0f);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(0);
+                vertexBufferData.putFloat(1);
+                vertexBufferData.putFloat(-1);
+
+
+                vertexBufferData.putFloat(x + w);
+                vertexBufferData.putFloat(y + h);
+                vertexBufferData.putFloat(0f);
+                vertexBufferData.putFloat(0f);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(1);
+                vertexBufferData.putFloat(1);
+                vertexBufferData.putFloat(-1);
+
+
+                vertexBufferData.putFloat(x + w);
+                vertexBufferData.putFloat(y);
+                vertexBufferData.putFloat(0f);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(1);
+                vertexBufferData.putFloat(0);
+                vertexBufferData.putFloat(-1);
+
+
+                indexBufferData.putInt(0 + (4 * quadIndex));
+                indexBufferData.putInt(1 + (4 * quadIndex));
+                indexBufferData.putInt(2 + (4 * quadIndex));
+                indexBufferData.putInt(2 + (4 * quadIndex));
+                indexBufferData.putInt(3 + (4 * quadIndex));
+                indexBufferData.putInt(0 + (4 * quadIndex));
+                quadIndex++;
+            }
+
+            {
+                float x = 1200, y = 600, w = 600, h = 600;
+
+                vertexBufferData.putFloat(x);
+                vertexBufferData.putFloat(y);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(0f);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(0);
+                vertexBufferData.putFloat(0);
+                vertexBufferData.putFloat(-2);
+
+                vertexBufferData.putFloat(x);
+                vertexBufferData.putFloat(y + h);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(0f);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(0);
+                vertexBufferData.putFloat(1);
+                vertexBufferData.putFloat(-2);
+
+
+                vertexBufferData.putFloat(x + w);
+                vertexBufferData.putFloat(y + h);
+                vertexBufferData.putFloat(0f);
+                vertexBufferData.putFloat(0f);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(1);
+                vertexBufferData.putFloat(1);
+                vertexBufferData.putFloat(-2);
+
+
+                vertexBufferData.putFloat(x + w);
+                vertexBufferData.putFloat(y);
+                vertexBufferData.putFloat(0f);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(1f);
+                vertexBufferData.putFloat(1);
+                vertexBufferData.putFloat(0);
+                vertexBufferData.putFloat(-2);
+
+
+                indexBufferData.putInt(0 + (4 * quadIndex));
+                indexBufferData.putInt(1 + (4 * quadIndex));
+                indexBufferData.putInt(2 + (4 * quadIndex));
+                indexBufferData.putInt(2 + (4 * quadIndex));
+                indexBufferData.putInt(3 + (4 * quadIndex));
+                indexBufferData.putInt(0 + (4 * quadIndex));
+                quadIndex++;
+            }
+        }
 
         renderer.updateRenderer(surface.update());
         scene.tick();

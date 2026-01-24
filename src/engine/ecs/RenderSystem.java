@@ -4,19 +4,17 @@ import engine.graphics.*;
 
 public class RenderSystem extends EcsSystem {
     private Renderer renderer;
-    private Scene scene;
     private RenderPipeline renderPipeline;
 
-    public RenderSystem(Renderer renderer, Scene scene, RenderPipeline renderPipeline) {
+    public RenderSystem(Renderer renderer, RenderPipeline renderPipeline) {
         this.renderer = renderer;
-        this.scene = scene;
         this.renderPipeline = renderPipeline;
-        renderPipeline.init(renderer, scene);
+        renderPipeline.init(renderer);
     }
 
     @Override
     public void run() {
-        renderPipeline.render(renderer, scene);
+        renderPipeline.render(renderer);
     }
 
     @Override

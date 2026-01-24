@@ -13,6 +13,7 @@ import static org.lwjgl.system.MemoryStack.*;
 
 import java.nio.ByteBuffer;
 import java.util.Iterator;
+import java.util.List;
 
 
 public class DeferredPBRRenderPipeline extends RenderPipeline {
@@ -55,7 +56,15 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
 
 
     @Override
-    public void init(Renderer renderer, Scene scene) {
+    public void init(Renderer renderer) {
+
+        //Features
+        {
+            supportedFeatures = List.of(
+                    new SceneFeatures(true),
+                    new ComposeFeatures(false)
+            );
+        }
 
 
 
@@ -193,14 +202,14 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
 
             composePassVertexBuffer = Buffer.newBuffer(
                     renderer,
-                    composePassShaderProgram.getVertexAttributesSize() * Float.BYTES * 4,
+                    composePassShaderProgram.getVertexAttributesSize() * Float.BYTES * 12,
                     Buffer.Usage.VertexBuffer,
                     Buffer.Type.CPUGPUShared,
                     false
             );
             composePassIndexBuffer = Buffer.newBuffer(
                     renderer,
-                    6 * Integer.BYTES,
+                    18 * Integer.BYTES,
                     Buffer.Usage.IndexBuffer,
                     Buffer.Type.CPUGPUShared,
                     false
@@ -230,61 +239,12 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
 
             composePassVertexBuffer.get().clear();
             composePassIndexBuffer.get().clear();
+            ComposeFeatures composeFeatures = getFeatures(ComposeFeatures.class);
+            composeFeatures.setVertexBuffer(composePassVertexBuffer);
+            composeFeatures.setIndexBuffer(composePassIndexBuffer);
 
 
-            {
-                float x = 100, y = 50, w = 1920 / 2f, h = 1080 / 2f;
 
-                ByteBuffer swapchainPassVertexBufferData = composePassVertexBuffer.get();
-                ByteBuffer swapchainPassIndexBufferData = composePassIndexBuffer.get();
-
-
-                swapchainPassVertexBufferData.putFloat(x);
-                swapchainPassVertexBufferData.putFloat(y);
-                swapchainPassVertexBufferData.putFloat(1f);
-                swapchainPassVertexBufferData.putFloat(0f);
-                swapchainPassVertexBufferData.putFloat(1f);
-                swapchainPassVertexBufferData.putFloat(1f);
-                swapchainPassVertexBufferData.putFloat(0);
-                swapchainPassVertexBufferData.putFloat(0);
-
-                swapchainPassVertexBufferData.putFloat(x);
-                swapchainPassVertexBufferData.putFloat(y + h);
-                swapchainPassVertexBufferData.putFloat(1f);
-                swapchainPassVertexBufferData.putFloat(1f);
-                swapchainPassVertexBufferData.putFloat(0f);
-                swapchainPassVertexBufferData.putFloat(1f);
-                swapchainPassVertexBufferData.putFloat(0);
-                swapchainPassVertexBufferData.putFloat(1);
-
-
-                swapchainPassVertexBufferData.putFloat(x + w);
-                swapchainPassVertexBufferData.putFloat(y + h);
-                swapchainPassVertexBufferData.putFloat(0f);
-                swapchainPassVertexBufferData.putFloat(0f);
-                swapchainPassVertexBufferData.putFloat(1f);
-                swapchainPassVertexBufferData.putFloat(1f);
-                swapchainPassVertexBufferData.putFloat(1);
-                swapchainPassVertexBufferData.putFloat(1);
-
-
-                swapchainPassVertexBufferData.putFloat(x + w);
-                swapchainPassVertexBufferData.putFloat(y);
-                swapchainPassVertexBufferData.putFloat(0f);
-                swapchainPassVertexBufferData.putFloat(1f);
-                swapchainPassVertexBufferData.putFloat(1f);
-                swapchainPassVertexBufferData.putFloat(1f);
-                swapchainPassVertexBufferData.putFloat(1);
-                swapchainPassVertexBufferData.putFloat(0);
-
-
-                swapchainPassIndexBufferData.putInt(0);
-                swapchainPassIndexBufferData.putInt(1);
-                swapchainPassIndexBufferData.putInt(2);
-                swapchainPassIndexBufferData.putInt(2);
-                swapchainPassIndexBufferData.putInt(3);
-                swapchainPassIndexBufferData.putInt(0);
-            }
 
         }
 
@@ -410,7 +370,11 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
 
 
     @Override
-    public void render(Renderer renderer, Scene scene) {
+    public void render(Renderer renderer) {
+        Scene scene = getFeatures(SceneFeatures.class).getScene();
+
+
+
 
         if(composePassRT != renderer.getSwapchainRenderTarget()) {
             composePassRT = renderer.getSwapchainRenderTarget();
@@ -727,6 +691,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
         });
 
 
+
         composePass.setPassExecuteCallback(() -> {
 
             Resource<Pair<Texture[], Sampler[]>> inputTexturesResource = composePass.getDependency("InputColorTextures").getResource();
@@ -752,9 +717,13 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
 
                 composePass.startRendering(renderer.getSwapchainRenderTarget(), 0, renderer.getWidth(), renderer.getHeight(), true, Color.LIGHT_GRAY);
                 {
+                    ComposeFeatures composeFeatures = getFeatures(ComposeFeatures.class);
+
+
+
                     composePass.setDrawBuffers(composePassVertexBuffer, composePassIndexBuffer);
                     composePass.setShaderProgram(composePassShaderProgram);
-                    composePass.drawIndexed(6);
+                    composePass.drawIndexed(18);
                 }
                 composePass.endRendering();
 
