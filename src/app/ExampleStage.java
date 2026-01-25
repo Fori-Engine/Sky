@@ -167,19 +167,26 @@ public class ExampleStage extends Stage {
 
 
             ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(renderer);
-            shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/Default_vertex.spv"), ShaderType.VertexShader);
-            shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/Default_fragment.spv"), ShaderType.FragmentShader);
+            shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/Default2_vertex.spv"), ShaderType.VertexShader);
+            shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/Default2_fragment.spv"), ShaderType.FragmentShader);
             shaderProgram.assemble();
 
 
 
-            MeshData meshData = MeshGenerator.newBox(10.0f, 1.0f, 10.0f);
+            MeshData meshData = MeshGenerator.newPlane(10, 10);
 
             ActorMeshComponent actorMeshComponent = new ActorMeshComponent(renderer, renderer, 100000, 100000, shaderProgram);
             actorMeshComponent.setMesh(meshData, new EntityShaderIndex(0));
 
+            Texture texture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/woodfloor.png"), TextureFormatType.ColorR8G8B8A8);
+            Sampler sampler = Sampler.newSampler(texture, Texture.Filter.Linear, Texture.Filter.Linear, true);
+
+
 
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
+                actorMeshComponent.shaderProgram.setTextures(frameIndex, new DescriptorUpdate<>("texture", texture));
+                actorMeshComponent.shaderProgram.setSamplers(frameIndex, new DescriptorUpdate<>("textureSampler", sampler));
+
                 actorMeshComponent.shaderProgram.setBuffers(
                         frameIndex,
                         new DescriptorUpdate<>("sceneDesc", actorMeshComponent.sceneDescBuffers[frameIndex]),
@@ -207,14 +214,14 @@ public class ExampleStage extends Stage {
             Texture[] posTextures = new Texture[] {
                     Texture.newColorTexture(
                             lightRT,
-                            1920,
-                            1080,
+                            1920 / 4,
+                            1080 / 4,
                             TextureFormatType.ColorR32G32B32A32
                     ),
                     Texture.newColorTexture(
                             lightRT,
-                            1920,
-                            1080,
+                            1920 / 4,
+                            1080 / 4,
                             TextureFormatType.ColorR32G32B32A32
                     )
             };
@@ -234,7 +241,7 @@ public class ExampleStage extends Stage {
             );
             lightRT.addAttachment(
                     new RenderTargetAttachment(RenderTargetAttachmentTypes.Depth, new Texture[]{
-                            Texture.newDepthTexture(lightRT, 1920, 1080, TextureFormatType.Depth32)
+                            Texture.newDepthTexture(lightRT, 1920 / 4, 1080 / 4, TextureFormatType.Depth32)
                     }, null)
             );
 

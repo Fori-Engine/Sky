@@ -1,5 +1,6 @@
 package engine.graphics;
 
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
@@ -9,6 +10,93 @@ import java.util.List;
 import java.util.Map;
 
 public class MeshGenerator {
+
+    public static MeshData newPlane(float width, float depth) {
+
+
+        float hw = width / 2.0f;
+        float hd = depth / 2.0f;
+
+        List<Float> verticesList = new ArrayList<>();
+        List<Float> colorsList = new ArrayList<>();
+        List<Float> normalsList = new ArrayList<>();
+        List<Float> textureUVsList = new ArrayList<>();
+        List<Integer> indicesList = new ArrayList<>();
+
+
+        Vector3f[] vertices = {
+                new Vector3f(-hw,  0,  hd),
+                new Vector3f( hw,  0,  hd),
+                new Vector3f( hw,  0, -hd),
+                new Vector3f(-hw,  0, -hd)
+        };
+
+        Vector2f[] textureUVs = {
+                new Vector2f(0.0f, 1.0f),
+                new Vector2f(1.0f, 1.0f),
+                new Vector2f(1.0f, 0.0f),
+                new Vector2f(0.0f, 0.0f),
+
+        };
+
+        float[][] colors = {
+                {1f, 1f, 1f, 1f}, // Rich red
+        };
+
+
+        float[] faceColors = colors[0];
+
+        Vector3f e0 = new Vector3f(vertices[1]).sub(vertices[0]);
+        Vector3f e1 = new Vector3f(vertices[2]).sub(vertices[0]);
+
+        Vector3f faceNormal = e0.cross(e1).normalize();
+
+        for (int vertexIndex = 0; vertexIndex < 4; vertexIndex++) {
+            Vector3f vertex = vertices[vertexIndex];
+            Vector2f uv =  textureUVs[vertexIndex];
+
+
+            // Position
+            verticesList.add(vertex.x);
+            verticesList.add(vertex.y);
+            verticesList.add(vertex.z);
+
+            // Color
+            colorsList.add(faceColors[0]);
+            colorsList.add(faceColors[1]);
+            colorsList.add(faceColors[2]);
+            colorsList.add(faceColors[3]);
+
+            //Normals
+            normalsList.add(faceNormal.x);
+            normalsList.add(faceNormal.y);
+            normalsList.add(faceNormal.z);
+
+            //UVs
+            textureUVsList.add(uv.x);
+            textureUVsList.add(uv.y);
+
+        }
+
+        // Indices for the face (2 triangles)
+        indicesList.add(0);
+        indicesList.add(1);
+        indicesList.add(2);
+        indicesList.add(2);
+        indicesList.add(3);
+        indicesList.add(0);
+
+        Map<String, List<Float>> vertexData = new HashMap<>();
+        vertexData.put("Positions", verticesList);
+        vertexData.put("Colors", colorsList);
+        vertexData.put("Normals", normalsList);
+        vertexData.put("TextureUVs", textureUVsList);
+
+        return new MeshData(vertexData, indicesList, 4);
+    }
+
+
+
     public static MeshData newBox(float width, float height, float depth) {
 
 

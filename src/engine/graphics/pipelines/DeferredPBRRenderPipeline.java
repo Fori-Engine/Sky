@@ -715,7 +715,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
 
                 composePass.resolveBarriers();
 
-                composePass.startRendering(renderer.getSwapchainRenderTarget(), 0, renderer.getWidth(), renderer.getHeight(), true, Color.LIGHT_GRAY);
+                composePass.startRendering(renderer.getSwapchainRenderTarget(), 0, renderer.getWidth(), renderer.getHeight(), true, Color.BLACK);
                 {
                     ComposeFeatures composeFeatures = getFeatures(ComposeFeatures.class);
 

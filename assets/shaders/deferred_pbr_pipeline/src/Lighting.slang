@@ -41,7 +41,6 @@ void computeMain(int3 dispatchID : SV_DispatchThreadID) {
         float4 lpFromShadowMap = inputShadowMaps[0].Sample(inputShadowMapsSamplers[0], shadowMapUV.xy);
         float4 wpFromShadowMap = mul(light.invView, lpFromShadowMap);
 
-
         if(wpFromShadowMap.z <= wpFromCamera.z - 0.005) {
             outputColor.xyz *= 0.1;
         }
@@ -52,13 +51,13 @@ void computeMain(int3 dispatchID : SV_DispatchThreadID) {
 
         float intensity = 0;
         {
-            float ambient = 0.1;
-            float diffuse = 0.20 * max(dot(lightDir, normal), 0.0);
+            float ambient = 0.01;
+            float diffuse = 0.05 * max(dot(lightDir, normal), 0.0);
 
             float3 cameraDir = normalize(cameraPos - wpFromCamera.xyz);
             float3 halfwayDir = normalize(lightDir + cameraDir);
 
-            float specular = 0.9 * pow(dot(halfwayDir, normal), 256);
+            float specular = 0.9 * pow(dot(halfwayDir, normal), 64);
             
             intensity = ambient + diffuse + specular;
         }
