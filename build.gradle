@@ -83,6 +83,9 @@ dependencies {
         implementation "dev.dominion.ecs:dominion-ecs-engine:$dominionVersion"
         implementation "de.fabmax:physx-jni:$physxVersion"
         implementation "org.joml:joml:$jomlVersion"
+        implementation "org.lwjgl:lwjgl-jawt"
+        implementation files("thirdparty/lwjgl3-awt-0.2.3.jar")
+
 
     }
 
