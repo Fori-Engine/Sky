@@ -1,19 +1,23 @@
 package engine.ecs;
 
 import engine.graphics.*;
+import engine.graphics.pipelines.SceneFeatures;
 
 public class RenderSystem extends EcsSystem {
     private Renderer renderer;
     private RenderPipeline renderPipeline;
+    private Scene scene;
 
-    public RenderSystem(Renderer renderer, RenderPipeline renderPipeline) {
+    public RenderSystem(Renderer renderer, RenderPipeline renderPipeline, Scene scene) {
         this.renderer = renderer;
         this.renderPipeline = renderPipeline;
+        this.scene = scene;
         renderPipeline.init(renderer);
     }
 
     @Override
     public void run() {
+        renderPipeline.getFeatures(SceneFeatures.class).setScene(scene);
         renderPipeline.render(renderer);
     }
 
