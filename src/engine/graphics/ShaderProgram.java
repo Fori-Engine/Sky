@@ -16,6 +16,7 @@ public abstract class ShaderProgram extends Disposable {
     protected TextureFormatType depthAttachmentTextureFormatType = TextureFormatType.Depth32;
     protected List<VertexAttribute> vertexAttributes = new ArrayList<>();
     protected int pushConstantsSizeBytes;
+    protected DepthTestType depthTestType = DepthTestType.LessThan;
 
 
     public ShaderProgram(Disposable parent){
@@ -35,6 +36,14 @@ public abstract class ShaderProgram extends Disposable {
 
     public List<VertexAttribute> getVertexAttributes() {
         return vertexAttributes;
+    }
+
+    public DepthTestType getDepthTestType() {
+        return depthTestType;
+    }
+
+    public void setDepthTestType(DepthTestType depthTestType) {
+        this.depthTestType = depthTestType;
     }
 
     public int getVertexAttributesSize() {

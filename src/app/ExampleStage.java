@@ -291,7 +291,7 @@ public class ExampleStage extends Stage {
             int quadIndex = 0;
 
             {
-                float x = surface.getMousePos().x, y = surface.getMousePos().y, w = 1920 / 2f, h = 1080 / 2f;
+                float x = 0, y = 0, w = 1920, h = 1080;
 
                 vertexBufferData.putFloat(x);
                 vertexBufferData.putFloat(y);
@@ -401,7 +401,7 @@ public class ExampleStage extends Stage {
             }
 
             {
-                float x = 1200, y = 600, w = 600, h = 600;
+                float x = 1200, y = 600, w = 300, h = 300;
 
                 vertexBufferData.putFloat(x);
                 vertexBufferData.putFloat(y);

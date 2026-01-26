@@ -196,6 +196,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
 
 
             composePassShaderProgram = ShaderProgram.newShaderProgram(renderer);
+            composePassShaderProgram.setDepthTestType(DepthTestType.Always);
             composePassShaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/Compose_vertex.spv"), ShaderType.VertexShader);
             composePassShaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/Compose_fragment.spv"), ShaderType.FragmentShader);
             composePassShaderProgram.assemble();

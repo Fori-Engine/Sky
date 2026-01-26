@@ -229,7 +229,7 @@ public class VulkanShaderProgram extends ShaderProgram {
                 depthStencil.sType(VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO);
                 depthStencil.depthTestEnable(true);
                 depthStencil.depthWriteEnable(true);
-                depthStencil.depthCompareOp(VulkanUtil.getVulkanDepthTestType(DepthTestType.LessThan));
+                depthStencil.depthCompareOp(VulkanUtil.getVulkanDepthTestType(depthTestType));
                 depthStencil.minDepthBounds(0f);
                 depthStencil.maxDepthBounds(1f);
 
