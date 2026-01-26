@@ -16,6 +16,7 @@ import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.AffineTransform;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
@@ -34,9 +35,18 @@ public class SwingSurface extends Surface {
 
     private JFrame frame;
     private Canvas canvas;
+    private boolean shouldClose;
+    private long startTime;
+    private int width, height;
+    private float mouseX, mouseY;
+    private float scaleX, scaleY;
 
     public SwingSurface(Disposable parent, String title, int width, int height, boolean resizable) {
         super(parent, title, width, height, resizable);
+        startTime = System.currentTimeMillis();
+        this.width = width;
+        this.height = height;
+
         try {
             SwingUtilities.invokeAndWait((Runnable) () -> {
                 frame = new JFrame(title);
@@ -46,14 +56,43 @@ public class SwingSurface extends Surface {
 
                 canvas = new Canvas();
 
+                GraphicsConfiguration gc =
+                        GraphicsEnvironment.getLocalGraphicsEnvironment()
+                                .getDefaultScreenDevice()
+                                .getDefaultConfiguration();
+
+                AffineTransform transform = gc.getDefaultTransform();
+
+                scaleX = (float) transform.getScaleX();
+                scaleY = (float) transform.getScaleY();
+
+                canvas.setPreferredSize(new Dimension((int) (width / scaleX), (int) (height / scaleY)));
+                frame.setSize((int) (width / scaleX), (int) (height / scaleY));
+
+                canvas.addMouseMotionListener(new MouseMotionAdapter() {
+                    @Override
+                    public void mouseMoved(MouseEvent e) {
+                        mouseX = e.getX();
+                        mouseY = e.getY();
+                    }
+                });
 
                 JPanel panel = new JPanel(new BorderLayout());
                 panel.add(canvas, BorderLayout.CENTER);
-                panel.setBorder(BorderFactory.createTitledBorder("Scene"));
 
                 frame.setContentPane(panel);
                 frame.pack();
-                frame.setSize(width, height);
+
+                frame.addWindowListener(new  WindowAdapter() {
+                    @Override
+                    public void windowClosing(WindowEvent e) {
+                        shouldClose = true;
+                    }
+                });
+
+
+
+
 
 
             });
@@ -106,7 +145,8 @@ public class SwingSurface extends Surface {
 
     @Override
     public Vector2f getMousePos() {
-        return new Vector2f(0, 0);
+        System.out.println(mouseX + " " + mouseY);
+        return new Vector2f(mouseX, mouseY);
     }
 
     @Override
@@ -277,7 +317,7 @@ public class SwingSurface extends Surface {
 
     @Override
     public double getTime() {
-        return 0;
+        return (System.currentTimeMillis() - startTime) / 1000f;
     }
 
     @Override
@@ -291,13 +331,18 @@ public class SwingSurface extends Surface {
 
     @Override
     public boolean update() {
+        if(width != canvas.getWidth() || height != canvas.getHeight()) {
+            width = canvas.getWidth();
+            height = canvas.getHeight();
+            return true;
+        }
+
         return false;
     }
 
-    private Boolean shouldClose = false;
     @Override
     public boolean shouldClose() {
-
+        if(shouldClose) System.out.println("Closing!");
         return shouldClose;
     }
 
