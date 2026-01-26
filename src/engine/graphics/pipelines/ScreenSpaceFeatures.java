@@ -2,11 +2,12 @@ package engine.graphics.pipelines;
 
 import engine.graphics.Buffer;
 
-public class ComposeFeatures extends Features {
+public class ScreenSpaceFeatures extends Features {
     private Buffer vertexBuffer;
     private Buffer indexBuffer;
+    private int indexCount;
 
-    protected ComposeFeatures(boolean mandatory) {
+    protected ScreenSpaceFeatures(boolean mandatory) {
         super(mandatory);
     }
 
@@ -14,7 +15,7 @@ public class ComposeFeatures extends Features {
         return vertexBuffer;
     }
 
-    public void setVertexBuffer(Buffer vertexBuffer) {
+    protected void setVertexBuffer(Buffer vertexBuffer) {
         this.vertexBuffer = vertexBuffer;
     }
 
@@ -22,7 +23,15 @@ public class ComposeFeatures extends Features {
         return indexBuffer;
     }
 
-    public void setIndexBuffer(Buffer indexBuffer) {
+    protected void setIndexBuffer(Buffer indexBuffer) {
         this.indexBuffer = indexBuffer;
+    }
+
+    public int getIndexCount() {
+        return indexCount;
+    }
+
+    public void setIndexCount(int indexCount) {
+        this.indexCount = indexCount;
     }
 }

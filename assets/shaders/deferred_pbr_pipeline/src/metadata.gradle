@@ -2,5 +2,5 @@ ext.shaders = [
         'Default': ['vertex', 'fragment'],
         'Default2': ['vertex', 'fragment'],
         'Lighting': ['compute'],
-        'Compose': ['vertex', 'fragment'],
+        'Display': ['vertex', 'fragment'],
 ]

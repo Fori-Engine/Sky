@@ -8,7 +8,7 @@ import engine.asset.AssetRegistry;
 import engine.graphics.*;
 
 import engine.ecs.*;
-import engine.graphics.pipelines.ComposeFeatures;
+import engine.graphics.pipelines.ScreenSpaceFeatures;
 import engine.graphics.pipelines.DeferredPBRRenderPipeline;
 import engine.graphics.pipelines.SceneFeatures;
 import engine.physx.ActorType;
@@ -282,10 +282,10 @@ public class ExampleStage extends Stage {
 
         //UI Rendering
         {
-            ComposeFeatures composeFeatures = renderPipeline.getFeatures(ComposeFeatures.class);
-            ByteBuffer vertexBufferData = composeFeatures.getVertexBuffer().get();
+            ScreenSpaceFeatures screenSpaceFeatures = renderPipeline.getFeatures(ScreenSpaceFeatures.class);
+            ByteBuffer vertexBufferData = screenSpaceFeatures.getVertexBuffer().get();
             vertexBufferData.clear();
-            ByteBuffer indexBufferData = composeFeatures.getIndexBuffer().get();
+            ByteBuffer indexBufferData = screenSpaceFeatures.getIndexBuffer().get();
             indexBufferData.clear();
 
             int quadIndex = 0;
@@ -454,6 +454,8 @@ public class ExampleStage extends Stage {
                 indexBufferData.putInt(0 + (4 * quadIndex));
                 quadIndex++;
             }
+
+            screenSpaceFeatures.setIndexCount(18);
         }
 
         renderer.updateRenderer(surface.update());

@@ -39,14 +39,14 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
     private Buffer[] lightingPassSceneDescBuffers;
 
 
-    private GraphicsPass composePass;
-    private RenderTarget composePassRT;
-    private Resource<Texture[]> composeColorTextures;
+    private GraphicsPass displayPass;
+    private RenderTarget displayPassRT;
+    private Resource<Texture[]> displayPassColorTextures;
 
-    private ShaderProgram composePassShaderProgram;
-    private Camera composePassCamera;
-    private Buffer composePassVertexBuffer, composePassIndexBuffer;
-    private Buffer[] composePassCameraBuffers;
+    private ShaderProgram displayPassShaderProgram;
+    private Camera displayPassCamera;
+    private Buffer displayPassVertexBuffer, displayPassIndexBuffer;
+    private Buffer[] displayPassCameraBuffers;
 
     private int lightCount = 0;
     private final int COMPUTE_THREAD_GROUP_SIZE = 32;
@@ -62,7 +62,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
         {
             supportedFeatures = List.of(
                     new SceneFeatures(true),
-                    new ComposeFeatures(false)
+                    new ScreenSpaceFeatures(false)
             );
         }
 
@@ -181,34 +181,34 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
 
         }
 
-        //Swapchain Pass Resources
+        //Display Pass Resources
         {
-            composePassRT = renderer.getSwapchainRenderTarget();
-            composeColorTextures = new Resource<>(
-                    composePassRT.getAttachment(RenderTargetAttachmentTypes.Color).getTextures()
+            displayPassRT = renderer.getSwapchainRenderTarget();
+            displayPassColorTextures = new Resource<>(
+                    displayPassRT.getAttachment(RenderTargetAttachmentTypes.Color).getTextures()
             );
 
-            composePassCamera = new Camera(
+            displayPassCamera = new Camera(
                     new Matrix4f().identity(),
                     new Matrix4f().ortho(0, renderer.getWidth(), 0, renderer.getHeight(), 0, 1, true),
                     false
             );
 
 
-            composePassShaderProgram = ShaderProgram.newShaderProgram(renderer);
-            composePassShaderProgram.setDepthTestType(DepthTestType.Always);
-            composePassShaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/Compose_vertex.spv"), ShaderType.VertexShader);
-            composePassShaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/Compose_fragment.spv"), ShaderType.FragmentShader);
-            composePassShaderProgram.assemble();
+            displayPassShaderProgram = ShaderProgram.newShaderProgram(renderer);
+            displayPassShaderProgram.setDepthTestType(DepthTestType.Always);
+            displayPassShaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/Display_vertex.spv"), ShaderType.VertexShader);
+            displayPassShaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/Display_fragment.spv"), ShaderType.FragmentShader);
+            displayPassShaderProgram.assemble();
 
-            composePassVertexBuffer = Buffer.newBuffer(
+            displayPassVertexBuffer = Buffer.newBuffer(
                     renderer,
-                    composePassShaderProgram.getVertexAttributesSize() * Float.BYTES * 12,
+                    displayPassShaderProgram.getVertexAttributesSize() * Float.BYTES * 12,
                     Buffer.Usage.VertexBuffer,
                     Buffer.Type.CPUGPUShared,
                     false
             );
-            composePassIndexBuffer = Buffer.newBuffer(
+            displayPassIndexBuffer = Buffer.newBuffer(
                     renderer,
                     18 * Integer.BYTES,
                     Buffer.Usage.IndexBuffer,
@@ -216,11 +216,11 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
                     false
             );
 
-            composePassCameraBuffers = new Buffer[renderer.getMaxFramesInFlight()];
+            displayPassCameraBuffers = new Buffer[renderer.getMaxFramesInFlight()];
             for (int i = 0; i < renderer.getMaxFramesInFlight(); i++) {
-                composePassCameraBuffers[i] = Buffer.newBuffer(
+                displayPassCameraBuffers[i] = Buffer.newBuffer(
                         renderer,
-                        composePassShaderProgram.getDescriptorByName("camera").getSizeBytes(),
+                        displayPassShaderProgram.getDescriptorByName("camera").getSizeBytes(),
                         Buffer.Usage.UniformBuffer,
                         Buffer.Type.CPUGPUShared,
                         false
@@ -229,20 +229,20 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
 
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
 
-                ByteBuffer swapchainPassCameraBufferData = composePassCameraBuffers[frameIndex].get();
+                ByteBuffer swapchainPassCameraBufferData = displayPassCameraBuffers[frameIndex].get();
 
-                composePassCamera.getProj().get(0, swapchainPassCameraBufferData);
-                composePassShaderProgram.setBuffers(
+                displayPassCamera.getProj().get(0, swapchainPassCameraBufferData);
+                displayPassShaderProgram.setBuffers(
                         frameIndex,
-                        new DescriptorUpdate<>("camera", composePassCameraBuffers[frameIndex])
+                        new DescriptorUpdate<>("camera", displayPassCameraBuffers[frameIndex])
                 );
             }
 
-            composePassVertexBuffer.get().clear();
-            composePassIndexBuffer.get().clear();
-            ComposeFeatures composeFeatures = getFeatures(ComposeFeatures.class);
-            composeFeatures.setVertexBuffer(composePassVertexBuffer);
-            composeFeatures.setIndexBuffer(composePassIndexBuffer);
+            displayPassVertexBuffer.get().clear();
+            displayPassIndexBuffer.get().clear();
+            ScreenSpaceFeatures screenSpaceFeatures = getFeatures(ScreenSpaceFeatures.class);
+            screenSpaceFeatures.setVertexBuffer(displayPassVertexBuffer);
+            screenSpaceFeatures.setIndexBuffer(displayPassIndexBuffer);
 
 
 
@@ -315,9 +315,9 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
                     )
             );
         }
-        composePass = Pass.newGraphicsPass(renderGraph, "Compose", renderer.getMaxFramesInFlight());
+        displayPass = Pass.newGraphicsPass(renderGraph, "Compose", renderer.getMaxFramesInFlight());
         {
-            composePass.addDependencies(
+            displayPass.addDependencies(
 
                     new Dependency(
                             "InputColorTextures",
@@ -326,12 +326,12 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
                     ),
                     new Dependency(
                             "SwapchainColorTextures",
-                            composeColorTextures,
+                            displayPassColorTextures,
                             DependencyTypes.RenderTargetWrite
                     ),
                     new Dependency(
                             "SwapchainColorTexturesPresent",
-                            composeColorTextures,
+                            displayPassColorTextures,
                             DependencyTypes.Present
                     )
             );
@@ -341,7 +341,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
                 shadowMapGenPass,
                 scenePass,
                 lightingPass,
-                composePass
+                displayPass
         );
     }
 
@@ -377,18 +377,18 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
 
 
 
-        if(composePassRT != renderer.getSwapchainRenderTarget()) {
-            composePassRT = renderer.getSwapchainRenderTarget();
-            RenderTargetAttachment colorAttachment = composePassRT.getAttachment(RenderTargetAttachmentTypes.Color);
-            composeColorTextures = new Resource<>(colorAttachment.getTextures());
+        if(displayPassRT != renderer.getSwapchainRenderTarget()) {
+            displayPassRT = renderer.getSwapchainRenderTarget();
+            RenderTargetAttachment colorAttachment = displayPassRT.getAttachment(RenderTargetAttachmentTypes.Color);
+            displayPassColorTextures = new Resource<>(colorAttachment.getTextures());
 
-            composePass.getDependency(
+            displayPass.getDependency(
                     "SwapchainColorTextures"
-            ).setDependency(composeColorTextures);
+            ).setDependency(displayPassColorTextures);
 
-            composePass.getDependency(
+            displayPass.getDependency(
                     "SwapchainColorTexturesPresent"
-            ).setDependency(composeColorTextures);
+            ).setDependency(displayPassColorTextures);
 
         }
 
@@ -693,49 +693,49 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
 
 
 
-        composePass.setPassExecuteCallback(() -> {
+        displayPass.setPassExecuteCallback(() -> {
 
-            Resource<Pair<Texture[], Sampler[]>> inputTexturesResource = composePass.getDependency("InputColorTextures").getResource();
+            Resource<Pair<Texture[], Sampler[]>> inputTexturesResource = displayPass.getDependency("InputColorTextures").getResource();
 
-            composePassShaderProgram.setTextures(
+            displayPassShaderProgram.setTextures(
                     renderer.getFrameIndex(),
                     new DescriptorUpdate<>(
                             "inputColorTexture",
                             inputTexturesResource.get().key[renderer.getFrameIndex()])
             );
 
-            composePassShaderProgram.setSamplers(
+            displayPassShaderProgram.setSamplers(
                     renderer.getFrameIndex(),
                     new DescriptorUpdate<>(
                             "inputColorTextureSampler",
                             inputTexturesResource.get().value[renderer.getFrameIndex()])
             );
 
-            composePass.startRecording(renderer.getFrameIndex());
+            displayPass.startRecording(renderer.getFrameIndex());
             {
 
-                composePass.resolveBarriers();
+                displayPass.resolveBarriers();
 
-                composePass.startRendering(renderer.getSwapchainRenderTarget(), 0, renderer.getWidth(), renderer.getHeight(), true, Color.BLACK);
+                displayPass.startRendering(renderer.getSwapchainRenderTarget(), 0, renderer.getWidth(), renderer.getHeight(), true, Color.BLACK);
                 {
-                    ComposeFeatures composeFeatures = getFeatures(ComposeFeatures.class);
+                    ScreenSpaceFeatures screenSpaceFeatures = getFeatures(ScreenSpaceFeatures.class);
 
 
 
-                    composePass.setDrawBuffers(composePassVertexBuffer, composePassIndexBuffer);
-                    composePass.setShaderProgram(composePassShaderProgram);
-                    composePass.drawIndexed(18);
+                    displayPass.setDrawBuffers(displayPassVertexBuffer, displayPassIndexBuffer);
+                    displayPass.setShaderProgram(displayPassShaderProgram);
+                    displayPass.drawIndexed(screenSpaceFeatures.getIndexCount());
                 }
-                composePass.endRendering();
+                displayPass.endRendering();
 
 
 
             }
-            composePass.endRecording();
+            displayPass.endRecording();
         });
 
 
-        renderGraph.setTargetPass(composePass);
+        renderGraph.setTargetPass(displayPass);
         renderer.render(renderGraph);
     }
 }
