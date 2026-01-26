@@ -8,6 +8,7 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWVulkan;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
 import org.lwjgl.vulkan.awt.AWTVK;
 
@@ -35,11 +36,12 @@ public class SwingSurface extends Surface {
 
     private JFrame frame;
     private Canvas canvas;
-    private boolean shouldClose;
+    private volatile boolean shouldClose;
     private long startTime;
-    private int width, height;
-    private float mouseX, mouseY;
-    private float scaleX, scaleY;
+    private volatile int width, height;
+    private volatile float mouseX, mouseY;
+    private volatile float scaleX, scaleY;
+    private volatile boolean shouldResize;
 
     public SwingSurface(Disposable parent, String title, int width, int height, boolean resizable) {
         super(parent, title, width, height, resizable);
@@ -66,14 +68,18 @@ public class SwingSurface extends Surface {
                 scaleX = (float) transform.getScaleX();
                 scaleY = (float) transform.getScaleY();
 
-                canvas.setPreferredSize(new Dimension((int) (width / scaleX), (int) (height / scaleY)));
-                frame.setSize((int) (width / scaleX), (int) (height / scaleY));
+                canvas.setPreferredSize(new Dimension((int) (this.width / scaleX), (int) (this.height / scaleY)));
+                frame.setSize((int) (this.width / scaleX), (int) (this.height / scaleY));
 
                 canvas.addMouseMotionListener(new MouseMotionAdapter() {
                     @Override
                     public void mouseMoved(MouseEvent e) {
-                        mouseX = e.getX();
-                        mouseY = e.getY();
+                        Point mousePosScr = MouseInfo.getPointerInfo().getLocation();
+                        Point canvasPosScr = canvas.getLocationOnScreen();
+
+                        mouseX = mousePosScr.x - canvasPosScr.x;
+                        mouseY = mousePosScr.y - canvasPosScr.y;
+
                     }
                 });
 
@@ -83,10 +89,22 @@ public class SwingSurface extends Surface {
                 frame.setContentPane(panel);
                 frame.pack();
 
-                frame.addWindowListener(new  WindowAdapter() {
+                frame.addWindowListener(new WindowAdapter() {
                     @Override
                     public void windowClosing(WindowEvent e) {
                         shouldClose = true;
+                    }
+                });
+
+                canvas.addComponentListener(new ComponentAdapter() {
+                    @Override
+                    public void componentResized(ComponentEvent e) {
+                        if(SwingSurface.this.width != canvas.getWidth() || SwingSurface.this.height != canvas.getHeight()) {
+                            SwingSurface.this.width = canvas.getWidth();
+                            SwingSurface.this.height = canvas.getHeight();
+
+                            shouldResize = true;
+                        }
                     }
                 });
 
@@ -331,9 +349,8 @@ public class SwingSurface extends Surface {
 
     @Override
     public boolean update() {
-        if(width != canvas.getWidth() || height != canvas.getHeight()) {
-            width = canvas.getWidth();
-            height = canvas.getHeight();
+        if(shouldResize) {
+            shouldResize = false;
             return true;
         }
 
@@ -342,7 +359,6 @@ public class SwingSurface extends Surface {
 
     @Override
     public boolean shouldClose() {
-        if(shouldClose) System.out.println("Closing!");
         return shouldClose;
     }
 
