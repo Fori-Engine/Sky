@@ -29,6 +29,8 @@ public class Launcher {
         while(true){
             boolean success = stage.update();
 
+
+
             if(!success) break;
         }
 

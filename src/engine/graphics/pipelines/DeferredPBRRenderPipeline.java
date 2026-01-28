@@ -49,7 +49,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
     private Buffer[] displayPassCameraBuffers;
 
     private int lightCount = 0;
-    private final int COMPUTE_THREAD_GROUP_SIZE = 32;
+    private final int COMPUTE_THREAD_GROUP_SIZE = 16;
 
 
 
@@ -357,7 +357,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
 
         int lightIndex = 0;
 
-        for(Iterator<Results.With1<LightComponent>> iterator = scene.getEngine().findEntitiesWith(LightComponent.class).stream().iterator(); iterator.hasNext();){
+        for(Iterator<Results.With1<LightComponent>> iterator = scene.getEngine().findEntitiesWith(LightComponent.class).iterator(); iterator.hasNext();){
             LightComponent lightComponent = iterator.next().comp();
 
             lightComponent.view.get(offset + ((4 * lightIndex) * SizeUtil.MATRIX_SIZE_BYTES), sceneDescData);
@@ -392,7 +392,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
 
         }
 
-        scene.getEngine().findEntitiesWith(CameraComponent.class).stream().forEach(components1 -> {
+        scene.getEngine().findEntitiesWith(CameraComponent.class).forEach(components1 -> {
             CameraComponent cameraComponent = components1.comp();
             sceneCamera = cameraComponent.camera();
         });
@@ -408,8 +408,8 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
             Sampler[] shadowMapSamplers = new Sampler[shadowMapTextures.length];
 
             int lightIndex = 0;
-            for (Iterator<Results.With1<LightComponent>> iterator = scene.getEngine().findEntitiesWith(LightComponent.class).stream().iterator(); iterator.hasNext(); ) {
-                LightComponent lightComponent = iterator.next().comp();
+            for (Results.With1<LightComponent> lightComponentWith1 : scene.getEngine().findEntitiesWith(LightComponent.class)) {
+                LightComponent lightComponent = lightComponentWith1.comp();
 
                 int i1 = renderer.getMaxFramesInFlight() * lightIndex;
                 int i2 = renderer.getMaxFramesInFlight() * lightIndex + 1;
@@ -448,7 +448,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
         {
             //Update entity shaders
             {
-                scene.getEngine().findEntitiesWith(TransformComponent.class, EnvironmentMeshComponent.class).stream().forEach(components -> {
+                scene.getEngine().findEntitiesWith(TransformComponent.class, EnvironmentMeshComponent.class).forEach(components -> {
 
                     TransformComponent transformComponent = components.comp1();
                     EnvironmentMeshComponent environmentMeshComponent = components.comp2();
@@ -458,7 +458,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
                     ByteBuffer sceneDescData = environmentMeshComponent.sceneDescBuffers[renderer.getFrameIndex()].get();
                     updateSceneDesc(sceneDescData, sceneCamera, scene);
                 });
-                scene.getEngine().findEntitiesWith(TransformComponent.class, ActorMeshComponent.class).stream().forEach(components -> {
+                scene.getEngine().findEntitiesWith(TransformComponent.class, ActorMeshComponent.class).forEach(components -> {
                     TransformComponent transformComponent = components.comp1();
                     ActorMeshComponent actorMeshComponent = components.comp2();
 
@@ -490,7 +490,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
 
 
 
-                    scene.getEngine().findEntitiesWith(LightComponent.class).stream().forEach(lightEntity -> {
+                    scene.getEngine().findEntitiesWith(LightComponent.class).forEach(lightEntity -> {
 
                         LightComponent lightComponent = lightEntity.comp();
 
@@ -509,7 +509,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
 
 
 
-                            scene.getEngine().findEntitiesWith(TransformComponent.class, EnvironmentMeshComponent.class).stream().forEach(components -> {
+                            scene.getEngine().findEntitiesWith(TransformComponent.class, EnvironmentMeshComponent.class).forEach(components -> {
 
                                 EnvironmentMeshComponent environmentMeshComponent = components.comp2();
                                 shadowMapGenPass.setDrawBuffers(
@@ -527,7 +527,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
                                 }
                                 shadowMapGenPass.drawIndexed(environmentMeshComponent.indexCount);
                             });
-                            scene.getEngine().findEntitiesWith(TransformComponent.class, ActorMeshComponent.class).stream().forEach(components -> {
+                            scene.getEngine().findEntitiesWith(TransformComponent.class, ActorMeshComponent.class).forEach(components -> {
                                 ActorMeshComponent actorMeshComponent = components.comp2();
 
                                 shadowMapGenPass.setDrawBuffers(
@@ -568,7 +568,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
 
                     scenePass.startRendering(scenePassRT, 0, renderer.getWidth(), renderer.getHeight(), true, Color.LIGHT_GRAY);
                     {
-                        scene.getEngine().findEntitiesWith(TransformComponent.class, EnvironmentMeshComponent.class).stream().forEach(components -> {
+                        scene.getEngine().findEntitiesWith(TransformComponent.class, EnvironmentMeshComponent.class).forEach(components -> {
                             EnvironmentMeshComponent environmentMeshComponent = components.comp2();
 
                             scenePass.setDrawBuffers(
@@ -586,7 +586,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
                             }
                             scenePass.drawIndexed(environmentMeshComponent.indexCount);
                         });
-                        scene.getEngine().findEntitiesWith(TransformComponent.class, ActorMeshComponent.class).stream().forEach(components -> {
+                        scene.getEngine().findEntitiesWith(TransformComponent.class, ActorMeshComponent.class).forEach(components -> {
 
                             ActorMeshComponent actorMeshComponent = components.comp2();
                             scenePass.setDrawBuffers(
@@ -611,6 +611,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
 
             }
             scenePass.endRecording();
+
         });
 
 
@@ -733,6 +734,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
             }
             displayPass.endRecording();
         });
+
 
 
         renderGraph.setTargetPass(displayPass);

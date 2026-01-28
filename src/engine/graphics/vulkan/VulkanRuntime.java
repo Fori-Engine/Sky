@@ -8,6 +8,7 @@ public class VulkanRuntime {
     private static VkPhysicalDevice currentPhysicalDevice;
     private static int graphicsFamilyIndex;
     private static VkQueue graphicsQueue;
+    private static VkQueue computeQueue;
     private static VkPhysicalDeviceProperties physicalDeviceProperties;
 
     private VulkanRuntime(){}
@@ -44,6 +45,13 @@ public class VulkanRuntime {
         VulkanRuntime.graphicsQueue = graphicsQueue;
     }
 
+    public static VkQueue getComputeQueue() {
+        return computeQueue;
+    }
+    public static void setComputeQueue(VkQueue computeQueue) {
+        VulkanRuntime.computeQueue = computeQueue;
+    }
+
     public static VkPhysicalDeviceProperties getPhysicalDeviceProperties() {
         return physicalDeviceProperties;
     }
@@ -51,4 +59,5 @@ public class VulkanRuntime {
     public static void setPhysicalDeviceProperties(VkPhysicalDeviceProperties physicalDeviceProperties) {
         VulkanRuntime.physicalDeviceProperties = physicalDeviceProperties;
     }
+
 }

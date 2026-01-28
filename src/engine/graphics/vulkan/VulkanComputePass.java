@@ -22,7 +22,7 @@ public class VulkanComputePass extends ComputePass {
     public VulkanComputePass(Disposable parent, String name, int framesInFlight) {
         super(parent, name, framesInFlight);
 
-        computeQueue = VulkanRuntime.getGraphicsQueue();
+        computeQueue = VulkanRuntime.getComputeQueue();
         device = VulkanRuntime.getCurrentDevice();
 
         //TODO(Shayan) This should use the compute family index!

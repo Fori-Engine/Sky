@@ -10,7 +10,7 @@ Texture2D inputNormalTexture;
 Texture2D inputShadowMaps[1];
 SamplerState inputShadowMapsSamplers[1];
 
-[numthreads(32, 32, 1)]
+[numthreads(16, 16, 1)]
 void computeMain(int3 dispatchID : SV_DispatchThreadID) {
 
     int3 textureXY = int3(dispatchID.x, dispatchID.y, 0);
