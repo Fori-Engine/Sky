@@ -32,6 +32,7 @@ public class VulkanShaderProgram extends ShaderProgram {
     private List<Long> shaderModuleHandles = new ArrayList<>();
     private VulkanPipeline pipeline;
     private long context;
+    private SpvcErrorCallback spvcErrorCallback;
 
 
     public VulkanShaderProgram(Disposable parent) {
@@ -41,13 +42,17 @@ public class VulkanShaderProgram extends ShaderProgram {
             PointerBuffer pContext = stack.callocPointer(1);
             spvc_context_create(pContext);
             context = pContext.get(0);
-            spvc_context_set_error_callback(context, new SpvcErrorCallback() {
+
+
+            spvcErrorCallback = new SpvcErrorCallback() {
                 @Override
                 public void invoke(long l, long l1) {
                     String str = spvc_context_get_last_error_string(context);
                     Logger.error(VulkanShaderProgram.class, str);
                 }
-            }, 0);
+            };
+            spvc_context_set_error_callback(context, spvcErrorCallback, 0);
+
 
         }
     }
@@ -884,6 +889,7 @@ public class VulkanShaderProgram extends ShaderProgram {
             vkDestroyDescriptorPool(VulkanRuntime.getCurrentDevice(), descriptorPoolHandle, null);
 
         spvc_context_destroy(context);
+        spvcErrorCallback.free();
     }
 
 }
