@@ -45,6 +45,7 @@ public class SwingSurface extends Surface {
 
     public SwingSurface(Disposable parent, String title, int width, int height, boolean resizable) {
         super(parent, title, width, height, resizable);
+        Logger.info(SwingSurface.class, "SwingSurface is experimental and may have performance issues");
         startTime = System.currentTimeMillis();
         this.width = width;
         this.height = height;
@@ -83,8 +84,21 @@ public class SwingSurface extends Surface {
                     }
                 });
 
+
+
                 JPanel panel = new JPanel(new BorderLayout());
                 panel.add(canvas, BorderLayout.CENTER);
+                panel.add(new JButton("Foo"), BorderLayout.NORTH);
+
+
+
+
+
+
+
+
+
+
 
                 frame.setContentPane(panel);
                 frame.pack();
