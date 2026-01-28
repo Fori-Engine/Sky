@@ -25,11 +25,16 @@ public class Logger {
 
 
     public static void setFileTarget(File file){
+        setConsoleTarget(System.out);
+        info(Logger.class, "The log file can be found at " + file.getAbsolutePath());
+
+
+
         target = LogTarget.File;
         try {
             writer = new PrintWriter(new FileOutputStream(file));
         } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
+            throw new SkyRuntimeException(e);
         }
     }
 

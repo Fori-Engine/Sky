@@ -1,6 +1,7 @@
 package engine.graphics.vulkan;
 
 import engine.Logger;
+import engine.SkyRuntimeException;
 import engine.graphics.*;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
@@ -50,7 +51,7 @@ public class VulkanUtil {
             }
         }
 
-        throw new RuntimeException(Logger.error(VulkanRenderer.class, "The depth operation for this pipeline is an invalid value [" + depthTestType + "]"));
+        throw new SkyRuntimeException("The depth operation for this pipeline is an invalid value [" + depthTestType + "]");
     }
 
     public static void transitionImages(VulkanImage image,

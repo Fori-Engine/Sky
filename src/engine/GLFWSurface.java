@@ -49,7 +49,7 @@ public class GLFWSurface extends Surface {
 
 
         if (!glfwInit()) {
-            throw new RuntimeException(Logger.error(GLFWSurface.class, "Failed to initialize GLFW"));
+            throw new SkyRuntimeException("Failed to initialize GLFW");
         }
 
         errorCallback = GLFWErrorCallback.createPrint(System.err);
@@ -94,7 +94,7 @@ public class GLFWSurface extends Surface {
 
                 for(String validationLayerName : validationLayers){
                     if(!availableLayerNames.contains(validationLayerName)){
-                        throw new RuntimeException("Validation Layer " + validationLayerName + " is not available");
+                        throw new SkyRuntimeException("Validation Layer " + validationLayerName + " is not available");
                     }
                     else {
                         Logger.info(VulkanRenderer.class, validationLayerName);
@@ -185,7 +185,7 @@ public class GLFWSurface extends Surface {
             PointerBuffer instancePtr = stack.mallocPointer(1);
 
             if (vkCreateInstance(instanceCreateInfo, null, instancePtr) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create instance");
+                throw new SkyRuntimeException("Failed to create instance");
             }
 
             instance = new VkInstance(instancePtr.get(0), instanceCreateInfo);
@@ -203,7 +203,7 @@ public class GLFWSurface extends Surface {
                 }
 
                 if (result != VK_SUCCESS)
-                    throw new RuntimeException("Failed to create the debug messenger as the extension is not present");
+                    throw new SkyRuntimeException("Failed to create the debug messenger as the extension is not present");
 
                 vkDebugMessenger = pDebugMessenger.get(0);
 
@@ -234,7 +234,7 @@ public class GLFWSurface extends Surface {
     @Override
     public void display() {
         if (handle == NULL)
-            throw new RuntimeException(Logger.error(GLFWSurface.class, "Failed to create GLFW window"));
+            throw new SkyRuntimeException("Failed to create GLFW window");
         glfwShowWindow(handle);
 
     }

@@ -2,6 +2,7 @@ package engine.graphics;
 
 import engine.Internal;
 import engine.Logger;
+import engine.SkyRuntimeException;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -28,7 +29,7 @@ public abstract class Disposable {
     public void add(Disposable child){
 
         if(child == this) {
-            throw new RuntimeException(Logger.error(Disposable.class, "Adding a Disposable to it's own child list is not allowed"));
+            throw new SkyRuntimeException("A Disposable cannot be a child of itself");
         }
         child.parent = this;
         children.add(child);

@@ -2,6 +2,7 @@ package engine.graphics.vulkan;
 
 import engine.Logger;
 import engine.Pair;
+import engine.SkyRuntimeException;
 import engine.Surface;
 import engine.graphics.*;
 import org.lwjgl.PointerBuffer;
@@ -189,7 +190,7 @@ public class VulkanRenderer extends Renderer {
             vkEnumeratePhysicalDevices(instance, physicalDevicesCount, null);
 
             if(physicalDevicesCount.get(0) == 0) {
-                throw new RuntimeException("No GPUs on the host support Vulkan");
+                throw new SkyRuntimeException("No GPUs on the host support Vulkan");
             }
             PointerBuffer ppPhysicalDevices = stack.mallocPointer(physicalDevicesCount.get(0));
             vkEnumeratePhysicalDevices(instance, physicalDevicesCount, ppPhysicalDevices);
@@ -274,7 +275,7 @@ public class VulkanRenderer extends Renderer {
 
             }
 
-            throw new RuntimeException("No GPU was selected");
+            throw new SkyRuntimeException("No GPU was selected");
         }
     }
     private VkPhysicalDeviceProperties getPhysicalDeviceProperties(VkPhysicalDevice physicalDevice){
@@ -372,7 +373,7 @@ public class VulkanRenderer extends Renderer {
             PointerBuffer pDevice = stack.pointers(VK_NULL_HANDLE);
 
             if(vkCreateDevice(physicalDevice, createInfo, null, pDevice) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create logical device");
+                throw new SkyRuntimeException("Failed to create logical device");
             }
 
             device = new VkDevice(pDevice.get(0), physicalDevice, createInfo);
@@ -430,11 +431,11 @@ public class VulkanRenderer extends Renderer {
 
         if(vsync) {
             if(isPresentModeAvailable.apply(VK_PRESENT_MODE_FIFO_KHR)) return VK_PRESENT_MODE_FIFO_KHR;
-            else throw new RuntimeException("Vsync was requested but VK_PRESENT_MODE_FIFO_KHR is not available as a present mode");
+            else throw new SkyRuntimeException("Vsync was requested but VK_PRESENT_MODE_FIFO_KHR is not available as a present mode");
         }
         else {
             if(isPresentModeAvailable.apply(VK_PRESENT_MODE_IMMEDIATE_KHR)) return VK_PRESENT_MODE_IMMEDIATE_KHR;
-            else throw new RuntimeException("Vsync was requested to be disabled but VK_PRESENT_MODE_IMMEDIATE_KHR is not available as a present mode");
+            else throw new SkyRuntimeException("Vsync was requested to be disabled but VK_PRESENT_MODE_IMMEDIATE_KHR is not available as a present mode");
         }
 
     }

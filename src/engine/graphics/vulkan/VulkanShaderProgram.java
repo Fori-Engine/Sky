@@ -2,6 +2,7 @@ package engine.graphics.vulkan;
 
 import engine.Logger;
 import engine.Pair;
+import engine.SkyRuntimeException;
 import engine.asset.Asset;
 import engine.graphics.*;
 import org.lwjgl.PointerBuffer;
@@ -81,7 +82,7 @@ public class VulkanShaderProgram extends ShaderProgram {
 
             LongBuffer pPipelineLayout = stack.longs(VK_NULL_HANDLE);
             if(vkCreatePipelineLayout(device, pipelineLayoutInfo, null, pPipelineLayout) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create pipeline layout");
+                throw new SkyRuntimeException("Failed to create pipeline layout");
             }
             pipelineLayoutHandle = pPipelineLayout.get(0);
 
@@ -98,7 +99,7 @@ public class VulkanShaderProgram extends ShaderProgram {
 
 
             if(vkCreateComputePipelines(device, VK_NULL_HANDLE, pipelineInfo, null, pComputePipeline) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create compute pipeline");
+                throw new SkyRuntimeException("Failed to create compute pipeline");
             }
 
 
@@ -267,7 +268,7 @@ public class VulkanShaderProgram extends ShaderProgram {
             LongBuffer pPipelineLayout = stack.longs(VK_NULL_HANDLE);
 
             if(vkCreatePipelineLayout(device, pipelineLayoutInfo, null, pPipelineLayout) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create pipeline layout");
+                throw new SkyRuntimeException("Failed to create pipeline layout");
             }
 
             pipelineLayoutHandle = pPipelineLayout.get(0);
@@ -307,7 +308,7 @@ public class VulkanShaderProgram extends ShaderProgram {
 
 
             if(vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, pipelineInfo, null, pGraphicsPipeline) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create graphics pipeline");
+                throw new SkyRuntimeException("Failed to create graphics pipeline");
             }
 
 
@@ -567,7 +568,7 @@ public class VulkanShaderProgram extends ShaderProgram {
                 for (int i = 0; i < VulkanRenderer.FRAMES_IN_FLIGHT; i++) {
                     LongBuffer pDescriptorPool = stack.callocLong(1);
                     if (vkCreateDescriptorPool(VulkanRuntime.getCurrentDevice(), descriptorPoolCreateInfo, null, pDescriptorPool) != VK_SUCCESS) {
-                        throw new RuntimeException("Failed to create descriptor pool");
+                        throw new SkyRuntimeException("Failed to create descriptor pool");
                     }
                     descriptorPoolHandles.add(i, pDescriptorPool.get(0));
                 }
@@ -602,7 +603,7 @@ public class VulkanShaderProgram extends ShaderProgram {
 
 
                         if (vkCreateDescriptorSetLayout(VulkanRuntime.getCurrentDevice(), descriptorSetLayoutCreateInfo, null, pDescriptorSetLayout) != VK_SUCCESS) {
-                            throw new RuntimeException("Failed to create descriptor set layout");
+                            throw new SkyRuntimeException("Failed to create descriptor set layout");
                         }
 
                         long descriptorSetLayout = pDescriptorSetLayout.get(0);
@@ -616,7 +617,7 @@ public class VulkanShaderProgram extends ShaderProgram {
 
                         LongBuffer pDescriptorSet = stack.callocLong(1);
                         if (vkAllocateDescriptorSets(VulkanRuntime.getCurrentDevice(), descriptorSetAllocateInfo, pDescriptorSet) != VK_SUCCESS) {
-                            throw new RuntimeException("Failed to allocate descriptor set");
+                            throw new SkyRuntimeException("Failed to allocate descriptor set");
                         }
                         descriptorSetHandles.get(frameIndex).add(pDescriptorSet.get(0));
                     }
@@ -645,7 +646,7 @@ public class VulkanShaderProgram extends ShaderProgram {
                     LongBuffer pShaderModule = stack.mallocLong(1);
 
                     if(vkCreateShaderModule(VulkanRuntime.getCurrentDevice(), createInfo, null, pShaderModule) != VK_SUCCESS) {
-                        throw new RuntimeException(Logger.error(VulkanShaderProgram.class, "Failed to create " + shaderType + " shader module"));
+                        throw new SkyRuntimeException("Failed to create " + shaderType + " shader module");
                     }
 
                     long shaderModule = pShaderModule.get(0);

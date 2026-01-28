@@ -1,5 +1,6 @@
 package engine.ecs;
 
+import engine.SkyRuntimeException;
 import engine.graphics.*;
 
 public class EnvironmentMeshComponent {
@@ -113,7 +114,7 @@ public class EnvironmentMeshComponent {
             this.indexCount += indexCount;
         }
         else {
-            throw new RuntimeException("EnvironmentMeshComponent has already been finalized");
+            throw new SkyRuntimeException("EnvironmentMeshComponent has already been finalized");
         }
     }
 

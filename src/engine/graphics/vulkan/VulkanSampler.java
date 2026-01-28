@@ -1,6 +1,7 @@
 package engine.graphics.vulkan;
 
 import engine.Logger;
+import engine.SkyRuntimeException;
 import engine.graphics.Disposable;
 import engine.graphics.Sampler;
 import engine.graphics.Texture;
@@ -37,7 +38,7 @@ public class VulkanSampler extends Sampler {
 
             LongBuffer pSampler = stack.callocLong(1);
             if (vkCreateSampler(VulkanRuntime.getCurrentDevice(), samplerCreateInfo, null, pSampler) != VK_SUCCESS) {
-                throw new RuntimeException(Logger.error(VulkanSampler.class, "Failed to create sampler!"));
+                throw new SkyRuntimeException(Logger.error(VulkanSampler.class, "Failed to create sampler!"));
             }
 
             handle = pSampler.get(0);

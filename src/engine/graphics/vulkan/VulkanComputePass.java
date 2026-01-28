@@ -1,5 +1,6 @@
 package engine.graphics.vulkan;
 
+import engine.SkyRuntimeException;
 import engine.graphics.*;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
@@ -46,7 +47,7 @@ public class VulkanComputePass extends ComputePass {
                 PointerBuffer pCommandBuffers = stack.mallocPointer(framesInFlight);
 
                 if(vkAllocateCommandBuffers(device, allocInfo, pCommandBuffers) != VK_SUCCESS) {
-                    throw new RuntimeException("Failed to allocate command buffers");
+                    throw new SkyRuntimeException("Failed to allocate command buffers");
                 }
 
                 commandBuffers[i] = new VkCommandBuffer(pCommandBuffers.get(i), device);
@@ -86,7 +87,7 @@ public class VulkanComputePass extends ComputePass {
             beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
 
             if (vkBeginCommandBuffer(commandBuffers[frameIndex], beginInfo) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to begin recording command buffer");
+                throw new SkyRuntimeException("Failed to begin recording command buffer");
             }
         }
     }
@@ -100,7 +101,7 @@ public class VulkanComputePass extends ComputePass {
     @Override
     public void endRecording() {
         if (vkEndCommandBuffer(commandBuffers[frameIndex]) != VK_SUCCESS) {
-            throw new RuntimeException("Failed to record command buffer");
+            throw new SkyRuntimeException("Failed to record command buffer");
         }
     }
 

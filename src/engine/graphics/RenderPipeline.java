@@ -1,6 +1,7 @@
 package engine.graphics;
 
 import engine.Logger;
+import engine.SkyRuntimeException;
 import engine.ecs.Scene;
 import engine.graphics.pipelines.Features;
 
@@ -20,7 +21,7 @@ public abstract class RenderPipeline {
             }
         }
 
-        throw new RuntimeException(Logger.meltdown(RenderPipeline.class, "This pipeline does not support the feature set " + c.getName()));
+        throw new SkyRuntimeException("This pipeline does not support the feature set " + c.getName());
     }
 
 }

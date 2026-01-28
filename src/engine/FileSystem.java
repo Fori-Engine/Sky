@@ -19,8 +19,9 @@ public class FileSystem {
             }
 
             return total.toString();
-        } catch (IOException e) {
-            throw new RuntimeException(Logger.error(FileSystems.class, ExceptionUtil.exceptionToString(e)));
+        }
+        catch (IOException e) {
+            throw new SkyRuntimeException(e);
         }
     }
 
@@ -28,7 +29,7 @@ public class FileSystem {
         try {
             return Files.readAllBytes(path);
         } catch (IOException e) {
-            throw new RuntimeException(Logger.error(FileSystems.class, ExceptionUtil.exceptionToString(e)));
+            throw new SkyRuntimeException(e);
         }
     }
 }

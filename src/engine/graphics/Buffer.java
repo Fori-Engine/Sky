@@ -1,6 +1,7 @@
 package engine.graphics;
 
 import engine.Logger;
+import engine.SkyRuntimeException;
 import engine.graphics.vulkan.VulkanBuffer;
 
 import java.nio.ByteBuffer;
@@ -52,11 +53,7 @@ public abstract class Buffer extends Disposable {
     public ByteBuffer map(){
 
         if(mapped) {
-            throw new RuntimeException(
-                    Logger.error(
-                            Buffer.class,
-                            "This Buffer cannot be remapped!"
-                    ));
+            throw new SkyRuntimeException("This buffer is already mapped. Use get() instead");
         }
         mapped = true;
 

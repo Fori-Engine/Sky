@@ -1,5 +1,6 @@
 package engine.graphics.vulkan;
 
+import engine.SkyRuntimeException;
 import engine.graphics.Disposable;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkExtent2D;
@@ -56,7 +57,7 @@ public class VulkanSwapchain extends Disposable {
             LongBuffer pSwapChain = stack.longs(VK_NULL_HANDLE);
 
             if (vkCreateSwapchainKHR(VulkanRuntime.getCurrentDevice(), swapchainCreateInfo, null, pSwapChain) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create swap chain");
+                throw new SkyRuntimeException("Failed to create swap chain");
             }
 
             handle = pSwapChain.get(0);

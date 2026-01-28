@@ -1,6 +1,7 @@
 package engine.graphics.vulkan;
 
 import engine.Logger;
+import engine.SkyRuntimeException;
 import engine.graphics.Buffer;
 import engine.graphics.Disposable;
 import org.lwjgl.PointerBuffer;
@@ -78,7 +79,7 @@ public class VulkanBuffer extends Buffer {
                 PointerBuffer pCommandBuffers = stack.mallocPointer(1);
 
                 if(vkAllocateCommandBuffers(VulkanRuntime.getCurrentDevice(), allocInfo, pCommandBuffers) != VK_SUCCESS) {
-                    throw new RuntimeException(Logger.error(VulkanBuffer.class, "Failed to create command buffer"));
+                    throw new SkyRuntimeException("Failed to create command buffers");
                 }
 
                 commandBuffer = new VkCommandBuffer(pCommandBuffers.get(0), VulkanRuntime.getCurrentDevice());
@@ -142,7 +143,7 @@ public class VulkanBuffer extends Buffer {
             beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
 
             if (vkBeginCommandBuffer(commandBuffer, beginInfo) != VK_SUCCESS) {
-                throw new RuntimeException(Logger.error(VulkanBuffer.class, "Failed to start recording copy command buffer"));
+                throw new SkyRuntimeException("Failed to start recording copy command buffer");
             }
 
 
@@ -154,7 +155,7 @@ public class VulkanBuffer extends Buffer {
             vkCmdCopyBuffer(commandBuffer, this.getHandle(), ((VulkanBuffer) dst).getHandle(), copyInfo);
 
             if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-                throw new RuntimeException(Logger.error(VulkanBuffer.class, "Failed to finish recording command buffer"));
+                throw new SkyRuntimeException("Failed to stop recording copy command buffer");
             }
 
             VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
@@ -162,7 +163,7 @@ public class VulkanBuffer extends Buffer {
             submitInfo.pCommandBuffers(stack.pointers(commandBuffer));
 
             if (vkQueueSubmit(VulkanRuntime.getGraphicsQueue(), submitInfo, ((VulkanFence) copyFence).getHandle()) != VK_SUCCESS) {
-                throw new RuntimeException(Logger.error(VulkanBuffer.class, "Failed to submit command buffer"));
+                throw new SkyRuntimeException("Failed to submit command buffer to queue");
             }
 
             vkWaitForFences(VulkanRuntime.getCurrentDevice(), ((VulkanFence) copyFence).getHandle(), true, VulkanUtil.UINT64_MAX);

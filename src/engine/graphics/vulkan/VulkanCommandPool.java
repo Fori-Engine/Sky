@@ -1,5 +1,6 @@
 package engine.graphics.vulkan;
 
+import engine.SkyRuntimeException;
 import engine.graphics.Disposable;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkCommandPoolCreateInfo;
@@ -29,7 +30,7 @@ public class VulkanCommandPool extends Disposable {
             LongBuffer pCommandPool = stack.mallocLong(1);
 
             if(vkCreateCommandPool(device, commandPoolCreateInfo, null, pCommandPool) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create command pool");
+                throw new SkyRuntimeException("Failed to create command pool");
             }
             handle = pCommandPool.get(0);
         }

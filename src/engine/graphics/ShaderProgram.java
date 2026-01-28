@@ -1,6 +1,7 @@
 package engine.graphics;
 
 import engine.Pair;
+import engine.SkyRuntimeException;
 import engine.asset.Asset;
 import engine.graphics.vulkan.VulkanShaderProgram;
 
@@ -60,7 +61,7 @@ public abstract class ShaderProgram extends Disposable {
                 if(descriptor.getName().equals(name)) return descriptor;
             }
         }
-        throw new RuntimeException("Unable to find descriptor " + name);
+        throw new SkyRuntimeException("Unable to find descriptor " + name);
     }
 
     public static ShaderProgram newShaderProgram(Disposable parent){

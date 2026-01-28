@@ -1,5 +1,6 @@
 package engine.graphics.vulkan;
 
+import engine.SkyRuntimeException;
 import engine.graphics.Disposable;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkDevice;
@@ -39,7 +40,7 @@ public class VulkanImageView extends Disposable {
             imageViewCreateInfo.subresourceRange().layerCount(1);
 
             if (vkCreateImageView(device, imageViewCreateInfo, null, pImageView) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create image views");
+                throw new SkyRuntimeException("Failed to create image views");
             }
 
             handle = pImageView.get(0);

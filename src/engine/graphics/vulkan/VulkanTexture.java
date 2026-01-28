@@ -1,6 +1,7 @@
 package engine.graphics.vulkan;
 
 import engine.Logger;
+import engine.SkyRuntimeException;
 import engine.asset.Asset;
 import engine.asset.TextureData;
 import engine.graphics.Buffer;
@@ -83,7 +84,7 @@ public class VulkanTexture extends Texture {
                 PointerBuffer pCommandBuffers = stack.mallocPointer(1);
 
                 if (vkAllocateCommandBuffers(VulkanRuntime.getCurrentDevice(), allocInfo, pCommandBuffers) != VK_SUCCESS) {
-                    throw new RuntimeException(Logger.error(VulkanTexture.class, "Failed to create command buffer"));
+                    throw new SkyRuntimeException("Failed to create command buffer");
                 }
 
                 commandBuffer = new VkCommandBuffer(pCommandBuffers.get(0), VulkanRuntime.getCurrentDevice());
@@ -97,7 +98,7 @@ public class VulkanTexture extends Texture {
                 beginInfo.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
 
                 if (vkBeginCommandBuffer(commandBuffer, beginInfo) != VK_SUCCESS) {
-                    throw new RuntimeException(Logger.error(VulkanTexture.class, "Failed to start recording command buffer"));
+                    throw new SkyRuntimeException("Failed to start recording command buffer");
                 }
 
 
@@ -135,7 +136,7 @@ public class VulkanTexture extends Texture {
                 );
 
                 if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-                    throw new RuntimeException(Logger.error(VulkanTexture.class, "Failed to finish recording per-RenderCommand command buffer"));
+                    throw new SkyRuntimeException(Logger.error(VulkanTexture.class, "Failed to finish recording per-RenderCommand command buffer"));
                 }
 
                 VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
@@ -143,7 +144,7 @@ public class VulkanTexture extends Texture {
                 submitInfo.pCommandBuffers(stack.pointers(commandBuffer));
 
                 if (vkQueueSubmit(VulkanRuntime.getGraphicsQueue(), submitInfo, fence.getHandle()) != VK_SUCCESS) {
-                    throw new RuntimeException(Logger.error(VulkanTexture.class, "Failed to submit per-RenderCommand command buffer"));
+                    throw new SkyRuntimeException("Failed to submit per-RenderCommand command buffer");
                 }
 
                 vkWaitForFences(VulkanRuntime.getCurrentDevice(), fence.getHandle(), true, VulkanUtil.UINT64_MAX);

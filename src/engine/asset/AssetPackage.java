@@ -6,6 +6,7 @@ import com.esotericsoftware.kryo.io.Output;
 import engine.FileSystem;
 import engine.Logger;
 import engine.ExceptionUtil;
+import engine.SkyRuntimeException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.stb.STBImage;
@@ -128,7 +129,7 @@ public class AssetPackage {
                 });
             }
             catch (IOException e) {
-                throw new RuntimeException(Logger.error(AssetPackage.class, ExceptionUtil.exceptionToString(e)));
+                throw new SkyRuntimeException(e);
             }
         }
 
@@ -143,7 +144,7 @@ public class AssetPackage {
             input = new Input(new InflaterInputStream(Files.newInputStream(path)));
         }
         catch (IOException e) {
-            throw new RuntimeException(Logger.error(AssetPackage.class, ExceptionUtil.exceptionToString(e)));
+            throw new SkyRuntimeException(e);
         }
         HashMap<String, Asset> assetMap = kryo.readObject(input, HashMap.class);
         input.close();
@@ -159,7 +160,7 @@ public class AssetPackage {
             output = new Output(new DeflaterOutputStream(Files.newOutputStream(path)));
         }
         catch (IOException e) {
-            throw new RuntimeException(Logger.error(AssetPackage.class, ExceptionUtil.exceptionToString(e)));
+            throw new SkyRuntimeException(e);
         }
 
         kryo.writeObject(output, assetPackage.getAssetMap());

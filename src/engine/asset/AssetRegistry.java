@@ -1,6 +1,7 @@
 package engine.asset;
 
 import engine.Logger;
+import engine.SkyRuntimeException;
 
 import java.util.HashMap;
 
@@ -24,13 +25,13 @@ public class AssetRegistry {
 
         if(assetPackage == null){
             error = "Failed to locate asset package for namespace " + assetPackNamespace;
-            throw new RuntimeException(Logger.error(AssetPackage.class, error));
+            throw new SkyRuntimeException(error);
         }
 
         Asset<T> asset = assetPackage.getAsset(assetPath);
         if(asset == null){
             error = "Failed to locate asset " + assetPath + " in package namespace " + assetPackNamespace;
-            throw new RuntimeException(Logger.error(AssetPackage.class, error));
+            throw new SkyRuntimeException(error);
 
         }
 

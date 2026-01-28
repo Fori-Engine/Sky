@@ -7,8 +7,6 @@ public abstract class Stage extends Disposable {
 
     public Stage() {
         super(null);
-
-        Logger.setConsoleTarget(System.out);
     }
 
     public void launch(String[] args, Surface surface){

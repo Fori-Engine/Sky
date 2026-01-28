@@ -1,6 +1,7 @@
 package engine.graphics.vulkan;
 
 import engine.Logger;
+import engine.SkyRuntimeException;
 import engine.Surface;
 import engine.graphics.RenderAPI;
 import engine.graphics.RenderContext;
@@ -25,7 +26,7 @@ public class VulkanRenderContext extends RenderContext {
     public void readyDisplay(Surface surface) {
         this.surface = surface;
         if(!surface.supportsRenderAPI(RenderAPI.Vulkan)) {
-            throw new RuntimeException(Logger.error(VulkanRenderContext.class, "The surface does not support Vulkan"));
+            throw new SkyRuntimeException(Logger.error(VulkanRenderContext.class, "The surface does not support Vulkan"));
         }
         surface.requestRenderAPI(RenderAPI.Vulkan);
 
