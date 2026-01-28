@@ -58,4 +58,11 @@ public class Launcher {
             Configuration.DEBUG_MEMORY_ALLOCATOR.set(true);
         }
     }
+
+    public void logPlatformInfo() {
+        Logger.info(Launcher.class,
+                "JVM info: " + System.getProperty("java.vendor") + " " + System.getProperty("java.vm.name") + " " + System.getProperty("java.version") +
+                        " [" + System.getProperty("os.name") + " " + System.getProperty("os.arch") + "]"
+        );
+    }
 }
