@@ -150,7 +150,6 @@ public class GLFWSurface extends Surface {
                 PointerBuffer pEnabledLayerNames = stack.mallocPointer(validationLayers.size());
 
                 for(String validationLayerName : validationLayers){
-                    System.out.println(validationLayerName);
                     pEnabledLayerNames.put(stack.UTF8(validationLayerName));
                 }
 
@@ -161,7 +160,6 @@ public class GLFWSurface extends Surface {
                     public int invoke(int messageSeverity, int messageTypes, long pCallbackData, long pUserData) {
                         VkDebugUtilsMessengerCallbackDataEXT callbackData = VkDebugUtilsMessengerCallbackDataEXT.create(pCallbackData);
                         Logger.info(VulkanRenderer.class, callbackData.pMessageString());
-                        System.out.println();
 
                         return VK_FALSE;
                     }
