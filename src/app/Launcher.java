@@ -56,6 +56,8 @@ public class Launcher {
         if(isRunningInDebug()) {
             Configuration.DEBUG.set(true);
             Configuration.DEBUG_MEMORY_ALLOCATOR.set(true);
+
+            Logger.info(Launcher.class, "A debugger is attached over JDWP. LWJGL memory allocations will ONLY appear on the console");
         }
     }
 
