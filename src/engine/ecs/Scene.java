@@ -1,42 +1,43 @@
 package engine.ecs;
 
-import dev.dominion.ecs.api.Dominion;
-import dev.dominion.ecs.api.Entity;
-import dev.dominion.ecs.api.Scheduler;
-import engine.graphics.Renderer;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class Scene {
-    private Dominion dominion;
-    private ArrayList<EcsSystem> systems = new ArrayList<>();
-    private Scheduler scheduler;
+    private List<Entity> entities = new ArrayList<>();
+    private List<EcsSystem> systems = new ArrayList<>();
 
     public Scene(String name) {
-        dominion = Dominion.create(name);
-        scheduler = dominion.createScheduler();
+
     }
 
     public void tick() {
-        scheduler.tick();
+        for(EcsSystem system : systems) {
+            system.run(entities);
+        }
     }
 
 
     public Entity createEntity(Object... components) {
-        return dominion.createEntity(components);
+        Entity entity = new Entity();
+        for(Object component : components)
+            entity.add(component);
+
+        entities.add(entity);
+        return entity;
+    }
+
+    public List<Entity> getEntities() {
+        return entities;
     }
 
     public void removeEntity(Entity entity) {
-        dominion.deleteEntity(entity);
+        entities.remove(entity);
     }
 
     public void addSystem(EcsSystem system) {
         systems.add(system);
-        scheduler.schedule(system);
-    }
-
-    public Dominion getEngine() {
-        return dominion;
     }
 
 
@@ -45,14 +46,10 @@ public class Scene {
     }
 
 
-    public void close(Renderer renderer) {
-
+    public void close() {
         for(EcsSystem system : systems) {
             system.dispose();
         }
-
-        scheduler.shutDown();
-        dominion.close();
     }
 
 

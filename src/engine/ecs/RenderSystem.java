@@ -3,6 +3,8 @@ package engine.ecs;
 import engine.graphics.*;
 import engine.graphics.pipelines.SceneFeatures;
 
+import java.util.List;
+
 public class RenderSystem extends EcsSystem {
     private Renderer renderer;
     private RenderPipeline renderPipeline;
@@ -16,7 +18,7 @@ public class RenderSystem extends EcsSystem {
     }
 
     @Override
-    public void run() {
+    public void run(List<Entity> entities) {
         renderPipeline.getFeatures(SceneFeatures.class).setScene(scene);
         renderPipeline.render(renderer);
     }

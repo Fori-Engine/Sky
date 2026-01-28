@@ -3,6 +3,7 @@ package engine.ecs;
 import engine.SkyRuntimeException;
 import engine.graphics.*;
 
+@ComponentArray(mask = 1 << 2)
 public class EnvironmentMeshComponent {
     public Buffer[] transformsBuffers;
     public Buffer[] sceneDescBuffers;

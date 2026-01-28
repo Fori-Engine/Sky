@@ -11,6 +11,8 @@ import physx.PxTopLevelFunctions;
 import physx.common.*;
 import physx.physics.*;
 
+import java.util.List;
+
 public class NVPhysXSystem extends EcsSystem {
     private PxScene pxScene;
     private PxPhysics physics;
@@ -68,86 +70,91 @@ public class NVPhysXSystem extends EcsSystem {
     }
 
     @Override
-    public void run() {
-        scene.getEngine().findEntitiesWith(NVPhysXComponent.class, TransformComponent.class).stream().forEach(components -> {
-            NVPhysXComponent nvPhysXComponent = components.comp1();
-            TransformComponent transformComponent = components.comp2();
+    public void run(List<Entity> entities) {
 
-            if(!nvPhysXComponent.initialized) {
-                try(MemoryStack stack = MemoryStack.stackPush()) {
-                    Material material = nvPhysXComponent.material;
-                    Collider collider = nvPhysXComponent.collider;
+        for (Entity entity : entities) {
+            if(entity.has(NVPhysXComponent.class) && entity.has(TransformComponent.class)) {
+                NVPhysXComponent nvPhysXComponent = entity.getComponent(NVPhysXComponent.class);
+                TransformComponent transformComponent = entity.getComponent(TransformComponent.class);
 
-                    PxTransform transform = PxTransform.createAt(stack, MemoryStack::nmalloc, PxIDENTITYEnum.PxIdentity);
+                if(!nvPhysXComponent.initialized) {
+                    try(MemoryStack stack = MemoryStack.stackPush()) {
+                        Material material = nvPhysXComponent.material;
+                        Collider collider = nvPhysXComponent.collider;
 
-                    {
-                        PxVec3 pos = PxVec3.createAt(stack, MemoryStack::nmalloc);
+                        PxTransform transform = PxTransform.createAt(stack, MemoryStack::nmalloc, PxIDENTITYEnum.PxIdentity);
 
-                        pos.setX(transformComponent.transform().m30());
-                        pos.setY(transformComponent.transform().m31());
-                        pos.setZ(transformComponent.transform().m32());
+                        {
+                            PxVec3 pos = PxVec3.createAt(stack, MemoryStack::nmalloc);
 
-                        transform.setP(pos);
+                            pos.setX(transformComponent.transform().m30());
+                            pos.setY(transformComponent.transform().m31());
+                            pos.setZ(transformComponent.transform().m32());
+
+                            transform.setP(pos);
+                        }
+
+
+                        {
+                            PxQuat quat = PxQuat.createAt(stack, MemoryStack::nmalloc);
+                            Quaternionf rotation = new Quaternionf();
+                            transformComponent.transform().getNormalizedRotation(rotation);
+
+                            quat.setX(rotation.x);
+                            quat.setY(rotation.y);
+                            quat.setZ(rotation.z);
+                            quat.setW(rotation.w);
+
+                            transform.setQ(quat);
+                        }
+
+
+
+
+                        PxFilterData filterData = PxFilterData.createAt(stack, MemoryStack::nmalloc, 1, 1, 0, 0);
+
+                        PxShapeFlags shapeFlags = PxShapeFlags.createAt(stack, MemoryStack::nmalloc, (byte) (PxShapeFlagEnum.eSCENE_QUERY_SHAPE.value | PxShapeFlagEnum.eSIMULATION_SHAPE.value));
+                        nvPhysXComponent.pxMaterial = physics.createMaterial(material.staticFriction, material.dynamicFriction, material.restitution);
+                        nvPhysXComponent.shape = physics.createShape(collider.getNativePxGeometry(stack), nvPhysXComponent.pxMaterial, true, shapeFlags);
+
+                        if(nvPhysXComponent.actorType == ActorType.Static) {
+                            nvPhysXComponent.actor = physics.createRigidStatic(transform);
+                        }
+                        else if(nvPhysXComponent.actorType == ActorType.Dynamic) {
+                            nvPhysXComponent.actor = physics.createRigidDynamic(transform);
+                        }
+
+                        nvPhysXComponent.shape.setSimulationFilterData(filterData);
+                        nvPhysXComponent.actor.attachShape(nvPhysXComponent.shape);
+                        pxScene.addActor(nvPhysXComponent.actor);
+
+                        nvPhysXComponent.releaseCallback = () -> {
+                            pxScene.removeActor(nvPhysXComponent.actor);
+                            nvPhysXComponent.actor.release();
+                            nvPhysXComponent.shape.release();
+                            nvPhysXComponent.pxMaterial.release();
+                        };
+
+
                     }
-
-
-                    {
-                        PxQuat quat = PxQuat.createAt(stack, MemoryStack::nmalloc);
-                        Quaternionf rotation = new Quaternionf();
-                        transformComponent.transform().getNormalizedRotation(rotation);
-
-                        quat.setX(rotation.x);
-                        quat.setY(rotation.y);
-                        quat.setZ(rotation.z);
-                        quat.setW(rotation.w);
-
-                        transform.setQ(quat);
-                    }
-
-
-
-
-                    PxFilterData filterData = PxFilterData.createAt(stack, MemoryStack::nmalloc, 1, 1, 0, 0);
-
-                    PxShapeFlags shapeFlags = PxShapeFlags.createAt(stack, MemoryStack::nmalloc, (byte) (PxShapeFlagEnum.eSCENE_QUERY_SHAPE.value | PxShapeFlagEnum.eSIMULATION_SHAPE.value));
-                    nvPhysXComponent.pxMaterial = physics.createMaterial(material.staticFriction, material.dynamicFriction, material.restitution);
-                    nvPhysXComponent.shape = physics.createShape(collider.getNativePxGeometry(stack), nvPhysXComponent.pxMaterial, true, shapeFlags);
-
-                    if(nvPhysXComponent.actorType == ActorType.Static) {
-                        nvPhysXComponent.actor = physics.createRigidStatic(transform);
-                    }
-                    else if(nvPhysXComponent.actorType == ActorType.Dynamic) {
-                        nvPhysXComponent.actor = physics.createRigidDynamic(transform);
-                    }
-
-                    nvPhysXComponent.shape.setSimulationFilterData(filterData);
-                    nvPhysXComponent.actor.attachShape(nvPhysXComponent.shape);
-                    pxScene.addActor(nvPhysXComponent.actor);
-
-                    nvPhysXComponent.releaseCallback = () -> {
-                        pxScene.removeActor(nvPhysXComponent.actor);
-                        nvPhysXComponent.actor.release();
-                        nvPhysXComponent.shape.release();
-                        nvPhysXComponent.pxMaterial.release();
-                    };
-
-
+                    nvPhysXComponent.initialized = true;
                 }
-                nvPhysXComponent.initialized = true;
+
+                PxQuat quat = nvPhysXComponent.actor.getGlobalPose().getQ();
+                PxVec3 pos = nvPhysXComponent.actor.getGlobalPose().getP();
+
+                Quaternionf rotation = new Quaternionf(quat.getX(), quat.getY(), quat.getZ(), quat.getW());
+
+
+                transformComponent
+                        .transform()
+                        .identity()
+                        .translate(pos.getX(), pos.getY(), pos.getZ())
+                        .rotate(rotation);
             }
-
-            PxQuat quat = nvPhysXComponent.actor.getGlobalPose().getQ();
-            PxVec3 pos = nvPhysXComponent.actor.getGlobalPose().getP();
-
-            Quaternionf rotation = new Quaternionf(quat.getX(), quat.getY(), quat.getZ(), quat.getW());
+        }
 
 
-            transformComponent
-                    .transform()
-                    .identity()
-                    .translate(pos.getX(), pos.getY(), pos.getZ())
-                    .rotate(rotation);
-        });
 
 
 
@@ -162,7 +169,6 @@ public class NVPhysXSystem extends EcsSystem {
 
             accumulator -= timestep;
         }
-
 
 
 

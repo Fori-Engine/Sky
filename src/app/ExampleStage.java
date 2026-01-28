@@ -1,6 +1,5 @@
 package app;
 
-import dev.dominion.ecs.api.Entity;
 import engine.*;
 import engine.asset.AssetPackage;
 import engine.asset.AssetRegistry;
@@ -8,17 +7,13 @@ import engine.asset.AssetRegistry;
 import engine.graphics.*;
 
 import engine.ecs.*;
-import engine.graphics.pipelines.ScreenSpaceFeatures;
 import engine.graphics.pipelines.DeferredPBRRenderPipeline;
-import engine.graphics.pipelines.SceneFeatures;
 import engine.physx.ActorType;
 import engine.physx.BoxCollider;
 import engine.physx.Material;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-
 import java.lang.Math;
-import java.nio.ByteBuffer;
 import java.nio.file.Path;
 
 public class ExampleStage extends Stage {
@@ -51,9 +46,18 @@ public class ExampleStage extends Stage {
                 surface.getHeight(),
                 new RendererSettings(RenderAPI.Vulkan)
                         .validation(true)
-                        .vsync(true)
+                        .vsync(false)
         );
         renderPipeline = new DeferredPBRRenderPipeline();
+
+        Entity.tryClassload(TransformComponent.class);
+        Entity.tryClassload(NVPhysXComponent.class);
+        Entity.tryClassload(ActorMeshComponent.class);
+        Entity.tryClassload(EnvironmentMeshComponent.class);
+        Entity.tryClassload(CameraComponent.class);
+        Entity.tryClassload(LightComponent.class);
+        Entity.tryClassload(ShaderComponent.class);
+        Entity.tryClassload(ScriptComponent.class);
 
 
         scene = new Scene("Example_Scene");
@@ -280,6 +284,7 @@ public class ExampleStage extends Stage {
 
     public boolean update(){
 
+
         renderer.updateRenderer(surface.update());
         scene.tick();
 
@@ -287,6 +292,8 @@ public class ExampleStage extends Stage {
 
         Time.deltaTime = (float) (surface.getTime() - startTime);
         startTime = (float) surface.getTime();
+        System.out.println(Time.framesPerSecond());
+
 
         return !surface.shouldClose();
     }
@@ -294,66 +301,59 @@ public class ExampleStage extends Stage {
     @Override
     public void closing() {
 
+        for(Entity entity : scene.getEntities()){
+            if(entity.has(ActorMeshComponent.class)) {
+                ActorMeshComponent actorMeshComponent = entity.getComponent(ActorMeshComponent.class);
+                for(int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
+                    Buffer sceneDescBuffer = actorMeshComponent.sceneDescBuffers[frameIndex];
+                    Buffer transformsBuffer = actorMeshComponent.transformsBuffers[frameIndex];
 
-        //Explicitly free all Actors and Environments
-        scene.getEngine().findEntitiesWith(ActorMeshComponent.class).stream().forEach(components -> {
-            ActorMeshComponent actorMeshComponent = components.comp();
+                    sceneDescBuffer.disposeAll();
+                    transformsBuffer.disposeAll();
 
-            for(int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                Buffer sceneDescBuffer = actorMeshComponent.sceneDescBuffers[frameIndex];
-                Buffer transformsBuffer = actorMeshComponent.transformsBuffers[frameIndex];
+                    renderer.remove(sceneDescBuffer);
+                    renderer.remove(transformsBuffer);
+                }
 
-                sceneDescBuffer.disposeAll();
-                transformsBuffer.disposeAll();
 
-                renderer.remove(sceneDescBuffer);
-                renderer.remove(transformsBuffer);
+                actorMeshComponent.vertexBuffer.disposeAll();
+                actorMeshComponent.indexBuffer.disposeAll();
+                actorMeshComponent.shaderProgram.disposeAll();
+
+                renderer.remove(actorMeshComponent.vertexBuffer);
+                renderer.remove(actorMeshComponent.indexBuffer);
+                renderer.remove(actorMeshComponent.shaderProgram);
             }
+            if(entity.has(EnvironmentMeshComponent.class)) {
+                EnvironmentMeshComponent environmentMeshComponent = entity.getComponent(EnvironmentMeshComponent.class);
+                for(int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
+                    Buffer sceneDescBuffer = environmentMeshComponent.sceneDescBuffers[frameIndex];
+                    Buffer transformsBuffer = environmentMeshComponent.transformsBuffers[frameIndex];
+
+                    sceneDescBuffer.disposeAll();
+                    transformsBuffer.disposeAll();
 
 
-            actorMeshComponent.vertexBuffer.disposeAll();
-            actorMeshComponent.indexBuffer.disposeAll();
-            actorMeshComponent.shaderProgram.disposeAll();
-
-            renderer.remove(actorMeshComponent.vertexBuffer);
-            renderer.remove(actorMeshComponent.indexBuffer);
-            renderer.remove(actorMeshComponent.shaderProgram);
-        });
-
-        scene.getEngine().findEntitiesWith(EnvironmentMeshComponent.class).stream().forEach(components -> {
-            EnvironmentMeshComponent environmentMeshComponent = components.comp();
-
-            for(int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                Buffer sceneDescBuffer = environmentMeshComponent.sceneDescBuffers[frameIndex];
-                Buffer transformsBuffer = environmentMeshComponent.transformsBuffers[frameIndex];
-
-                sceneDescBuffer.disposeAll();
-                transformsBuffer.disposeAll();
+                    renderer.remove(sceneDescBuffer);
+                    renderer.remove(transformsBuffer);
+                }
 
 
-                renderer.remove(sceneDescBuffer);
-                renderer.remove(transformsBuffer);
+                environmentMeshComponent.vertexBuffer.disposeAll();
+                environmentMeshComponent.indexBuffer.disposeAll();
+                environmentMeshComponent.shaderProgram.disposeAll();
+
+                renderer.remove(environmentMeshComponent.vertexBuffer);
+                renderer.remove(environmentMeshComponent.indexBuffer);
+                renderer.remove(environmentMeshComponent.shaderProgram);
             }
+            if(entity.has(NVPhysXComponent.class)) {
+                NVPhysXComponent nvPhysXComponent = entity.getComponent(NVPhysXComponent.class);
+                nvPhysXComponent.release();
+            }
+        }
 
-
-            environmentMeshComponent.vertexBuffer.disposeAll();
-            environmentMeshComponent.indexBuffer.disposeAll();
-            environmentMeshComponent.shaderProgram.disposeAll();
-
-            renderer.remove(environmentMeshComponent.vertexBuffer);
-            renderer.remove(environmentMeshComponent.indexBuffer);
-            renderer.remove(environmentMeshComponent.shaderProgram);
-        });
-
-
-
-
-        scene.getEngine().findEntitiesWith(NVPhysXComponent.class).stream().forEach(components -> {
-            NVPhysXComponent nvPhysXComponent = components.comp();
-            nvPhysXComponent.release();
-        });
-
-        scene.close(renderer);
+        scene.close();
     }
 
 
