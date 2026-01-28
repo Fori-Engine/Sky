@@ -4,6 +4,7 @@ import engine.graphics.*;
 
 import java.nio.ByteBuffer;
 
+@ComponentArray(mask = 1 << 0)
 public class ActorMeshComponent {
     public Buffer[] transformsBuffers;
     public Buffer[] sceneDescBuffers;

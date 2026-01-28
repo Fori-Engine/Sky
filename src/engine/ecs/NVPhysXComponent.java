@@ -7,6 +7,7 @@ import physx.physics.PxMaterial;
 import physx.physics.PxRigidActor;
 import physx.physics.PxShape;
 
+@ComponentArray(mask = 1 << 4)
 public class NVPhysXComponent extends NativeResComponent {
     public boolean initialized;
     public Collider collider;

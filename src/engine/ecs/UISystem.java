@@ -9,6 +9,7 @@ import org.joml.Matrix2f;
 import org.joml.Vector2f;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
 public class UISystem extends EcsSystem {
 
@@ -28,7 +29,7 @@ public class UISystem extends EcsSystem {
 
     private float elapsedTime = 0;
     @Override
-    public void run() {
+    public void run(List<Entity> entities) {
         ScreenSpaceFeatures screenSpaceFeatures = renderPipeline.getFeatures(ScreenSpaceFeatures.class);
         vertexBufferData = screenSpaceFeatures.getVertexBuffer().get();
         vertexBufferData.clear();

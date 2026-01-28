@@ -1,6 +1,5 @@
 package engine.graphics.pipelines;
 
-import dev.dominion.ecs.api.Results;
 import engine.Pair;
 import engine.asset.AssetRegistry;
 import engine.ecs.*;
@@ -357,16 +356,19 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
 
         int lightIndex = 0;
 
-        for(Iterator<Results.With1<LightComponent>> iterator = scene.getEngine().findEntitiesWith(LightComponent.class).iterator(); iterator.hasNext();){
-            LightComponent lightComponent = iterator.next().comp();
+        for(Entity entity : scene.getEntities()) {
+            if(entity.has(LightComponent.class)) {
+                LightComponent lightComponent = entity.getComponent(LightComponent.class);
+                lightComponent.view.get(offset + ((4 * lightIndex) * SizeUtil.MATRIX_SIZE_BYTES), sceneDescData);
+                lightComponent.proj.get(offset + ((4 * lightIndex) + 1) * SizeUtil.MATRIX_SIZE_BYTES, sceneDescData);
+                lightComponent.invView.get(offset + ((4 * lightIndex) + 2) * SizeUtil.MATRIX_SIZE_BYTES, sceneDescData);
+                lightComponent.invProj.get(offset + ((4 * lightIndex) + 3) * SizeUtil.MATRIX_SIZE_BYTES, sceneDescData);
 
-            lightComponent.view.get(offset + ((4 * lightIndex) * SizeUtil.MATRIX_SIZE_BYTES), sceneDescData);
-            lightComponent.proj.get(offset + ((4 * lightIndex) + 1) * SizeUtil.MATRIX_SIZE_BYTES, sceneDescData);
-            lightComponent.invView.get(offset + ((4 * lightIndex) + 2) * SizeUtil.MATRIX_SIZE_BYTES, sceneDescData);
-            lightComponent.invProj.get(offset + ((4 * lightIndex) + 3) * SizeUtil.MATRIX_SIZE_BYTES, sceneDescData);
-
-            lightIndex++;
+                lightIndex++;
+            }
         }
+
+
     }
 
 
@@ -392,46 +394,57 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
 
         }
 
-        scene.getEngine().findEntitiesWith(CameraComponent.class).forEach(components1 -> {
-            CameraComponent cameraComponent = components1.comp();
-            sceneCamera = cameraComponent.camera();
-        });
-
+        for(Entity entity : scene.getEntities()) {
+            if(entity.has(CameraComponent.class)) {
+                CameraComponent cameraComponent = entity.getComponent(CameraComponent.class);
+                sceneCamera = cameraComponent.camera();
+            }
+        }
 
 
 
         //ShadowMapGen and ShadowMap pass Dynamic Resource Dependencies
         {
 
-            lightCount = (int) scene.getEngine().findEntitiesWith(LightComponent.class).stream().count();
+            lightCount = 0;
+            for(Entity entity : scene.getEntities()) {
+                if (entity.has(LightComponent.class))
+                    lightCount++;
+            }
+
+
             Texture[] shadowMapTextures = new Texture[lightCount * renderer.getMaxFramesInFlight()];
             Sampler[] shadowMapSamplers = new Sampler[shadowMapTextures.length];
 
             int lightIndex = 0;
-            for (Results.With1<LightComponent> lightComponentWith1 : scene.getEngine().findEntitiesWith(LightComponent.class)) {
-                LightComponent lightComponent = lightComponentWith1.comp();
 
-                int i1 = renderer.getMaxFramesInFlight() * lightIndex;
-                int i2 = renderer.getMaxFramesInFlight() * lightIndex + 1;
+            for(Entity entity : scene.getEntities()) {
+                if (entity.has(LightComponent.class)) {
+                    LightComponent lightComponent = entity.getComponent(LightComponent.class);
+                    int i1 = renderer.getMaxFramesInFlight() * lightIndex;
+                    int i2 = renderer.getMaxFramesInFlight() * lightIndex + 1;
 
-                shadowMapTextures[i1] = lightComponent.renderTarget
-                        .getAttachment(RenderTargetAttachmentTypes.Pos)
-                        .getTextures()[0];
+                    shadowMapTextures[i1] = lightComponent.renderTarget
+                            .getAttachment(RenderTargetAttachmentTypes.Pos)
+                            .getTextures()[0];
 
-                shadowMapSamplers[i1] = lightComponent.renderTarget
-                        .getAttachment(RenderTargetAttachmentTypes.Pos)
-                        .getSamplers()[0];
+                    shadowMapSamplers[i1] = lightComponent.renderTarget
+                            .getAttachment(RenderTargetAttachmentTypes.Pos)
+                            .getSamplers()[0];
 
-                shadowMapTextures[i2] = lightComponent.renderTarget
-                        .getAttachment(RenderTargetAttachmentTypes.Pos)
-                        .getTextures()[1];
+                    shadowMapTextures[i2] = lightComponent.renderTarget
+                            .getAttachment(RenderTargetAttachmentTypes.Pos)
+                            .getTextures()[1];
 
-                shadowMapSamplers[i2] = lightComponent.renderTarget
-                        .getAttachment(RenderTargetAttachmentTypes.Pos)
-                        .getSamplers()[1];
+                    shadowMapSamplers[i2] = lightComponent.renderTarget
+                            .getAttachment(RenderTargetAttachmentTypes.Pos)
+                            .getSamplers()[1];
 
-                lightIndex++;
+                    lightIndex++;
+                }
             }
+
+
 
             Resource<Pair<Texture[], Sampler[]>> shadowMapTexturesResource = new Resource<>(new Pair<>(shadowMapTextures, shadowMapSamplers));
 
@@ -448,25 +461,29 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
         {
             //Update entity shaders
             {
-                scene.getEngine().findEntitiesWith(TransformComponent.class, EnvironmentMeshComponent.class).forEach(components -> {
+                for(Entity entity : scene.getEntities()) {
+                    if(entity.has(TransformComponent.class)) {
+                        TransformComponent transformComponent = entity.getComponent(TransformComponent.class);
 
-                    TransformComponent transformComponent = components.comp1();
-                    EnvironmentMeshComponent environmentMeshComponent = components.comp2();
+                        if(entity.has(EnvironmentMeshComponent.class)) {
+                            EnvironmentMeshComponent environmentMeshComponent = entity.getComponent(EnvironmentMeshComponent.class);
+                            ByteBuffer transformsData = environmentMeshComponent.transformsBuffers[renderer.getFrameIndex()].get();
+                            transformComponent.transform().get(transformComponent.transformIndex() * SizeUtil.MATRIX_SIZE_BYTES, transformsData);
+                            ByteBuffer sceneDescData = environmentMeshComponent.sceneDescBuffers[renderer.getFrameIndex()].get();
+                            updateSceneDesc(sceneDescData, sceneCamera, scene);
+                        }
+                        if(entity.has(ActorMeshComponent.class)) {
+                            ActorMeshComponent actorMeshComponent = entity.getComponent(ActorMeshComponent.class);
+                            ByteBuffer transformsData = actorMeshComponent.transformsBuffers[renderer.getFrameIndex()].get();
+                            transformComponent.transform().get(0, transformsData);
+                            ByteBuffer sceneDescData = actorMeshComponent.sceneDescBuffers[renderer.getFrameIndex()].get();
+                            updateSceneDesc(sceneDescData, sceneCamera, scene);
+                        }
 
-                    ByteBuffer transformsData = environmentMeshComponent.transformsBuffers[renderer.getFrameIndex()].get();
-                    transformComponent.transform().get(transformComponent.transformIndex() * SizeUtil.MATRIX_SIZE_BYTES, transformsData);
-                    ByteBuffer sceneDescData = environmentMeshComponent.sceneDescBuffers[renderer.getFrameIndex()].get();
-                    updateSceneDesc(sceneDescData, sceneCamera, scene);
-                });
-                scene.getEngine().findEntitiesWith(TransformComponent.class, ActorMeshComponent.class).forEach(components -> {
-                    TransformComponent transformComponent = components.comp1();
-                    ActorMeshComponent actorMeshComponent = components.comp2();
 
-                    ByteBuffer transformsData = actorMeshComponent.transformsBuffers[renderer.getFrameIndex()].get();
-                    transformComponent.transform().get(0, transformsData);
-                    ByteBuffer sceneDescData = actorMeshComponent.sceneDescBuffers[renderer.getFrameIndex()].get();
-                    updateSceneDesc(sceneDescData, sceneCamera, scene);
-                });
+                    }
+                }
+
             }
 
             //Update ShadowMapPass shaders
@@ -488,67 +505,73 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
                 {
                     int mode = 1;
 
+                    for(Entity entity : scene.getEntities()) {
+                        if(entity.has(LightComponent.class)) {
+                            LightComponent lightComponent = entity.getComponent(LightComponent.class);
 
 
-                    scene.getEngine().findEntitiesWith(LightComponent.class).forEach(lightEntity -> {
-
-                        LightComponent lightComponent = lightEntity.comp();
 
 
-                        int width, height;
-                        {
-                            Texture texture = lightComponent.renderTarget.getAttachmentByIndex(0).getTextures()[0];
-                            width = texture.getWidth();
-                            height = texture.getHeight();
+                            int width, height;
+                            {
+                                Texture texture = lightComponent.renderTarget.getAttachmentByIndex(0).getTextures()[0];
+                                width = texture.getWidth();
+                                height = texture.getHeight();
+                            }
+
+
+                            shadowMapGenPass.startRendering(lightComponent.renderTarget, 2, width, height, true, Color.BLACK);
+                            {
+
+                                if(entity.has(TransformComponent.class)) {
+                                    TransformComponent transformComponent = entity.getComponent(TransformComponent.class);
+
+                                    if(entity.has(EnvironmentMeshComponent.class)) {
+                                        EnvironmentMeshComponent environmentMeshComponent = entity.getComponent(EnvironmentMeshComponent.class);
+                                        shadowMapGenPass.setDrawBuffers(
+                                                environmentMeshComponent.vertexBuffer,
+                                                environmentMeshComponent.indexBuffer
+                                        );
+                                        shadowMapGenPass.setShaderProgram(
+                                                environmentMeshComponent.shaderProgram
+                                        );
+                                        try(MemoryStack stack = stackPush()) {
+                                            ByteBuffer pPushConstants = stack.calloc(2 * Integer.BYTES);
+                                            pPushConstants.putInt(mode);
+                                            pPushConstants.putInt(shadowMapGenPassLightIndex);
+                                            shadowMapGenPass.setPushConstants(pPushConstants);
+                                        }
+                                        shadowMapGenPass.drawIndexed(environmentMeshComponent.indexCount);
+                                    }
+                                    if(entity.has(ActorMeshComponent.class)) {
+                                        ActorMeshComponent actorMeshComponent = entity.getComponent(ActorMeshComponent.class);
+                                        shadowMapGenPass.setDrawBuffers(
+                                                actorMeshComponent.vertexBuffer,
+                                                actorMeshComponent.indexBuffer
+                                        );
+                                        shadowMapGenPass.setShaderProgram(
+                                                actorMeshComponent.shaderProgram
+                                        );
+                                        try(MemoryStack stack = stackPush()) {
+                                            ByteBuffer pPushConstants = stack.calloc(2 * Integer.BYTES);
+                                            pPushConstants.putInt(mode);
+                                            pPushConstants.putInt(shadowMapGenPassLightIndex);
+                                            shadowMapGenPass.setPushConstants(pPushConstants);
+                                        }
+                                        shadowMapGenPass.drawIndexed(actorMeshComponent.indexCount);
+                                    }
+
+                                }
+                            }
+                            shadowMapGenPass.endRendering();
+                            shadowMapGenPassLightIndex++;
                         }
 
 
-                        shadowMapGenPass.startRendering(lightComponent.renderTarget, 2, width, height, true, Color.BLACK);
-                        {
+                    }
 
 
 
-
-                            scene.getEngine().findEntitiesWith(TransformComponent.class, EnvironmentMeshComponent.class).forEach(components -> {
-
-                                EnvironmentMeshComponent environmentMeshComponent = components.comp2();
-                                shadowMapGenPass.setDrawBuffers(
-                                        environmentMeshComponent.vertexBuffer,
-                                        environmentMeshComponent.indexBuffer
-                                );
-                                shadowMapGenPass.setShaderProgram(
-                                        environmentMeshComponent.shaderProgram
-                                );
-                                try(MemoryStack stack = stackPush()) {
-                                    ByteBuffer pPushConstants = stack.calloc(2 * Integer.BYTES);
-                                    pPushConstants.putInt(mode);
-                                    pPushConstants.putInt(shadowMapGenPassLightIndex);
-                                    shadowMapGenPass.setPushConstants(pPushConstants);
-                                }
-                                shadowMapGenPass.drawIndexed(environmentMeshComponent.indexCount);
-                            });
-                            scene.getEngine().findEntitiesWith(TransformComponent.class, ActorMeshComponent.class).forEach(components -> {
-                                ActorMeshComponent actorMeshComponent = components.comp2();
-
-                                shadowMapGenPass.setDrawBuffers(
-                                        actorMeshComponent.vertexBuffer,
-                                        actorMeshComponent.indexBuffer
-                                );
-                                shadowMapGenPass.setShaderProgram(
-                                        actorMeshComponent.shaderProgram
-                                );
-                                try(MemoryStack stack = stackPush()) {
-                                    ByteBuffer pPushConstants = stack.calloc(2 * Integer.BYTES);
-                                    pPushConstants.putInt(mode);
-                                    pPushConstants.putInt(shadowMapGenPassLightIndex);
-                                    shadowMapGenPass.setPushConstants(pPushConstants);
-                                }
-                                shadowMapGenPass.drawIndexed(actorMeshComponent.indexCount);
-                            });
-                        }
-                        shadowMapGenPass.endRendering();
-                        shadowMapGenPassLightIndex++;
-                    });
 
                 }
 
@@ -568,42 +591,44 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
 
                     scenePass.startRendering(scenePassRT, 0, renderer.getWidth(), renderer.getHeight(), true, Color.LIGHT_GRAY);
                     {
-                        scene.getEngine().findEntitiesWith(TransformComponent.class, EnvironmentMeshComponent.class).forEach(components -> {
-                            EnvironmentMeshComponent environmentMeshComponent = components.comp2();
+                        for(Entity entity : scene.getEntities()) {
+                            if (entity.has(EnvironmentMeshComponent.class)) {
+                                EnvironmentMeshComponent environmentMeshComponent = entity.getComponent(EnvironmentMeshComponent.class);
 
-                            scenePass.setDrawBuffers(
-                                    environmentMeshComponent.vertexBuffer,
-                                    environmentMeshComponent.indexBuffer
-                            );
-                            scenePass.setShaderProgram(
-                                    environmentMeshComponent.shaderProgram
-                            );
-                            try(MemoryStack stack = stackPush()) {
-                                ByteBuffer pPushConstants = stack.calloc(2 * Integer.BYTES);
-                                pPushConstants.putInt(mode);
-                                pPushConstants.putInt(-1);
-                                scenePass.setPushConstants(pPushConstants);
+                                scenePass.setDrawBuffers(
+                                        environmentMeshComponent.vertexBuffer,
+                                        environmentMeshComponent.indexBuffer
+                                );
+                                scenePass.setShaderProgram(
+                                        environmentMeshComponent.shaderProgram
+                                );
+                                try (MemoryStack stack = stackPush()) {
+                                    ByteBuffer pPushConstants = stack.calloc(2 * Integer.BYTES);
+                                    pPushConstants.putInt(mode);
+                                    pPushConstants.putInt(-1);
+                                    scenePass.setPushConstants(pPushConstants);
+                                }
+                                scenePass.drawIndexed(environmentMeshComponent.indexCount);
                             }
-                            scenePass.drawIndexed(environmentMeshComponent.indexCount);
-                        });
-                        scene.getEngine().findEntitiesWith(TransformComponent.class, ActorMeshComponent.class).forEach(components -> {
+                            if(entity.has(ActorMeshComponent.class)) {
+                                ActorMeshComponent actorMeshComponent = entity.getComponent(ActorMeshComponent.class);
+                                scenePass.setDrawBuffers(
+                                        actorMeshComponent.vertexBuffer,
+                                        actorMeshComponent.indexBuffer
+                                );
+                                scenePass.setShaderProgram(
+                                        actorMeshComponent.shaderProgram
+                                );
+                                try(MemoryStack stack = stackPush()) {
+                                    ByteBuffer pPushConstants = stack.calloc(2 * Integer.BYTES);
+                                    pPushConstants.putInt(mode);
+                                    pPushConstants.putInt(-1);
+                                    scenePass.setPushConstants(pPushConstants);
+                                }
+                                scenePass.drawIndexed(actorMeshComponent.indexCount);
+                            }
 
-                            ActorMeshComponent actorMeshComponent = components.comp2();
-                            scenePass.setDrawBuffers(
-                                    actorMeshComponent.vertexBuffer,
-                                    actorMeshComponent.indexBuffer
-                            );
-                            scenePass.setShaderProgram(
-                                    actorMeshComponent.shaderProgram
-                            );
-                            try(MemoryStack stack = stackPush()) {
-                                ByteBuffer pPushConstants = stack.calloc(2 * Integer.BYTES);
-                                pPushConstants.putInt(mode);
-                                pPushConstants.putInt(-1);
-                                scenePass.setPushConstants(pPushConstants);
-                            }
-                            scenePass.drawIndexed(actorMeshComponent.indexCount);
-                        });
+                        }
                     }
                     scenePass.endRendering();
                 }

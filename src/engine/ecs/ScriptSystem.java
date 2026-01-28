@@ -1,5 +1,7 @@
 package engine.ecs;
 
+import java.util.List;
+
 public class ScriptSystem extends EcsSystem {
     private Scene scene;
 
@@ -8,16 +10,18 @@ public class ScriptSystem extends EcsSystem {
     }
 
     @Override
-    public void run() {
-        scene.getEngine().findEntitiesWith(ScriptComponent.class).stream().forEach(components -> {
-            ScriptComponent scriptComponent = components.comp();
+    public void run(List<Entity> entities) {
+        for(Entity entity : entities) {
+            if(entity.has(ScriptComponent.class)) {
+                ScriptComponent scriptComponent = entity.getComponent(ScriptComponent.class);
+                if (!scriptComponent.script().initialized) {
+                    scriptComponent.script().init(entity);
+                }
 
-            if(!scriptComponent.script().initialized) {
-                scriptComponent.script().init(components.entity());
+                scriptComponent.script().update(entity);
+
             }
-
-            scriptComponent.script().update(components.entity());
-        });
+        }
     }
 
     @Override

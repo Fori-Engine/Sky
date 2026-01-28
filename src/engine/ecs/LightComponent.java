@@ -3,6 +3,7 @@ package engine.ecs;
 import engine.graphics.RenderTarget;
 import org.joml.Matrix4f;
 
+@ComponentArray(mask = 1 << 3)
 public class LightComponent {
     public Matrix4f view, proj;
     public Matrix4f invView, invProj;
