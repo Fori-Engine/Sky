@@ -6,6 +6,8 @@ public class Main {
 
         Launcher launcher = new Launcher();
         launcher.initLogging();
+        launcher.enableDebugOptionsIfAttached();
+
         launcher.launch(args);
     }
 }

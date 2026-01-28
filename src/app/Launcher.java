@@ -1,13 +1,13 @@
 package app;
 
 import engine.Logger;
-import engine.SkyRuntimeException;
 import engine.Stage;
 import engine.Surface;
-import engine.asset.AssetPackage;
+import org.lwjgl.system.Configuration;
 
 import java.io.File;
-import java.nio.file.Path;
+import java.lang.management.ManagementFactory;
+import java.util.List;
 
 
 public class Launcher {
@@ -19,10 +19,6 @@ public class Launcher {
 
 
     public void launch(String[] args) {
-        //Configuration.DEBUG.set(true);
-        //Configuration.DEBUG_MEMORY_ALLOCATOR.set(true);
-
-
 
         Stage stage = new ExampleStage();
         Surface surface = Surface.newSurface(stage, "SkySOFT Engine", 1920, 1080);
@@ -44,5 +40,22 @@ public class Launcher {
 
     }
 
+    private boolean isRunningInDebug() {
+        List<String> jvmArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();
 
+        boolean isRunningInDebug = false;
+
+        for(String arg : jvmArgs){
+            if(arg.contains("jdwp=")) return true;
+        }
+
+        return isRunningInDebug;
+    }
+
+    public void enableDebugOptionsIfAttached() {
+        if(isRunningInDebug()) {
+            Configuration.DEBUG.set(true);
+            Configuration.DEBUG_MEMORY_ALLOCATOR.set(true);
+        }
+    }
 }
