@@ -30,7 +30,7 @@ jar {
         }
     }
     manifest {
-        manifest.attributes["Main-Class"] = "app.Launcher"
+        manifest.attributes["Main-Class"] = "app.Main"
     }
 }
 
