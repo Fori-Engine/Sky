@@ -11,11 +11,10 @@ import static engine.graphics.Texture.Filter.Linear;
 import static org.lwjgl.system.MemoryStack.*;
 
 import java.nio.ByteBuffer;
-import java.util.Iterator;
 import java.util.List;
 
 
-public class DeferredPBRRenderPipeline extends RenderPipeline {
+public class BlinnPhongPipeline extends RenderPipeline {
 
 
 
@@ -164,7 +163,7 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
             );
 
             lightingPassShaderProgram = ShaderProgram.newShaderProgram(renderer);
-            lightingPassShaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/Lighting_compute.spv"), ShaderType.ComputeShader);
+            lightingPassShaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/blinn_phong/Lighting_compute.spv"), ShaderType.ComputeShader);
             lightingPassShaderProgram.assemble();
 
             lightingPassSceneDescBuffers = new Buffer[renderer.getMaxFramesInFlight()];
@@ -196,8 +195,8 @@ public class DeferredPBRRenderPipeline extends RenderPipeline {
 
             displayPassShaderProgram = ShaderProgram.newShaderProgram(renderer);
             displayPassShaderProgram.setDepthTestType(DepthTestType.Always);
-            displayPassShaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/Display_vertex.spv"), ShaderType.VertexShader);
-            displayPassShaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/Display_fragment.spv"), ShaderType.FragmentShader);
+            displayPassShaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/blinn_phong/Display_vertex.spv"), ShaderType.VertexShader);
+            displayPassShaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/blinn_phong/Display_fragment.spv"), ShaderType.FragmentShader);
             displayPassShaderProgram.assemble();
 
             displayPassVertexBuffer = Buffer.newBuffer(

@@ -7,7 +7,7 @@ import engine.asset.AssetRegistry;
 import engine.graphics.*;
 
 import engine.ecs.*;
-import engine.graphics.pipelines.DeferredPBRRenderPipeline;
+import engine.graphics.pipelines.BlinnPhongPipeline;
 import engine.physx.ActorType;
 import engine.physx.BoxCollider;
 import engine.physx.Material;
@@ -48,7 +48,7 @@ public class ExampleStage extends Stage {
                         .validation(true)
                         .vsync(false)
         );
-        renderPipeline = new DeferredPBRRenderPipeline();
+        renderPipeline = new BlinnPhongPipeline();
 
         Entity.tryClassload(TransformComponent.class);
         Entity.tryClassload(NVPhysXComponent.class);
@@ -93,8 +93,8 @@ public class ExampleStage extends Stage {
 
 
             ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(renderer);
-            shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/Default_vertex.spv"), ShaderType.VertexShader);
-            shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/Default_fragment.spv"), ShaderType.FragmentShader);
+            shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/blinn_phong/Default_vertex.spv"), ShaderType.VertexShader);
+            shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/blinn_phong/Default_fragment.spv"), ShaderType.FragmentShader);
             shaderProgram.assemble();
 
 
@@ -131,8 +131,8 @@ public class ExampleStage extends Stage {
 
 
             ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(renderer);
-            shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/Default_vertex.spv"), ShaderType.VertexShader);
-            shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/Default_fragment.spv"), ShaderType.FragmentShader);
+            shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/blinn_phong/Default_vertex.spv"), ShaderType.VertexShader);
+            shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/blinn_phong/Default_fragment.spv"), ShaderType.FragmentShader);
             shaderProgram.assemble();
 
 
@@ -172,8 +172,8 @@ public class ExampleStage extends Stage {
 
 
             ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(renderer);
-            shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/Default2_vertex.spv"), ShaderType.VertexShader);
-            shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred_pbr_pipeline/Default2_fragment.spv"), ShaderType.FragmentShader);
+            shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/blinn_phong/Default2_vertex.spv"), ShaderType.VertexShader);
+            shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/blinn_phong/Default2_fragment.spv"), ShaderType.FragmentShader);
             shaderProgram.assemble();
 
 
