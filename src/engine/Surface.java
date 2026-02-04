@@ -80,6 +80,7 @@ public abstract class Surface extends Disposable {
     public VkInstance getVulkanInstance() {
         return vkInstance;
     }
+    public abstract void setCaptureMouse(boolean captureMouse);
 
     protected abstract VkInstance createInstance(String appName, List<String> validationLayers);
 

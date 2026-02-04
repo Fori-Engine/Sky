@@ -11,6 +11,7 @@ import engine.graphics.pipelines.BlinnPhongPipeline;
 import engine.physx.ActorType;
 import engine.physx.BoxCollider;
 import engine.physx.Material;
+import engine.scripts.FlyCameraScript;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import java.lang.Math;
@@ -85,7 +86,7 @@ public class ExampleStage extends Stage {
         );
 
         //Camera
-        cameraEntity = scene.createEntity(new CameraComponent(camera));
+        cameraEntity = scene.createEntity(new CameraComponent(camera), new ScriptComponent(new FlyCameraScript(surface, renderer)));
 
 
         //Default Cube

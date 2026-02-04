@@ -66,6 +66,11 @@ public class GLFWSurface extends Surface {
     }
 
     @Override
+    public void setCaptureMouse(boolean captureMouse) {
+        glfwSetInputMode(handle, GLFW_CURSOR, captureMouse ? GLFW_CURSOR_DISABLED :  GLFW_CURSOR_NORMAL);
+    }
+
+    @Override
     protected VkInstance createInstance(String appName, List<String> validationLayers){
 
         boolean validation = validationLayers != null;

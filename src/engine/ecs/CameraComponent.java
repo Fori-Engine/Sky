@@ -3,5 +3,10 @@ package engine.ecs;
 import engine.graphics.Camera;
 
 @ComponentArray(mask = 1 << 1)
-public record CameraComponent(Camera camera) {
+public class CameraComponent {
+    public Camera camera;
+
+    public CameraComponent(Camera camera) {
+        this.camera = camera;
+    }
 }

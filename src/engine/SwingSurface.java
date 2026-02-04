@@ -193,6 +193,11 @@ public class SwingSurface extends Surface {
     }
 
     @Override
+    public void setCaptureMouse(boolean captureMouse) {
+
+    }
+
+    @Override
     protected VkInstance createInstance(String appName, List<String> validationLayers){
 
         boolean validation = validationLayers != null;
