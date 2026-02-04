@@ -18,7 +18,7 @@ public class FlyCameraScript extends Script {
     private Vector3f pos = new Vector3f(), dir = new Vector3f(), up = new Vector3f(0.0f, 1.0f, 0.0f);
     private float lastMouseX, lastMouseY;
     private Matrix4f viewMatrix = new Matrix4f();
-    public float mouseSensitivity = 0.01f, maxPitchDeg = 75, moveSpeed = 5;
+    public float mouseSensitivity = 0.01f, maxPitchDeg = 75, moveSpeed = 10;
 
     public FlyCameraScript(Surface surface, Renderer renderer) {
         this.surface = surface;
