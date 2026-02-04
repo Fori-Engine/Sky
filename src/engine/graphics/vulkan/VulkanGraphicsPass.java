@@ -13,6 +13,7 @@ import java.util.Optional;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
+import static org.lwjgl.vulkan.VK13.vkCmdSetCullMode;
 
 public class VulkanGraphicsPass extends GraphicsPass {
 
@@ -236,6 +237,11 @@ public class VulkanGraphicsPass extends GraphicsPass {
     @Override
     public void endRendering() {
         KHRDynamicRendering.vkCmdEndRenderingKHR(commandBuffers[frameIndex]);
+    }
+
+    @Override
+    public void setCullMode(CullMode cullMode) {
+        vkCmdSetCullMode(commandBuffers[frameIndex], VulkanUtil.getVulkanCullMode(cullMode));
     }
 
 

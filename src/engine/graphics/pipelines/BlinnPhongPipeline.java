@@ -520,6 +520,7 @@ public class BlinnPhongPipeline extends RenderPipeline {
 
                             shadowMapGenPass.startRendering(lightComponent.renderTarget, 2, width, height, true, Color.BLACK);
                             {
+                                shadowMapGenPass.setCullMode(CullMode.Back);
 
                                 for(Entity e : scene.getEntities()) {
 
@@ -588,6 +589,7 @@ public class BlinnPhongPipeline extends RenderPipeline {
 
                     scenePass.startRendering(scenePassRT, 0, renderer.getWidth(), renderer.getHeight(), true, Color.LIGHT_GRAY);
                     {
+                        scenePass.setCullMode(CullMode.Back);
                         for(Entity entity : scene.getEntities()) {
                             if (entity.has(EnvironmentMeshComponent.class)) {
                                 EnvironmentMeshComponent environmentMeshComponent = entity.getComponent(EnvironmentMeshComponent.class);
@@ -741,6 +743,7 @@ public class BlinnPhongPipeline extends RenderPipeline {
 
                 displayPass.startRendering(renderer.getSwapchainRenderTarget(), 0, renderer.getWidth(), renderer.getHeight(), true, Color.BLACK);
                 {
+                    displayPass.setCullMode(CullMode.Back);
                     ScreenSpaceFeatures screenSpaceFeatures = getFeatures(ScreenSpaceFeatures.class);
 
 

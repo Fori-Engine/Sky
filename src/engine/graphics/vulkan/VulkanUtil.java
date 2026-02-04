@@ -153,4 +153,12 @@ public class VulkanUtil {
         return 0;
     }
 
+    public static int getVulkanCullMode(CullMode cullMode) {
+        switch (cullMode) {
+            case Front: return VK_CULL_MODE_FRONT_BIT;
+            case Back: return VK_CULL_MODE_BACK_BIT;
+        }
+
+        return -1;
+    }
 }

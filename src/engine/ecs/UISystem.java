@@ -38,7 +38,7 @@ public class UISystem extends EcsSystem {
 
 
         transform = new Matrix2f();
-        drawQuad(100, 100, 1920 / 2f, 1080 / 2f, 0, Color.WHITE);
+        drawQuad(0, 0, 1920, 1080, 0, Color.WHITE);
 
 
         transform = new Matrix2f()

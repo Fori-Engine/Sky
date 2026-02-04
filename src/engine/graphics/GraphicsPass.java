@@ -17,6 +17,7 @@ public abstract class GraphicsPass extends Pass {
     public abstract void startRendering(RenderTarget renderTarget, int unusedAttachmentCount, int width, int height, boolean clear, Color clearColor);
     public abstract void endRendering();
 
+    public abstract void setCullMode(CullMode cullMode);
     public abstract void setDrawBuffers(Buffer vertexBuffer, Buffer indexBuffer);
     public abstract void setShaderProgram(ShaderProgram shaderProgram);
     public abstract void setPushConstants(ByteBuffer pPushConstants);

@@ -20,6 +20,7 @@ import static org.lwjgl.util.spvc.Spv.SpvDecorationBinding;
 import static org.lwjgl.util.spvc.Spv.SpvDecorationDescriptorSet;
 import static org.lwjgl.util.spvc.Spvc.*;
 import static org.lwjgl.vulkan.VK10.*;
+import static org.lwjgl.vulkan.VK13.VK_DYNAMIC_STATE_CULL_MODE;
 
 public class VulkanShaderProgram extends ShaderProgram {
 
@@ -179,7 +180,7 @@ public class VulkanShaderProgram extends ShaderProgram {
             VkPipelineDynamicStateCreateInfo dynamicState = VkPipelineDynamicStateCreateInfo.calloc(stack);
             {
                 dynamicState.sType(VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
-                dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR));
+                dynamicState.pDynamicStates(stack.ints(VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_CULL_MODE));
             }
 
             VkPipelineRasterizationStateCreateInfo rasterizer = VkPipelineRasterizationStateCreateInfo.calloc(stack);
