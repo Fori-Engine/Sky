@@ -6,7 +6,7 @@ public class Camera {
     private Matrix4f proj, view;
     private boolean invertY;
     public static final int SIZE = SizeUtil.MATRIX_SIZE_BYTES * 2;
-    private Matrix4f invProj, invView;
+    private Matrix4f invProj = new Matrix4f(), invView = new Matrix4f();
 
     public Camera(Matrix4f view, Matrix4f proj, boolean invertY) {
         setView(view);
@@ -25,7 +25,7 @@ public class Camera {
 
     public void setProj(Matrix4f proj) {
         this.proj = proj;
-        this.invProj = new Matrix4f(proj).invert();
+        proj.invert(this.invProj);
     }
 
     public Matrix4f getInvProj() {
@@ -42,6 +42,6 @@ public class Camera {
 
     public void setView(Matrix4f view) {
         this.view = view;
-        this.invView = new Matrix4f(view).invert();
+        view.invert(this.invView);
     }
 }
