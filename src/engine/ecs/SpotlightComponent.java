@@ -4,12 +4,12 @@ import engine.graphics.RenderTarget;
 import org.joml.Matrix4f;
 
 @ComponentArray(mask = 1 << 3)
-public class LightComponent {
+public class SpotlightComponent {
     public Matrix4f view, proj;
     public Matrix4f invView, invProj;
     public boolean invertY;
     public RenderTarget renderTarget;
-    public LightComponent(Matrix4f view, Matrix4f proj, boolean invertY, RenderTarget renderTarget) {
+    public SpotlightComponent(Matrix4f view, Matrix4f proj, boolean invertY, RenderTarget renderTarget) {
         setView(view);
 
 

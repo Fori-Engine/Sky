@@ -356,12 +356,12 @@ public class BlinnPhongPipeline extends RenderPipeline {
         int lightIndex = 0;
 
         for(Entity entity : scene.getEntities()) {
-            if(entity.has(LightComponent.class)) {
-                LightComponent lightComponent = entity.getComponent(LightComponent.class);
-                lightComponent.view.get(offset + ((4 * lightIndex) * SizeUtil.MATRIX_SIZE_BYTES), sceneDescData);
-                lightComponent.proj.get(offset + ((4 * lightIndex) + 1) * SizeUtil.MATRIX_SIZE_BYTES, sceneDescData);
-                lightComponent.invView.get(offset + ((4 * lightIndex) + 2) * SizeUtil.MATRIX_SIZE_BYTES, sceneDescData);
-                lightComponent.invProj.get(offset + ((4 * lightIndex) + 3) * SizeUtil.MATRIX_SIZE_BYTES, sceneDescData);
+            if(entity.has(SpotlightComponent.class)) {
+                SpotlightComponent spotlightComponent = entity.getComponent(SpotlightComponent.class);
+                spotlightComponent.view.get(offset + ((4 * lightIndex) * SizeUtil.MATRIX_SIZE_BYTES), sceneDescData);
+                spotlightComponent.proj.get(offset + ((4 * lightIndex) + 1) * SizeUtil.MATRIX_SIZE_BYTES, sceneDescData);
+                spotlightComponent.invView.get(offset + ((4 * lightIndex) + 2) * SizeUtil.MATRIX_SIZE_BYTES, sceneDescData);
+                spotlightComponent.invProj.get(offset + ((4 * lightIndex) + 3) * SizeUtil.MATRIX_SIZE_BYTES, sceneDescData);
 
                 lightIndex++;
             }
@@ -396,7 +396,7 @@ public class BlinnPhongPipeline extends RenderPipeline {
         for(Entity entity : scene.getEntities()) {
             if(entity.has(CameraComponent.class)) {
                 CameraComponent cameraComponent = entity.getComponent(CameraComponent.class);
-                sceneCamera = cameraComponent.camera();
+                sceneCamera = cameraComponent.camera;
             }
         }
 
@@ -407,7 +407,7 @@ public class BlinnPhongPipeline extends RenderPipeline {
 
             lightCount = 0;
             for(Entity entity : scene.getEntities()) {
-                if (entity.has(LightComponent.class))
+                if (entity.has(SpotlightComponent.class))
                     lightCount++;
             }
 
@@ -418,24 +418,24 @@ public class BlinnPhongPipeline extends RenderPipeline {
             int lightIndex = 0;
 
             for(Entity entity : scene.getEntities()) {
-                if (entity.has(LightComponent.class)) {
-                    LightComponent lightComponent = entity.getComponent(LightComponent.class);
+                if (entity.has(SpotlightComponent.class)) {
+                    SpotlightComponent spotlightComponent = entity.getComponent(SpotlightComponent.class);
                     int i1 = renderer.getMaxFramesInFlight() * lightIndex;
                     int i2 = renderer.getMaxFramesInFlight() * lightIndex + 1;
 
-                    shadowMapTextures[i1] = lightComponent.renderTarget
+                    shadowMapTextures[i1] = spotlightComponent.renderTarget
                             .getAttachment(RenderTargetAttachmentTypes.Pos)
                             .getTextures()[0];
 
-                    shadowMapSamplers[i1] = lightComponent.renderTarget
+                    shadowMapSamplers[i1] = spotlightComponent.renderTarget
                             .getAttachment(RenderTargetAttachmentTypes.Pos)
                             .getSamplers()[0];
 
-                    shadowMapTextures[i2] = lightComponent.renderTarget
+                    shadowMapTextures[i2] = spotlightComponent.renderTarget
                             .getAttachment(RenderTargetAttachmentTypes.Pos)
                             .getTextures()[1];
 
-                    shadowMapSamplers[i2] = lightComponent.renderTarget
+                    shadowMapSamplers[i2] = spotlightComponent.renderTarget
                             .getAttachment(RenderTargetAttachmentTypes.Pos)
                             .getSamplers()[1];
 
@@ -505,20 +505,20 @@ public class BlinnPhongPipeline extends RenderPipeline {
                     int mode = 1;
 
                     for(Entity entity : scene.getEntities()) {
-                        if(entity.has(LightComponent.class)) {
-                            LightComponent lightComponent = entity.getComponent(LightComponent.class);
+                        if(entity.has(SpotlightComponent.class)) {
+                            SpotlightComponent spotlightComponent = entity.getComponent(SpotlightComponent.class);
 
 
 
                             int width, height;
                             {
-                                Texture texture = lightComponent.renderTarget.getAttachmentByIndex(0).getTextures()[0];
+                                Texture texture = spotlightComponent.renderTarget.getAttachmentByIndex(0).getTextures()[0];
                                 width = texture.getWidth();
                                 height = texture.getHeight();
                             }
 
 
-                            shadowMapGenPass.startRendering(lightComponent.renderTarget, 2, width, height, true, Color.BLACK);
+                            shadowMapGenPass.startRendering(spotlightComponent.renderTarget, 2, width, height, true, Color.BLACK);
                             {
                                 shadowMapGenPass.setCullMode(CullMode.Back);
 

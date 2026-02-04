@@ -55,7 +55,7 @@ public class ExampleStage extends Stage {
         Entity.tryClassload(ActorMeshComponent.class);
         Entity.tryClassload(EnvironmentMeshComponent.class);
         Entity.tryClassload(CameraComponent.class);
-        Entity.tryClassload(LightComponent.class);
+        Entity.tryClassload(SpotlightComponent.class);
         Entity.tryClassload(ShaderComponent.class);
         Entity.tryClassload(ScriptComponent.class);
 
@@ -183,7 +183,7 @@ public class ExampleStage extends Stage {
             ActorMeshComponent actorMeshComponent = new ActorMeshComponent(renderer, renderer, 100000, 100000, shaderProgram);
             actorMeshComponent.setMesh(meshData, new EntityShaderIndex(0));
 
-            Texture texture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/woodfloor.png"), TextureFormatType.ColorR8G8B8A8);
+            Texture texture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/k.png"), TextureFormatType.ColorR8G8B8A8);
             Sampler sampler = Sampler.newSampler(texture, Texture.Filter.Linear, Texture.Filter.Linear, true);
 
 
@@ -255,7 +255,7 @@ public class ExampleStage extends Stage {
 
 
             spotlightEntity = scene.createEntity(
-                    new LightComponent(
+                    new SpotlightComponent(
                             new Matrix4f().lookAt(
                                     new Vector3f(x, y, z),
                                     new Vector3f(0, 0, 0),
@@ -292,7 +292,6 @@ public class ExampleStage extends Stage {
 
         Time.deltaTime = (float) (surface.getTime() - startTime);
         startTime = (float) surface.getTime();
-        System.out.println(Time.framesPerSecond());
 
 
         return !surface.shouldClose();
