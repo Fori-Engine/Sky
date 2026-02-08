@@ -107,6 +107,7 @@ public class MeshGenerator {
         List<Float> verticesList = new ArrayList<>();
         List<Float> colorsList = new ArrayList<>();
         List<Float> normalsList = new ArrayList<>();
+        List<Float> textureUVsList = new ArrayList<>();
         List<Integer> indicesList = new ArrayList<>();
 
 
@@ -156,12 +157,20 @@ public class MeshGenerator {
         };
 
         float[][] colors = {
-                {0.95f, 0.22f, 0.30f, 1f}, // Rich red
-                {0.18f, 0.85f, 0.35f, 1f}, // Vibrant green
-                {0.18f, 0.60f, 0.95f, 1f}, // Vibrant blue
-                {1f, 0.82f, 0.18f, 1f}, // Warm yellow
-                {0.12f, 0.90f, 0.88f, 1f}, // Soft cyan
-                {0.68f, 0.28f, 1f, 1f}  // Deep violet
+                {1, 1, 1, 1},
+                {1, 1, 1, 1},
+                {1, 1, 1, 1},
+                {1, 1, 1, 1},
+                {1, 1, 1, 1},
+                {1, 1, 1, 1}
+        };
+
+        Vector2f[] textureUVs = {
+                new Vector2f(0.0f, 1.0f),
+                new Vector2f(1.0f, 1.0f),
+                new Vector2f(1.0f, 0.0f),
+                new Vector2f(0.0f, 0.0f),
+
         };
 
         int index = 0;
@@ -175,13 +184,14 @@ public class MeshGenerator {
             Vector3f faceNormal = e0.cross(e1).normalize();
 
 
-            for (int j = 0; j < 4; j++) {
-                Vector3f faceVertex = faceVertices[j];
+            for (int vertexIndex = 0; vertexIndex < 4; vertexIndex++) {
+                Vector3f vertex = faceVertices[vertexIndex];
+                Vector2f uv =  textureUVs[vertexIndex];
 
                 // Position
-                verticesList.add(faceVertex.x);
-                verticesList.add(faceVertex.y);
-                verticesList.add(faceVertex.z);
+                verticesList.add(vertex.x);
+                verticesList.add(vertex.y);
+                verticesList.add(vertex.z);
 
                 // Color
                 colorsList.add(faceColors[0]);
@@ -193,6 +203,9 @@ public class MeshGenerator {
                 normalsList.add(faceNormal.x);
                 normalsList.add(faceNormal.y);
                 normalsList.add(faceNormal.z);
+
+                textureUVsList.add(uv.x);
+                textureUVsList.add(uv.y);
 
             }
 
@@ -211,6 +224,7 @@ public class MeshGenerator {
         vertexData.put("Positions", verticesList);
         vertexData.put("Colors", colorsList);
         vertexData.put("Normals", normalsList);
+        vertexData.put("TextureUVs", textureUVsList);
 
         return new MeshData(vertexData, indicesList, 24);
     }

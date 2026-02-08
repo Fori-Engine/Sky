@@ -16,7 +16,7 @@ public class FlyCameraScript extends Script {
     private Camera camera;
     private float yaw = 0, pitch = 0;
     private Vector3f pos = new Vector3f(), dir = new Vector3f(), up = new Vector3f(0.0f, 1.0f, 0.0f);
-    private float lastMouseX, lastMouseY;
+    private float lastMouseX = -1, lastMouseY = -1;
     private Matrix4f viewMatrix = new Matrix4f();
     public float mouseSensitivity = 0.01f, maxPitchDeg = 75, moveSpeed = 10;
 
@@ -43,6 +43,11 @@ public class FlyCameraScript extends Script {
 
     @Override
     public void update(Entity entity) {
+
+        if(lastMouseX == -1 && lastMouseY == -1) {
+            lastMouseX = surface.getMousePos().x;
+            lastMouseY = surface.getMousePos().y;
+        }
 
         yaw += (surface.getMousePos().x - lastMouseX) * mouseSensitivity;
         pitch += (surface.getMousePos().y - lastMouseY) * mouseSensitivity;

@@ -21,17 +21,13 @@ public class Launcher {
     public void launch(String[] args) {
 
         Stage stage = new ExampleStage();
-        Surface surface = Surface.newSwingSurface(stage, "SkySOFT Editor", 1920, 1080); //Surface.newSurface(stage, "SkySOFT Engine", 1920, 1080);
+        Surface surface = Surface.newSurface(stage, "SkySOFT Engine", 1920, 1080);
 
         stage.launch(args, surface);
 
 
         while(true){
             boolean success = stage.update();
-            System.out.println("Tick");
-
-
-
             if(!success) break;
         }
 

@@ -9,7 +9,7 @@ StructuredBuffer<Transforms> transforms;
 
 struct VSOutput {
     float4 pos : SV_POSITION;
-    float4 posViewSpace;
+    float4 pos_vs;
     float4 color;
     float3 normal;
 }
@@ -42,10 +42,16 @@ VSOutput vertexMain(Vertex vertex, uniform int renderMode, uniform int lightInde
     
     float4x4 transform = transforms[0].transforms[int(vertex.entityIndex)];
 
-    output.posViewSpace = mul(view, mul(transform, float4(vertex.pos, 1.0)));
-    output.pos = mul(proj, output.posViewSpace);
-    output.color = vertex.color;
     output.normal = mul(float3x3(transform), vertex.normal);
+
+    if(renderMode == 0) 
+        output.pos_vs = mul(view, mul(transform, float4(vertex.pos, 1.0)));
+    else
+        output.pos_vs = mul(view, mul(transform, float4(vertex.pos + 0.02 * 0.98 * vertex.normal, 1.0)));
+
+
+    output.pos = mul(proj, output.pos_vs);
+    output.color = vertex.color;
 
     return output;
 }
@@ -63,11 +69,11 @@ FSOutput fragmentMain(VSOutput vsOutput, uniform int renderMode, uniform int lig
 
     if(renderMode == 0) {
         output.color0 = float4(vsOutput.color.xyz, 1.0);
-        output.color1 = float4(vsOutput.posViewSpace.xyz, 1.0);
+        output.color1 = float4(vsOutput.pos_vs.xyz, 1.0);
         output.color2 = float4(vsOutput.normal.xyz, 1.0);
     }
     if(renderMode == 1) {
-        output.color0 = float4(vsOutput.posViewSpace.xyz, 1.0);
+        output.color0 = float4(vsOutput.pos_vs.xyz, 1.0);
     }
 
 

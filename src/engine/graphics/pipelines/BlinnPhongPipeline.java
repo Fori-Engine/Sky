@@ -520,7 +520,7 @@ public class BlinnPhongPipeline extends RenderPipeline {
 
                             shadowMapGenPass.startRendering(spotlightComponent.renderTarget, 2, width, height, true, Color.BLACK);
                             {
-                                shadowMapGenPass.setCullMode(CullMode.Back);
+                                shadowMapGenPass.setCullMode(CullMode.Front);
 
                                 for(Entity e : scene.getEntities()) {
 
@@ -707,6 +707,12 @@ public class BlinnPhongPipeline extends RenderPipeline {
             {
                 lightingPass.resolveBarriers();
                 lightingPass.setShaderProgram(lightingPassShaderProgram);
+
+                try(MemoryStack stack = stackPush()) {
+                    ByteBuffer pPushConstants = stack.calloc(Integer.BYTES);
+                    pPushConstants.putInt(lightCount);
+                    lightingPass.setPushConstants(pPushConstants);
+                }
 
                 int groupCountX = (int) Math.ceil((float) renderer.getWidth() / COMPUTE_THREAD_GROUP_SIZE);
                 int groupCountY = (int) Math.ceil((float) renderer.getHeight() / COMPUTE_THREAD_GROUP_SIZE);
