@@ -51,7 +51,7 @@ public class ActorMeshComponent {
 
             sceneDescBuffers[i] = Buffer.newBuffer(
                     parent,
-                    shaderProgram.getDescriptorByName("sceneDesc").getSizeBytes(),
+                    shaderProgram.getDescriptorByName("scene_desc").getSizeBytes(),
                     Buffer.Usage.ShaderStorageBuffer,
                     Buffer.Type.CPUGPUShared,
                     false

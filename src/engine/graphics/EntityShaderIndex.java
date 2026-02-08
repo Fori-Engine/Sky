@@ -24,7 +24,7 @@ public class EntityShaderIndex {
 
             for(VertexAttribute vertexAttribute : shaderProgram.getVertexAttributes()) {
                 switch (vertexAttribute.getName()) {
-                    case "vertex.pos" -> {
+                    case "vertex.pos_ws" -> {
                         float x = positions.get(3 * vertexIndex + 0);
                         float y = positions.get(3 * vertexIndex + 1);
                         float z = positions.get(3 * vertexIndex + 2);
@@ -33,10 +33,10 @@ public class EntityShaderIndex {
                         vertexBufferData.putFloat(y);
                         vertexBufferData.putFloat(z);
                     }
-                    case "vertex.entityIndex" -> {
+                    case "vertex.entity_index" -> {
                         vertexBufferData.putFloat(entityIndex);
                     }
-                    case "vertex.uv" -> {
+                    case "vertex.uv_ts" -> {
                         float u = textureUVs.get(2 * vertexIndex + 0);
                         float v = textureUVs.get(2 * vertexIndex + 1);
 
@@ -54,7 +54,7 @@ public class EntityShaderIndex {
                         vertexBufferData.putFloat(b);
                         vertexBufferData.putFloat(a);
                     }
-                    case "vertex.normal" -> {
+                    case "vertex.normal_ws" -> {
                         float nx = normals.get(3 * vertexIndex + 0);
                         float ny = normals.get(3 * vertexIndex + 1);
                         float nz = normals.get(3 * vertexIndex + 2);

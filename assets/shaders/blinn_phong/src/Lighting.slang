@@ -1,5 +1,5 @@
 #include "SceneDesc.slang"
-StructuredBuffer<Scene> sceneDesc;
+StructuredBuffer<Scene> scene_desc;
 
 
 Texture2D inputColorTexture;
@@ -17,14 +17,14 @@ void computeMain(uniform int light_count, int3 dispatch_ID : SV_DispatchThreadID
     
     float4 output_color = inputColorTexture.Load(texture_xy_ss, 0);
 
-    Camera camera = sceneDesc[0].camera;
+    Camera camera = scene_desc[0].camera;
     float4 fragment_vs = inputPosTexture.Load(texture_xy_ss, 0);
     float4 fragment_ws = mul(camera.invView, fragment_vs);
     
     for(int light_index = 0; light_index < light_count; light_index++) {
 
 
-        Light light = sceneDesc[0].lights[light_index];
+        Light light = scene_desc[0].lights[light_index];
 
         float4 shadow_map_uv_ts = mul(light.proj, mul(light.view, fragment_ws));
         shadow_map_uv_ts /= shadow_map_uv_ts.w;

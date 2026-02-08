@@ -114,7 +114,7 @@ public class ExampleStage extends Stage {
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
                 actorMeshComponent.shaderProgram.setBuffers(
                         frameIndex,
-                        new DescriptorUpdate<>("sceneDesc", actorMeshComponent.sceneDescBuffers[frameIndex]),
+                        new DescriptorUpdate<>("scene_desc", actorMeshComponent.sceneDescBuffers[frameIndex]),
                         new DescriptorUpdate<>("transforms", actorMeshComponent.transformsBuffers[frameIndex])
                 );
             }
@@ -152,7 +152,7 @@ public class ExampleStage extends Stage {
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
                 actorMeshComponent.shaderProgram.setBuffers(
                         frameIndex,
-                        new DescriptorUpdate<>("sceneDesc", actorMeshComponent.sceneDescBuffers[frameIndex]),
+                        new DescriptorUpdate<>("scene_desc", actorMeshComponent.sceneDescBuffers[frameIndex]),
                         new DescriptorUpdate<>("transforms", actorMeshComponent.transformsBuffers[frameIndex])
                 );
             }
@@ -191,11 +191,11 @@ public class ExampleStage extends Stage {
 
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
                 actorMeshComponent.shaderProgram.setTextures(frameIndex, new DescriptorUpdate<>("texture", texture));
-                actorMeshComponent.shaderProgram.setSamplers(frameIndex, new DescriptorUpdate<>("textureSampler", sampler));
+                actorMeshComponent.shaderProgram.setSamplers(frameIndex, new DescriptorUpdate<>("texture_sampler", sampler));
 
                 actorMeshComponent.shaderProgram.setBuffers(
                         frameIndex,
-                        new DescriptorUpdate<>("sceneDesc", actorMeshComponent.sceneDescBuffers[frameIndex]),
+                        new DescriptorUpdate<>("scene_desc", actorMeshComponent.sceneDescBuffers[frameIndex]),
                         new DescriptorUpdate<>("transforms", actorMeshComponent.transformsBuffers[frameIndex])
                 );
             }

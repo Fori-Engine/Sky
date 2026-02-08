@@ -170,7 +170,7 @@ public class BlinnPhongPipeline extends RenderPipeline {
             for (int i = 0; i < renderer.getMaxFramesInFlight(); i++) {
                 lightingPassSceneDescBuffers[i] = Buffer.newBuffer(
                         renderer,
-                        lightingPassShaderProgram.getDescriptorByName("sceneDesc").getSizeBytes(),
+                        lightingPassShaderProgram.getDescriptorByName("scene_desc").getSizeBytes(),
                         Buffer.Usage.ShaderStorageBuffer,
                         Buffer.Type.CPUGPUShared,
                         false
@@ -644,7 +644,7 @@ public class BlinnPhongPipeline extends RenderPipeline {
             lightingPassShaderProgram.setBuffers(
                     renderer.getFrameIndex(),
                     new DescriptorUpdate<>(
-                            "sceneDesc",
+                            "scene_desc",
                             lightingPassSceneDescBuffers[renderer.getFrameIndex()]
                     )
             );
