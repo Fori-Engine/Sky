@@ -2,23 +2,23 @@
 StructuredBuffer<Scene> scene_desc;
 
 
-Texture2D inputColorTexture;
-RWTexture2D outputColorTexture;
-Texture2D inputPosTexture;
-Texture2D inputNormalTexture;
+Texture2D input_color_texture;
+RWTexture2D output_color_texture;
+Texture2D input_pos_vs_texture;
+Texture2D input_normal_ws_texture;
 
-Texture2D inputShadowMaps[MAX_LIGHTS];
-SamplerState inputShadowMapsSamplers[MAX_LIGHTS];
+Texture2D input_shadow_maps[MAX_LIGHTS];
+SamplerState input_shadow_maps_samplers[MAX_LIGHTS];
 
 [numthreads(16, 16, 1)]
 void computeMain(uniform int light_count, int3 dispatch_ID : SV_DispatchThreadID) {
 
     int3 texture_xy_ss = int3(dispatch_ID.x, dispatch_ID.y, 0);
     
-    float4 output_color = inputColorTexture.Load(texture_xy_ss, 0);
+    float4 output_color = input_color_texture.Load(texture_xy_ss, 0);
 
     Camera camera = scene_desc[0].camera;
-    float4 fragment_vs = inputPosTexture.Load(texture_xy_ss, 0);
+    float4 fragment_vs = input_pos_vs_texture.Load(texture_xy_ss, 0);
     float4 fragment_ws = mul(camera.invView, fragment_vs);
     
     for(int light_index = 0; light_index < light_count; light_index++) {
@@ -36,7 +36,7 @@ void computeMain(uniform int light_count, int3 dispatch_ID : SV_DispatchThreadID
         float3 light_dir_ws = normalize(light_pos_ws - fragment_ws.xyz);
         float3 camera_dir_ws = normalize(camera_pos_ws - fragment_ws.xyz);
 
-        float3 normal = inputNormalTexture.Load(texture_xy_ss, 0).xyz;
+        float3 normal = input_normal_ws_texture.Load(texture_xy_ss, 0).xyz;
 
 
         
@@ -46,7 +46,7 @@ void computeMain(uniform int light_count, int3 dispatch_ID : SV_DispatchThreadID
 
             if(shadow_map_uv_ts.x >= 0 && shadow_map_uv_ts.x <= 1 && shadow_map_uv_ts.y >= 0 && shadow_map_uv_ts.y <= 1) {
 
-                float4 lpFromShadowMap = inputShadowMaps[light_index].Sample(inputShadowMapsSamplers[light_index], shadow_map_uv_ts.xy);
+                float4 lpFromShadowMap = input_shadow_maps[light_index].Sample(input_shadow_maps_samplers[light_index], shadow_map_uv_ts.xy);
                 float4 lpFragment = mul(light.view, fragment_ws);
 
                 if(lpFragment.z < lpFromShadowMap.z) {
@@ -82,5 +82,5 @@ void computeMain(uniform int light_count, int3 dispatch_ID : SV_DispatchThreadID
     }
 
 
-    outputColorTexture[texture_xy_ss.xy] = output_color;
+    output_color_texture[texture_xy_ss.xy] = output_color;
 }

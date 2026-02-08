@@ -660,19 +660,19 @@ public class BlinnPhongPipeline extends RenderPipeline {
             lightingPassShaderProgram.setTextures(
                     renderer.getFrameIndex(),
                     new DescriptorUpdate<>(
-                            "inputColorTexture",
+                            "input_color_texture",
                             inputColorTexturesDependency.get().key[renderer.getFrameIndex()]
                     ),
                     new DescriptorUpdate<>(
-                            "inputPosTexture",
+                            "input_pos_vs_texture",
                             inputPosTexturesDependency.get().key[renderer.getFrameIndex()]
                     ),
                     new DescriptorUpdate<>(
-                            "inputNormalTexture",
+                            "input_normal_ws_texture",
                             inputNormalTexturesDependency.get().key[renderer.getFrameIndex()]
                     ),
                     new DescriptorUpdate<>(
-                            "outputColorTexture",
+                            "output_color_texture",
                             outputColorTexturesDependency.get().key[renderer.getFrameIndex()]
                     )
             );
@@ -688,14 +688,14 @@ public class BlinnPhongPipeline extends RenderPipeline {
                     lightingPassShaderProgram.setTextures(
                             renderer.getFrameIndex(),
                             new DescriptorUpdate<>(
-                                    "inputShadowMaps",
+                                    "input_shadow_maps",
                                     shadowMapTexturesResource.get().key[renderer.getMaxFramesInFlight() * i + renderer.getFrameIndex()]
                             ).arrayIndex(i)
                     );
                     lightingPassShaderProgram.setSamplers(
                             renderer.getFrameIndex(),
                             new DescriptorUpdate<>(
-                                    "inputShadowMapsSamplers",
+                                    "input_shadow_maps_samplers",
                                     shadowMapTexturesResource.get().value[renderer.getMaxFramesInFlight() * i + renderer.getFrameIndex()]
                             ).arrayIndex(i)
                     );
@@ -731,14 +731,14 @@ public class BlinnPhongPipeline extends RenderPipeline {
             displayPassShaderProgram.setTextures(
                     renderer.getFrameIndex(),
                     new DescriptorUpdate<>(
-                            "inputColorTexture",
+                            "input_color_texture",
                             inputTexturesResource.get().key[renderer.getFrameIndex()])
             );
 
             displayPassShaderProgram.setSamplers(
                     renderer.getFrameIndex(),
                     new DescriptorUpdate<>(
-                            "inputColorTextureSampler",
+                            "input_color_texture_sampler",
                             inputTexturesResource.get().value[renderer.getFrameIndex()])
             );
 

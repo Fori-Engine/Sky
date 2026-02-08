@@ -37,8 +37,8 @@ struct FSOutput {
     float4 color0SW : SV_Target0;
 }
 
-Texture2D inputColorTexture;
-SamplerState inputColorTextureSampler;
+Texture2D input_color_texture;
+SamplerState input_color_texture_sampler;
 
 
 
@@ -48,7 +48,7 @@ FSOutput fragmentMain(VSOutput vsOutput) {
 
     FSOutput output;
     if(vsOutput.fillMode >= 0) {
-        output.color0SW = inputColorTexture.Sample(inputColorTextureSampler, vsOutput.uv) * vsOutput.color;
+        output.color0SW = input_color_texture.Sample(input_color_texture_sampler, vsOutput.uv) * vsOutput.color;
     }
     else if(vsOutput.fillMode == -1) output.color0SW = vsOutput.color;
     else if(vsOutput.fillMode == -2) {
