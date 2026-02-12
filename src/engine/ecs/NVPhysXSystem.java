@@ -1,6 +1,8 @@
 package engine.ecs;
 
+import engine.Input;
 import engine.Logger;
+import engine.Surface;
 import engine.Time;
 import engine.physx.ActorType;
 import engine.physx.Collider;
@@ -25,12 +27,14 @@ public class NVPhysXSystem extends EcsSystem {
     private PxDefaultCpuDispatcher cpuDispatcher;
     private PxSimulationFilterShader filterShader;
 
+    private Surface surface;
     private Scene scene;
     private float accumulator = 0;
     private int numThreads;
     private float timestep;
 
-    public NVPhysXSystem(Scene scene, int numThreads, float timestep) {
+    public NVPhysXSystem(Surface surface, Scene scene, int numThreads, float timestep) {
+        this.surface = surface;
         this.scene = scene;
         this.numThreads = numThreads;
         this.timestep = timestep;
@@ -158,16 +162,18 @@ public class NVPhysXSystem extends EcsSystem {
 
 
 
+        if(surface.getKeyPressed(Input.KEY_SPACE)) {
 
 
-        float frameTime = Math.min(Time.deltaTime(), 0.25f);
-        accumulator += frameTime;
-        while (accumulator >= timestep) {
+            float frameTime = Math.min(Time.deltaTime(), 0.25f);
+            accumulator += frameTime;
+            while (accumulator >= timestep) {
 
-            pxScene.simulate(timestep);
-            pxScene.fetchResults(true);
+                pxScene.simulate(timestep);
+                pxScene.fetchResults(true);
 
-            accumulator -= timestep;
+                accumulator -= timestep;
+            }
         }
 
 

@@ -41,19 +41,44 @@ void computeMain(uniform int light_count, int3 dispatch_ID : SV_DispatchThreadID
         fragment_shadow_map_ps /= fragment_shadow_map_ps.w;
         float4 shadow_map_uv_ts = fragment_shadow_map_ps * 0.5 + 0.5;
 
+        float shadow_map_texel_w, shadow_map_texel_h, shadow_map_num_levels;
+        input_shadow_maps[light_index].GetDimensions(0, shadow_map_texel_w, shadow_map_texel_h, shadow_map_num_levels);
+        shadow_map_texel_w = 1 / shadow_map_texel_w;
+        shadow_map_texel_h = 1 / shadow_map_texel_h;
+        float shadow_samples = 0;
 
 
 
         if(shadow_map_uv_ts.x >= 0 && shadow_map_uv_ts.x <= 1 && shadow_map_uv_ts.y >= 0 && shadow_map_uv_ts.y <= 1) {
 
+            int pcf_kernel_w;
+            int penumbra_step = 4;
 
-            //Shadows
+
+            //PCSS
             {
                 float shadow_map_depth = input_shadow_maps[light_index].Sample(input_shadow_maps_samplers[light_index], shadow_map_uv_ts.xy).z;
 
-                if(shadow_map_depth < fragment_shadow_map_ps.z) {
-                    output_color.xyz *= 0.5;
+                pcf_kernel_w = (int) ceil((fragment_shadow_map_ps.z - shadow_map_depth) / fragment_shadow_map_ps.z) * penumbra_step;
+            }
+
+            //Shadows
+            {
+
+
+
+                for(int x = -pcf_kernel_w; x <= pcf_kernel_w; x++) {
+                    for(int y = -pcf_kernel_w; y <= -pcf_kernel_w; y++) {
+                        float shadow_map_depth = input_shadow_maps[light_index].Sample(input_shadow_maps_samplers[light_index], shadow_map_uv_ts.xy + float2(x, y) * float2(shadow_map_texel_w, shadow_map_texel_h)).z;
+
+                        shadow_samples += (shadow_map_depth < fragment_shadow_map_ps.z) ? 0.5 : 0.0;
+                    }
                 }
+
+                shadow_samples /= pow(2 * pcf_kernel_w + 1, 2);
+               
+
+                
 
             }
     
@@ -73,7 +98,7 @@ void computeMain(uniform int light_count, int3 dispatch_ID : SV_DispatchThreadID
 
                 float specular = 0.8 * pow(dot(halfway_dir_ws, normal_ws), 512);
 
-                intensity = ambient + diffuse + specular;
+                intensity = ambient + diffuse + specular - shadow_samples;
             }
 
 
