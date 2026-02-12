@@ -239,8 +239,8 @@ public class ExampleStage extends Stage {
                             RenderTargetAttachmentTypes.Pos,
                             posTextures,
                             new Sampler[]{
-                                    Sampler.newSampler(lightRT, Texture.Filter.Linear, Texture.Filter.Linear, false),
-                                    Sampler.newSampler(lightRT, Texture.Filter.Linear, Texture.Filter.Linear, false)
+                                    Sampler.newSampler(lightRT, Texture.Filter.Nearest, Texture.Filter.Nearest, false),
+                                    Sampler.newSampler(lightRT, Texture.Filter.Nearest, Texture.Filter.Nearest, false)
                             }
 
                     )

@@ -43,13 +43,7 @@ VSOutput vertexMain(Vertex vertex, uniform int render_mode, uniform int light_in
     float4x4 transform = transforms[0].transforms[int(vertex.entity_index)];
 
     output.normal_ws = mul(float3x3(transform), vertex.normal_ws);
-
-    if(render_mode == 0) 
-        output.pos_vs = mul(view, mul(transform, float4(vertex.pos_ws, 1.0)));
-    else
-        output.pos_vs = mul(view, mul(transform, float4(vertex.pos_ws + 0.02 * 0.98 * vertex.normal_ws, 1.0)));
-
-
+    output.pos_vs = mul(view, mul(transform, float4(vertex.pos_ws, 1.0)));
     output.pos = mul(proj, output.pos_vs);
     output.color = vertex.color;
 
@@ -73,7 +67,7 @@ FSOutput fragmentMain(VSOutput vsOutput, uniform int render_mode, uniform int li
         output.color2 = float4(vsOutput.normal_ws.xyz, 1.0);
     }
     if(render_mode == 1) {
-        output.color0 = float4(vsOutput.pos_vs.xyz, 1.0);
+        output.color0 = float4(vsOutput.pos.z,vsOutput.pos.z, vsOutput.pos.z, 1.0);
     }
 
 
