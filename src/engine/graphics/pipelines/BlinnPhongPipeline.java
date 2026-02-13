@@ -28,7 +28,7 @@ public class BlinnPhongPipeline extends RenderPipeline {
     private Resource<Pair<Texture[], Sampler[]>> sceneColorTextures;
     private Resource<Pair<Texture[], Sampler[]>> scenePosTextures;
     private Resource<Pair<Texture[], Sampler[]>> sceneNormalTextures;
-    private Resource<Texture> sceneDepthTexture;
+    private Resource<Pair<Texture[], Sampler[]>> sceneDepthStencilTexture;
 
     private ComputePass lightingPass;
     private RenderTarget lightingPassRT;
@@ -99,8 +99,13 @@ public class BlinnPhongPipeline extends RenderPipeline {
                     )
             );
 
-            sceneDepthTexture = new Resource<>(
-                    Texture.newDepthTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.Depth32)
+            sceneDepthStencilTexture = new Resource<>(
+                    new Pair<>(
+                            new Texture[]{
+                                    Texture.newDepthTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.Depth32)
+                            },
+                            null
+                    )
             );
 
             scenePassRT.addAttachment(
@@ -132,7 +137,7 @@ public class BlinnPhongPipeline extends RenderPipeline {
             scenePassRT.addAttachment(
                     new RenderTargetAttachment(
                             RenderTargetAttachmentTypes.Depth,
-                            new Texture[]{ sceneDepthTexture.get() },
+                            new Texture[]{ sceneDepthStencilTexture.get().key[0] },
                             null
                     )
             );

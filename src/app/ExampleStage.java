@@ -79,7 +79,7 @@ public class ExampleStage extends Stage {
                         (float) Math.toRadians(45.0f),
                         (float) renderer.getWidth() / renderer.getHeight(),
                         0.01f,
-                        100.0f,
+                        100,
                         true
                 ),
                 true
@@ -89,80 +89,42 @@ public class ExampleStage extends Stage {
         cameraEntity = scene.createEntity(new CameraComponent(camera), new ScriptComponent(new FlyCameraScript(surface, renderer)));
 
 
-        //Default Cube
-        {
+        for(int x = 0; x < 5; x++) {
+            for(int y = 0; y < 5; y++) {
+                for (int z = 0; z < 5; z++) {
+                    //Default Cube
+                    {
 
 
-            ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(renderer);
-            shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/blinn_phong/Default_vertex.spv"), ShaderType.VertexShader);
-            shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/blinn_phong/Default_fragment.spv"), ShaderType.FragmentShader);
-            shaderProgram.assemble();
+                        ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(renderer);
+                        shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/blinn_phong/Default_vertex.spv"), ShaderType.VertexShader);
+                        shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/blinn_phong/Default_fragment.spv"), ShaderType.FragmentShader);
+                        shaderProgram.assemble();
+
+                        MeshData meshData = MeshGenerator.newBox(1.0f, 1.0f, 1.0f);
+
+                        ActorMeshComponent actorMeshComponent = new ActorMeshComponent(renderer, renderer, 100, 100, shaderProgram);
+                        actorMeshComponent.setMesh(meshData, new EntityShaderIndex(0));
+
+                        for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
+                            actorMeshComponent.shaderProgram.setBuffers(
+                                    frameIndex,
+                                    new DescriptorUpdate<>("scene_desc", actorMeshComponent.sceneDescBuffers[frameIndex]),
+                                    new DescriptorUpdate<>("transforms", actorMeshComponent.transformsBuffers[frameIndex])
+                            );
+                        }
+
+                        defaultCubeEntity = scene.createEntity(
+                                actorMeshComponent,
+                                new ShaderComponent(shaderProgram),
+                                new TransformComponent(new Matrix4f().identity().translate(x * z, y * x, z * y).rotate((float) Math.toRadians(0), 1, 0, 1)),
+                                new NVPhysXComponent(new BoxCollider(1.0f, 1.0f, 1.0f), new Material(0.05f, 0.05f, 0.3f), ActorType.Dynamic)
+                        );
+                    }
 
 
-
-            MeshData meshData = MeshGenerator.newBox(1.0f, 1.0f, 1.0f);
-
-
-
-
-            ActorMeshComponent actorMeshComponent = new ActorMeshComponent(renderer, renderer, 100000, 100000, shaderProgram);
-            actorMeshComponent.setMesh(meshData, new EntityShaderIndex(0));
-
-
-
-
-            for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                actorMeshComponent.shaderProgram.setBuffers(
-                        frameIndex,
-                        new DescriptorUpdate<>("scene_desc", actorMeshComponent.sceneDescBuffers[frameIndex]),
-                        new DescriptorUpdate<>("transforms", actorMeshComponent.transformsBuffers[frameIndex])
-                );
+                }
             }
-
-            defaultCubeEntity = scene.createEntity(
-                    actorMeshComponent,
-                    new ShaderComponent(shaderProgram),
-                    new TransformComponent(new Matrix4f().identity().translate(0.2f, 10, 0).rotate((float) Math.toRadians(45.0f), 1, 0, 1)),
-                    new NVPhysXComponent(new BoxCollider(1.0f, 1.0f, 1.0f), new Material(0.5f, 0.5f, 0.3f), ActorType.Dynamic)
-            );
-        }
-
-        //Default Cube
-        {
-
-
-            ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(renderer);
-            shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/blinn_phong/Default_vertex.spv"), ShaderType.VertexShader);
-            shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/blinn_phong/Default_fragment.spv"), ShaderType.FragmentShader);
-            shaderProgram.assemble();
-
-
-
-            MeshData meshData = MeshGenerator.newBox(1.0f, 1.0f, 1.0f);
-
-
-
-
-            ActorMeshComponent actorMeshComponent = new ActorMeshComponent(renderer, renderer, 100000, 100000, shaderProgram);
-            actorMeshComponent.setMesh(meshData, new EntityShaderIndex(0));
-
-
-
-
-            for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                actorMeshComponent.shaderProgram.setBuffers(
-                        frameIndex,
-                        new DescriptorUpdate<>("scene_desc", actorMeshComponent.sceneDescBuffers[frameIndex]),
-                        new DescriptorUpdate<>("transforms", actorMeshComponent.transformsBuffers[frameIndex])
-                );
-            }
-
-            defaultCubeEntity = scene.createEntity(
-                    actorMeshComponent,
-                    new ShaderComponent(shaderProgram),
-                    new TransformComponent(new Matrix4f().identity().translate(0.1f, 7, 0).rotate((float) Math.toRadians(45.0f), 1, 0, 1)),
-                    new NVPhysXComponent(new BoxCollider(1.0f, 1.0f, 1.0f), new Material(0.5f, 0.5f, 0.3f), ActorType.Dynamic)
-            );
         }
 
 
@@ -179,12 +141,12 @@ public class ExampleStage extends Stage {
 
 
 
-            MeshData meshData = MeshGenerator.newBox(10, 1, 10); //.newPlane(10, 10);
+            MeshData meshData = MeshGenerator.newBox(100, 1, 100); //.newPlane(10, 10);
 
             ActorMeshComponent actorMeshComponent = new ActorMeshComponent(renderer, renderer, 100000, 100000, shaderProgram);
             actorMeshComponent.setMesh(meshData, new EntityShaderIndex(0));
 
-            Texture texture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/woodfloor.png"), TextureFormatType.ColorR8G8B8A8);
+            Texture texture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/bugcat.jpg"), TextureFormatType.ColorR8G8B8A8);
             Sampler sampler = Sampler.newSampler(texture, Texture.Filter.Linear, Texture.Filter.Linear, true);
 
 
@@ -204,13 +166,9 @@ public class ExampleStage extends Stage {
                     actorMeshComponent,
                     new ShaderComponent(shaderProgram),
                     new TransformComponent(new Matrix4f().identity().translate(0, -2, 0).rotate((float) Math.toRadians(0), 0, 0, 1)),
-                    new NVPhysXComponent(new BoxCollider(10.0f, 1f, 10.0f), new Material(0.5f, 0.5f, 0.3f), ActorType.Static)
+                    new NVPhysXComponent(new BoxCollider(100.0f, 1f, 100.0f), new Material(0.05f, 0.05f, 0.3f), ActorType.Static)
             );
         }
-
-
-
-
 
 
         //Spotlight
@@ -220,14 +178,14 @@ public class ExampleStage extends Stage {
             Texture[] posTextures = new Texture[] {
                     Texture.newColorTexture(
                             lightRT,
-                            1920 / 2,
-                            1080 / 2,
+                            1024,
+                            1024,
                             TextureFormatType.ColorR32G32B32A32
                     ),
                     Texture.newColorTexture(
                             lightRT,
-                            1920 / 2,
-                            1080 / 2,
+                            1024,
+                            1024,
                             TextureFormatType.ColorR32G32B32A32
                     )
             };
@@ -247,12 +205,12 @@ public class ExampleStage extends Stage {
             );
             lightRT.addAttachment(
                     new RenderTargetAttachment(RenderTargetAttachmentTypes.Depth, new Texture[]{
-                            Texture.newDepthTexture(lightRT, 1920 / 2, 1080 / 2, TextureFormatType.Depth32)
+                            Texture.newDepthTexture(lightRT, 1024, 1024, TextureFormatType.Depth32)
                     }, null)
             );
 
 
-            float x = 0, y = 6, z = 1;
+            float x = 0, y = 10, z = 0.5f;
 
 
             spotlightEntity = scene.createEntity(
@@ -263,8 +221,8 @@ public class ExampleStage extends Stage {
                                     new Vector3f(0.0f, 1.0f, 0.0f)
                             ),
                             new Matrix4f().perspective(
-                                    (float) Math.toRadians(45),
-                                    (float) 1920 / 1080,
+                                    (float) Math.toRadians(95),
+                                    (float) 1,
                                     0.01f,
                                     100.0f,
                                     true
@@ -277,6 +235,73 @@ public class ExampleStage extends Stage {
 
 
         }
+
+
+        //Spotlight
+        {
+            RenderTarget lightRT = new RenderTarget(renderer);
+
+            Texture[] posTextures = new Texture[] {
+                    Texture.newColorTexture(
+                            lightRT,
+                            1024,
+                            1024,
+                            TextureFormatType.ColorR32G32B32A32
+                    ),
+                    Texture.newColorTexture(
+                            lightRT,
+                            1024,
+                            1024,
+                            TextureFormatType.ColorR32G32B32A32
+                    )
+            };
+
+
+
+            lightRT.addAttachment(
+                    new RenderTargetAttachment(
+                            RenderTargetAttachmentTypes.Pos,
+                            posTextures,
+                            new Sampler[]{
+                                    Sampler.newSampler(lightRT, Texture.Filter.Nearest, Texture.Filter.Nearest, false),
+                                    Sampler.newSampler(lightRT, Texture.Filter.Nearest, Texture.Filter.Nearest, false)
+                            }
+
+                    )
+            );
+            lightRT.addAttachment(
+                    new RenderTargetAttachment(RenderTargetAttachmentTypes.Depth, new Texture[]{
+                            Texture.newDepthTexture(lightRT, 1024, 1024, TextureFormatType.Depth32)
+                    }, null)
+            );
+
+
+            float x = 30, y = 10, z = 0.5f;
+
+
+            spotlightEntity = scene.createEntity(
+                    new SpotlightComponent(
+                            new Matrix4f().lookAt(
+                                    new Vector3f(x, y, z),
+                                    new Vector3f(30, 0, 0.0f),
+                                    new Vector3f(0.0f, 1.0f, 0.0f)
+                            ),
+                            new Matrix4f().perspective(
+                                    (float) Math.toRadians(95),
+                                    (float) 1,
+                                    0.01f,
+                                    100.0f,
+                                    true
+                            ),
+
+                            true,
+                            lightRT
+                    )
+            );
+
+
+        }
+
 
 
 

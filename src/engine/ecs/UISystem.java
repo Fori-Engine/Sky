@@ -45,12 +45,12 @@ public class UISystem extends EcsSystem {
                 .rotate(elapsedTime * 1);
 
         elapsedTime += 2 * Time.deltaTime;
-        setOrigin(100 + 150, 600 + 150);
-        drawQuad(100, 600, (float) (300 * Math.sin(elapsedTime)), (float) (300 * Math.sin(elapsedTime)), -1, Color.RED);
+        setOrigin(100 + 50, 600 + 50);
+        drawQuad(100, 600, (float) (100 * Math.sin(elapsedTime)), (float) (100 * Math.sin(elapsedTime)), -1, Color.RED);
         setOrigin(0, 0);
 
         transform = new Matrix2f();
-        drawQuad(1200, 600, 300, 300, -2, Color.RED);
+        drawQuad(1200, 600, 100, 100, -2, Color.GRAY);
 
 
         screenSpaceFeatures.setIndexCount(18);
