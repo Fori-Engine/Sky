@@ -11,9 +11,9 @@ public class SpotlightComponent {
     public boolean invertY;
     public RenderTarget renderTarget;
     public float attenuationConstant = 1.0f;
-    public float attenuationLinear = 0.014f;
-    public float attenuationQuadratic = 0.0007f;
-    public Vector3f color = new Vector3f(0, 1, 0);
+    public float attenuationLinear = 0.14f;
+    public float attenuationQuadratic = 0.07f;
+    public Vector3f color = new Vector3f(1, 1, 1);
 
     public SpotlightComponent(Matrix4f view, Matrix4f proj, boolean invertY, RenderTarget renderTarget) {
         setView(view);

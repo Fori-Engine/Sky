@@ -21,9 +21,7 @@ public class ExampleStage extends Stage {
 
     private float startTime;
     private Scene scene;
-    private Entity modelEntity;
     private Entity cameraEntity;
-    private Entity defaultCubeEntity;
     private Entity floorEntity;
     private Entity spotlightEntity;
     private RenderPipeline renderPipeline;
@@ -69,68 +67,33 @@ public class ExampleStage extends Stage {
 
 
 
-        Camera camera = new Camera(
-                new Matrix4f().lookAt(
-                        new Vector3f(0.0f, 6.0f, 0.5f),
-                        new Vector3f(0, 0, 0),
-                        new Vector3f(0.0f, 1.0f, 0.0f)
-                ),
-                new Matrix4f().perspective(
-                        (float) Math.toRadians(45.0f),
-                        (float) renderer.getWidth() / renderer.getHeight(),
-                        0.01f,
-                        100,
-                        true
-                ),
-                true
-        );
 
         //Camera
-        cameraEntity = scene.createEntity(new CameraComponent(camera), new ScriptComponent(new FlyCameraScript(surface, renderer)));
-
-
-        for(int x = 0; x < 5; x++) {
-            for(int y = 0; y < 5; y++) {
-                for (int z = 0; z < 5; z++) {
-                    //Default Cube
-                    {
-
-
-                        ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(renderer);
-                        shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/blinn_phong/Default_vertex.spv"), ShaderType.VertexShader);
-                        shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/blinn_phong/Default_fragment.spv"), ShaderType.FragmentShader);
-                        shaderProgram.assemble();
-
-                        MeshData meshData = MeshGenerator.newBox(1.0f, 1.0f, 1.0f);
-
-                        ActorMeshComponent actorMeshComponent = new ActorMeshComponent(renderer, renderer, 100, 100, shaderProgram);
-                        actorMeshComponent.setMesh(meshData, new EntityShaderIndex(0));
-
-                        for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                            actorMeshComponent.shaderProgram.setBuffers(
-                                    frameIndex,
-                                    new DescriptorUpdate<>("scene_desc", actorMeshComponent.sceneDescBuffers[frameIndex]),
-                                    new DescriptorUpdate<>("transforms", actorMeshComponent.transformsBuffers[frameIndex])
-                            );
-                        }
-
-                        defaultCubeEntity = scene.createEntity(
-                                actorMeshComponent,
-                                new ShaderComponent(shaderProgram),
-                                new TransformComponent(new Matrix4f().identity().translate(x * z, y * x, z * y).rotate((float) Math.toRadians(0), 1, 0, 1)),
-                                new NVPhysXComponent(new BoxCollider(1.0f, 1.0f, 1.0f), new Material(0.05f, 0.05f, 0.3f), ActorType.Dynamic)
-                        );
-                    }
-
-
-                }
-            }
-        }
+        cameraEntity = scene.createEntity(
+                new CameraComponent(
+                        new Camera(
+                                new Matrix4f().lookAt(
+                                        new Vector3f(0.0f, 6.0f, 0.5f),
+                                        new Vector3f(0, 0, 0),
+                                        new Vector3f(0.0f, 1.0f, 0.0f)
+                                ),
+                                new Matrix4f().perspective(
+                                        (float) Math.toRadians(45.0f),
+                                        (float) renderer.getWidth() / renderer.getHeight(),
+                                        0.01f,
+                                        100,
+                                        true
+                                ),
+                                true
+                        )
+                ),
+                new ScriptComponent(
+                        new FlyCameraScript(surface, renderer)
+                )
+        );
 
 
 
-
-        //Floor Cube
         {
 
 
@@ -141,9 +104,9 @@ public class ExampleStage extends Stage {
 
 
 
-            MeshData meshData = MeshGenerator.newBox(100, 1, 100); //.newPlane(10, 10);
+            MeshData meshData = MeshGenerator.newBox(10, 1, 10);
 
-            ActorMeshComponent actorMeshComponent = new ActorMeshComponent(renderer, renderer, 100000, 100000, shaderProgram);
+            ActorMeshComponent actorMeshComponent = new ActorMeshComponent(renderer, renderer, 100, 100, shaderProgram);
             actorMeshComponent.setMesh(meshData, new EntityShaderIndex(0));
 
             Texture texture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/bugcat.jpg"), TextureFormatType.ColorR8G8B8A8);
@@ -221,7 +184,7 @@ public class ExampleStage extends Stage {
                                     new Vector3f(0.0f, 1.0f, 0.0f)
                             ),
                             new Matrix4f().perspective(
-                                    (float) Math.toRadians(95),
+                                    (float) Math.toRadians(15),
                                     (float) 1,
                                     0.01f,
                                     100.0f,
