@@ -237,70 +237,10 @@ public class ExampleStage extends Stage {
         }
 
 
-        //Spotlight
-        {
-            RenderTarget lightRT = new RenderTarget(renderer);
-
-            Texture[] posTextures = new Texture[] {
-                    Texture.newColorTexture(
-                            lightRT,
-                            1024,
-                            1024,
-                            TextureFormatType.ColorR32G32B32A32
-                    ),
-                    Texture.newColorTexture(
-                            lightRT,
-                            1024,
-                            1024,
-                            TextureFormatType.ColorR32G32B32A32
-                    )
-            };
 
 
 
-            lightRT.addAttachment(
-                    new RenderTargetAttachment(
-                            RenderTargetAttachmentTypes.Pos,
-                            posTextures,
-                            new Sampler[]{
-                                    Sampler.newSampler(lightRT, Texture.Filter.Nearest, Texture.Filter.Nearest, false),
-                                    Sampler.newSampler(lightRT, Texture.Filter.Nearest, Texture.Filter.Nearest, false)
-                            }
 
-                    )
-            );
-            lightRT.addAttachment(
-                    new RenderTargetAttachment(RenderTargetAttachmentTypes.Depth, new Texture[]{
-                            Texture.newDepthTexture(lightRT, 1024, 1024, TextureFormatType.Depth32)
-                    }, null)
-            );
-
-
-            float x = 30, y = 10, z = 0.5f;
-
-
-            spotlightEntity = scene.createEntity(
-                    new SpotlightComponent(
-                            new Matrix4f().lookAt(
-                                    new Vector3f(x, y, z),
-                                    new Vector3f(30, 0, 0.0f),
-                                    new Vector3f(0.0f, 1.0f, 0.0f)
-                            ),
-                            new Matrix4f().perspective(
-                                    (float) Math.toRadians(95),
-                                    (float) 1,
-                                    0.01f,
-                                    100.0f,
-                                    true
-                            ),
-
-                            true,
-                            lightRT
-                    )
-            );
-
-
-        }
 
 
 

@@ -350,25 +350,41 @@ public class BlinnPhongPipeline extends RenderPipeline {
 
     private void updateSceneDesc(ByteBuffer sceneDescData, Camera camera, Scene scene) {
         sceneDescData.clear();
+
         camera.getView().get(sceneDescData);
-        camera.getProj().get(SizeUtil.MATRIX_SIZE_BYTES, sceneDescData);
-        camera.getInvView().get(2 * SizeUtil.MATRIX_SIZE_BYTES, sceneDescData);
-        camera.getInvProj().get(3 * SizeUtil.MATRIX_SIZE_BYTES, sceneDescData);
+        sceneDescData.position(sceneDescData.position() + SizeUtil.MATRIX_SIZE_BYTES);
+
+        camera.getProj().get(sceneDescData);
+        sceneDescData.position(sceneDescData.position() + SizeUtil.MATRIX_SIZE_BYTES);
+
+        camera.getInvView().get(sceneDescData);
+        sceneDescData.position(sceneDescData.position() + SizeUtil.MATRIX_SIZE_BYTES);
+
+        camera.getInvProj().get(sceneDescData);
+        sceneDescData.position(sceneDescData.position() + SizeUtil.MATRIX_SIZE_BYTES);
 
 
-        int offset = 4 * SizeUtil.MATRIX_SIZE_BYTES;
-
-        int lightIndex = 0;
 
         for(Entity entity : scene.getEntities()) {
             if(entity.has(SpotlightComponent.class)) {
                 SpotlightComponent spotlightComponent = entity.getComponent(SpotlightComponent.class);
-                spotlightComponent.view.get(offset + ((4 * lightIndex) * SizeUtil.MATRIX_SIZE_BYTES), sceneDescData);
-                spotlightComponent.proj.get(offset + ((4 * lightIndex) + 1) * SizeUtil.MATRIX_SIZE_BYTES, sceneDescData);
-                spotlightComponent.invView.get(offset + ((4 * lightIndex) + 2) * SizeUtil.MATRIX_SIZE_BYTES, sceneDescData);
-                spotlightComponent.invProj.get(offset + ((4 * lightIndex) + 3) * SizeUtil.MATRIX_SIZE_BYTES, sceneDescData);
 
-                lightIndex++;
+                spotlightComponent.view.get(sceneDescData);
+                sceneDescData.position(sceneDescData.position() + SizeUtil.MATRIX_SIZE_BYTES);
+
+                spotlightComponent.proj.get(sceneDescData);
+                sceneDescData.position(sceneDescData.position() + SizeUtil.MATRIX_SIZE_BYTES);
+
+                spotlightComponent.invView.get(sceneDescData);
+                sceneDescData.position(sceneDescData.position() + SizeUtil.MATRIX_SIZE_BYTES);
+
+                spotlightComponent.invProj.get(sceneDescData);
+                sceneDescData.position(sceneDescData.position() + SizeUtil.MATRIX_SIZE_BYTES);
+
+                sceneDescData.putFloat(spotlightComponent.attenuationConstant);
+                sceneDescData.putFloat(spotlightComponent.attenuationLinear);
+                sceneDescData.putFloat(spotlightComponent.attenuationQuadratic);
+                sceneDescData.putFloat(-1);
             }
         }
 

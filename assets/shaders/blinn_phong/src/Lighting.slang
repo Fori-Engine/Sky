@@ -71,6 +71,7 @@ void computeMain(uniform int light_count, int3 dispatch_ID : SV_DispatchThreadID
 
             float shadow_samples = 0;
 
+          
             // Shadows
             {
                 shadow_samples = pcf(
@@ -80,23 +81,22 @@ void computeMain(uniform int light_count, int3 dispatch_ID : SV_DispatchThreadID
                     shadow_map_uv_ts.xy, 
                     fragment_shadow_map_ps
                 );
-
-
-
             }
 
             // Lighting BRDF
             {
-                {
-                    float diffuse = 0.15 * max(dot(light_dir_ws, normal_ws), 0.0);
+                float d = length(light_pos_ws - fragment_ws.xyz);
 
-                    float3 camera_dir_ws = normalize(camera_pos_ws - fragment_ws.xyz);
-                    float3 halfway_dir_ws = normalize(light_dir_ws + camera_dir_ws);
+                float attenuation = 1.0 / (light.attenuationConstant + light.attenuationLinear * d + light.attenuationQuadratic * (d * d));
 
-                    float specular = 0.8 * pow(dot(halfway_dir_ws, normal_ws), 512);
+                float diffuse = 0.15 * max(dot(light_dir_ws, normal_ws), 0.0);
 
-                    intensity = ambient + diffuse + specular - shadow_samples;
-                }
+                float3 camera_dir_ws = normalize(camera_pos_ws - fragment_ws.xyz);
+                float3 halfway_dir_ws = normalize(light_dir_ws + camera_dir_ws);
+
+                float specular = 0.8 * pow(dot(halfway_dir_ws, normal_ws), 512);
+
+                intensity = (attenuation * (ambient + diffuse + specular)) - shadow_samples;
             }
         }
     }
