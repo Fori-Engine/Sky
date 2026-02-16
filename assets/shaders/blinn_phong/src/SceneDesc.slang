@@ -20,6 +20,8 @@ struct Light {
     float attenuationConstant;
     float attenuationLinear;
     float attenuationQuadratic;
+
+    float3 color;
 }
 
 struct Scene {

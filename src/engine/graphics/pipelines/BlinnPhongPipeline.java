@@ -5,6 +5,7 @@ import engine.asset.AssetRegistry;
 import engine.ecs.*;
 import engine.graphics.*;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import org.lwjgl.system.MemoryStack;
 
 import static engine.graphics.Texture.Filter.Linear;
@@ -384,6 +385,9 @@ public class BlinnPhongPipeline extends RenderPipeline {
                 sceneDescData.putFloat(spotlightComponent.attenuationConstant);
                 sceneDescData.putFloat(spotlightComponent.attenuationLinear);
                 sceneDescData.putFloat(spotlightComponent.attenuationQuadratic);
+                sceneDescData.putFloat(-1);
+                spotlightComponent.color.get(sceneDescData);
+                sceneDescData.position(sceneDescData.position() + SizeUtil.VEC3_SIZE_BYTES);
                 sceneDescData.putFloat(-1);
             }
         }

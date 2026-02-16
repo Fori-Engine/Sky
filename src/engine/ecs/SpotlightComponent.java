@@ -2,6 +2,7 @@ package engine.ecs;
 
 import engine.graphics.RenderTarget;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 @ComponentArray(mask = 1 << 3)
 public class SpotlightComponent {
@@ -12,6 +13,7 @@ public class SpotlightComponent {
     public float attenuationConstant = 1.0f;
     public float attenuationLinear = 0.014f;
     public float attenuationQuadratic = 0.0007f;
+    public Vector3f color = new Vector3f(0, 1, 0);
 
     public SpotlightComponent(Matrix4f view, Matrix4f proj, boolean invertY, RenderTarget renderTarget) {
         setView(view);

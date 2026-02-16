@@ -40,7 +40,7 @@ float pcf(Texture2D input_shadow_map, SamplerState input_shadow_map_sampler, int
 void computeMain(uniform int light_count, int3 dispatch_ID : SV_DispatchThreadID) {
     int3 texture_xy_ss = int3(dispatch_ID.x, dispatch_ID.y, 0);
 
-    float4 output_color = input_color_texture.Load(texture_xy_ss, 0);
+    float4 input_color = input_color_texture.Load(texture_xy_ss, 0);
 
     Camera camera = scene_desc[0].camera;
     float3 camera_pos_ws = float3(camera.invView[0][3], camera.invView[1][3], camera.invView[2][3]);
@@ -49,7 +49,7 @@ void computeMain(uniform int light_count, int3 dispatch_ID : SV_DispatchThreadID
     float4 fragment_ws = mul(camera.invView, fragment_vs);
 
     float ambient = 0.01;
-    float intensity = ambient;
+    float3 output_color = ambient * input_color.xyz;
 
     for (int light_index = 0; light_index < light_count; light_index++) {
 
@@ -69,12 +69,12 @@ void computeMain(uniform int light_count, int3 dispatch_ID : SV_DispatchThreadID
 
         if (shadow_map_uv_ts.x >= 0 && shadow_map_uv_ts.x <= 1 && shadow_map_uv_ts.y >= 0 && shadow_map_uv_ts.y <= 1) {
 
-            float shadow_samples = 0;
+            float shadow = 0;
 
           
             // Shadows
             {
-                shadow_samples = pcf(
+                shadow = pcf(
                     input_shadow_maps[light_index], 
                     input_shadow_maps_samplers[light_index], 
                     1, 
@@ -96,12 +96,10 @@ void computeMain(uniform int light_count, int3 dispatch_ID : SV_DispatchThreadID
 
                 float specular = 0.8 * pow(dot(halfway_dir_ws, normal_ws), 512);
 
-                intensity = (attenuation * (ambient + diffuse + specular)) - shadow_samples;
+                output_color += attenuation * (ambient + diffuse + specular) * light.color - shadow;
             }
         }
     }
 
-    output_color.xyz *= intensity;
-    output_color_texture[texture_xy_ss.xy] = output_color;
-
+    output_color_texture[texture_xy_ss.xy] = float4(output_color, 1.0);
 }
