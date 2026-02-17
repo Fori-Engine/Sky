@@ -13,6 +13,7 @@ struct VSOutput {
     float4 color;
     float3 normal_ws;
     float2 uv_ts;
+    float1 entity_index;
 }
 
 struct Vertex
@@ -49,6 +50,7 @@ VSOutput vertexMain(Vertex vertex, uniform int render_mode, uniform int light_in
     output.pos = mul(proj, output.pos_vs);
     output.color = vertex.color;
     output.uv_ts = vertex.uv_ts;
+    output.entity_index = vertex.entity_index;
 
     return output;
 }
@@ -60,18 +62,24 @@ struct FSOutput {
 }
 
 
-Texture2D texture;
-SamplerState texture_sampler;
+Texture2D color_map_texture;
+SamplerState color_map_sampler;
+
+Texture2D normal_map_texture;
+SamplerState normal_map_sampler;
 
 [shader("fragment")]
 FSOutput fragmentMain(VSOutput vsOutput, uniform int render_mode, uniform int light_index) {
     FSOutput output;
-    
 
-    if(render_mode == 0) {
-        output.color0 = float4(vsOutput.color.xyz * texture.Sample(texture_sampler, vsOutput.uv_ts).xyz, 1.0);
+    if (render_mode == 0) {
+
+        float3 normal_ts = normal_map_texture.Sample(normal_map_sampler, vsOutput.uv_ts).xyz * 2.0 - 1.0;
+        float3 normal_ws = mul(float3x3(transforms[0].transforms[int(vsOutput.entity_index)]), normal_ts);
+
+        output.color0 = float4(vsOutput.color.xyz * color_map_texture.Sample(color_map_sampler, vsOutput.uv_ts).xyz, 1.0);
         output.color1 = float4(vsOutput.pos_vs.xyz, 1.0);
-        output.color2 = float4(vsOutput.normal_ws.xyz, 1.0);
+        output.color2 = float4(normal_ws, 1.0);
     }
     if(render_mode == 1) {
         output.color0 = float4(vsOutput.pos.z,vsOutput.pos.z, vsOutput.pos.z, 1.0);

@@ -48,7 +48,7 @@ void computeMain(uniform int light_count, int3 dispatch_ID : SV_DispatchThreadID
     float4 fragment_vs = input_pos_vs_texture.Load(texture_xy_ss, 0);
     float4 fragment_ws = mul(camera.invView, fragment_vs);
 
-    float ambient = 0.1;
+    float ambient = 0.05;
     float3 output_color = ambient * input_color.xyz;
 
     for (int light_index = 0; light_index < light_count; light_index++) {
@@ -89,12 +89,12 @@ void computeMain(uniform int light_count, int3 dispatch_ID : SV_DispatchThreadID
 
                 float attenuation = 1.0 / (light.attenuationConstant + light.attenuationLinear * d + light.attenuationQuadratic * (d * d));
 
-                float diffuse = 0.4 * max(dot(light_dir_ws, normal_ws), 0.0);
+                float diffuse = 0.6 * max(dot(light_dir_ws, normal_ws), 0.0);
 
                 float3 camera_dir_ws = normalize(camera_pos_ws - fragment_ws.xyz);
                 float3 halfway_dir_ws = normalize(light_dir_ws + camera_dir_ws);
 
-                float specular = 0.5 * pow(dot(halfway_dir_ws, normal_ws), 64);
+                float specular = 0.35 * pow(dot(halfway_dir_ws, normal_ws), 128);
 
                 output_color += attenuation * (ambient + diffuse + specular) * light.color - shadow;
             }

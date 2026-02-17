@@ -109,14 +109,21 @@ public class ExampleStage extends Stage {
             ActorMeshComponent actorMeshComponent = new ActorMeshComponent(renderer, renderer, 100, 100, shaderProgram);
             actorMeshComponent.setMesh(meshData, new EntityShaderIndex(0));
 
-            Texture texture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/bugcat.jpg"), TextureFormatType.ColorR8G8B8A8);
-            Sampler sampler = Sampler.newSampler(texture, Texture.Filter.Linear, Texture.Filter.Linear, true);
+            Texture colorMapTexture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/bugcat.jpg"), TextureFormatType.ColorR8G8B8A8);
+            Sampler colorMapSampler = Sampler.newSampler(colorMapTexture, Texture.Filter.Linear, Texture.Filter.Linear, true);
+
+            Texture normalMapTexture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/normal_map.png"), TextureFormatType.ColorR8G8B8A8);
+            Sampler normalMapSampler = Sampler.newSampler(colorMapTexture, Texture.Filter.Linear, Texture.Filter.Linear, true);
 
 
 
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                actorMeshComponent.shaderProgram.setTextures(frameIndex, new DescriptorUpdate<>("texture", texture));
-                actorMeshComponent.shaderProgram.setSamplers(frameIndex, new DescriptorUpdate<>("texture_sampler", sampler));
+                actorMeshComponent.shaderProgram.setTextures(frameIndex, new DescriptorUpdate<>("color_map_texture", colorMapTexture));
+                actorMeshComponent.shaderProgram.setSamplers(frameIndex, new DescriptorUpdate<>("color_map_sampler", colorMapSampler));
+
+                actorMeshComponent.shaderProgram.setTextures(frameIndex, new DescriptorUpdate<>("normal_map_texture", normalMapTexture));
+                actorMeshComponent.shaderProgram.setSamplers(frameIndex, new DescriptorUpdate<>("normal_map_sampler", normalMapSampler));
+
 
                 actorMeshComponent.shaderProgram.setBuffers(
                         frameIndex,
