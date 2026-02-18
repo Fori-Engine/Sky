@@ -184,14 +184,14 @@ public class VulkanGraphicsPass extends GraphicsPass {
             {
 
 
-                VulkanTexture depthImage = ((VulkanTexture) depthAttachment.getTextures()[0]);
+                VulkanTexture depthImage = ((VulkanTexture) depthAttachment.getTextures()[frameIndex]);
                 VulkanImageView depthImageView = depthImage.getImageView();
 
                 depthRenderingAttachmentInfoKHR.sType(KHRDynamicRendering.VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR);
                 depthRenderingAttachmentInfoKHR.imageView(depthImageView.getHandle());
                 depthRenderingAttachmentInfoKHR.imageLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
                 depthRenderingAttachmentInfoKHR.loadOp(loadOp);
-                depthRenderingAttachmentInfoKHR.storeOp(VK_ATTACHMENT_STORE_OP_DONT_CARE);
+                depthRenderingAttachmentInfoKHR.storeOp(VK_ATTACHMENT_STORE_OP_STORE);
                 depthRenderingAttachmentInfoKHR.clearValue(depthClearValue);
             }
 

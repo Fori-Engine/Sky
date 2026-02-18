@@ -165,14 +165,25 @@ public class VulkanRenderer extends Renderer {
 
         RenderTargetAttachment colorAttachment = new RenderTargetAttachment(RenderTargetAttachmentTypes.Color, colorTextures, null);
 
-        Texture depthTexture = Texture.newDepthTexture(
-            swapchainRenderTarget,
-            swapchain.getExtent().width(),
-            swapchain.getExtent().height(),
-            TextureFormatType.Depth32
-        );
 
-        RenderTargetAttachment depthAttachment = new RenderTargetAttachment(RenderTargetAttachmentTypes.Depth, new Texture[]{depthTexture}, null);
+        RenderTargetAttachment depthAttachment = new RenderTargetAttachment(
+                RenderTargetAttachmentTypes.Depth,
+                new Texture[] {
+                        Texture.newDepthTexture(
+                                swapchainRenderTarget,
+                                swapchain.getExtent().width(),
+                                swapchain.getExtent().height(),
+                                TextureFormatType.Depth32
+                        ),
+                        Texture.newDepthTexture(
+                                swapchainRenderTarget,
+                                swapchain.getExtent().width(),
+                                swapchain.getExtent().height(),
+                                TextureFormatType.Depth32
+                        )
+                },
+                null
+        );
 
         swapchainRenderTarget.addAttachment(colorAttachment);
         swapchainRenderTarget.addAttachment(depthAttachment);
@@ -579,9 +590,6 @@ public class VulkanRenderer extends Renderer {
 
 
                                 if ((rd.getType() & DependencyTypes.FragmentShaderRead) != 0) {
-
-
-
                                     VulkanUtil.transitionImages(
                                             image,
                                             commandBuffer,
@@ -605,7 +613,19 @@ public class VulkanRenderer extends Renderer {
                                             srcStageMask,
                                             VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
                                     );
-                                } else if ((rd.getType() & DependencyTypes.ComputeShaderWrite) != 0) {
+                                }
+                                else if ((rd.getType() & DependencyTypes.ComputeShaderReadDepth) != 0) {
+                                    VulkanUtil.transitionImages(
+                                            image,
+                                            commandBuffer,
+                                            VK_IMAGE_LAYOUT_GENERAL,
+                                            readSrcAccessMask,
+                                            VK_ACCESS_SHADER_READ_BIT,
+                                            VK_IMAGE_ASPECT_DEPTH_BIT,
+                                            srcStageMask,
+                                            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
+                                    );
+                                }else if ((rd.getType() & DependencyTypes.ComputeShaderWrite) != 0) {
                                     VulkanUtil.transitionImages(
                                             image,
                                             commandBuffer,
@@ -639,6 +659,17 @@ public class VulkanRenderer extends Renderer {
                                             VK_IMAGE_ASPECT_COLOR_BIT,
                                             srcStageMask,
                                             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+                                    );
+                                } else if ((rd.getType() & DependencyTypes.RenderTargetDepthWrite) != 0) {
+                                    VulkanUtil.transitionImages(
+                                            image,
+                                            commandBuffer,
+                                            VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                                            writeSrcAccessMask,
+                                            VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+                                            VK_IMAGE_ASPECT_DEPTH_BIT,
+                                            srcStageMask,
+                                            VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT
                                     );
                                 }
 

@@ -30,7 +30,7 @@ public class VulkanSampler extends Sampler {
             samplerCreateInfo.addressModeW(VK_SAMPLER_ADDRESS_MODE_REPEAT);
             samplerCreateInfo.anisotropyEnable(anisotropy);
             samplerCreateInfo.maxAnisotropy(VulkanRuntime.getPhysicalDeviceProperties().limits().maxSamplerAnisotropy());
-            samplerCreateInfo.borderColor(VK_BORDER_COLOR_INT_OPAQUE_WHITE);
+            samplerCreateInfo.borderColor(VK_BORDER_COLOR_INT_OPAQUE_BLACK);
             samplerCreateInfo.unnormalizedCoordinates(false);
             samplerCreateInfo.compareEnable(false);
             samplerCreateInfo.compareOp(VK_COMPARE_OP_ALWAYS);

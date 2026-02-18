@@ -80,8 +80,8 @@ public class ExampleStage extends Stage {
                                 new Matrix4f().perspective(
                                         (float) Math.toRadians(45.0f),
                                         (float) renderer.getWidth() / renderer.getHeight(),
-                                        0.01f,
-                                        100,
+                                        0.1f,
+                                        10,
                                         true
                                 ),
                                 true
@@ -104,7 +104,7 @@ public class ExampleStage extends Stage {
 
 
 
-            MeshData meshData = MeshGenerator.newBox(10, 1, 10);
+            MeshData meshData = MeshGenerator.newBox(1, 1, 1);
 
             ActorMeshComponent actorMeshComponent = new ActorMeshComponent(renderer, renderer, 100, 100, shaderProgram);
             actorMeshComponent.setMesh(meshData, new EntityShaderIndex(0));
@@ -135,8 +135,7 @@ public class ExampleStage extends Stage {
             floorEntity = scene.createEntity(
                     actorMeshComponent,
                     new ShaderComponent(shaderProgram),
-                    new TransformComponent(new Matrix4f().identity().translate(0, -2, 0).rotate((float) Math.toRadians(0), 0, 0, 1)),
-                    new NVPhysXComponent(new BoxCollider(100.0f, 1f, 100.0f), new Material(0.05f, 0.05f, 0.3f), ActorType.Static)
+                    new TransformComponent(new Matrix4f().identity().translate(0, 2, 0).rotate((float) Math.toRadians(0), 0, 0, 1))
             );
         }
 
@@ -175,6 +174,7 @@ public class ExampleStage extends Stage {
             );
             lightRT.addAttachment(
                     new RenderTargetAttachment(RenderTargetAttachmentTypes.Depth, new Texture[]{
+                            Texture.newDepthTexture(lightRT, 1024, 1024, TextureFormatType.Depth32),
                             Texture.newDepthTexture(lightRT, 1024, 1024, TextureFormatType.Depth32)
                     }, null)
             );
@@ -193,8 +193,8 @@ public class ExampleStage extends Stage {
                             new Matrix4f().perspective(
                                     (float) Math.toRadians(15),
                                     (float) 1,
-                                    0.01f,
-                                    100.0f,
+                                    0.1f,
+                                    10.0f,
                                     true
                             ),
 
