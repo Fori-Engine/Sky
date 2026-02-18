@@ -98,6 +98,13 @@ public class AssetPackage {
                                             FileSystem.readBytes(assetPath)
                                     );
                                 }
+                                else if (assetFilePath.endsWith("ttf")) {
+                                    asset = new Asset<byte[]>(
+                                            assetPackage,
+                                            identifier,
+                                            FileSystem.readBytes(assetPath)
+                                    );
+                                }
 
                                 assetMap.put(identifier, asset);
                                 Logger.info(AssetPackage.class, "Loading asset " + identifier + " into namespace " + namespace);

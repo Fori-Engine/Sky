@@ -83,9 +83,6 @@ dependencies {
         implementation "org.joml:joml:$jomlVersion"
         implementation "org.lwjgl:lwjgl-jawt"
         implementation files("thirdparty/lwjgl3-awt-0.2.3.jar")
-
-
-
     }
 
     //Natives
@@ -101,7 +98,6 @@ dependencies {
         runtimeOnly "org.lwjgl:lwjgl-assimp::$lwjglNatives"
         runtimeOnly "org.lwjgl:lwjgl-spvc::$lwjglNatives"
         runtimeOnly "de.fabmax:physx-jni:$physxVersion:$lwjglNatives"
-
     }
 
 }

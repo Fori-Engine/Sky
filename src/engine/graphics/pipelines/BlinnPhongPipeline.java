@@ -207,14 +207,14 @@ public class BlinnPhongPipeline extends RenderPipeline {
 
             displayPassVertexBuffer = Buffer.newBuffer(
                     renderer,
-                    displayPassShaderProgram.getVertexAttributesSize() * Float.BYTES * 12,
+                    displayPassShaderProgram.getVertexAttributesSize() * Float.BYTES * 4 * 1000,
                     Buffer.Usage.VertexBuffer,
                     Buffer.Type.CPUGPUShared,
                     false
             );
             displayPassIndexBuffer = Buffer.newBuffer(
                     renderer,
-                    18 * Integer.BYTES,
+                    Integer.BYTES * 6 * 1000,
                     Buffer.Usage.IndexBuffer,
                     Buffer.Type.CPUGPUShared,
                     false
@@ -756,15 +756,17 @@ public class BlinnPhongPipeline extends RenderPipeline {
             displayPassShaderProgram.setTextures(
                     renderer.getFrameIndex(),
                     new DescriptorUpdate<>(
-                            "input_color_texture",
-                            inputTexturesResource.get().key[renderer.getFrameIndex()])
+                            "input_textures",
+                            inputTexturesResource.get().key[renderer.getFrameIndex()]
+                    ).arrayIndex(0)
             );
 
             displayPassShaderProgram.setSamplers(
                     renderer.getFrameIndex(),
                     new DescriptorUpdate<>(
-                            "input_color_texture_sampler",
-                            inputTexturesResource.get().value[renderer.getFrameIndex()])
+                            "input_samplers",
+                            inputTexturesResource.get().value[renderer.getFrameIndex()]
+                    ).arrayIndex(0)
             );
 
             displayPass.startRecording(renderer.getFrameIndex());
@@ -774,11 +776,12 @@ public class BlinnPhongPipeline extends RenderPipeline {
 
                 displayPass.startRendering(renderer.getSwapchainRenderTarget(), 0, renderer.getWidth(), renderer.getHeight(), true, Color.BLACK);
                 {
-                    displayPass.setCullMode(CullMode.Back);
                     ScreenSpaceFeatures screenSpaceFeatures = getFeatures(ScreenSpaceFeatures.class);
 
+                    screenSpaceFeatures.setShaderProgram(displayPassShaderProgram);
 
 
+                    displayPass.setCullMode(CullMode.Back);
                     displayPass.setDrawBuffers(displayPassVertexBuffer, displayPassIndexBuffer);
                     displayPass.setShaderProgram(displayPassShaderProgram);
                     displayPass.drawIndexed(screenSpaceFeatures.getIndexCount());

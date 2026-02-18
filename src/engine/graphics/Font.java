@@ -11,21 +11,18 @@ import java.util.Map;
  * Represents a Font that can be rendered to the screen. This class can also interoperate with AWT Fonts, as well as load TrueType (.ttf) fonts from disk.
  */
 public class Font extends Disposable {
-    private Asset<TextureData> textureAsset;
     private Asset<String> fnt;
     private Texture texture;
     private Glyph[] glyphs = new Glyph[1024];
     private float defaultLineHeight;
 
 
-    public Font(Disposable parent, Asset<TextureData> textureAsset, Asset<String> fnt) {
+    public Font(Disposable parent, Asset<TextureData> textureAsset, Asset<String> fntAsset) {
         super(parent);
-        this.textureAsset = textureAsset;
-        this.fnt = fnt;
+        this.fnt = fntAsset;
 
-        //texture = Texture.newTexture(this, textureAsset, Texture.Filter.Nearest, Texture.Filter.Nearest);
+        texture = Texture.newColorTextureFromAsset(this, textureAsset, TextureFormatType.ColorR8G8B8A8);
         createGlyphs();
-
     }
 
 
@@ -44,7 +41,7 @@ public class Font extends Disposable {
                 defaultLineHeight = Float.parseFloat(parameters.get("lineHeight"));
             }
             else if(line.startsWith("chars")){
-                Logger.todo(Font.class, "Attribute 'chars' not implemented in Font2D");
+                Logger.todo(Font.class, "Attribute 'chars' not implemented in Font");
             }
             else if(line.startsWith("char")){
                 int id = Integer.parseInt(parameters.get("id"));
