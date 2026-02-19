@@ -43,50 +43,57 @@ public class FlyCameraScript extends Script {
 
     @Override
     public void update(Entity entity) {
+        if(entity.has(CameraComponent.class)) {
 
-        if(lastMouseX == -1 && lastMouseY == -1) {
+            if (lastMouseX == -1 && lastMouseY == -1) {
+                lastMouseX = surface.getMousePos().x;
+                lastMouseY = surface.getMousePos().y;
+            }
+
+            yaw += (surface.getMousePos().x - lastMouseX) * mouseSensitivity;
+            pitch += (surface.getMousePos().y - lastMouseY) * mouseSensitivity;
+
+            pitch = (float) Math.clamp(pitch, Math.toRadians(-maxPitchDeg), Math.toRadians(maxPitchDeg));
+
+
             lastMouseX = surface.getMousePos().x;
             lastMouseY = surface.getMousePos().y;
+
+
+            dir.x = (float) (Math.sin(yaw));
+            dir.y = (float) (Math.sin(pitch));
+            dir.z = (float) ((Math.cos(yaw) * Math.cos(pitch)));
+
+            //Movement
+            {
+                if (surface.getKeyPressed(Input.KEY_W)) {
+                    pos.add(new Vector3f(dir).normalize().mul(moveSpeed * Time.deltaTime()));
+                }
+                if (surface.getKeyPressed(Input.KEY_S)) {
+                    pos.add(new Vector3f(dir).normalize().mul(-moveSpeed * Time.deltaTime()));
+                }
+                if (surface.getKeyPressed(Input.KEY_D)) {
+                    pos.add(new Vector3f(dir).normalize().cross(up).mul(moveSpeed * Time.deltaTime()));
+                }
+                if (surface.getKeyPressed(Input.KEY_A)) {
+                    pos.add(new Vector3f(dir).normalize().cross(up).mul(-moveSpeed * Time.deltaTime()));
+                }
+            }
+
+
+            camera.setView(
+                    viewMatrix.identity().lookAt(
+                            pos,
+                            dir.add(pos),
+                            up
+                    )
+            );
         }
 
-        yaw += (surface.getMousePos().x - lastMouseX) * mouseSensitivity;
-        pitch += (surface.getMousePos().y - lastMouseY) * mouseSensitivity;
-
-        pitch = (float) Math.clamp(pitch, Math.toRadians(-maxPitchDeg), Math.toRadians(maxPitchDeg));
-
-
-        lastMouseX = surface.getMousePos().x;
-        lastMouseY = surface.getMousePos().y;
 
 
 
-        dir.x = (float) (Math.sin(yaw));
-        dir.y = (float) (Math.sin(pitch));
-        dir.z = (float) ((Math.cos(yaw) * Math.cos(pitch)));
-
-        //Movement
-        {
-            if(surface.getKeyPressed(Input.KEY_W)) {
-                pos.add(new Vector3f(dir).normalize().mul(moveSpeed * Time.deltaTime()));
-            }
-            if(surface.getKeyPressed(Input.KEY_S)) {
-                pos.add(new Vector3f(dir).normalize().mul(-moveSpeed * Time.deltaTime()));
-            }
-            if(surface.getKeyPressed(Input.KEY_D)) {
-                pos.add(new Vector3f(dir).normalize().cross(up).mul(moveSpeed * Time.deltaTime()));
-            }
-            if(surface.getKeyPressed(Input.KEY_A)) {
-                pos.add(new Vector3f(dir).normalize().cross(up).mul(-moveSpeed * Time.deltaTime()));
-            }
-        }
 
 
-        camera.setView(
-                viewMatrix.identity().lookAt(
-                        pos,
-                        dir.add(pos),
-                        up
-                )
-        );
     }
 }

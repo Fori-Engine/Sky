@@ -50,7 +50,7 @@ public class UISystem extends EcsSystem {
         setOrigin(0, 0);
 
         transform = new Matrix2f();
-        drawQuad(1200, 600, 100, 100, -2, Color.GRAY);
+        drawQuad((renderer.getWidth() / 2) - (30 / 2), (renderer.getHeight() / 2) - (30 / 2), 30, 30, -2, Color.WHITE);
 
 
         screenSpaceFeatures.setIndexCount(18);

@@ -643,7 +643,7 @@ public class BlinnPhongPipeline extends RenderPipeline {
                 {
                     int mode = 0;
 
-                    scenePass.startRendering(scenePassRT, 0, renderer.getWidth(), renderer.getHeight(), true, Color.LIGHT_GRAY);
+                    scenePass.startRendering(scenePassRT, 0, renderer.getWidth(), renderer.getHeight(), true, Color.BLACK);
                     {
                         scenePass.setCullMode(CullMode.Back);
                         for(Entity entity : scene.getEntities()) {
