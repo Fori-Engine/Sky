@@ -54,7 +54,7 @@ void computeMain(uniform int light_count, int3 dispatch_ID : SV_DispatchThreadID
         float4 fragment_vs = input_pos_vs_texture.Load(texture_xy_ss, 0);
         float4 fragment_ws = mul(camera.invView, fragment_vs);
 
-        float ambient = 0.05;
+        float ambient = 0.00;
         output_color = ambient * input_color.xyz;
 
         for (int light_index = 0; light_index < light_count; light_index++) {

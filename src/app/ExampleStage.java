@@ -109,7 +109,7 @@ public class ExampleStage extends Stage {
             Texture colorMapTexture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/brickwall.jpg"), TextureFormatType.ColorR8G8B8A8);
             Sampler colorMapSampler = Sampler.newSampler(colorMapTexture, Texture.Filter.Linear, Texture.Filter.Linear, true);
 
-            Texture normalMapTexture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/normal_map.png"), TextureFormatType.ColorR8G8B8A8);
+            Texture normalMapTexture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/normal_map.png"), TextureFormatType.ColorR8G8B8A8unorm);
             Sampler normalMapSampler = Sampler.newSampler(colorMapTexture, Texture.Filter.Linear, Texture.Filter.Linear, true);
 
 
@@ -158,7 +158,7 @@ public class ExampleStage extends Stage {
             Texture colorMapTexture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/bugcat.jpg"), TextureFormatType.ColorR8G8B8A8);
             Sampler colorMapSampler = Sampler.newSampler(colorMapTexture, Texture.Filter.Linear, Texture.Filter.Linear, true);
 
-            Texture normalMapTexture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/normal_map.png"), TextureFormatType.ColorR8G8B8A8);
+            Texture normalMapTexture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/normal_map.png"), TextureFormatType.ColorR8G8B8A8unorm);
             Sampler normalMapSampler = Sampler.newSampler(colorMapTexture, Texture.Filter.Linear, Texture.Filter.Linear, true);
 
 
@@ -207,7 +207,7 @@ public class ExampleStage extends Stage {
             Texture colorMapTexture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/bugcat.jpg"), TextureFormatType.ColorR8G8B8A8);
             Sampler colorMapSampler = Sampler.newSampler(colorMapTexture, Texture.Filter.Linear, Texture.Filter.Linear, true);
 
-            Texture normalMapTexture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/normal_map.png"), TextureFormatType.ColorR8G8B8A8);
+            Texture normalMapTexture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/normal_map.png"), TextureFormatType.ColorR8G8B8A8unorm);
             Sampler normalMapSampler = Sampler.newSampler(colorMapTexture, Texture.Filter.Linear, Texture.Filter.Linear, true);
 
 
@@ -277,7 +277,7 @@ public class ExampleStage extends Stage {
             );
 
 
-            float x = 0, y = 10, z = 0.5f;
+            float x = 0, y = 10, z = 1f;
 
 
             Entity spotlightEntity = scene.createEntity(
@@ -344,7 +344,7 @@ public class ExampleStage extends Stage {
             );
 
 
-            float x = 3, y = 10, z = 0.5f;
+            float x = 3, y = 10, z = 1f;
 
 
             SpotlightComponent spotlightComponent = new SpotlightComponent(

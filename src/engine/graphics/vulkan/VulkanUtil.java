@@ -24,6 +24,9 @@ public class VulkanUtil {
             case Depth32 -> {
                 return VK_FORMAT_D32_SFLOAT;
             }
+            case ColorR8G8B8A8unorm -> {
+                return VK_FORMAT_R8G8B8A8_UNORM;
+            }
         }
         return -1;
     }
