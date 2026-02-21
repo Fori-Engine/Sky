@@ -28,9 +28,9 @@ public class UISystem extends EcsSystem {
         this.renderPipeline = renderPipeline;
         this.scene = scene;
 
-        texture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/fonts/B612/b612-atlas.png"), TextureFormatType.ColorR8G8B8A8);
-        msdfData = MsdfJsonLoader.load((String) AssetRegistry.getAsset("core:assets/fonts/B612/b612-atlas.json").getObject());
-        sampler = Sampler.newSampler(texture, Texture.Filter.Nearest, Texture.Filter.Nearest, true);
+        texture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/fonts/Roboto/roboto-atlas.png"), TextureFormatType.ColorR8G8B8A8);
+        msdfData = MsdfJsonLoader.load((String) AssetRegistry.getAsset("core:assets/fonts/Roboto/roboto-atlas.json").getObject());
+        sampler = Sampler.newSampler(texture, Texture.Filter.Linear, Texture.Filter.Linear, true);
 
 
 
@@ -71,7 +71,7 @@ public class UISystem extends EcsSystem {
 
         MsdfJsonLoader.Glyph glyph = null;
         for(MsdfJsonLoader.Glyph g : msdfData.glyphs) {
-            if(g.unicode == 77) glyph = g;
+            if(g.unicode == 120) glyph = g;
         }
 
 
