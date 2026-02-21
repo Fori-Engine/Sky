@@ -73,7 +73,7 @@ FSOutput fragmentMain(VSOutput vsOutput) {
         float screenPxDistance = (72 / 32) * 7 * (sd - 0.5);
         float opacity = clamp(screenPxDistance + 0.5, 0.0, 1.0);
 
-        output.color0SW = lerp(0.0, 1.0, opacity);
+        output.color0SW = lerp(0.0, vsOutput.color, opacity);
     }
 
 

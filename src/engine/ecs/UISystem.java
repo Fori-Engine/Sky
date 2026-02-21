@@ -69,31 +69,55 @@ public class UISystem extends EcsSystem {
                 Color.WHITE
         );
 
-        MsdfJsonLoader.Glyph glyph = null;
-        for(MsdfJsonLoader.Glyph g : msdfData.glyphs) {
-            if(g.unicode == 120) glyph = g;
+        {
+            MsdfJsonLoader.Glyph glyph = null;
+            for (MsdfJsonLoader.Glyph g : msdfData.glyphs) {
+                if (g.unicode == 120) glyph = g;
+            }
+
+            drawQuad(
+                    0,
+                    0,
+                    72,
+                    72,
+                    glyph.atlasBounds.left / msdfData.width,
+                    1 - glyph.atlasBounds.top / msdfData.height,
+                    glyph.atlasBounds.left / msdfData.width,
+                    1 - glyph.atlasBounds.bottom / msdfData.height,
+                    glyph.atlasBounds.right / msdfData.width,
+                    1 - glyph.atlasBounds.top / msdfData.height,
+                    glyph.atlasBounds.right / msdfData.width,
+                    1 - glyph.atlasBounds.bottom / msdfData.height,
+                    -3,
+                    1,
+                    Color.WHITE
+            );
         }
 
+        {
+            MsdfJsonLoader.Glyph glyph = null;
+            for (MsdfJsonLoader.Glyph g : msdfData.glyphs) {
+                if (g.unicode == 43) glyph = g;
+            }
 
-
-
-        drawQuad(
-                0,
-                0,
-                72,
-                72,
-                glyph.atlasBounds.left / msdfData.width,
-                1 - glyph.atlasBounds.top / msdfData.height,
-                glyph.atlasBounds.left / msdfData.width,
-                1 - glyph.atlasBounds.bottom / msdfData.height,
-                glyph.atlasBounds.right / msdfData.width,
-                1 - glyph.atlasBounds.top / msdfData.height,
-                glyph.atlasBounds.right / msdfData.width,
-                1 - glyph.atlasBounds.bottom / msdfData.height,
-                -3,
-                1,
-                Color.WHITE
-        );
+            drawQuad(
+                    100,
+                    100,
+                    72,
+                    72,
+                    glyph.atlasBounds.left / msdfData.width,
+                    1 - glyph.atlasBounds.top / msdfData.height,
+                    glyph.atlasBounds.left / msdfData.width,
+                    1 - glyph.atlasBounds.bottom / msdfData.height,
+                    glyph.atlasBounds.right / msdfData.width,
+                    1 - glyph.atlasBounds.top / msdfData.height,
+                    glyph.atlasBounds.right / msdfData.width,
+                    1 - glyph.atlasBounds.bottom / msdfData.height,
+                    -3,
+                    1,
+                    Color.RED
+            );
+        }
 
 
 
