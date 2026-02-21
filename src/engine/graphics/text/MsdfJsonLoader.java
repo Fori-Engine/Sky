@@ -66,7 +66,7 @@ public class MsdfJsonLoader {
                     );
                 }
 
-                msdfData.glyphs.add(glyph);
+                msdfData.glyphs[glyph.unicode] = glyph;
 
             }
 
@@ -112,6 +112,7 @@ public class MsdfJsonLoader {
     }
 
     public static class MsdfData {
+        public static int glyphCount = 1024;
         public String type;
         public float distanceRange;
         public float distanceRangeMiddle;
@@ -119,7 +120,7 @@ public class MsdfJsonLoader {
         public float width;
         public float height;
         public String yOrigin;
-        public List<Glyph> glyphs = new ArrayList<>();
+        public Glyph[] glyphs = new Glyph[glyphCount];
 
         float emSize;
         float lineHeight;

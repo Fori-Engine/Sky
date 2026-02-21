@@ -71,13 +71,9 @@ public class UISystem extends EcsSystem {
         );
 
 
-        for (MsdfJsonLoader.Glyph g : msdfData.glyphs) {
-            if (g.unicode == 120) drawGlyph(0, 30, 32, 32, 1, msdfData, g, Color.WHITE);
-            if (g.unicode == 43) drawGlyph(100, 100, 32, 32, 1, msdfData, g, Color.WHITE);
-            if (g.unicode == 72) drawGlyph(200, 100, 32, 40, 1, msdfData, g, Color.WHITE);
-
-        }
-
+        drawGlyph(0, 30, 32, 32, 1, msdfData, msdfData.glyphs[120], Color.WHITE);
+        drawGlyph(100, 100, 32, 32, 1, msdfData, msdfData.glyphs[43], Color.WHITE);
+        drawGlyph(200, 100, 32, 40, 1, msdfData, msdfData.glyphs[72], Color.WHITE);
 
 
 
