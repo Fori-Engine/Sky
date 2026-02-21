@@ -43,6 +43,12 @@ struct FSOutput {
 Texture2D input_textures[2];
 SamplerState input_samplers[2];
 
+float median(float r, float g, float b) {
+    return max(min(r, g), min(max(r, g), b));
+}
+
+
+
 
 
 [shader("fragment")]
@@ -60,6 +66,14 @@ FSOutput fragmentMain(VSOutput vsOutput) {
 
         if(distance <= 1.0 && distance >= (1.0 - 0.5)) output.color0SW = vsOutput.color;
         else discard;
+    }
+    else if (vsOutput.fill_mode == -3) {
+        float3 msd = input_textures[int(vsOutput.texture_index)] .Sample(input_samplers[int(vsOutput.texture_index)], vsOutput.uv) .xyz;
+        float sd = median(msd.r, msd.g, msd.b);
+        float screenPxDistance = (72 / 32) * 7 * (sd - 0.5);
+        float opacity = clamp(screenPxDistance + 0.5, 0.0, 1.0);
+
+        output.color0SW = lerp(0.0, 1.0, opacity);
     }
 
 

@@ -98,11 +98,11 @@ public class AssetPackage {
                                             FileSystem.readBytes(assetPath)
                                     );
                                 }
-                                else if (assetFilePath.endsWith("ttf")) {
-                                    asset = new Asset<byte[]>(
+                                else if (assetFilePath.endsWith("json")) {
+                                    asset = new Asset<String>(
                                             assetPackage,
                                             identifier,
-                                            FileSystem.readBytes(assetPath)
+                                            FileSystem.readString(assetPath)
                                     );
                                 }
 

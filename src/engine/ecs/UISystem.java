@@ -3,6 +3,7 @@ package engine.ecs;
 import engine.asset.AssetRegistry;
 import engine.graphics.*;
 import engine.graphics.pipelines.ScreenSpaceFeatures;
+import engine.graphics.text.MsdfJsonLoader;
 import org.joml.Matrix2f;
 import org.joml.Vector2f;
 import java.nio.ByteBuffer;
@@ -20,6 +21,7 @@ public class UISystem extends EcsSystem {
 
     private Texture texture;
     private Sampler sampler;
+    private MsdfJsonLoader.MsdfData msdfData;
 
     public UISystem(Renderer renderer, RenderPipeline renderPipeline, Scene scene) {
         this.renderer = renderer;
@@ -27,7 +29,8 @@ public class UISystem extends EcsSystem {
         this.scene = scene;
 
         texture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/fonts/B612/b612-atlas.png"), TextureFormatType.ColorR8G8B8A8);
-        sampler = Sampler.newSampler(texture, Texture.Filter.Linear, Texture.Filter.Linear, true);
+        msdfData = MsdfJsonLoader.load((String) AssetRegistry.getAsset("core:assets/fonts/B612/b612-atlas.json").getObject());
+        sampler = Sampler.newSampler(texture, Texture.Filter.Nearest, Texture.Filter.Nearest, true);
 
 
 
@@ -59,23 +62,35 @@ public class UISystem extends EcsSystem {
                 1080,
                 0, 0,
                 0, 1,
-                1, 1,
                 1, 0,
+                1, 1,
                 0,
                 0,
                 Color.WHITE
         );
 
+        MsdfJsonLoader.Glyph glyph = null;
+        for(MsdfJsonLoader.Glyph g : msdfData.glyphs) {
+            if(g.unicode == 77) glyph = g;
+        }
+
+
+
+
         drawQuad(
                 0,
                 0,
-                300,
-                300,
-                0, 0,
-                0, 1,
-                1, 1,
-                1, 0,
-                0,
+                72,
+                72,
+                glyph.atlasBounds.left / msdfData.width,
+                1 - glyph.atlasBounds.top / msdfData.height,
+                glyph.atlasBounds.left / msdfData.width,
+                1 - glyph.atlasBounds.bottom / msdfData.height,
+                glyph.atlasBounds.right / msdfData.width,
+                1 - glyph.atlasBounds.top / msdfData.height,
+                glyph.atlasBounds.right / msdfData.width,
+                1 - glyph.atlasBounds.bottom / msdfData.height,
+                -3,
                 1,
                 Color.WHITE
         );
@@ -150,8 +165,8 @@ public class UISystem extends EcsSystem {
         vertexBufferData.putFloat(color.g);
         vertexBufferData.putFloat(color.b);
         vertexBufferData.putFloat(color.a);
-        vertexBufferData.putFloat(uvtrx);
-        vertexBufferData.putFloat(uvtry);
+        vertexBufferData.putFloat(uvbrx);
+        vertexBufferData.putFloat(uvbry);
         vertexBufferData.putFloat(fillMode);
         vertexBufferData.putFloat(textureIndex);
 
@@ -161,8 +176,8 @@ public class UISystem extends EcsSystem {
         vertexBufferData.putFloat(color.g);
         vertexBufferData.putFloat(color.b);
         vertexBufferData.putFloat(color.a);
-        vertexBufferData.putFloat(uvbrx);
-        vertexBufferData.putFloat(uvbry);
+        vertexBufferData.putFloat(uvtrx);
+        vertexBufferData.putFloat(uvtry);
         vertexBufferData.putFloat(fillMode);
         vertexBufferData.putFloat(textureIndex);
 
