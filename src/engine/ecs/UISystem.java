@@ -71,9 +71,9 @@ public class UISystem extends EcsSystem {
         );
 
 
-        drawGlyph(0, 30, 32, 32, 1, msdfData, msdfData.glyphs[120], Color.WHITE);
-        drawGlyph(100, 100, 32, 32, 1, msdfData, msdfData.glyphs[43], Color.WHITE);
-        drawGlyph(200, 100, 32, 40, 1, msdfData, msdfData.glyphs[72], Color.WHITE);
+        drawGlyph(0, 30, 32, 32, 1, msdfData, msdfData.characters[120], Color.WHITE);
+        drawGlyph(100, 100, 32, 32, 1, msdfData, msdfData.characters[43], Color.WHITE);
+        drawGlyph(200, 100, 32, 40, 1, msdfData, msdfData.characters[72], Color.WHITE);
 
 
 
@@ -87,7 +87,7 @@ public class UISystem extends EcsSystem {
         origin.set(x, y);
     }
 
-    private void drawGlyph(float x, float y, float w, float h, int msdfTextureIndex, MsdfJsonLoader.MsdfData msdfData, MsdfJsonLoader.Glyph glyph, Color color) {
+    private void drawGlyph(float x, float y, float w, float h, int msdfTextureIndex, MsdfJsonLoader.MsdfData msdfData, MsdfJsonLoader.Character character, Color color) {
 
         float msdfScreenPxRange = (w / msdfData.width) * msdfData.size;
 
@@ -96,14 +96,14 @@ public class UISystem extends EcsSystem {
                 y,
                 w,
                 h,
-                glyph.atlasBounds.left / msdfData.width,
-                1 - glyph.atlasBounds.top / msdfData.height,
-                glyph.atlasBounds.left / msdfData.width,
-                1 - glyph.atlasBounds.bottom / msdfData.height,
-                glyph.atlasBounds.right / msdfData.width,
-                1 - glyph.atlasBounds.top / msdfData.height,
-                glyph.atlasBounds.right / msdfData.width,
-                1 - glyph.atlasBounds.bottom / msdfData.height,
+                character.atlasBounds.left / msdfData.width,
+                1 - character.atlasBounds.top / msdfData.height,
+                character.atlasBounds.left / msdfData.width,
+                1 - character.atlasBounds.bottom / msdfData.height,
+                character.atlasBounds.right / msdfData.width,
+                1 - character.atlasBounds.top / msdfData.height,
+                character.atlasBounds.right / msdfData.width,
+                1 - character.atlasBounds.bottom / msdfData.height,
                 -3,
                 msdfTextureIndex,
                 msdfScreenPxRange,

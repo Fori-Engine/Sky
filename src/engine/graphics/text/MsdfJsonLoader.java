@@ -5,9 +5,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class MsdfJsonLoader {
 
 
@@ -32,24 +29,24 @@ public class MsdfJsonLoader {
 
         //Glyphs
         {
-            JsonArray glyphsInfo = jsonObject.get("glyphs").getAsJsonArray();
-            int size = glyphsInfo.size();
+            JsonArray charactersInfo = jsonObject.get("glyphs").getAsJsonArray();
+            int size = charactersInfo.size();
 
             for(int i = 0; i < size; i++) {
-                JsonObject glyphInfo = glyphsInfo.get(i).getAsJsonObject();
+                JsonObject characterInfo = charactersInfo.get(i).getAsJsonObject();
 
 
-                Glyph glyph = new Glyph();
+                Character character = new Character();
 
-                glyph.unicode = glyphInfo.get("unicode").getAsInt();
-                glyph.advance =  glyphInfo.get("advance").getAsFloat();
+                character.unicode = characterInfo.get("unicode").getAsInt();
+                character.advance =  characterInfo.get("advance").getAsFloat();
 
 
-                if(glyphInfo.has("planeBounds") && glyphInfo.has("atlasBounds")) {
-                    JsonObject planeBoundsInfo = glyphInfo.get("planeBounds").getAsJsonObject();
-                    JsonObject atlasBoundsInfo = glyphInfo.get("atlasBounds").getAsJsonObject();
+                if(characterInfo.has("planeBounds") && characterInfo.has("atlasBounds")) {
+                    JsonObject planeBoundsInfo = characterInfo.get("planeBounds").getAsJsonObject();
+                    JsonObject atlasBoundsInfo = characterInfo.get("atlasBounds").getAsJsonObject();
 
-                    glyph.planeBounds = new Rect(
+                    character.planeBounds = new Rect(
                             planeBoundsInfo.get("left").getAsFloat(),
                             planeBoundsInfo.get("bottom").getAsFloat(),
                             planeBoundsInfo.get("right").getAsFloat(),
@@ -57,7 +54,7 @@ public class MsdfJsonLoader {
 
                     );
 
-                    glyph.atlasBounds = new Rect(
+                    character.atlasBounds = new Rect(
                             atlasBoundsInfo.get("left").getAsFloat(),
                             atlasBoundsInfo.get("bottom").getAsFloat(),
                             atlasBoundsInfo.get("right").getAsFloat(),
@@ -66,7 +63,7 @@ public class MsdfJsonLoader {
                     );
                 }
 
-                msdfData.glyphs[glyph.unicode] = glyph;
+                msdfData.characters[character.unicode] = character;
 
             }
 
@@ -104,7 +101,7 @@ public class MsdfJsonLoader {
         }
     }
 
-    public static class Glyph {
+    public static class Character {
         public int unicode;
         public float advance;
         public Rect planeBounds;
@@ -120,7 +117,7 @@ public class MsdfJsonLoader {
         public float width;
         public float height;
         public String yOrigin;
-        public Glyph[] glyphs = new Glyph[glyphCount];
+        public Character[] characters = new Character[glyphCount];
 
         float emSize;
         float lineHeight;
