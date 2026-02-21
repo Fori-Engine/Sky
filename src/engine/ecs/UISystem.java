@@ -66,60 +66,17 @@ public class UISystem extends EcsSystem {
                 1, 1,
                 0,
                 0,
+                -1,
                 Color.WHITE
         );
 
-        {
-            MsdfJsonLoader.Glyph glyph = null;
-            for (MsdfJsonLoader.Glyph g : msdfData.glyphs) {
-                if (g.unicode == 120) glyph = g;
-            }
 
-            drawQuad(
-                    0,
-                    0,
-                    72,
-                    72,
-                    glyph.atlasBounds.left / msdfData.width,
-                    1 - glyph.atlasBounds.top / msdfData.height,
-                    glyph.atlasBounds.left / msdfData.width,
-                    1 - glyph.atlasBounds.bottom / msdfData.height,
-                    glyph.atlasBounds.right / msdfData.width,
-                    1 - glyph.atlasBounds.top / msdfData.height,
-                    glyph.atlasBounds.right / msdfData.width,
-                    1 - glyph.atlasBounds.bottom / msdfData.height,
-                    -3,
-                    1,
-                    Color.WHITE
-            );
+        for (MsdfJsonLoader.Glyph g : msdfData.glyphs) {
+            if (g.unicode == 120) drawGlyph(0, 30, 32, 32, 1, msdfData, g, Color.WHITE);
+            if (g.unicode == 43) drawGlyph(100, 100, 32, 32, 1, msdfData, g, Color.WHITE);
+            if (g.unicode == 72) drawGlyph(200, 100, 32, 40, 1, msdfData, g, Color.WHITE);
+
         }
-
-        {
-            MsdfJsonLoader.Glyph glyph = null;
-            for (MsdfJsonLoader.Glyph g : msdfData.glyphs) {
-                if (g.unicode == 43) glyph = g;
-            }
-
-            drawQuad(
-                    100,
-                    100,
-                    72,
-                    72,
-                    glyph.atlasBounds.left / msdfData.width,
-                    1 - glyph.atlasBounds.top / msdfData.height,
-                    glyph.atlasBounds.left / msdfData.width,
-                    1 - glyph.atlasBounds.bottom / msdfData.height,
-                    glyph.atlasBounds.right / msdfData.width,
-                    1 - glyph.atlasBounds.top / msdfData.height,
-                    glyph.atlasBounds.right / msdfData.width,
-                    1 - glyph.atlasBounds.bottom / msdfData.height,
-                    -3,
-                    1,
-                    Color.RED
-            );
-        }
-
-
 
 
 
@@ -132,6 +89,30 @@ public class UISystem extends EcsSystem {
 
     private void setOrigin(float x, float y) {
         origin.set(x, y);
+    }
+
+    private void drawGlyph(float x, float y, float w, float h, int msdfTextureIndex, MsdfJsonLoader.MsdfData msdfData, MsdfJsonLoader.Glyph glyph, Color color) {
+
+        float msdfScreenPxRange = (w / msdfData.width) * msdfData.size;
+
+        drawQuad(
+                x,
+                y,
+                w,
+                h,
+                glyph.atlasBounds.left / msdfData.width,
+                1 - glyph.atlasBounds.top / msdfData.height,
+                glyph.atlasBounds.left / msdfData.width,
+                1 - glyph.atlasBounds.bottom / msdfData.height,
+                glyph.atlasBounds.right / msdfData.width,
+                1 - glyph.atlasBounds.top / msdfData.height,
+                glyph.atlasBounds.right / msdfData.width,
+                1 - glyph.atlasBounds.bottom / msdfData.height,
+                -3,
+                msdfTextureIndex,
+                msdfScreenPxRange,
+                color
+        );
     }
 
     private void drawQuad(float x,
@@ -153,6 +134,7 @@ public class UISystem extends EcsSystem {
 
                           int fillMode,
                           int textureIndex,
+                          float msdfScreenPxRange,
                           Color color) {
 
         Vector2f
@@ -171,6 +153,7 @@ public class UISystem extends EcsSystem {
         vertexBufferData.putFloat(uvtly);
         vertexBufferData.putFloat(fillMode);
         vertexBufferData.putFloat(textureIndex);
+        vertexBufferData.putFloat(msdfScreenPxRange);
 
         vertexBufferData.putFloat(bottomLeft.x);
         vertexBufferData.putFloat(bottomLeft.y);
@@ -182,6 +165,7 @@ public class UISystem extends EcsSystem {
         vertexBufferData.putFloat(uvbly);
         vertexBufferData.putFloat(fillMode);
         vertexBufferData.putFloat(textureIndex);
+        vertexBufferData.putFloat(msdfScreenPxRange);
 
         vertexBufferData.putFloat(bottomRight.x);
         vertexBufferData.putFloat(bottomRight.y);
@@ -193,6 +177,7 @@ public class UISystem extends EcsSystem {
         vertexBufferData.putFloat(uvbry);
         vertexBufferData.putFloat(fillMode);
         vertexBufferData.putFloat(textureIndex);
+        vertexBufferData.putFloat(msdfScreenPxRange);
 
         vertexBufferData.putFloat(topRight.x);
         vertexBufferData.putFloat(topRight.y);
@@ -204,6 +189,7 @@ public class UISystem extends EcsSystem {
         vertexBufferData.putFloat(uvtry);
         vertexBufferData.putFloat(fillMode);
         vertexBufferData.putFloat(textureIndex);
+        vertexBufferData.putFloat(msdfScreenPxRange);
 
         indexBufferData.putInt(0 + (4 * quadIndex));
         indexBufferData.putInt(1 + (4 * quadIndex));

@@ -4,6 +4,7 @@ struct VSOutput {
     float2 uv;
     float fill_mode;
     float texture_index;
+    float msdf_screenpx_range;
 }
 
 struct Vertex
@@ -13,6 +14,7 @@ struct Vertex
     float2 uv : TEXCOORD0;
     float fill_mode;
     float texture_index;
+    float msdf_screenpx_range;
 }
 
 struct Camera
@@ -32,6 +34,8 @@ VSOutput vertexMain(Vertex vertex) {
     output.uv = vertex.uv;
     output.fill_mode = vertex.fill_mode;
     output.texture_index = vertex.texture_index;
+    output.msdf_screenpx_range = vertex.msdf_screenpx_range;
+    ;
 
     return output;
 }
@@ -70,7 +74,7 @@ FSOutput fragmentMain(VSOutput vsOutput) {
     else if (vsOutput.fill_mode == -3) {
         float3 msd = input_textures[int(vsOutput.texture_index)] .Sample(input_samplers[int(vsOutput.texture_index)], vsOutput.uv) .xyz;
         float sd = median(msd.r, msd.g, msd.b);
-        float screenPxDistance = (72 / 32) * 7 * (sd - 0.5);
+        float screenPxDistance = vsOutput.msdf_screenpx_range * (sd - 0.5);
         float opacity = clamp(screenPxDistance + 0.5, 0.0, 1.0);
 
         output.color0SW = lerp(0.0, vsOutput.color, opacity);
