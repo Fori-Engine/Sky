@@ -37,7 +37,7 @@ float pcf(Texture2D input_shadow_map, SamplerState input_shadow_map_sampler, int
     return shadow_samples;
 }
 
-[numthreads(16, 16, 1)]
+[numthreads(32, 32, 1)]
 void computeMain(uniform int light_count, int3 dispatch_ID : SV_DispatchThreadID) {
     int3 texture_xy_ss = int3(dispatch_ID.x, dispatch_ID.y, 0);
 

@@ -47,7 +47,7 @@ public class BlinnPhongPipeline extends RenderPipeline {
     private Buffer[] displayPassCameraBuffers;
 
     private int lightCount = 0;
-    private final int COMPUTE_THREAD_GROUP_SIZE = 16;
+    private final int COMPUTE_THREAD_GROUP_SIZE = 32;
 
 
 
