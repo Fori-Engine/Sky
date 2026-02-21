@@ -3,7 +3,6 @@ package engine.ui;
 import engine.Input;
 import engine.Surface;
 import engine.graphics.Color;
-import engine.graphics.Font;
 import engine.graphics.Rect2D;
 
 import java.util.*;
@@ -11,6 +10,7 @@ import java.util.List;
 
 
 public class AmberUI {
+    /*
 
     private static Adapter currentAdapter;
     private static final HashMap<String, Event> eventMap = new HashMap<>();
@@ -258,6 +258,7 @@ public class AmberUI {
         builderLastWidgetType = "panel";
     }
 
+
     public static void text(String text, Font font, int... layoutInParent){
         String id = getNewID();
 
@@ -285,6 +286,8 @@ public class AmberUI {
         builderLastWidgetType = "text";
     }
 
+
+
     public static Optional<Boolean> isHighestWindowForInput(String windowID, InputFunction inputFunction) {
         //Find all the windows that contain the mouse
         //Whichever window is highest in the queue gets to process the event, and nobody else
@@ -308,6 +311,7 @@ public class AmberUI {
         if(highestIndex == -1) return Optional.empty();
         return Optional.of(runtimeWindowRenderList.get(highestIndex).id == windowID);
     }
+
 
 
 
@@ -410,6 +414,8 @@ public class AmberUI {
 
 
 
+
+
     public static String getNewID(){
         namespaceAssembly.setLength(0);
 
@@ -421,4 +427,5 @@ public class AmberUI {
         return namespaceAssembly.toString() + StackWalker.getInstance(StackWalker.Option.SHOW_HIDDEN_FRAMES).walk(
                 (s) -> s.skip(2).findFirst()).get().getLineNumber();
     }
+    */
 }

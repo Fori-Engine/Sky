@@ -1,8 +1,7 @@
 package engine.ui;
 
-import engine.graphics.Font;
-
 public class WindowScope {
+    /*
     public String title;
     public float x, y;
     public String id;
@@ -15,4 +14,6 @@ public class WindowScope {
         this.id = id;
         this.font = font;
     }
+
+     */
 }
