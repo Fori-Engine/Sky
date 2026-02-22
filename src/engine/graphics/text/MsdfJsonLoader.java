@@ -119,12 +119,12 @@ public class MsdfJsonLoader {
         public String yOrigin;
         public Character[] characters = new Character[glyphCount];
 
-        float emSize;
-        float lineHeight;
-        float ascender;
-        float descender;
-        float underlineY;
-        float underlineThickness;
+        public float emSize;
+        public float lineHeight;
+        public float ascender;
+        public float descender;
+        public float underlineY;
+        public float underlineThickness;
 
 
 

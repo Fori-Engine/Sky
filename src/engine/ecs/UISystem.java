@@ -3,6 +3,7 @@ package engine.ecs;
 import engine.asset.AssetRegistry;
 import engine.graphics.*;
 import engine.graphics.pipelines.ScreenSpaceFeatures;
+import engine.graphics.text.MsdfFont;
 import engine.graphics.text.MsdfJsonLoader;
 import org.joml.Matrix2f;
 import org.joml.Vector2f;
@@ -19,18 +20,21 @@ public class UISystem extends EcsSystem {
     private Matrix2f transform = new Matrix2f();
     private Vector2f origin = new Vector2f();
 
-    private Texture texture;
-    private Sampler sampler;
-    private MsdfJsonLoader.MsdfData msdfData;
+
+    private MsdfFont msdfFont;
 
     public UISystem(Renderer renderer, RenderPipeline renderPipeline, Scene scene) {
         this.renderer = renderer;
         this.renderPipeline = renderPipeline;
         this.scene = scene;
 
-        texture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/fonts/Roboto/roboto-atlas.png"), TextureFormatType.ColorR8G8B8A8);
-        msdfData = MsdfJsonLoader.load((String) AssetRegistry.getAsset("core:assets/fonts/Roboto/roboto-atlas.json").getObject());
-        sampler = Sampler.newSampler(texture, Texture.Filter.Linear, Texture.Filter.Linear, true);
+        msdfFont = new MsdfFont(
+                renderer,
+                AssetRegistry.getAsset("core:assets/fonts/Roboto/roboto-atlas.png"),
+                AssetRegistry.getAsset("core:assets/fonts/Roboto/roboto-atlas.json")
+        );
+
+
 
 
 
@@ -48,8 +52,8 @@ public class UISystem extends EcsSystem {
         indexBufferData = screenSpaceFeatures.getIndexBuffer().get();
         indexBufferData.clear();
 
-        screenSpaceFeatures.getShaderProgram().setTextures(renderer.getFrameIndex(), new DescriptorUpdate<>("input_textures", texture).arrayIndex(1));
-        screenSpaceFeatures.getShaderProgram().setSamplers(renderer.getFrameIndex(), new DescriptorUpdate<>("input_samplers", sampler).arrayIndex(1));
+        screenSpaceFeatures.getShaderProgram().setTextures(renderer.getFrameIndex(), new DescriptorUpdate<>("input_textures", msdfFont.getTexture()).arrayIndex(1));
+        screenSpaceFeatures.getShaderProgram().setSamplers(renderer.getFrameIndex(), new DescriptorUpdate<>("input_samplers", msdfFont.getSampler()).arrayIndex(1));
 
 
         transform = new Matrix2f();
@@ -70,10 +74,45 @@ public class UISystem extends EcsSystem {
                 Color.WHITE
         );
 
-
-        drawGlyph(0, 30, 32, 32, 1, msdfData, msdfData.characters[120], Color.WHITE);
-        drawGlyph(100, 100, 32, 32, 1, msdfData, msdfData.characters[43], Color.WHITE);
-        drawGlyph(200, 100, 32, 40, 1, msdfData, msdfData.characters[72], Color.WHITE);
+        drawString(300, 300, " private void drawString(float x, float y, String text, Color color) {\n" +
+                "\n" +
+                "        float xl = 0;\n" +
+                "        float yl = y;\n" +
+                "\n" +
+                "        float spaceXAdvance = msdfData.characters[' '].advance;\n" +
+                "\n" +
+                "        for (int i = 0; i < text.length(); i++) {\n" +
+                "            char c = text.charAt(i);\n" +
+                "\n" +
+                "            if(c == '\\n') {\n" +
+                "                yl += msdfData.lineHeight * msdfData.size;\n" +
+                "                xl = 0;\n" +
+                "                continue;\n" +
+                "            }\n" +
+                "            if(c == '\\t') {\n" +
+                "                xl = 4 * spaceXAdvance;\n" +
+                "                continue;\n" +
+                "            }\n" +
+                "\n" +
+                "            MsdfJsonLoader.Character character = msdfData.characters[c];\n" +
+                "            if(character == null) character = msdfData.characters['?'];\n" +
+                "\n" +
+                "            MsdfJsonLoader.Rect planeBounds = character.planeBounds;\n" +
+                "            if(planeBounds != null) {\n" +
+                "\n" +
+                "                float sw = (planeBounds.right - planeBounds.left) * msdfData.size;\n" +
+                "                float sh = (planeBounds.top - planeBounds.bottom) * msdfData.size;\n" +
+                "                float yo = planeBounds.bottom * msdfData.size;\n" +
+                "\n" +
+                "                drawGlyph(x + xl, yl - sh - yo, sw, sh, 1, msdfData, character, color);\n" +
+                "            }\n" +
+                "            xl += character.advance * msdfData.size;\n" +
+                "\n" +
+                "\n" +
+                "        }\n" +
+                "\n" +
+                "\n" +
+                "    }\n", msdfFont, Color.WHITE);
 
 
 
@@ -81,6 +120,45 @@ public class UISystem extends EcsSystem {
         quadIndex = 0;
     }
 
+    private void drawString(float x, float y, String text, MsdfFont msdfFont, Color color) {
+
+        float xl = 0;
+        float yl = y;
+
+        float spaceXAdvance = msdfFont.getMSDFData().characters[' '].advance;
+
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+
+            if(c == '\n') {
+                yl += msdfFont.getMSDFData().lineHeight * msdfFont.getMSDFData().size;
+                xl = 0;
+                continue;
+            }
+            if(c == '\t') {
+                xl = 4 * spaceXAdvance;
+                continue;
+            }
+
+            MsdfJsonLoader.Character character = msdfFont.getMSDFData().characters[c];
+            if(character == null) character = msdfFont.getMSDFData().characters['?'];
+
+            MsdfJsonLoader.Rect planeBounds = character.planeBounds;
+            if(planeBounds != null) {
+
+                float sw = (planeBounds.right - planeBounds.left) * msdfFont.getMSDFData().size;
+                float sh = (planeBounds.top - planeBounds.bottom) * msdfFont.getMSDFData().size;
+                float yo = planeBounds.bottom * msdfFont.getMSDFData().size;
+
+                drawGlyph(x + xl, yl - sh - yo, sw, sh, 1, msdfFont.getMSDFData(), character, color);
+            }
+            xl += character.advance * msdfFont.getMSDFData().size;
+
+
+        }
+
+
+    }
 
 
     private void setOrigin(float x, float y) {
