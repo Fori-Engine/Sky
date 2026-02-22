@@ -68,7 +68,7 @@ FSOutput fragmentMain(VSOutput vsOutput) {
         float2 uv = vsOutput.uv * 2.0 - 1.0;
         float distance = length(uv);
 
-        if(distance <= 1.0 && distance >= (1.0 - 0.5)) output.color0SW = vsOutput.color;
+        if(distance <= 1.0 && distance >= (1.0 - 0.03)) output.color0SW = vsOutput.color;
         else discard;
     }
     else if (vsOutput.fill_mode == -3) {

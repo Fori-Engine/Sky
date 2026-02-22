@@ -24,6 +24,9 @@ public class VulkanUtil {
             case Depth32 -> {
                 return VK_FORMAT_D32_SFLOAT;
             }
+            case ColorR8G8B8A8unorm -> {
+                return VK_FORMAT_R8G8B8A8_UNORM;
+            }
         }
         return -1;
     }
@@ -80,6 +83,9 @@ public class VulkanUtil {
                 imageBarrier.subresourceRange().layerCount(1);
             }
 
+            if(image.getFormat() == VK_FORMAT_D32_SFLOAT && aspectMask == VK_IMAGE_ASPECT_COLOR_BIT) {
+                System.out.println();
+            }
 
 
 

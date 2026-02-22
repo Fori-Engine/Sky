@@ -20,6 +20,7 @@ public class MeshGenerator {
         List<Float> verticesList = new ArrayList<>();
         List<Float> colorsList = new ArrayList<>();
         List<Float> normalsList = new ArrayList<>();
+        List<Float> tangentsList = new ArrayList<>();
         List<Float> textureUVsList = new ArrayList<>();
         List<Integer> indicesList = new ArrayList<>();
 
@@ -49,7 +50,8 @@ public class MeshGenerator {
         Vector3f e0 = new Vector3f(vertices[1]).sub(vertices[0]);
         Vector3f e1 = new Vector3f(vertices[2]).sub(vertices[0]);
 
-        Vector3f faceNormal = e0.cross(e1).normalize();
+        Vector3f faceNormal = new Vector3f(e0).cross(e1).normalize();
+        Vector3f faceTangent = new Vector3f(e0).normalize();
 
         for (int vertexIndex = 0; vertexIndex < 4; vertexIndex++) {
             Vector3f vertex = vertices[vertexIndex];
@@ -72,6 +74,11 @@ public class MeshGenerator {
             normalsList.add(faceNormal.y);
             normalsList.add(faceNormal.z);
 
+            //Tangents
+            tangentsList.add(faceTangent.x);
+            tangentsList.add(faceTangent.y);
+            tangentsList.add(faceTangent.z);
+
             //UVs
             textureUVsList.add(uv.x);
             textureUVsList.add(uv.y);
@@ -91,6 +98,7 @@ public class MeshGenerator {
         vertexData.put("Colors", colorsList);
         vertexData.put("Normals", normalsList);
         vertexData.put("TextureUVs", textureUVsList);
+        vertexData.put("Tangents", tangentsList);
 
         return new MeshData(vertexData, indicesList, 4);
     }
@@ -107,6 +115,7 @@ public class MeshGenerator {
         List<Float> verticesList = new ArrayList<>();
         List<Float> colorsList = new ArrayList<>();
         List<Float> normalsList = new ArrayList<>();
+        List<Float> tangentsList = new ArrayList<>();
         List<Float> textureUVsList = new ArrayList<>();
         List<Integer> indicesList = new ArrayList<>();
 
@@ -181,7 +190,8 @@ public class MeshGenerator {
             Vector3f e0 = new Vector3f(faceVertices[1]).sub(faceVertices[0]);
             Vector3f e1 = new Vector3f(faceVertices[2]).sub(faceVertices[0]);
 
-            Vector3f faceNormal = e0.cross(e1).normalize();
+            Vector3f faceNormal = new Vector3f(e0).cross(e1).normalize();
+            Vector3f faceTangent = new Vector3f(e0).normalize();
 
 
             for (int vertexIndex = 0; vertexIndex < 4; vertexIndex++) {
@@ -204,6 +214,11 @@ public class MeshGenerator {
                 normalsList.add(faceNormal.y);
                 normalsList.add(faceNormal.z);
 
+                //Tangents
+                tangentsList.add(faceTangent.x);
+                tangentsList.add(faceTangent.y);
+                tangentsList.add(faceTangent.z);
+
                 textureUVsList.add(uv.x);
                 textureUVsList.add(uv.y);
 
@@ -225,6 +240,7 @@ public class MeshGenerator {
         vertexData.put("Colors", colorsList);
         vertexData.put("Normals", normalsList);
         vertexData.put("TextureUVs", textureUVsList);
+        vertexData.put("Tangents", tangentsList);
 
         return new MeshData(vertexData, indicesList, 24);
     }

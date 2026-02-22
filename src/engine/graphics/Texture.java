@@ -114,7 +114,7 @@ public abstract class Texture extends Disposable {
                     height,
                     null,
                     VulkanUtil.getVulkanImageFormat(textureFormatType),
-                    VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                    VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                     VK_IMAGE_TILING_OPTIMAL,
                     VK_IMAGE_ASPECT_DEPTH_BIT
             );

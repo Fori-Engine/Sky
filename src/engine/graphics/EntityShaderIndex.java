@@ -18,6 +18,7 @@ public class EntityShaderIndex {
         List<Float> textureUVs = meshData.getData().get("TextureUVs");
         List<Float> colors = meshData.getData().get("Colors");
         List<Float> normals = meshData.getData().get("Normals");
+        List<Float> tangents = meshData.getData().get("Tangents");
 
         for (int vertexIndex = 0; vertexIndex < meshData.getVertexCount(); vertexIndex++) {
 
@@ -62,6 +63,15 @@ public class EntityShaderIndex {
                         vertexBufferData.putFloat(nx);
                         vertexBufferData.putFloat(ny);
                         vertexBufferData.putFloat(nz);
+                    }
+                    case "vertex.tangent_ws" -> {
+                        float tx = tangents.get(3 * vertexIndex + 0);
+                        float ty = tangents.get(3 * vertexIndex + 1);
+                        float tz = tangents.get(3 * vertexIndex + 2);
+
+                        vertexBufferData.putFloat(tx);
+                        vertexBufferData.putFloat(ty);
+                        vertexBufferData.putFloat(tz);
                     }
                     default -> {
                         for(int i = 0; i < vertexAttribute.getSize(); i++)
