@@ -19,9 +19,15 @@ public class UISystem extends EcsSystem {
     private ByteBuffer vertexBufferData, indexBufferData;
     private Matrix2f transform = new Matrix2f();
     private Vector2f origin = new Vector2f();
-
-
     private MsdfFont msdfFont;
+    private String text = "\"Lorem ipsum dolor sit amet, consectetur adipiscing elit,\n" +
+            " sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\n" +
+            "Ut enim ad minim veniam, quis nostrud\n" +
+            " exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.\n" +
+            "Duis aute irure dolor in reprehenderit in voluptate velit esse\n" +
+            " cillum dolore eu fugiat nulla pariatur.\n" +
+            "Excepteur sint occaecat cupidatat non proident,\n" +
+            " sunt in culpa qui officia deserunt mollit anim id est laborum.\"";
 
     public UISystem(Renderer renderer, RenderPipeline renderPipeline, Scene scene) {
         this.renderer = renderer;
@@ -33,6 +39,7 @@ public class UISystem extends EcsSystem {
                 AssetRegistry.getAsset("core:assets/fonts/Roboto/roboto-atlas.png"),
                 AssetRegistry.getAsset("core:assets/fonts/Roboto/roboto-atlas.json")
         );
+
 
 
 
@@ -74,45 +81,22 @@ public class UISystem extends EcsSystem {
                 Color.WHITE
         );
 
-        drawString(300, 300, " private void drawString(float x, float y, String text, Color color) {\n" +
-                "\n" +
-                "        float xl = 0;\n" +
-                "        float yl = y;\n" +
-                "\n" +
-                "        float spaceXAdvance = msdfData.characters[' '].advance;\n" +
-                "\n" +
-                "        for (int i = 0; i < text.length(); i++) {\n" +
-                "            char c = text.charAt(i);\n" +
-                "\n" +
-                "            if(c == '\\n') {\n" +
-                "                yl += msdfData.lineHeight * msdfData.size;\n" +
-                "                xl = 0;\n" +
-                "                continue;\n" +
-                "            }\n" +
-                "            if(c == '\\t') {\n" +
-                "                xl = 4 * spaceXAdvance;\n" +
-                "                continue;\n" +
-                "            }\n" +
-                "\n" +
-                "            MsdfJsonLoader.Character character = msdfData.characters[c];\n" +
-                "            if(character == null) character = msdfData.characters['?'];\n" +
-                "\n" +
-                "            MsdfJsonLoader.Rect planeBounds = character.planeBounds;\n" +
-                "            if(planeBounds != null) {\n" +
-                "\n" +
-                "                float sw = (planeBounds.right - planeBounds.left) * msdfData.size;\n" +
-                "                float sh = (planeBounds.top - planeBounds.bottom) * msdfData.size;\n" +
-                "                float yo = planeBounds.bottom * msdfData.size;\n" +
-                "\n" +
-                "                drawGlyph(x + xl, yl - sh - yo, sw, sh, 1, msdfData, character, color);\n" +
-                "            }\n" +
-                "            xl += character.advance * msdfData.size;\n" +
-                "\n" +
-                "\n" +
-                "        }\n" +
-                "\n" +
-                "\n" +
-                "    }\n", msdfFont, Color.WHITE);
+        drawQuad(
+                300,
+                300,
+                msdfFont.getStringWidth(text),
+                msdfFont.getStringHeight(text),
+                -1, -1,
+                -1, -1,
+                -1, -1,
+                -1, -1,
+                -1,
+                -1,
+                -1,
+                Color.GRAY
+        );
+
+        drawString(300, 300, text, msdfFont, Color.WHITE);
 
 
 
@@ -123,8 +107,7 @@ public class UISystem extends EcsSystem {
     private void drawString(float x, float y, String text, MsdfFont msdfFont, Color color) {
 
         float xl = 0;
-        float yl = y;
-
+        float yl = y + msdfFont.getMaxHeightAboveBaselineOnFirstLine(text);
         float spaceXAdvance = msdfFont.getMSDFData().characters[' '].advance;
 
         for (int i = 0; i < text.length(); i++) {
