@@ -39,8 +39,8 @@ public class UISystem extends EcsSystem {
 
         msdfFont = new MsdfFont(
                 renderer,
-                AssetRegistry.getAsset("core:assets/fonts/Roboto/roboto-atlas.png"),
-                AssetRegistry.getAsset("core:assets/fonts/Roboto/roboto-atlas.json")
+                AssetRegistry.getAsset("core:assets/fonts/AirbusB612/b612-atlas.png"),
+                AssetRegistry.getAsset("core:assets/fonts/AirbusB612/b612-atlas.json")
         );
 
 
@@ -84,20 +84,6 @@ public class UISystem extends EcsSystem {
                 Color.WHITE
         );
 
-        drawQuad(
-                300,
-                300,
-                msdfFont.getStringWidth(text),
-                msdfFont.getStringHeight(text),
-                -1, -1,
-                -1, -1,
-                -1, -1,
-                -1, -1,
-                -1,
-                -1,
-                -1,
-                Color.GRAY
-        );
 
         drawString(300, 300, text, msdfFont, textEffect, Color.WHITE);
 
