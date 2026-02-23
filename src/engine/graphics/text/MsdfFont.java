@@ -11,13 +11,21 @@ public class MsdfFont extends Disposable {
     private Texture texture;
     private MsdfJsonLoader.MsdfData msdfData;
     private Sampler sampler;
+    private int tabWidth = 4;
     public MsdfFont(Disposable parent, Asset<TextureData> textureDataAsset, Asset<String> jsonAsset) {
         super(parent);
 
         texture = Texture.newColorTextureFromAsset(this, textureDataAsset, TextureFormatType.ColorR8G8B8A8unorm);
         msdfData = MsdfJsonLoader.load(jsonAsset.getObject());
         sampler = Sampler.newSampler(texture, Texture.Filter.Linear, Texture.Filter.Linear, true);
+    }
 
+    public int getTabWidth() {
+        return tabWidth;
+    }
+
+    public void setTabWidth(int tabWidth) {
+        this.tabWidth = tabWidth;
     }
 
     public float getStringWidth(String string) {
@@ -34,7 +42,7 @@ public class MsdfFont extends Disposable {
                 continue;
             }
             if(c == '\t') {
-                stringLineWidth += 4 * spaceXAdvance;
+                stringLineWidth += tabWidth * spaceXAdvance;
                 continue;
             }
 

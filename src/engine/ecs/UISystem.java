@@ -119,7 +119,7 @@ public class UISystem extends EcsSystem {
                 continue;
             }
             if(c == '\t') {
-                xl = 4 * spaceXAdvance;
+                xl = msdfFont.getTabWidth() * spaceXAdvance;
                 continue;
             }
 
