@@ -3,10 +3,7 @@ package engine.ecs;
 import engine.asset.AssetRegistry;
 import engine.graphics.*;
 import engine.graphics.pipelines.ScreenSpaceFeatures;
-import engine.graphics.text.MsdfFont;
-import engine.graphics.text.MsdfJsonLoader;
-import engine.graphics.text.TextEffect;
-import engine.graphics.text.WaveTextEffect;
+import engine.graphics.text.*;
 import org.joml.Matrix2f;
 import org.joml.Vector2f;
 import java.nio.ByteBuffer;
@@ -30,7 +27,10 @@ public class UISystem extends EcsSystem {
             " cillum dolore eu fugiat nulla pariatur.\n" +
             "Excepteur sint occaecat cupidatat non proident,\n" +
             " sunt in culpa qui officia deserunt mollit anim id est laborum.\"";
-    private WaveTextEffect waveTextEffect = new WaveTextEffect();
+    private TextEffect textEffect = new TextEffectCombiner(
+            new WaveTextEffect(),
+            new ShoutTextEffect()
+    );
 
     public UISystem(Renderer renderer, RenderPipeline renderPipeline, Scene scene) {
         this.renderer = renderer;
@@ -99,7 +99,7 @@ public class UISystem extends EcsSystem {
                 Color.GRAY
         );
 
-        drawString(300, 300, text, msdfFont, waveTextEffect, Color.WHITE);
+        drawString(300, 300, text, msdfFont, textEffect, Color.WHITE);
 
 
 
