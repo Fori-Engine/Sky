@@ -158,7 +158,7 @@ public class UISystem extends EcsSystem {
 
     private void drawGlyph(float x, float y, float w, float h, int msdfTextureIndex, MsdfJsonLoader.MsdfData msdfData, MsdfJsonLoader.Character character, Color color) {
 
-        float msdfScreenPxRange = (w / msdfData.width) * msdfData.size;
+        int msdfScreenPxRange = (int) Math.ceil((w / msdfData.width) * msdfData.size);
 
         drawQuad(
                 x,
