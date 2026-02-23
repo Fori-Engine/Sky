@@ -5,6 +5,8 @@ import engine.graphics.*;
 import engine.graphics.pipelines.ScreenSpaceFeatures;
 import engine.graphics.text.MsdfFont;
 import engine.graphics.text.MsdfJsonLoader;
+import engine.graphics.text.TextEffect;
+import engine.graphics.text.WaveTextEffect;
 import org.joml.Matrix2f;
 import org.joml.Vector2f;
 import java.nio.ByteBuffer;
@@ -28,6 +30,7 @@ public class UISystem extends EcsSystem {
             " cillum dolore eu fugiat nulla pariatur.\n" +
             "Excepteur sint occaecat cupidatat non proident,\n" +
             " sunt in culpa qui officia deserunt mollit anim id est laborum.\"";
+    private WaveTextEffect waveTextEffect = new WaveTextEffect();
 
     public UISystem(Renderer renderer, RenderPipeline renderPipeline, Scene scene) {
         this.renderer = renderer;
@@ -96,7 +99,7 @@ public class UISystem extends EcsSystem {
                 Color.GRAY
         );
 
-        drawString(300, 300, text, msdfFont, Color.WHITE);
+        drawString(300, 300, text, msdfFont, waveTextEffect, Color.WHITE);
 
 
 
@@ -104,7 +107,9 @@ public class UISystem extends EcsSystem {
         quadIndex = 0;
     }
 
-    private void drawString(float x, float y, String text, MsdfFont msdfFont, Color color) {
+    private void drawString(float x, float y, String text, MsdfFont msdfFont, TextEffect textEffect, Color color) {
+        if(textEffect != null)
+            textEffect.update();
 
         float xl = 0;
         float yl = y + (msdfFont.getMSDFData().lineHeight + msdfFont.getMSDFData().descender) * msdfFont.getMSDFData().size;
@@ -133,7 +138,24 @@ public class UISystem extends EcsSystem {
                 float sh = (planeBounds.top - planeBounds.bottom) * msdfFont.getMSDFData().size;
                 float yo = planeBounds.bottom * msdfFont.getMSDFData().size;
 
-                drawGlyph(x + xl, yl - sh - yo, sw, sh, 1, msdfFont.getMSDFData(), character, color);
+                float effectOffsetX = 0, effectOffsetY = 0;
+
+                if(textEffect != null) {
+                    Vector2f effectOffset = textEffect.offset(i, text.length());
+                    effectOffsetX = effectOffset.x;
+                    effectOffsetY = effectOffset.y;
+                }
+
+                drawGlyph(
+                        x + xl + effectOffsetX,
+                        yl - sh - yo + effectOffsetY,
+                        sw,
+                        sh,
+                        1,
+                        msdfFont.getMSDFData(),
+                        character,
+                        color
+                );
             }
             xl += character.advance * msdfFont.getMSDFData().size;
 
