@@ -71,21 +71,4 @@ public class MsdfFont extends Disposable {
 
     @Override
     public void dispose() {}
-
-    public float getMaxHeightAboveBaselineOnFirstLine(String string) {
-
-        float maxHeight = 0;
-        for (int i = 0; i < string.length(); i++) {
-            char c = string.charAt(i);
-            if(c == '\n') return maxHeight * msdfData.size;
-
-            MsdfJsonLoader.Character character = msdfData.characters[c];
-            if(character == null || character.planeBounds == null)
-                continue;
-
-            maxHeight = Math.max(maxHeight, character.planeBounds.top);
-        }
-
-        return -1;
-    }
 }

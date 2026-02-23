@@ -107,7 +107,7 @@ public class UISystem extends EcsSystem {
     private void drawString(float x, float y, String text, MsdfFont msdfFont, Color color) {
 
         float xl = 0;
-        float yl = y + msdfFont.getMaxHeightAboveBaselineOnFirstLine(text);
+        float yl = y + (msdfFont.getMSDFData().lineHeight + msdfFont.getMSDFData().descender) * msdfFont.getMSDFData().size;
         float spaceXAdvance = msdfFont.getMSDFData().characters[' '].advance;
 
         for (int i = 0; i < text.length(); i++) {
