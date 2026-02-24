@@ -25,7 +25,7 @@ public class EntityShaderIndex {
 
             for(VertexAttribute vertexAttribute : shaderProgram.getVertexAttributes()) {
                 switch (vertexAttribute.getName()) {
-                    case "vertex.pos_ws" -> {
+                    case "vertex.pos_ms" -> {
                         float x = positions.get(3 * vertexIndex + 0);
                         float y = positions.get(3 * vertexIndex + 1);
                         float z = positions.get(3 * vertexIndex + 2);
@@ -55,7 +55,7 @@ public class EntityShaderIndex {
                         vertexBufferData.putFloat(b);
                         vertexBufferData.putFloat(a);
                     }
-                    case "vertex.normal_ws" -> {
+                    case "vertex.normal_ms" -> {
                         float nx = normals.get(3 * vertexIndex + 0);
                         float ny = normals.get(3 * vertexIndex + 1);
                         float nz = normals.get(3 * vertexIndex + 2);
@@ -64,7 +64,7 @@ public class EntityShaderIndex {
                         vertexBufferData.putFloat(ny);
                         vertexBufferData.putFloat(nz);
                     }
-                    case "vertex.tangent_ws" -> {
+                    case "vertex.tangent_ms" -> {
                         float tx = tangents.get(3 * vertexIndex + 0);
                         float ty = tangents.get(3 * vertexIndex + 1);
                         float tz = tangents.get(3 * vertexIndex + 2);

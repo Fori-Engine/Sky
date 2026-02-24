@@ -19,12 +19,12 @@ struct VSOutput {
 
 struct Vertex
 {
-    float3 pos_ws;
+    float3 pos_ms;
     float1 entity_index;
     float4 color;
-    float3 normal_ws;
+    float3 normal_ms;
     float2 uv_ts;
-    float3 tangent_ws;
+    float3 tangent_ms;
 }
 
 
@@ -47,14 +47,14 @@ VSOutput vertexMain(Vertex vertex, uniform int render_mode, uniform int light_in
     
     float4x4 transform = transforms[0].transforms[int(vertex.entity_index)];
 
-    output.normal_ws = normalize(mul(float3x3(transform), vertex.normal_ws));
-    output.pos_vs = mul(view, mul(transform, float4(vertex.pos_ws, 1.0)));
+    output.normal_ws = normalize(mul(float3x3(transform), vertex.normal_ms));
+    output.pos_vs = mul(view, mul(transform, float4(vertex.pos_ms, 1.0)));
     output.pos = mul(proj, output.pos_vs);
     output.color = vertex.color;
     output.uv_ts = vertex.uv_ts;
     output.entity_index = vertex.entity_index;
 
-    float3 tangent_ws = normalize(mul(float3x3(transform), vertex.tangent_ws));
+    float3 tangent_ws = normalize(mul(float3x3(transform), vertex.tangent_ms));
     float3 bitangent_ws = cross(output.normal_ws, tangent_ws);
 
     output.tbn_ws_inv = transpose(float3x3(tangent_ws, bitangent_ws, output.normal_ws));
