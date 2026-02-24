@@ -4,7 +4,7 @@ import engine.SkyRuntimeException;
 import engine.graphics.*;
 
 @ComponentArray(mask = 1 << 2)
-public class EnvironmentMeshComponent {
+public class MeshListComponent {
     public Buffer[] transformsBuffers;
     public Buffer[] sceneDescBuffers;
     public Buffer vertexBuffer;
@@ -20,7 +20,7 @@ public class EnvironmentMeshComponent {
     private Buffer stagingVertexBuffer, stagingIndexBuffer;
     private Disposable parent;
 
-    public EnvironmentMeshComponent(Disposable parent, Renderer renderer, int maxVertexCount, int maxIndexCount, int maxTransformCount, ShaderProgram shaderProgram) {
+    public MeshListComponent(Disposable parent, Renderer renderer, int maxVertexCount, int maxIndexCount, int maxTransformCount, ShaderProgram shaderProgram) {
         this.parent = parent;
         this.maxIndexCount = maxIndexCount;
         this.maxVertexCount = maxVertexCount;
@@ -82,12 +82,12 @@ public class EnvironmentMeshComponent {
 
 
 
-    public void addMesh(MeshData meshData, MeshDataWriter meshDataWriter) {
+    public void addMeshData(MeshData meshData, int meshIndex) {
 
         stagingVertexBuffer.get().clear();
         stagingIndexBuffer.get().clear();
 
-        meshDataWriter.upload(meshData, shaderProgram, stagingVertexBuffer.get(), stagingIndexBuffer.get(), this.vertexCount);
+        new MeshDataWriter(meshIndex).upload(meshData, shaderProgram, stagingVertexBuffer.get(), stagingIndexBuffer.get(), this.vertexCount);
 
         commitMesh(
                 meshData.getVertexCount(),

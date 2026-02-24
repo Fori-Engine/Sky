@@ -48,8 +48,8 @@ public class ExampleStage extends Stage {
 
         Entity.tryClassload(TransformComponent.class);
         Entity.tryClassload(NVPhysXComponent.class);
-        Entity.tryClassload(ActorMeshComponent.class);
-        Entity.tryClassload(EnvironmentMeshComponent.class);
+        Entity.tryClassload(MeshComponent.class);
+        Entity.tryClassload(MeshListComponent.class);
         Entity.tryClassload(CameraComponent.class);
         Entity.tryClassload(SpotlightComponent.class);
         Entity.tryClassload(ShaderComponent.class);
@@ -103,8 +103,8 @@ public class ExampleStage extends Stage {
 
             MeshData meshData = MeshGenerator.newBox(10, 1, 10);
 
-            ActorMeshComponent actorMeshComponent = new ActorMeshComponent(renderer, renderer, 100, 100, shaderProgram);
-            actorMeshComponent.addMeshData(meshData, 0);
+            MeshListComponent meshListComponent = new MeshListComponent(renderer, renderer, 100, 100, 1, shaderProgram);
+            meshListComponent.addMeshData(meshData, 0);
 
             Texture colorMapTexture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/brickwall.jpg"), TextureFormatType.ColorR8G8B8A8);
             Sampler colorMapSampler = Sampler.newSampler(colorMapTexture, Texture.Filter.Linear, Texture.Filter.Linear, true);
@@ -115,22 +115,22 @@ public class ExampleStage extends Stage {
 
 
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                actorMeshComponent.shaderProgram.setTextures(frameIndex, new DescriptorUpdate<>("color_map_texture", colorMapTexture));
-                actorMeshComponent.shaderProgram.setSamplers(frameIndex, new DescriptorUpdate<>("color_map_sampler", colorMapSampler));
+                meshListComponent.shaderProgram.setTextures(frameIndex, new DescriptorUpdate<>("color_map_texture", colorMapTexture));
+                meshListComponent.shaderProgram.setSamplers(frameIndex, new DescriptorUpdate<>("color_map_sampler", colorMapSampler));
 
-                actorMeshComponent.shaderProgram.setTextures(frameIndex, new DescriptorUpdate<>("normal_map_texture", normalMapTexture));
-                actorMeshComponent.shaderProgram.setSamplers(frameIndex, new DescriptorUpdate<>("normal_map_sampler", normalMapSampler));
+                meshListComponent.shaderProgram.setTextures(frameIndex, new DescriptorUpdate<>("normal_map_texture", normalMapTexture));
+                meshListComponent.shaderProgram.setSamplers(frameIndex, new DescriptorUpdate<>("normal_map_sampler", normalMapSampler));
 
 
-                actorMeshComponent.shaderProgram.setBuffers(
+                meshListComponent.shaderProgram.setBuffers(
                         frameIndex,
-                        new DescriptorUpdate<>("scene_desc", actorMeshComponent.sceneDescBuffers[frameIndex]),
-                        new DescriptorUpdate<>("transforms", actorMeshComponent.transformsBuffers[frameIndex])
+                        new DescriptorUpdate<>("scene_desc", meshListComponent.sceneDescBuffers[frameIndex]),
+                        new DescriptorUpdate<>("transforms", meshListComponent.transformsBuffers[frameIndex])
                 );
             }
 
             Entity floorEntity = scene.createEntity(
-                    actorMeshComponent,
+                    meshListComponent,
                     new ShaderComponent(shaderProgram),
                     new TransformComponent(new Matrix4f().identity().translate(0, 2, 0).rotate((float) Math.toRadians(0), 0, 0, 1)),
                     new NVPhysXComponent(new BoxCollider(10.0f, 1f, 10.0f), new Material(0.05f, 0.05f, 0.3f), ActorType.Static)
@@ -152,8 +152,8 @@ public class ExampleStage extends Stage {
 
             MeshData meshData = MeshGenerator.newBox(1, 1, 1);
 
-            ActorMeshComponent actorMeshComponent = new ActorMeshComponent(renderer, renderer, 100, 100, shaderProgram);
-            actorMeshComponent.addMeshData(meshData, 0);
+            MeshComponent meshComponent = new MeshComponent(renderer, renderer, 100, 100, shaderProgram);
+            meshComponent.setMeshData(meshData);
 
             Texture colorMapTexture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/bugcat.jpg"), TextureFormatType.ColorR8G8B8A8);
             Sampler colorMapSampler = Sampler.newSampler(colorMapTexture, Texture.Filter.Linear, Texture.Filter.Linear, true);
@@ -164,22 +164,22 @@ public class ExampleStage extends Stage {
 
 
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                actorMeshComponent.shaderProgram.setTextures(frameIndex, new DescriptorUpdate<>("color_map_texture", colorMapTexture));
-                actorMeshComponent.shaderProgram.setSamplers(frameIndex, new DescriptorUpdate<>("color_map_sampler", colorMapSampler));
+                meshComponent.shaderProgram.setTextures(frameIndex, new DescriptorUpdate<>("color_map_texture", colorMapTexture));
+                meshComponent.shaderProgram.setSamplers(frameIndex, new DescriptorUpdate<>("color_map_sampler", colorMapSampler));
 
-                actorMeshComponent.shaderProgram.setTextures(frameIndex, new DescriptorUpdate<>("normal_map_texture", normalMapTexture));
-                actorMeshComponent.shaderProgram.setSamplers(frameIndex, new DescriptorUpdate<>("normal_map_sampler", normalMapSampler));
+                meshComponent.shaderProgram.setTextures(frameIndex, new DescriptorUpdate<>("normal_map_texture", normalMapTexture));
+                meshComponent.shaderProgram.setSamplers(frameIndex, new DescriptorUpdate<>("normal_map_sampler", normalMapSampler));
 
 
-                actorMeshComponent.shaderProgram.setBuffers(
+                meshComponent.shaderProgram.setBuffers(
                         frameIndex,
-                        new DescriptorUpdate<>("scene_desc", actorMeshComponent.sceneDescBuffers[frameIndex]),
-                        new DescriptorUpdate<>("transforms", actorMeshComponent.transformsBuffers[frameIndex])
+                        new DescriptorUpdate<>("scene_desc", meshComponent.sceneDescBuffers[frameIndex]),
+                        new DescriptorUpdate<>("transforms", meshComponent.transformsBuffers[frameIndex])
                 );
             }
 
             Entity cubeEntity = scene.createEntity(
-                    actorMeshComponent,
+                    meshComponent,
                     new ShaderComponent(shaderProgram),
                     new TransformComponent(new Matrix4f().identity().translate(0, 5, 0).rotate((float) Math.toRadians(0), 0, 0, 1)),
                     new NVPhysXComponent(new BoxCollider(1f, 1f, 1f), new Material(0.05f, 0.05f, 0.3f), ActorType.Dynamic)
@@ -201,8 +201,8 @@ public class ExampleStage extends Stage {
 
             MeshData meshData = MeshGenerator.newBox(1, 1, 1);
 
-            ActorMeshComponent actorMeshComponent = new ActorMeshComponent(renderer, renderer, 100, 100, shaderProgram);
-            actorMeshComponent.addMeshData(meshData, 0);
+            MeshComponent meshComponent = new MeshComponent(renderer, renderer, 100, 100, shaderProgram);
+            meshComponent.setMeshData(meshData);
 
             Texture colorMapTexture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/bugcat.jpg"), TextureFormatType.ColorR8G8B8A8);
             Sampler colorMapSampler = Sampler.newSampler(colorMapTexture, Texture.Filter.Linear, Texture.Filter.Linear, true);
@@ -213,22 +213,22 @@ public class ExampleStage extends Stage {
 
 
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                actorMeshComponent.shaderProgram.setTextures(frameIndex, new DescriptorUpdate<>("color_map_texture", colorMapTexture));
-                actorMeshComponent.shaderProgram.setSamplers(frameIndex, new DescriptorUpdate<>("color_map_sampler", colorMapSampler));
+                meshComponent.shaderProgram.setTextures(frameIndex, new DescriptorUpdate<>("color_map_texture", colorMapTexture));
+                meshComponent.shaderProgram.setSamplers(frameIndex, new DescriptorUpdate<>("color_map_sampler", colorMapSampler));
 
-                actorMeshComponent.shaderProgram.setTextures(frameIndex, new DescriptorUpdate<>("normal_map_texture", normalMapTexture));
-                actorMeshComponent.shaderProgram.setSamplers(frameIndex, new DescriptorUpdate<>("normal_map_sampler", normalMapSampler));
+                meshComponent.shaderProgram.setTextures(frameIndex, new DescriptorUpdate<>("normal_map_texture", normalMapTexture));
+                meshComponent.shaderProgram.setSamplers(frameIndex, new DescriptorUpdate<>("normal_map_sampler", normalMapSampler));
 
 
-                actorMeshComponent.shaderProgram.setBuffers(
+                meshComponent.shaderProgram.setBuffers(
                         frameIndex,
-                        new DescriptorUpdate<>("scene_desc", actorMeshComponent.sceneDescBuffers[frameIndex]),
-                        new DescriptorUpdate<>("transforms", actorMeshComponent.transformsBuffers[frameIndex])
+                        new DescriptorUpdate<>("scene_desc", meshComponent.sceneDescBuffers[frameIndex]),
+                        new DescriptorUpdate<>("transforms", meshComponent.transformsBuffers[frameIndex])
                 );
             }
 
             Entity cubeEntity = scene.createEntity(
-                    actorMeshComponent,
+                    meshComponent,
                     new ShaderComponent(shaderProgram),
                     new TransformComponent(new Matrix4f().identity().translate(3, 5, 0).rotate((float) Math.toRadians(0), 0, 0, 1)),
                     new NVPhysXComponent(new BoxCollider(1f, 1f, 1f), new Material(0.05f, 0.05f, 0.3f), ActorType.Dynamic)
@@ -407,11 +407,11 @@ public class ExampleStage extends Stage {
     public void closing() {
 
         for(Entity entity : scene.getEntities()){
-            if(entity.has(ActorMeshComponent.class)) {
-                ActorMeshComponent actorMeshComponent = entity.getComponent(ActorMeshComponent.class);
+            if(entity.has(MeshComponent.class)) {
+                MeshComponent meshComponent = entity.getComponent(MeshComponent.class);
                 for(int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                    Buffer sceneDescBuffer = actorMeshComponent.sceneDescBuffers[frameIndex];
-                    Buffer transformsBuffer = actorMeshComponent.transformsBuffers[frameIndex];
+                    Buffer sceneDescBuffer = meshComponent.sceneDescBuffers[frameIndex];
+                    Buffer transformsBuffer = meshComponent.transformsBuffers[frameIndex];
 
                     sceneDescBuffer.disposeAll();
                     transformsBuffer.disposeAll();
@@ -421,19 +421,19 @@ public class ExampleStage extends Stage {
                 }
 
 
-                actorMeshComponent.vertexBuffer.disposeAll();
-                actorMeshComponent.indexBuffer.disposeAll();
-                actorMeshComponent.shaderProgram.disposeAll();
+                meshComponent.vertexBuffer.disposeAll();
+                meshComponent.indexBuffer.disposeAll();
+                meshComponent.shaderProgram.disposeAll();
 
-                renderer.remove(actorMeshComponent.vertexBuffer);
-                renderer.remove(actorMeshComponent.indexBuffer);
-                renderer.remove(actorMeshComponent.shaderProgram);
+                renderer.remove(meshComponent.vertexBuffer);
+                renderer.remove(meshComponent.indexBuffer);
+                renderer.remove(meshComponent.shaderProgram);
             }
-            if(entity.has(EnvironmentMeshComponent.class)) {
-                EnvironmentMeshComponent environmentMeshComponent = entity.getComponent(EnvironmentMeshComponent.class);
+            if(entity.has(MeshListComponent.class)) {
+                MeshListComponent meshListComponent = entity.getComponent(MeshListComponent.class);
                 for(int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                    Buffer sceneDescBuffer = environmentMeshComponent.sceneDescBuffers[frameIndex];
-                    Buffer transformsBuffer = environmentMeshComponent.transformsBuffers[frameIndex];
+                    Buffer sceneDescBuffer = meshListComponent.sceneDescBuffers[frameIndex];
+                    Buffer transformsBuffer = meshListComponent.transformsBuffers[frameIndex];
 
                     sceneDescBuffer.disposeAll();
                     transformsBuffer.disposeAll();
@@ -444,13 +444,13 @@ public class ExampleStage extends Stage {
                 }
 
 
-                environmentMeshComponent.vertexBuffer.disposeAll();
-                environmentMeshComponent.indexBuffer.disposeAll();
-                environmentMeshComponent.shaderProgram.disposeAll();
+                meshListComponent.vertexBuffer.disposeAll();
+                meshListComponent.indexBuffer.disposeAll();
+                meshListComponent.shaderProgram.disposeAll();
 
-                renderer.remove(environmentMeshComponent.vertexBuffer);
-                renderer.remove(environmentMeshComponent.indexBuffer);
-                renderer.remove(environmentMeshComponent.shaderProgram);
+                renderer.remove(meshListComponent.vertexBuffer);
+                renderer.remove(meshListComponent.indexBuffer);
+                renderer.remove(meshListComponent.shaderProgram);
             }
             if(entity.has(NVPhysXComponent.class)) {
                 NVPhysXComponent nvPhysXComponent = entity.getComponent(NVPhysXComponent.class);

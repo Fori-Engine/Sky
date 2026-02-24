@@ -5,7 +5,7 @@ import engine.graphics.*;
 import java.nio.ByteBuffer;
 
 @ComponentArray(mask = 1 << 0)
-public class ActorMeshComponent {
+public class MeshComponent {
     public Buffer[] transformsBuffers;
     public Buffer[] sceneDescBuffers;
     public ShaderProgram shaderProgram;
@@ -17,7 +17,7 @@ public class ActorMeshComponent {
     public Buffer indexBuffer;
     public boolean finalized;
 
-    public ActorMeshComponent(Disposable parent, Renderer renderer, int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram) {
+    public MeshComponent(Disposable parent, Renderer renderer, int maxVertexCount, int maxIndexCount, ShaderProgram shaderProgram) {
         this.maxVertexCount = maxVertexCount;
         this.maxIndexCount = maxIndexCount;
         this.shaderProgram = shaderProgram;
@@ -61,15 +61,14 @@ public class ActorMeshComponent {
 
 
 
-    public void addMeshData(MeshData meshData, int meshIndex) {
+    public void setMeshData(MeshData meshData) {
         ByteBuffer vertexBufferData = vertexBuffer.get();
         vertexBufferData.clear();
 
         ByteBuffer indexBufferData = indexBuffer.get();
         indexBufferData.clear();
 
-        MeshDataWriter meshDataWriter = new MeshDataWriter(meshIndex);
-        meshDataWriter.upload(meshData, shaderProgram, vertexBufferData, indexBufferData, 0);
+        new MeshDataWriter(0).upload(meshData, shaderProgram, vertexBufferData, indexBufferData, 0);
 
         this.vertexCount = meshData.getVertexCount();
         this.indexCount = meshData.getIndexCount();

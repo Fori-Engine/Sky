@@ -520,18 +520,18 @@ public class BlinnPhongPipeline extends RenderPipeline {
                     if(entity.has(TransformComponent.class)) {
                         TransformComponent transformComponent = entity.getComponent(TransformComponent.class);
 
-                        if(entity.has(EnvironmentMeshComponent.class)) {
-                            EnvironmentMeshComponent environmentMeshComponent = entity.getComponent(EnvironmentMeshComponent.class);
-                            ByteBuffer transformsData = environmentMeshComponent.transformsBuffers[renderer.getFrameIndex()].get();
+                        if(entity.has(MeshListComponent.class)) {
+                            MeshListComponent meshListComponent = entity.getComponent(MeshListComponent.class);
+                            ByteBuffer transformsData = meshListComponent.transformsBuffers[renderer.getFrameIndex()].get();
                             transformComponent.transform().get(transformComponent.transformIndex() * SizeUtil.MATRIX_SIZE_BYTES, transformsData);
-                            ByteBuffer sceneDescData = environmentMeshComponent.sceneDescBuffers[renderer.getFrameIndex()].get();
+                            ByteBuffer sceneDescData = meshListComponent.sceneDescBuffers[renderer.getFrameIndex()].get();
                             updateSceneDesc(sceneDescData, sceneCamera, scene);
                         }
-                        if(entity.has(ActorMeshComponent.class)) {
-                            ActorMeshComponent actorMeshComponent = entity.getComponent(ActorMeshComponent.class);
-                            ByteBuffer transformsData = actorMeshComponent.transformsBuffers[renderer.getFrameIndex()].get();
+                        if(entity.has(MeshComponent.class)) {
+                            MeshComponent meshComponent = entity.getComponent(MeshComponent.class);
+                            ByteBuffer transformsData = meshComponent.transformsBuffers[renderer.getFrameIndex()].get();
                             transformComponent.transform().get(0, transformsData);
-                            ByteBuffer sceneDescData = actorMeshComponent.sceneDescBuffers[renderer.getFrameIndex()].get();
+                            ByteBuffer sceneDescData = meshComponent.sceneDescBuffers[renderer.getFrameIndex()].get();
                             updateSceneDesc(sceneDescData, sceneCamera, scene);
                         }
 
@@ -580,14 +580,14 @@ public class BlinnPhongPipeline extends RenderPipeline {
 
                                 for(Entity e : scene.getEntities()) {
 
-                                    if (e.has(EnvironmentMeshComponent.class)) {
-                                        EnvironmentMeshComponent environmentMeshComponent = e.getComponent(EnvironmentMeshComponent.class);
+                                    if (e.has(MeshListComponent.class)) {
+                                        MeshListComponent meshListComponent = e.getComponent(MeshListComponent.class);
                                         shadowMapGenPass.setDrawBuffers(
-                                                environmentMeshComponent.vertexBuffer,
-                                                environmentMeshComponent.indexBuffer
+                                                meshListComponent.vertexBuffer,
+                                                meshListComponent.indexBuffer
                                         );
                                         shadowMapGenPass.setShaderProgram(
-                                                environmentMeshComponent.shaderProgram
+                                                meshListComponent.shaderProgram
                                         );
                                         try (MemoryStack stack = stackPush()) {
                                             ByteBuffer pPushConstants = stack.calloc(2 * Integer.BYTES);
@@ -595,16 +595,16 @@ public class BlinnPhongPipeline extends RenderPipeline {
                                             pPushConstants.putInt(shadowMapGenPassLightIndex);
                                             shadowMapGenPass.setPushConstants(pPushConstants);
                                         }
-                                        shadowMapGenPass.drawIndexed(environmentMeshComponent.indexCount);
+                                        shadowMapGenPass.drawIndexed(meshListComponent.indexCount);
                                     }
-                                    if (e.has(ActorMeshComponent.class)) {
-                                        ActorMeshComponent actorMeshComponent = e.getComponent(ActorMeshComponent.class);
+                                    if (e.has(MeshComponent.class)) {
+                                        MeshComponent meshComponent = e.getComponent(MeshComponent.class);
                                         shadowMapGenPass.setDrawBuffers(
-                                                actorMeshComponent.vertexBuffer,
-                                                actorMeshComponent.indexBuffer
+                                                meshComponent.vertexBuffer,
+                                                meshComponent.indexBuffer
                                         );
                                         shadowMapGenPass.setShaderProgram(
-                                                actorMeshComponent.shaderProgram
+                                                meshComponent.shaderProgram
                                         );
                                         try (MemoryStack stack = stackPush()) {
                                             ByteBuffer pPushConstants = stack.calloc(2 * Integer.BYTES);
@@ -612,7 +612,7 @@ public class BlinnPhongPipeline extends RenderPipeline {
                                             pPushConstants.putInt(shadowMapGenPassLightIndex);
                                             shadowMapGenPass.setPushConstants(pPushConstants);
                                         }
-                                        shadowMapGenPass.drawIndexed(actorMeshComponent.indexCount);
+                                        shadowMapGenPass.drawIndexed(meshComponent.indexCount);
                                     }
                                 }
 
@@ -647,15 +647,15 @@ public class BlinnPhongPipeline extends RenderPipeline {
                     {
                         scenePass.setCullMode(CullMode.Back);
                         for(Entity entity : scene.getEntities()) {
-                            if (entity.has(EnvironmentMeshComponent.class)) {
-                                EnvironmentMeshComponent environmentMeshComponent = entity.getComponent(EnvironmentMeshComponent.class);
+                            if (entity.has(MeshListComponent.class)) {
+                                MeshListComponent meshListComponent = entity.getComponent(MeshListComponent.class);
 
                                 scenePass.setDrawBuffers(
-                                        environmentMeshComponent.vertexBuffer,
-                                        environmentMeshComponent.indexBuffer
+                                        meshListComponent.vertexBuffer,
+                                        meshListComponent.indexBuffer
                                 );
                                 scenePass.setShaderProgram(
-                                        environmentMeshComponent.shaderProgram
+                                        meshListComponent.shaderProgram
                                 );
                                 try (MemoryStack stack = stackPush()) {
                                     ByteBuffer pPushConstants = stack.calloc(2 * Integer.BYTES);
@@ -663,16 +663,16 @@ public class BlinnPhongPipeline extends RenderPipeline {
                                     pPushConstants.putInt(-1);
                                     scenePass.setPushConstants(pPushConstants);
                                 }
-                                scenePass.drawIndexed(environmentMeshComponent.indexCount);
+                                scenePass.drawIndexed(meshListComponent.indexCount);
                             }
-                            if(entity.has(ActorMeshComponent.class)) {
-                                ActorMeshComponent actorMeshComponent = entity.getComponent(ActorMeshComponent.class);
+                            if(entity.has(MeshComponent.class)) {
+                                MeshComponent meshComponent = entity.getComponent(MeshComponent.class);
                                 scenePass.setDrawBuffers(
-                                        actorMeshComponent.vertexBuffer,
-                                        actorMeshComponent.indexBuffer
+                                        meshComponent.vertexBuffer,
+                                        meshComponent.indexBuffer
                                 );
                                 scenePass.setShaderProgram(
-                                        actorMeshComponent.shaderProgram
+                                        meshComponent.shaderProgram
                                 );
                                 try(MemoryStack stack = stackPush()) {
                                     ByteBuffer pPushConstants = stack.calloc(2 * Integer.BYTES);
@@ -680,7 +680,7 @@ public class BlinnPhongPipeline extends RenderPipeline {
                                     pPushConstants.putInt(-1);
                                     scenePass.setPushConstants(pPushConstants);
                                 }
-                                scenePass.drawIndexed(actorMeshComponent.indexCount);
+                                scenePass.drawIndexed(meshComponent.indexCount);
                             }
 
                         }
