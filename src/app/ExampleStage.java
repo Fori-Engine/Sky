@@ -57,10 +57,10 @@ public class ExampleStage extends Stage {
 
 
         scene = new Scene("Example_Scene");
+        scene.addSystem(new UISystem(renderer, renderPipeline, scene));
         scene.addSystem(new RenderSystem(renderer, renderPipeline, scene));
         scene.addSystem(new NVPhysXSystem(surface, scene, 4, 1f/60f));
         scene.addSystem(new ScriptSystem(scene));
-        scene.addSystem(new UISystem(renderer, renderPipeline, scene));
 
 
 

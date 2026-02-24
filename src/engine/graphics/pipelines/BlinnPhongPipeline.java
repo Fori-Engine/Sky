@@ -248,6 +248,7 @@ public class BlinnPhongPipeline extends RenderPipeline {
             ScreenSpaceFeatures screenSpaceFeatures = getFeatures(ScreenSpaceFeatures.class);
             screenSpaceFeatures.setVertexBuffer(displayPassVertexBuffer);
             screenSpaceFeatures.setIndexBuffer(displayPassIndexBuffer);
+            screenSpaceFeatures.setShaderProgram(displayPassShaderProgram);
 
 
 
@@ -812,7 +813,6 @@ public class BlinnPhongPipeline extends RenderPipeline {
                 displayPass.startRendering(renderer.getSwapchainRenderTarget(), 0, renderer.getWidth(), renderer.getHeight(), true, Color.BLACK);
                 {
                     ScreenSpaceFeatures screenSpaceFeatures = getFeatures(ScreenSpaceFeatures.class);
-
                     screenSpaceFeatures.setShaderProgram(displayPassShaderProgram);
 
 

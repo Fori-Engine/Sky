@@ -43,14 +43,6 @@ public class UISystem extends EcsSystem {
                 AssetRegistry.getAsset("core:assets/fonts/AirbusB612/b612-atlas.json")
         );
 
-
-
-
-
-
-
-
-
     }
 
 
@@ -61,9 +53,10 @@ public class UISystem extends EcsSystem {
         vertexBufferData.clear();
         indexBufferData = screenSpaceFeatures.getIndexBuffer().get();
         indexBufferData.clear();
-
         screenSpaceFeatures.getShaderProgram().setTextures(renderer.getFrameIndex(), new DescriptorUpdate<>("input_textures", msdfFont.getTexture()).arrayIndex(1));
         screenSpaceFeatures.getShaderProgram().setSamplers(renderer.getFrameIndex(), new DescriptorUpdate<>("input_samplers", msdfFont.getSampler()).arrayIndex(1));
+
+
 
 
         transform = new Matrix2f();
