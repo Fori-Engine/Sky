@@ -61,14 +61,15 @@ public class ActorMeshComponent {
 
 
 
-    public void setMesh(MeshData meshData, EntityShaderIndex entityShaderIndex) {
+    public void addMeshData(MeshData meshData, int meshIndex) {
         ByteBuffer vertexBufferData = vertexBuffer.get();
         vertexBufferData.clear();
 
         ByteBuffer indexBufferData = indexBuffer.get();
         indexBufferData.clear();
 
-        entityShaderIndex.upload(meshData, shaderProgram, vertexBufferData, indexBufferData, 0);
+        MeshDataWriter meshDataWriter = new MeshDataWriter(meshIndex);
+        meshDataWriter.upload(meshData, shaderProgram, vertexBufferData, indexBufferData, 0);
 
         this.vertexCount = meshData.getVertexCount();
         this.indexCount = meshData.getIndexCount();

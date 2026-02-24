@@ -82,12 +82,12 @@ public class EnvironmentMeshComponent {
 
 
 
-    public void addMesh(MeshData meshData, EntityShaderIndex entityShaderIndex) {
+    public void addMesh(MeshData meshData, MeshDataWriter meshDataWriter) {
 
         stagingVertexBuffer.get().clear();
         stagingIndexBuffer.get().clear();
 
-        entityShaderIndex.upload(meshData, shaderProgram, stagingVertexBuffer.get(), stagingIndexBuffer.get(), this.vertexCount);
+        meshDataWriter.upload(meshData, shaderProgram, stagingVertexBuffer.get(), stagingIndexBuffer.get(), this.vertexCount);
 
         commitMesh(
                 meshData.getVertexCount(),

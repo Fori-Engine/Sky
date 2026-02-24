@@ -104,7 +104,7 @@ public class ExampleStage extends Stage {
             MeshData meshData = MeshGenerator.newBox(10, 1, 10);
 
             ActorMeshComponent actorMeshComponent = new ActorMeshComponent(renderer, renderer, 100, 100, shaderProgram);
-            actorMeshComponent.setMesh(meshData, new EntityShaderIndex(0));
+            actorMeshComponent.addMeshData(meshData, 0);
 
             Texture colorMapTexture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/brickwall.jpg"), TextureFormatType.ColorR8G8B8A8);
             Sampler colorMapSampler = Sampler.newSampler(colorMapTexture, Texture.Filter.Linear, Texture.Filter.Linear, true);
@@ -153,7 +153,7 @@ public class ExampleStage extends Stage {
             MeshData meshData = MeshGenerator.newBox(1, 1, 1);
 
             ActorMeshComponent actorMeshComponent = new ActorMeshComponent(renderer, renderer, 100, 100, shaderProgram);
-            actorMeshComponent.setMesh(meshData, new EntityShaderIndex(0));
+            actorMeshComponent.addMeshData(meshData, 0);
 
             Texture colorMapTexture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/bugcat.jpg"), TextureFormatType.ColorR8G8B8A8);
             Sampler colorMapSampler = Sampler.newSampler(colorMapTexture, Texture.Filter.Linear, Texture.Filter.Linear, true);
@@ -202,7 +202,7 @@ public class ExampleStage extends Stage {
             MeshData meshData = MeshGenerator.newBox(1, 1, 1);
 
             ActorMeshComponent actorMeshComponent = new ActorMeshComponent(renderer, renderer, 100, 100, shaderProgram);
-            actorMeshComponent.setMesh(meshData, new EntityShaderIndex(0));
+            actorMeshComponent.addMeshData(meshData, 0);
 
             Texture colorMapTexture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/bugcat.jpg"), TextureFormatType.ColorR8G8B8A8);
             Sampler colorMapSampler = Sampler.newSampler(colorMapTexture, Texture.Filter.Linear, Texture.Filter.Linear, true);

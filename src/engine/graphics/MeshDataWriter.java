@@ -1,13 +1,12 @@
 package engine.graphics;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.List;
 
-public class EntityShaderIndex {
+public class MeshDataWriter {
     private int entityIndex;
 
-    public EntityShaderIndex(int entityIndex) {
+    public MeshDataWriter(int entityIndex) {
         this.entityIndex = entityIndex;
     }
 
