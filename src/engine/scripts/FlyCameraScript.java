@@ -22,7 +22,7 @@ public class FlyCameraScript extends Script {
 
     public FlyCameraScript(Surface surface, Renderer renderer) {
         this.surface = surface;
-        surface.setCaptureMouse(true);
+        //surface.setCaptureMouse(true);
         camera = new Camera(
                 new Matrix4f().identity(),
                 new Matrix4f().perspective(

@@ -1,13 +1,21 @@
 package engine.ecs;
 
+import engine.Surface;
+import engine.Time;
 import engine.asset.AssetRegistry;
 import engine.graphics.*;
 import engine.graphics.pipelines.ScreenSpaceFeatures;
 import engine.graphics.text.*;
+import engine.ui.Adapter;
+import engine.ui.DarkMode;
+import engine.ui.EdgeLayout;
+import engine.ui.FlowLayout;
 import org.joml.Matrix2f;
 import org.joml.Vector2f;
 import java.nio.ByteBuffer;
 import java.util.List;
+import static engine.ui.AmberUI.*;
+import static engine.ui.Flags.*;
 
 public class UISystem extends EcsSystem {
 
@@ -32,7 +40,7 @@ public class UISystem extends EcsSystem {
             new ShoutTextEffect()
     );
 
-    public UISystem(Renderer renderer, RenderPipeline renderPipeline, Scene scene) {
+    public UISystem(Renderer renderer, RenderPipeline renderPipeline, Surface surface, Scene scene) {
         this.renderer = renderer;
         this.renderPipeline = renderPipeline;
         this.scene = scene;
@@ -42,6 +50,71 @@ public class UISystem extends EcsSystem {
                 AssetRegistry.getAsset("core:assets/fonts/AirbusB612/b612-atlas.png"),
                 AssetRegistry.getAsset("core:assets/fonts/AirbusB612/b612-atlas.json")
         );
+
+        setAdapter(new Adapter() {
+            @Override
+            public Vector2f getSize() {
+                return new Vector2f(renderer.getWidth(), renderer.getHeight());
+            }
+
+            @Override
+            public void drawFilledRect(float x, float y, float w, float h, Color color) {
+                drawQuad(
+                        x,
+                        y,
+                        w,
+                        h,
+                        -1, -1,
+                        -1, -1,
+                        -1, -1,
+                        -1, -1,
+                        -1,
+                        -1,
+                        -1,
+                        color
+                );
+            }
+
+            @Override
+            public void drawRect(float x, float y, float w, float h, Color color) {
+                int thickness = 1;
+
+                drawFilledRect(x, y, thickness, h, color);
+                drawFilledRect(x, y, w, thickness, color);
+                drawFilledRect(x + w - thickness, y, thickness, h, color);
+                drawFilledRect(x, y + h - thickness, w, thickness, color);
+            }
+
+            @Override
+            public void drawText(float x, float y, String text, MsdfFont font, Color color) {
+                drawString(x, y, text, font, null, color);
+            }
+
+            @Override
+            public void drawTexture(float x, float y, float w, float h, float tx, float ty, float tw, float th, Texture texture, Color color) {
+
+            }
+
+            @Override
+            public void drawFilledCircle(float x, float y, float w, float h, float thickness, Color color) {
+                drawQuad(
+                        x,
+                        y,
+                        w,
+                        h,
+                        -1, -1,
+                        -1, -1,
+                        -1, -1,
+                        -1, -1,
+                        -3,
+                        -1,
+                        -1,
+                        color
+                );
+            }
+        });
+        setSurface(surface);
+        setTheme(new DarkMode());
 
     }
 
@@ -59,9 +132,11 @@ public class UISystem extends EcsSystem {
 
 
 
+
         transform = new Matrix2f();
         setOrigin(0, 0);
 
+        drawString(60, 60, text, msdfFont, null, Color.WHITE);
         drawQuad(
                 0,
                 0,
@@ -76,13 +151,67 @@ public class UISystem extends EcsSystem {
                 -1,
                 Color.WHITE
         );
-
-
-        drawString(300, 300, text, msdfFont, textEffect, Color.WHITE);
+        drawString(60, 60, text, msdfFont, null, Color.WHITE);
 
 
 
-        screenSpaceFeatures.setIndexCount(6 * 1000);
+        {
+           newContext();
+           {
+               newWindow("SkySOFT Engine Demo " + Time.framesPerSecond(), 60, 60, msdfFont, EdgeLayout.getInstance());
+               {
+                   newPanel(EdgeLayout.getInstance(), North);
+                   {
+                       newPanel(FlowLayout.getInstance(Vertical), Center);
+                       {
+                           button("This is a button!", msdfFont);
+                           text("\"Lorem ipsum dolor sit amet, consectetur adipiscing elit,\n" +
+                                   " sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\n" +
+                                   "Ut enim ad minim veniam, quis nostrud\n" +
+                                   " exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.\n" +
+                                   "Duis aute irure dolor in reprehenderit in voluptate velit esse\n" +
+                                   " cillum dolore eu fugiat nulla pariatur.\n" +
+                                   "Excepteur sint occaecat cupidatat non proident,\n" +
+                                   " sunt in culpa qui officia deserunt mollit anim id est laborum.\"", msdfFont);
+
+
+                       }
+                       endPanel();
+                   }
+                   endPanel();
+               }
+               endWindow();
+
+               newWindow("SkySOFT Engine Demo", 300, 300, msdfFont, EdgeLayout.getInstance());
+               {
+                   newPanel(EdgeLayout.getInstance(), North);
+                   {
+                       newPanel(FlowLayout.getInstance(Vertical), Center);
+                       {
+
+
+                           if(button("Just another button", msdfFont)) {
+                               System.out.println("Doing a thing");
+                           }
+                           if(button("Just another button", msdfFont)) {
+                               System.out.println("Doing another thing");
+                           }
+
+
+                       }
+                       endPanel();
+                   }
+                   endPanel();
+               }
+               endWindow();
+           }
+           render();
+           endContext();
+        }
+
+
+
+        screenSpaceFeatures.setIndexCount(6 * 4000);
         quadIndex = 0;
     }
 

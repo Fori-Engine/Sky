@@ -4,6 +4,11 @@ package engine.ui;
 import java.util.List;
 
 public class EdgeLayout extends Layout {
+    public static EdgeLayout instance;
+    public static EdgeLayout getInstance() {
+        if(instance == null) instance = new EdgeLayout();
+        return instance;
+    }
 
     @Override
     public void layoutAndDraw(List<Widget> children, PanelScope panelScope, Adapter adapter, float parentX, float parentY, float w, float h) {
