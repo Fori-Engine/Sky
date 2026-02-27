@@ -1,6 +1,7 @@
 #include "SceneDesc.slang"
-StructuredBuffer<Scene> scene_desc;
+#include "KnarkowiczOctahedral.slang"
 
+StructuredBuffer<Scene> scene_desc;
 
 Texture2D input_color_texture;
 RWTexture2D output_color_texture;
@@ -65,7 +66,7 @@ void computeMain(uniform int light_count, int3 dispatch_ID : SV_DispatchThreadID
             float3 light_dir_ws = normalize(light_pos_ws - fragment_ws.xyz);
             float3 camera_dir_ws = normalize(camera_pos_ws - fragment_ws.xyz);
 
-            float3 normal_ws = normalize(input_normal_ws_texture.Load(texture_xy_ss, 0).xyz);
+            float3 normal_ws = normalize(decode(input_normal_ws_texture.Load(texture_xy_ss, 0).xy));
             float4 normal_biased_fragment_ws = get_normal_biased_fragment_ws(fragment_ws, light_dir_ws, normal_ws);
 
             float4 fragment_shadow_map_ps = mul(light.proj, mul(light.view, normal_biased_fragment_ws));

@@ -1,3 +1,4 @@
+#include "KnarkowiczOctahedral.slang"
 #include "SceneDesc.slang"
 
 struct Transforms {
@@ -86,7 +87,7 @@ FSOutput fragmentMain(VSOutput vsOutput, uniform int render_mode, uniform int li
 
         output.color0 = float4(vsOutput.color.xyz * color_map_texture.Sample(color_map_sampler, vsOutput.uv_ts).xyz, 1.0);
         output.color1 = float4(vsOutput.pos_vs.xyz, 1.0);
-        output.color2 = float4(normal_ws, 1.0);
+        output.color2 = float4(encode(normal_ws), 0.0, 1.0);
     }
 
 
