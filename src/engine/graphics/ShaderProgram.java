@@ -18,6 +18,7 @@ public abstract class ShaderProgram extends Disposable {
     protected List<VertexAttribute> vertexAttributes = new ArrayList<>();
     protected int pushConstantsSizeBytes;
     protected DepthTestType depthTestType = DepthTestType.LessThan;
+    protected boolean enableBlending = false;
 
 
     public ShaderProgram(Disposable parent){
@@ -41,6 +42,14 @@ public abstract class ShaderProgram extends Disposable {
 
     public DepthTestType getDepthTestType() {
         return depthTestType;
+    }
+
+    public boolean isBlendingEnabled() {
+        return enableBlending;
+    }
+
+    public void setEnableBlending(boolean enableBlending) {
+        this.enableBlending = enableBlending;
     }
 
     public void setDepthTestType(DepthTestType depthTestType) {

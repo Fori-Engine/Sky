@@ -66,7 +66,6 @@ VSOutput vertexMain(Vertex vertex, uniform int render_mode, uniform int light_in
 struct FSOutput {
     float4 color0 : SV_Target0;
     float4 color1 : SV_Target1;
-    float4 color2 : SV_Target2;
 }
 
 
@@ -85,9 +84,10 @@ FSOutput fragmentMain(VSOutput vsOutput, uniform int render_mode, uniform int li
         float3 normal_ts = normal_map_texture.Sample(normal_map_sampler, vsOutput.uv_ts).xyz * 2.0 - 1.0;
         float3 normal_ws = normalize(mul(vsOutput.tbn_ws_inv, normalize(normal_ts)));
 
-        output.color0 = float4(vsOutput.color.xyz * color_map_texture.Sample(color_map_sampler, vsOutput.uv_ts).xyz, 1.0);
-        output.color1 = float4(vsOutput.pos_vs.xyz, 1.0);
-        output.color2 = float4(encode(normal_ws), 0.0, 1.0);
+        float2 encoded_normal_ws = encode(normal_ws);
+
+        output.color0 = float4(vsOutput.color.xyz * color_map_texture.Sample(color_map_sampler, vsOutput.uv_ts).xyz, encoded_normal_ws.x);
+        output.color1 = float4(vsOutput.pos_vs.xyz, encoded_normal_ws.y);
     }
 
 

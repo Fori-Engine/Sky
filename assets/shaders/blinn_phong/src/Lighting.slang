@@ -6,7 +6,6 @@ StructuredBuffer<Scene> scene_desc;
 Texture2D input_color_texture;
 RWTexture2D output_color_texture;
 Texture2D input_pos_vs_texture;
-Texture2D input_normal_ws_texture;
 Texture2D input_depth_stencil_psw_texture;
 
 Texture2D input_shadow_maps[MAX_LIGHTS];
@@ -53,7 +52,7 @@ void computeMain(uniform int light_count, int3 dispatch_ID : SV_DispatchThreadID
         float3 camera_pos_ws = float3(camera.invView[0][3], camera.invView[1][3], camera.invView[2][3]);
 
         float4 fragment_vs = input_pos_vs_texture.Load(texture_xy_ss, 0);
-        float4 fragment_ws = mul(camera.invView, fragment_vs);
+        float4 fragment_ws = mul(camera.invView, float4(fragment_vs.xyz, 1.0));
 
         float ambient = 0.02;
         output_color = ambient * input_color.xyz;
@@ -66,7 +65,8 @@ void computeMain(uniform int light_count, int3 dispatch_ID : SV_DispatchThreadID
             float3 light_dir_ws = normalize(light_pos_ws - fragment_ws.xyz);
             float3 camera_dir_ws = normalize(camera_pos_ws - fragment_ws.xyz);
 
-            float3 normal_ws = normalize(decode(input_normal_ws_texture.Load(texture_xy_ss, 0).xy));
+            float3 normal_ws = normalize(decode(float2(input_color.w, fragment_vs.w)));
+
             float4 normal_biased_fragment_ws = get_normal_biased_fragment_ws(fragment_ws, light_dir_ws, normal_ws);
 
             float4 fragment_shadow_map_ps = mul(light.proj, mul(light.view, normal_biased_fragment_ws));

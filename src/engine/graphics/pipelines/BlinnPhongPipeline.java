@@ -27,7 +27,6 @@ public class BlinnPhongPipeline extends RenderPipeline {
     private RenderTarget scenePassRT;
     private Resource<Pair<Texture[], Sampler[]>> sceneColorTextures;
     private Resource<Pair<Texture[], Sampler[]>> scenePosTextures;
-    private Resource<Pair<Texture[], Sampler[]>> sceneNormalTextures;
     private Resource<Pair<Texture[], Sampler[]>> sceneDepthStencilTextures;
 
     private ComputePass lightingPass;
@@ -89,15 +88,7 @@ public class BlinnPhongPipeline extends RenderPipeline {
                     )
             );
 
-            sceneNormalTextures = new Resource<>(
-                    new Pair<>(
-                            new Texture[]{
-                                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32),
-                                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32)
-                            },
-                            null
-                    )
-            );
+
 
             sceneDepthStencilTextures = new Resource<>(
                     new Pair<>(
@@ -122,15 +113,6 @@ public class BlinnPhongPipeline extends RenderPipeline {
                             RenderTargetAttachmentTypes.Pos,
                             scenePosTextures.get().key,
                             scenePosTextures.get().value
-
-                    )
-            );
-
-            scenePassRT.addAttachment(
-                    new RenderTargetAttachment(
-                            RenderTargetAttachmentTypes.Normal,
-                            sceneNormalTextures.get().key,
-                            sceneNormalTextures.get().value
 
                     )
             );
@@ -202,6 +184,7 @@ public class BlinnPhongPipeline extends RenderPipeline {
 
             displayPassShaderProgram = ShaderProgram.newShaderProgram(renderer);
             displayPassShaderProgram.setDepthTestType(DepthTestType.Always);
+            displayPassShaderProgram.setEnableBlending(true);
             displayPassShaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/blinn_phong/Display_vertex.spv"), ShaderType.VertexShader);
             displayPassShaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/blinn_phong/Display_fragment.spv"), ShaderType.FragmentShader);
             displayPassShaderProgram.assemble();
@@ -281,11 +264,6 @@ public class BlinnPhongPipeline extends RenderPipeline {
                             DependencyTypes.RenderTargetWrite
                     ),
                     new Dependency(
-                            "OutputNormalTextures",
-                            sceneNormalTextures,
-                            DependencyTypes.RenderTargetWrite
-                    ),
-                    new Dependency(
                             "OutputDepthStencilTextures",
                             sceneDepthStencilTextures,
                             DependencyTypes.RenderTargetDepthWrite
@@ -307,11 +285,6 @@ public class BlinnPhongPipeline extends RenderPipeline {
                     new Dependency(
                             "InputPosTextures",
                             scenePosTextures,
-                            DependencyTypes.ComputeShaderRead
-                    ),
-                    new Dependency(
-                            "InputNormalTextures",
-                            sceneNormalTextures,
                             DependencyTypes.ComputeShaderRead
                     ),
                     new Dependency(
@@ -690,7 +663,6 @@ public class BlinnPhongPipeline extends RenderPipeline {
             Resource<Pair<Texture[], Sampler[]>> inputColorTexturesDependency = lightingPass.getDependency("InputColorTextures").getResource();
             Resource<Pair<Texture[], Sampler[]>> outputColorTexturesDependency = lightingPass.getDependency("OutputColorTextures").getResource();
             Resource<Pair<Texture[], Sampler[]>> inputPosTexturesDependency = lightingPass.getDependency("InputPosTextures").getResource();
-            Resource<Pair<Texture[], Sampler[]>> inputNormalTexturesDependency = lightingPass.getDependency("InputNormalTextures").getResource();
             Resource<Pair<Texture[], Sampler[]>> inputDepthStencilTexturesDependency = lightingPass.getDependency("InputDepthStencilTextures").getResource();
 
 
@@ -704,10 +676,6 @@ public class BlinnPhongPipeline extends RenderPipeline {
                     new DescriptorUpdate<>(
                             "input_pos_vs_texture",
                             inputPosTexturesDependency.get().key[renderer.getFrameIndex()]
-                    ),
-                    new DescriptorUpdate<>(
-                            "input_normal_ws_texture",
-                            inputNormalTexturesDependency.get().key[renderer.getFrameIndex()]
                     ),
                     new DescriptorUpdate<>(
                             "input_depth_stencil_psw_texture",
