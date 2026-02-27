@@ -88,9 +88,7 @@ FSOutput fragmentMain(VSOutput vsOutput, uniform int render_mode, uniform int li
         output.color1 = float4(vsOutput.pos_vs.xyz, 1.0);
         output.color2 = float4(normal_ws, 1.0);
     }
-    if(render_mode == 1) {
-        output.color0 = float4(vsOutput.pos.z, vsOutput.pos.z, vsOutput.pos.z, 1.0);
-    }
+
 
 
 

@@ -263,11 +263,6 @@ public class BlinnPhongPipeline extends RenderPipeline {
                     new Dependency(
                             "OutputShadowMaps",
                             null,
-                            DependencyTypes.RenderTargetWrite
-                    ),
-                    new Dependency(
-                            "OutputDepthStencilTextures",
-                            null,
                             DependencyTypes.RenderTargetDepthWrite
                     )
             );
@@ -322,7 +317,7 @@ public class BlinnPhongPipeline extends RenderPipeline {
                     new Dependency(
                             "InputShadowMaps",
                             null,
-                            DependencyTypes.ComputeShaderRead
+                            DependencyTypes.ComputeShaderReadDepth
                     ),
                     new Dependency(
                             "InputDepthStencilTextures",
@@ -455,7 +450,6 @@ public class BlinnPhongPipeline extends RenderPipeline {
 
 
             Texture[] shadowMapTextures = new Texture[lightCount * renderer.getMaxFramesInFlight()];
-            Texture[] depthStencilTextures = new Texture[lightCount * renderer.getMaxFramesInFlight()];
             Sampler[] shadowMapSamplers = new Sampler[shadowMapTextures.length];
 
             int lightIndex = 0;
@@ -467,28 +461,20 @@ public class BlinnPhongPipeline extends RenderPipeline {
                     int i2 = renderer.getMaxFramesInFlight() * lightIndex + 1;
 
                     shadowMapTextures[i1] = spotlightComponent.renderTarget
-                            .getAttachment(RenderTargetAttachmentTypes.Pos)
+                            .getAttachment(RenderTargetAttachmentTypes.Depth)
                             .getTextures()[0];
 
                     shadowMapSamplers[i1] = spotlightComponent.renderTarget
-                            .getAttachment(RenderTargetAttachmentTypes.Pos)
+                            .getAttachment(RenderTargetAttachmentTypes.Depth)
                             .getSamplers()[0];
 
                     shadowMapTextures[i2] = spotlightComponent.renderTarget
-                            .getAttachment(RenderTargetAttachmentTypes.Pos)
+                            .getAttachment(RenderTargetAttachmentTypes.Depth)
                             .getTextures()[1];
 
                     shadowMapSamplers[i2] = spotlightComponent.renderTarget
-                            .getAttachment(RenderTargetAttachmentTypes.Pos)
+                            .getAttachment(RenderTargetAttachmentTypes.Depth)
                             .getSamplers()[1];
-
-                    depthStencilTextures[i1] = spotlightComponent.renderTarget
-                            .getAttachment(RenderTargetAttachmentTypes.Depth)
-                            .getTextures()[0];
-
-                    depthStencilTextures[i2] = spotlightComponent.renderTarget
-                            .getAttachment(RenderTargetAttachmentTypes.Depth)
-                            .getTextures()[1];
 
                     lightIndex++;
                 }
@@ -497,16 +483,11 @@ public class BlinnPhongPipeline extends RenderPipeline {
 
 
             Resource<Pair<Texture[], Sampler[]>> shadowMapTexturesResource = new Resource<>(new Pair<>(shadowMapTextures, shadowMapSamplers));
-            Resource<Pair<Texture[], Sampler[]>> depthStencilTexturesResource = new Resource<>(new Pair<>(depthStencilTextures, null));
 
 
             shadowMapGenPass.getDependency(
                     "OutputShadowMaps"
             ).setDependency(shadowMapTexturesResource);
-
-            shadowMapGenPass.getDependency(
-                    "OutputDepthStencilTextures"
-            ).setDependency(depthStencilTexturesResource);
 
             lightingPass.getDependency(
                     "InputShadowMaps"
@@ -575,7 +556,7 @@ public class BlinnPhongPipeline extends RenderPipeline {
                             }
 
 
-                            shadowMapGenPass.startRendering(spotlightComponent.renderTarget, 2, width, height, true, Color.BLACK);
+                            shadowMapGenPass.startRendering(spotlightComponent.renderTarget, 3, width, height, true, Color.BLACK);
                             {
                                 shadowMapGenPass.setCullMode(CullMode.Front);
 

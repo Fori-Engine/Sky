@@ -241,39 +241,18 @@ public class ExampleStage extends Stage {
         {
             RenderTarget lightRT = new RenderTarget(renderer);
 
-            Texture[] posTextures = new Texture[] {
-                    Texture.newColorTexture(
-                            lightRT,
-                            1024,
-                            1024,
-                            TextureFormatType.ColorR32G32B32A32
-                    ),
-                    Texture.newColorTexture(
-                            lightRT,
-                            1024,
-                            1024,
-                            TextureFormatType.ColorR32G32B32A32
-                    )
-            };
-
-
-
             lightRT.addAttachment(
                     new RenderTargetAttachment(
-                            RenderTargetAttachmentTypes.Pos,
-                            posTextures,
+                            RenderTargetAttachmentTypes.Depth,
+                            new Texture[]{
+                                    Texture.newDepthTexture(lightRT, 1024, 1024, TextureFormatType.Depth32),
+                                    Texture.newDepthTexture(lightRT, 1024, 1024, TextureFormatType.Depth32)
+                            },
                             new Sampler[]{
                                     Sampler.newSampler(lightRT, Texture.Filter.Nearest, Texture.Filter.Nearest, false),
                                     Sampler.newSampler(lightRT, Texture.Filter.Nearest, Texture.Filter.Nearest, false)
                             }
-
                     )
-            );
-            lightRT.addAttachment(
-                    new RenderTargetAttachment(RenderTargetAttachmentTypes.Depth, new Texture[]{
-                            Texture.newDepthTexture(lightRT, 1024, 1024, TextureFormatType.Depth32),
-                            Texture.newDepthTexture(lightRT, 1024, 1024, TextureFormatType.Depth32)
-                    }, null)
             );
 
 
@@ -308,39 +287,18 @@ public class ExampleStage extends Stage {
         {
             RenderTarget lightRT = new RenderTarget(renderer);
 
-            Texture[] posTextures = new Texture[] {
-                    Texture.newColorTexture(
-                            lightRT,
-                            1024,
-                            1024,
-                            TextureFormatType.ColorR32G32B32A32
-                    ),
-                    Texture.newColorTexture(
-                            lightRT,
-                            1024,
-                            1024,
-                            TextureFormatType.ColorR32G32B32A32
-                    )
-            };
-
-
-
             lightRT.addAttachment(
                     new RenderTargetAttachment(
-                            RenderTargetAttachmentTypes.Pos,
-                            posTextures,
+                            RenderTargetAttachmentTypes.Depth,
+                            new Texture[]{
+                                    Texture.newDepthTexture(lightRT, 1024, 1024, TextureFormatType.Depth32),
+                                    Texture.newDepthTexture(lightRT, 1024, 1024, TextureFormatType.Depth32)
+                            },
                             new Sampler[]{
                                     Sampler.newSampler(lightRT, Texture.Filter.Nearest, Texture.Filter.Nearest, false),
                                     Sampler.newSampler(lightRT, Texture.Filter.Nearest, Texture.Filter.Nearest, false)
                             }
-
                     )
-            );
-            lightRT.addAttachment(
-                    new RenderTargetAttachment(RenderTargetAttachmentTypes.Depth, new Texture[]{
-                            Texture.newDepthTexture(lightRT, 1024, 1024, TextureFormatType.Depth32),
-                            Texture.newDepthTexture(lightRT, 1024, 1024, TextureFormatType.Depth32)
-                    }, null)
             );
 
 
@@ -389,6 +347,8 @@ public class ExampleStage extends Stage {
 
 
     public boolean update(){
+
+        System.out.println(Time.framesPerSecond());
 
 
         renderer.updateRenderer(surface.update());
