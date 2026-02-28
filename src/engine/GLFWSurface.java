@@ -16,6 +16,7 @@ import engine.graphics.vulkan.VulkanRenderer;
 import org.joml.Vector2f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFWErrorCallback;
+import org.lwjgl.glfw.GLFWKeyCallbackI;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
@@ -285,6 +286,13 @@ public class GLFWSurface extends Surface {
         int[] width = new int[1], height = new int[1];
         glfwGetWindowSize(handle, width, height);
         return height[0];
+    }
+
+    @Override
+    public void setKeyCallback(SurfaceKeyCallback callback) {
+        glfwSetKeyCallback(handle, (window, key, scancode, action, mods) -> {
+            if(action == GLFW_PRESS) callback.keyClick(key);
+        });
     }
 
     @Override

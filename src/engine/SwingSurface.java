@@ -136,6 +136,11 @@ public class SwingSurface extends Surface {
     }
 
     @Override
+    public void setKeyCallback(SurfaceKeyCallback callback) {
+
+    }
+
+    @Override
     public void requestRenderAPI(RenderAPI api) {
         if(api == RenderAPI.Vulkan) {
             vkInstance = createInstance(title, List.of("VK_LAYER_KHRONOS_validation"));
