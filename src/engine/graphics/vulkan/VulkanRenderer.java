@@ -80,6 +80,7 @@ public class VulkanRenderer extends Renderer {
         VulkanRuntime.setComputeQueue(computeQueue);
         presentQueue = getPresentQueue(device);
         VulkanRuntime.setGraphicsFamilyIndex(queueFamilies.graphicsFamily);
+        VulkanRuntime.setComputeFamilyIndex(queueFamilies.computeFamily);
 
         swapchainRenderTarget = createSwapchainRenderTarget(rendererSettings);
 
@@ -211,7 +212,7 @@ public class VulkanRenderer extends Renderer {
                 boolean hasExtensions;
                 boolean hasCorrectSwapchain = false;
 
-                //Find the graphics, compute and present queue
+                //Find the graphics and present queue
                 {
                     IntBuffer queueFamilyCount = stack.ints(0);
                     vkGetPhysicalDeviceQueueFamilyProperties(device, queueFamilyCount, null);
@@ -220,7 +221,7 @@ public class VulkanRenderer extends Renderer {
 
                     IntBuffer hasPresentSupport = stack.ints(VK_FALSE);
 
-                    int graphicsFamilyIndex = -1, computeFamilyIndex = -1, presentFamilyIndex = -1;
+                    int graphicsFamilyIndex = -1, presentFamilyIndex = -1;
 
                     for (int queueFamilyIndex = 0; queueFamilyIndex < queueFamilies.capacity(); queueFamilyIndex++) {
                         VkQueueFamilyProperties queueFamilyProperties = queueFamilies.get(queueFamilyIndex);
@@ -228,21 +229,12 @@ public class VulkanRenderer extends Renderer {
                         if ((queueFamilyProperties.queueFlags() & VK_QUEUE_GRAPHICS_BIT) != 0)
                             graphicsFamilyIndex = queueFamilyIndex;
 
-                        //Check for compute only queue
-                        if ((queueFamilyProperties.queueFlags() & VK_QUEUE_GRAPHICS_BIT) == 0 && (queueFamilyProperties.queueFlags() & VK_QUEUE_COMPUTE_BIT) != 0)
-                            computeFamilyIndex = queueFamilyIndex;
-
-
                         vkGetPhysicalDeviceSurfaceSupportKHR(device, queueFamilyIndex, surface, hasPresentSupport);
                         if (hasPresentSupport.get(0) == VK_TRUE) presentFamilyIndex = queueFamilyIndex;
                     }
 
-                    if(computeFamilyIndex == -1) {
-                        Logger.info(VulkanRenderer.class, "A dedicated compute queue could not be found");
-                        computeFamilyIndex = graphicsFamilyIndex;
-                    }
 
-                    this.queueFamilies = new VulkanQueueFamilies(graphicsFamilyIndex, computeFamilyIndex, presentFamilyIndex);
+                    this.queueFamilies = new VulkanQueueFamilies(graphicsFamilyIndex, graphicsFamilyIndex, presentFamilyIndex);
                 }
 
                 //Find the requisite extensions
@@ -527,6 +519,8 @@ public class VulkanRenderer extends Renderer {
                     VK_NULL_HANDLE,
                     pImageIndex
             );
+
+            System.out.println(pImageIndex.get(0));
 
 
 

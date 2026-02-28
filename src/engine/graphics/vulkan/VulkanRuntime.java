@@ -10,6 +10,7 @@ public class VulkanRuntime {
     private static VkQueue graphicsQueue;
     private static VkQueue computeQueue;
     private static VkPhysicalDeviceProperties physicalDeviceProperties;
+    private static int computeFamilyIndex;
 
     private VulkanRuntime(){}
 
@@ -33,8 +34,16 @@ public class VulkanRuntime {
         return graphicsFamilyIndex;
     }
 
+    public static int getComputeFamilyIndex() {
+        return computeFamilyIndex;
+    }
+
     public static void setGraphicsFamilyIndex(int graphicsFamilyIndex) {
         VulkanRuntime.graphicsFamilyIndex = graphicsFamilyIndex;
+    }
+
+    public static void setComputeFamilyIndex(int computeFamilyIndex) {
+        VulkanRuntime.computeFamilyIndex = computeFamilyIndex;
     }
 
     public static VkQueue getGraphicsQueue() {
@@ -59,5 +68,4 @@ public class VulkanRuntime {
     public static void setPhysicalDeviceProperties(VkPhysicalDeviceProperties physicalDeviceProperties) {
         VulkanRuntime.physicalDeviceProperties = physicalDeviceProperties;
     }
-
 }

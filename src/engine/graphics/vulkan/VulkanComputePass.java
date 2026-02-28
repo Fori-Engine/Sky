@@ -25,8 +25,7 @@ public class VulkanComputePass extends ComputePass {
         computeQueue = VulkanRuntime.getComputeQueue();
         device = VulkanRuntime.getCurrentDevice();
 
-        //TODO(Shayan) This should use the compute family index!
-        commandPool = new VulkanCommandPool(this, device, VulkanRuntime.getGraphicsFamilyIndex());
+        commandPool = new VulkanCommandPool(this, device, VulkanRuntime.getComputeFamilyIndex());
 
 
 

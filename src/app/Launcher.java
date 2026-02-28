@@ -19,6 +19,7 @@ public class Launcher {
 
 
     public void launch(String[] args) {
+        System.setProperty("org.lwjgl.system.stackSize", "128");
 
         Stage stage = new ExampleStage();
         Surface surface = Surface.newSurface(stage, "SkySOFT Engine", 1920, 1080);
