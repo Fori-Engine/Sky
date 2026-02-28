@@ -520,7 +520,6 @@ public class VulkanRenderer extends Renderer {
                     pImageIndex
             );
 
-            System.out.println(pImageIndex.get(0));
 
 
 

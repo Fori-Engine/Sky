@@ -348,9 +348,6 @@ public class ExampleStage extends Stage {
 
     public boolean update(){
 
-        System.out.println(Time.framesPerSecond());
-
-
         renderer.updateRenderer(surface.update());
         scene.tick();
 
