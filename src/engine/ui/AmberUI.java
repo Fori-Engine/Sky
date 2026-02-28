@@ -4,13 +4,14 @@ import engine.Input;
 import engine.Surface;
 import engine.graphics.Color;
 import engine.graphics.Rect2D;
+import engine.graphics.text.MsdfFont;
 
 import java.util.*;
 import java.util.List;
 
 
 public class AmberUI {
-    /*
+
 
     private static Adapter currentAdapter;
     private static final HashMap<String, Event> eventMap = new HashMap<>();
@@ -87,7 +88,7 @@ public class AmberUI {
         }
     }
 
-    public static void newWindow(String title, float x, float y, Font font, Layout layout) {
+    public static void newWindow(String title, float x, float y, MsdfFont font, Layout layout) {
         String id = getNewID();
         windowScopes.push(new WindowScope(title, x, y, id, font));
         builderCurrentWindowID = id;
@@ -117,7 +118,7 @@ public class AmberUI {
                 WindowEvent windowEvent = getEvent(windowScope.id);
                 windowEvent.title = windowScope.title;
 
-                Rect2D headerRect = new Rect2D(windowEvent.x, windowEvent.y - windowScope.font.getHeightOf(windowScope.title) - (currentTheme.windowHeaderPadding * 2), getWidth(), windowScope.font.getHeightOf(windowScope.title) + (currentTheme.windowHeaderPadding * 2));
+                Rect2D headerRect = new Rect2D(windowEvent.x, windowEvent.y - windowScope.font.getStringHeight(windowScope.title) - (currentTheme.windowHeaderPadding * 2), getWidth(), windowScope.font.getStringHeight(windowScope.title) + (currentTheme.windowHeaderPadding * 2));
                 Rect2D clientRect = new Rect2D(windowEvent.x, windowEvent.y, getWidth(), getHeight());
                 windowEvent.windowRect = new Rect2D(headerRect.x, headerRect.y, clientRect.w, headerRect.h + clientRect.h);
 
@@ -193,9 +194,7 @@ public class AmberUI {
                         System.out.println(windowEvent.title + " is cursed");
                     }
                 }
-                else {
-                    System.out.println("No window is cursed");
-                }
+
 
 
 
@@ -204,7 +203,7 @@ public class AmberUI {
 
             @Override
             public float getWidth() {
-                return java.lang.Math.max(windowScope.font.getWidthOf(windowScope.title), last.getWidth()) + getPadding() * 2 + (currentTheme.windowHeaderPadding * 2);
+                return java.lang.Math.max(windowScope.font.getStringWidth(windowScope.title), last.getWidth()) + getPadding() * 2 + (currentTheme.windowHeaderPadding * 2);
             }
 
             @Override
@@ -259,7 +258,7 @@ public class AmberUI {
     }
 
 
-    public static void text(String text, Font font, int... layoutInParent){
+    public static void text(String text, MsdfFont font, int... layoutInParent){
         String id = getNewID();
 
         Widget last = builderLastWidget;
@@ -272,12 +271,12 @@ public class AmberUI {
 
             @Override
             public float getWidth() {
-                return font.getWidthOf(text) + getPadding() * 2;
+                return font.getStringWidth(text) + getPadding() * 2;
             }
 
             @Override
             public float getHeight() {
-                return font.getHeightOf(text) + getPadding() * 2;
+                return font.getStringHeight(text) + getPadding() * 2;
             }
         };
         submit(layoutInParent, widget);
@@ -315,7 +314,7 @@ public class AmberUI {
 
 
 
-    public static boolean button(String text, Font font, int... layoutInParent){
+    public static boolean button(String text, MsdfFont font, int... layoutInParent){
         String id = getNewID();
 
         Widget last = builderLastWidget;
@@ -368,7 +367,7 @@ public class AmberUI {
 
 
 
-                if(currentWindowID == runtimeLastSelectedWindowID) {
+                if(Objects.equals(currentWindowID, runtimeLastSelectedWindowID)) {
                     if (pressed) {
                         if (!buttonEvent.lock) {
                             buttonEvent.lock = true;
@@ -393,12 +392,12 @@ public class AmberUI {
 
             @Override
             public float getWidth() {
-                return font.getWidthOf(text) + getPadding() * 2;
+                return font.getStringWidth(text) + getPadding() * 2;
             }
 
             @Override
             public float getHeight() {
-                return font.getHeightOf(text) + getPadding() * 2;
+                return font.getStringHeight(text) + getPadding() * 2;
             }
         };
         submit(layoutInParent, widget);
@@ -427,5 +426,4 @@ public class AmberUI {
         return namespaceAssembly.toString() + StackWalker.getInstance(StackWalker.Option.SHOW_HIDDEN_FRAMES).walk(
                 (s) -> s.skip(2).findFirst()).get().getLineNumber();
     }
-    */
 }

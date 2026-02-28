@@ -191,14 +191,14 @@ public class BlinnPhongPipeline extends RenderPipeline {
 
             displayPassVertexBuffer = Buffer.newBuffer(
                     renderer,
-                    displayPassShaderProgram.getVertexAttributesSize() * Float.BYTES * 4 * 1000,
+                    displayPassShaderProgram.getVertexAttributesSize() * Float.BYTES * 4 * 3000,
                     Buffer.Usage.VertexBuffer,
                     Buffer.Type.CPUGPUShared,
                     false
             );
             displayPassIndexBuffer = Buffer.newBuffer(
                     renderer,
-                    Integer.BYTES * 6 * 1000,
+                    Integer.BYTES * 6 * 4000,
                     Buffer.Usage.IndexBuffer,
                     Buffer.Type.CPUGPUShared,
                     false

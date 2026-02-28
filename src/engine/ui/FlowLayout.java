@@ -5,9 +5,20 @@ import java.util.List;
 
 public class FlowLayout extends Layout {
 
+    public static FlowLayout instance;
+    public static FlowLayout getInstance(int axis) {
+        if(instance == null) instance = new FlowLayout();
+        instance.setAxis(axis);
+        return instance;
+    }
+
     public int axis;
 
-    public FlowLayout(int axis) {
+    public int getAxis() {
+        return axis;
+    }
+
+    public void setAxis(int axis) {
         this.axis = axis;
     }
 
