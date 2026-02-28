@@ -1,5 +1,6 @@
 package engine.ecs;
 
+import engine.Input;
 import engine.Surface;
 import engine.Time;
 import engine.asset.AssetRegistry;
@@ -22,28 +23,19 @@ public class UISystem extends EcsSystem {
     private Renderer renderer;
     private RenderPipeline renderPipeline;
     private Scene scene;
-    private int quadIndex = 0;
+    private int quadCount = 0;
     private ByteBuffer vertexBufferData, indexBufferData;
     private Matrix2f transform = new Matrix2f();
     private Vector2f origin = new Vector2f();
     private MsdfFont msdfFont;
-    private String text = "\"Lorem ipsum dolor sit amet, consectetur adipiscing elit,\n" +
-            " sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\n" +
-            "Ut enim ad minim veniam, quis nostrud\n" +
-            " exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.\n" +
-            "Duis aute irure dolor in reprehenderit in voluptate velit esse\n" +
-            " cillum dolore eu fugiat nulla pariatur.\n" +
-            "Excepteur sint occaecat cupidatat non proident,\n" +
-            " sunt in culpa qui officia deserunt mollit anim id est laborum.\"";
-    private TextEffect textEffect = new TextEffectCombiner(
-            new WaveTextEffect(),
-            new ShoutTextEffect()
-    );
+    private Surface surface;
 
     public UISystem(Renderer renderer, RenderPipeline renderPipeline, Surface surface, Scene scene) {
         this.renderer = renderer;
         this.renderPipeline = renderPipeline;
+        this.surface = surface;
         this.scene = scene;
+
 
         msdfFont = new MsdfFont(
                 renderer,
@@ -118,7 +110,6 @@ public class UISystem extends EcsSystem {
 
     }
 
-
     @Override
     public void run(List<Entity> entities) {
         ScreenSpaceFeatures screenSpaceFeatures = renderPipeline.getFeatures(ScreenSpaceFeatures.class);
@@ -131,12 +122,9 @@ public class UISystem extends EcsSystem {
 
 
 
-
-
         transform = new Matrix2f();
         setOrigin(0, 0);
 
-        drawString(60, 60, text, msdfFont, null, Color.WHITE);
         drawQuad(
                 0,
                 0,
@@ -151,68 +139,67 @@ public class UISystem extends EcsSystem {
                 -1,
                 Color.WHITE
         );
-        drawString(60, 60, text, msdfFont, null, Color.WHITE);
-
-
+        surface.setCaptureMouse(true);
 
         {
-           newContext();
-           {
-               newWindow("SkySOFT Engine Demo " + Time.framesPerSecond(), 60, 60, msdfFont, EdgeLayout.getInstance());
-               {
-                   newPanel(EdgeLayout.getInstance(), North);
-                   {
-                       newPanel(FlowLayout.getInstance(Vertical), Center);
-                       {
-                           button("This is a button!", msdfFont);
-                           text("\"Lorem ipsum dolor sit amet, consectetur adipiscing elit,\n" +
-                                   " sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\n" +
-                                   "Ut enim ad minim veniam, quis nostrud\n" +
-                                   " exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.\n" +
-                                   "Duis aute irure dolor in reprehenderit in voluptate velit esse\n" +
-                                   " cillum dolore eu fugiat nulla pariatur.\n" +
-                                   "Excepteur sint occaecat cupidatat non proident,\n" +
-                                   " sunt in culpa qui officia deserunt mollit anim id est laborum.\"", msdfFont);
+            newContext();
+            {
+                newWindow("SkySOFT Engine Demo " + Time.framesPerSecond(), 60, 60, msdfFont, EdgeLayout.getInstance());
+                {
+                    newPanel(EdgeLayout.getInstance(), North);
+                    {
+                        newPanel(FlowLayout.getInstance(Vertical), Center);
+                        {
+                            button("This is a button!", msdfFont);
+                            text("\"Lorem ipsum dolor sit amet, consectetur adipiscing elit,\n" +
+                                    " sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\n" +
+                                    "Ut enim ad minim veniam, quis nostrud\n" +
+                                    " exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.\n" +
+                                    "Duis aute irure dolor in reprehenderit in voluptate velit esse\n" +
+                                    " cillum dolore eu fugiat nulla pariatur.\n" +
+                                    "Excepteur sint occaecat cupidatat non proident,\n" +
+                                    " sunt in culpa qui officia deserunt mollit anim id est laborum.\"", msdfFont);
 
 
-                       }
-                       endPanel();
-                   }
-                   endPanel();
-               }
-               endWindow();
+                        }
+                        endPanel();
+                    }
+                    endPanel();
+                }
+                endWindow();
 
-               newWindow("SkySOFT Engine Demo", 300, 300, msdfFont, EdgeLayout.getInstance());
-               {
-                   newPanel(EdgeLayout.getInstance(), North);
-                   {
-                       newPanel(FlowLayout.getInstance(Vertical), Center);
-                       {
-
-
-                           if(button("Just another button", msdfFont)) {
-                               System.out.println("Doing a thing");
-                           }
-                           if(button("Just another button", msdfFont)) {
-                               System.out.println("Doing another thing");
-                           }
+                newWindow("SkySOFT Engine Demo", 300, 300, msdfFont, EdgeLayout.getInstance());
+                {
+                    newPanel(EdgeLayout.getInstance(), North);
+                    {
+                        newPanel(FlowLayout.getInstance(Vertical), Center);
+                        {
 
 
-                       }
-                       endPanel();
-                   }
-                   endPanel();
-               }
-               endWindow();
-           }
-           render();
-           endContext();
+                            if(button("Just another button", msdfFont)) {
+                                System.out.println("Doing a thing");
+                            }
+                            if(button("Just another button", msdfFont)) {
+                                System.out.println("Doing another thing");
+                            }
+
+
+                        }
+                        endPanel();
+                    }
+                    endPanel();
+                }
+                endWindow();
+            }
+            render();
+            endContext();
         }
 
+        surface.setCaptureMouse(false);
 
 
-        screenSpaceFeatures.setIndexCount(6 * 4000);
-        quadIndex = 0;
+        screenSpaceFeatures.setIndexCount(6 * quadCount);
+        quadCount = 0;
     }
 
     private void drawString(float x, float y, String text, MsdfFont msdfFont, TextEffect textEffect, Color color) {
@@ -378,13 +365,13 @@ public class UISystem extends EcsSystem {
         vertexBufferData.putFloat(textureIndex);
         vertexBufferData.putFloat(msdfScreenPxRange);
 
-        indexBufferData.putInt(0 + (4 * quadIndex));
-        indexBufferData.putInt(1 + (4 * quadIndex));
-        indexBufferData.putInt(2 + (4 * quadIndex));
-        indexBufferData.putInt(2 + (4 * quadIndex));
-        indexBufferData.putInt(3 + (4 * quadIndex));
-        indexBufferData.putInt(0 + (4 * quadIndex));
-        quadIndex++;
+        indexBufferData.putInt(0 + (4 * quadCount));
+        indexBufferData.putInt(1 + (4 * quadCount));
+        indexBufferData.putInt(2 + (4 * quadCount));
+        indexBufferData.putInt(2 + (4 * quadCount));
+        indexBufferData.putInt(3 + (4 * quadCount));
+        indexBufferData.putInt(0 + (4 * quadCount));
+        quadCount++;
     }
 
     @Override
