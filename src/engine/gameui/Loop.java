@@ -25,6 +25,10 @@ public class Loop {
     public void update(int x, int y) {
         widget.update(gfxPlatform, x, y, widget.getRequiredWidth(), widget.getRequiredHeight());
     }
+    public void update(int x, int y, int w, int h) {
+        widget.update(gfxPlatform, x, y, w, h);
+    }
+
 
 
 }

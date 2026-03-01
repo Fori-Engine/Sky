@@ -3,8 +3,12 @@ package engine.gameui;
 import engine.graphics.Color;
 
 public class ContainerWidget extends Widget {
+    private boolean ignore;
 
-
+    public Widget setIgnore(boolean ignore) {
+        this.ignore = ignore;
+        return this;
+    }
 
     @Override
     public int getRequiredWidth() {
@@ -18,7 +22,8 @@ public class ContainerWidget extends Widget {
 
     @Override
     public void update(GfxPlatform platform, int x, int y, int w, int h) {
-        platform.drawRect(x, y, w, h, Color.GRAY);
+        if(!ignore)
+            platform.drawRect(x, y, w, h, Color.GRAY);
         updateChildren(platform, x, y);
     }
 

@@ -40,6 +40,7 @@ public class UISystem extends EcsSystem {
         loop = new Loop();
         loop.setWidget(
                 new ContainerWidget()
+                        .setIgnore(true)
                         .setLayoutEngine(new LineLayoutEngine(LineLayoutEngine.Line.Vertical))
                         .addWidgets(
                                 new ButtonWidget("This is a button", Color.BLUE, msdfFont),
@@ -107,7 +108,7 @@ public class UISystem extends EcsSystem {
                 Color.WHITE
         );
 
-        loop.update(300, 300);
+        loop.update(0, 0, renderer.getWidth(), renderer.getHeight());
 
 
         surface.setCaptureMouse(false);
