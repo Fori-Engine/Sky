@@ -1,6 +1,8 @@
 package engine.ecs;
 
 import engine.Surface;
+import static engine.gameui.TextValue.*;
+
 import engine.Time;
 import engine.asset.AssetRegistry;
 import engine.gameui.*;
@@ -23,6 +25,7 @@ public class UISystem extends EcsSystem {
     private MsdfFont msdfFont;
     private Surface surface;
     private Loop loop;
+    private TextValue fpsValue = text("Text 2");
 
     public UISystem(Renderer renderer, RenderPipeline renderPipeline, Surface surface, Scene scene) {
         this.renderer = renderer;
@@ -43,16 +46,16 @@ public class UISystem extends EcsSystem {
                         .setIgnore(true)
                         .setLayoutEngine(new EdgeLayoutEngine())
                         .addWidgets(
-                                new Button("This is\n a button", msdfFont)
+                                new Button(text("This is a really wide button"), msdfFont)
                                         .addEventHandler(new EventHandler() {
                                             @Override
                                             public void onClick() {
                                                 System.out.println("Foo");
                                             }
                                         }).addHint(EdgeLayoutEngine.Top),
-                                new Text("I sure love some text", msdfFont).addHint(EdgeLayoutEngine.Bottom),
-                                new Button("Button\n 1", msdfFont).addHint(EdgeLayoutEngine.Right),
-                                new Button("Button #2", msdfFont).addHint(EdgeLayoutEngine.Left)
+                                new Text(fpsValue, msdfFont).addHint(EdgeLayoutEngine.Bottom),
+                                new Button(text("Text 1"), msdfFont).addHint(EdgeLayoutEngine.Right),
+                                new Button(text("Text 2"), msdfFont).addHint(EdgeLayoutEngine.Left)
                         )
         );
 
@@ -130,6 +133,7 @@ public class UISystem extends EcsSystem {
                 Color.WHITE
         );
 
+        fpsValue.string = String.valueOf(Time.framesPerSecond());
         loop.update(0, 0, renderer.getWidth(), renderer.getHeight());
 
 

@@ -4,26 +4,25 @@ import engine.Input;
 import engine.graphics.Color;
 import engine.graphics.Rect2D;
 import engine.graphics.text.MsdfFont;
-;
 
 public class Button extends Widget {
-    private String text;
+    private TextValue value;
     private MsdfFont font;
     private boolean pressed;
 
-    public Button(String text, MsdfFont font) {
-        this.text = text;
+    public Button(TextValue value, MsdfFont font) {
+        this.value = value;
         this.font = font;
     }
 
     @Override
     public int getRequiredWidth() {
-        return (int) font.getStringWidth(text);
+        return (int) font.getStringWidth(value.string);
     }
 
     @Override
     public int getRequiredHeight() {
-        return (int) font.getStringHeight(text);
+        return (int) font.getStringHeight(value.string);
     }
 
     @Override
@@ -43,7 +42,7 @@ public class Button extends Widget {
         }
         else platform.drawRect(x, y, w, h, Color.GRAY);
 
-        platform.drawString(x, y, text, font, Color.WHITE);
+        platform.drawString(x, y, value.string, font, Color.WHITE);
         updateChildren(platform, x, y);
     }
 }
