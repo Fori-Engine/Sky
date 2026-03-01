@@ -51,8 +51,7 @@ public class MsdfFont extends Disposable {
 
             stringLineWidth += character.advance * msdfData.size;
         }
-        if(width == 0) width = stringLineWidth;
-
+        width = Math.max(width, stringLineWidth);
         return width;
     }
 

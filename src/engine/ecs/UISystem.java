@@ -43,14 +43,36 @@ public class UISystem extends EcsSystem {
                         .setIgnore(true)
                         .setLayoutEngine(new LineLayoutEngine(LineLayoutEngine.Line.Vertical))
                         .addWidgets(
-                                new ButtonWidget("This is a button", Color.BLUE, msdfFont),
-                                new ButtonWidget("Button 1", Color.GREEN, msdfFont),
-                                new ButtonWidget("Button #2", Color.RED, msdfFont)
+                                new Button("This is\n a button", msdfFont)
+                                        .addEventHandler(new EventHandler() {
+                                            @Override
+                                            public void onClick() {
+                                                System.out.println("Foo");
+                                            }
+                                        }),
+                                new Text("I sure love some text", msdfFont),
+                                new Button("Button\n 1", msdfFont),
+                                new Button("Button #2", msdfFont)
                         )
         );
 
 
         loop.setGfxPlatform(new GfxPlatform() {
+            @Override
+            public int getMouseX() {
+                return (int) surface.getMousePos().x;
+            }
+
+            @Override
+            public int getMouseY() {
+                return (int) surface.getMousePos().y;
+            }
+
+            @Override
+            public boolean isMousePressed(int mouseButton) {
+                return surface.getMousePressed(mouseButton);
+            }
+
             @Override
             public void drawRect(float x, float y, float w, float h, Color color) {
                 UISystem.this.drawQuad(
@@ -70,8 +92,8 @@ public class UISystem extends EcsSystem {
             }
 
             @Override
-            public void drawString(float x, float y, String text, Color color) {
-                UISystem.this.drawString(x, y, text, msdfFont, null, color);
+            public void drawString(float x, float y, String text, MsdfFont font, Color color) {
+                UISystem.this.drawString(x, y, text, font, null, color);
             }
         });
 
@@ -112,7 +134,6 @@ public class UISystem extends EcsSystem {
 
 
         surface.setCaptureMouse(false);
-        System.out.println(Time.framesPerSecond());
 
 
         screenSpaceFeatures.setIndexCount(6 * quadCount);

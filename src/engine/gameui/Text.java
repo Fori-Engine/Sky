@@ -1,17 +1,18 @@
 package engine.gameui;
 
+import engine.Input;
 import engine.graphics.Color;
+import engine.graphics.Rect2D;
 import engine.graphics.text.MsdfFont;
+
 ;
 
-public class ButtonWidget extends Widget {
+public class Text extends Widget {
     private String text;
-    private Color color;
     private MsdfFont font;
 
-    public ButtonWidget(String text, Color color, MsdfFont font) {
+    public Text(String text, MsdfFont font) {
         this.text = text;
-        this.color = color;
         this.font = font;
     }
 
@@ -27,8 +28,8 @@ public class ButtonWidget extends Widget {
 
     @Override
     public void update(GfxPlatform platform, int x, int y, int w, int h) {
-        platform.drawRect(x, y, w, h, color);
-        platform.drawString(x, y, text, Color.WHITE);
+
+        platform.drawString(x, y, text, font, Color.WHITE);
         updateChildren(platform, x, y);
     }
 }

@@ -56,6 +56,10 @@ public class Rect2D {
         return (x >= this.x && x <= this.x + this.w) && (y >= this.y && y <= this.y + this.h);
     }
 
+    public static boolean contains(float mx, float my, float x, float y, float w, float h){
+        return (mx >= x && mx <= x + w) && (my >= y && my <= y + h);
+    }
+
     @Override
     public String toString() {
         return "Rect2D [" + x + " " + y + " " + w + " " + h + "]";
