@@ -41,7 +41,7 @@ public class UISystem extends EcsSystem {
         loop.setWidget(
                 new ContainerWidget()
                         .setIgnore(true)
-                        .setLayoutEngine(new LineLayoutEngine(LineLayoutEngine.Line.Vertical))
+                        .setLayoutEngine(new EdgeLayoutEngine())
                         .addWidgets(
                                 new Button("This is\n a button", msdfFont)
                                         .addEventHandler(new EventHandler() {
@@ -49,10 +49,10 @@ public class UISystem extends EcsSystem {
                                             public void onClick() {
                                                 System.out.println("Foo");
                                             }
-                                        }),
-                                new Text("I sure love some text", msdfFont),
-                                new Button("Button\n 1", msdfFont),
-                                new Button("Button #2", msdfFont)
+                                        }).addHint(EdgeLayoutEngine.Top),
+                                new Text("I sure love some text", msdfFont).addHint(EdgeLayoutEngine.Bottom),
+                                new Button("Button\n 1", msdfFont).addHint(EdgeLayoutEngine.Right),
+                                new Button("Button #2", msdfFont).addHint(EdgeLayoutEngine.Left)
                         )
         );
 

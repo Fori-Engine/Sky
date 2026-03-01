@@ -1,13 +1,12 @@
 package engine.gameui;
 
-import org.joml.Vector2f;
-
 import java.util.LinkedList;
 import java.util.List;
 
 public abstract class Widget {
     private List<Widget> widgets = new LinkedList<>();
     private List<EventHandler> eventHandlers = new LinkedList<>();
+    private long hints;
     protected LayoutEngine layoutEngine = new LayoutEngine() {
         @Override
         public int getComputedWidth() {
@@ -24,6 +23,15 @@ public abstract class Widget {
 
         }
     };
+
+    public Widget addHint(long hint) {
+        hints |= hint;
+        return this;
+    }
+
+    public boolean hasHint(long hint) {
+        return (hints & hint) != 0;
+    }
 
 
 
