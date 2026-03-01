@@ -586,7 +586,7 @@ public class VulkanRenderer extends Renderer {
                                     VulkanUtil.transitionImages(
                                             image,
                                             commandBuffer,
-                                            VK_IMAGE_LAYOUT_GENERAL,
+                                            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                                             readSrcAccessMask,
                                             VK_ACCESS_SHADER_READ_BIT,
                                             VK_IMAGE_ASPECT_COLOR_BIT,
@@ -599,7 +599,7 @@ public class VulkanRenderer extends Renderer {
                                     VulkanUtil.transitionImages(
                                             image,
                                             commandBuffer,
-                                            VK_IMAGE_LAYOUT_GENERAL,
+                                            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                                             readSrcAccessMask,
                                             VK_ACCESS_SHADER_READ_BIT,
                                             VK_IMAGE_ASPECT_COLOR_BIT,
@@ -611,7 +611,7 @@ public class VulkanRenderer extends Renderer {
                                     VulkanUtil.transitionImages(
                                             image,
                                             commandBuffer,
-                                            VK_IMAGE_LAYOUT_GENERAL,
+                                            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                                             readSrcAccessMask,
                                             VK_ACCESS_SHADER_READ_BIT,
                                             VK_IMAGE_ASPECT_DEPTH_BIT,
