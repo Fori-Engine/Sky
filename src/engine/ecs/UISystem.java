@@ -1,9 +1,9 @@
 package engine.ecs;
 
-import engine.Input;
 import engine.Surface;
 import engine.Time;
 import engine.asset.AssetRegistry;
+import engine.gameui.*;
 import engine.graphics.*;
 import engine.graphics.pipelines.ScreenSpaceFeatures;
 import engine.graphics.text.*;
@@ -22,6 +22,7 @@ public class UISystem extends EcsSystem {
     private Vector2f origin = new Vector2f();
     private MsdfFont msdfFont;
     private Surface surface;
+    private Loop loop;
 
     public UISystem(Renderer renderer, RenderPipeline renderPipeline, Surface surface, Scene scene) {
         this.renderer = renderer;
@@ -35,6 +36,43 @@ public class UISystem extends EcsSystem {
                 AssetRegistry.getAsset("core:assets/fonts/AirbusB612/b612-atlas.png"),
                 AssetRegistry.getAsset("core:assets/fonts/AirbusB612/b612-atlas.json")
         );
+
+        loop = new Loop();
+        loop.setWidget(
+                new ContainerWidget()
+                        .setLayoutEngine(new LineLayoutEngine(LineLayoutEngine.Line.Vertical))
+                        .addWidgets(
+                                new ButtonWidget("This is a button", Color.BLUE, msdfFont),
+                                new ButtonWidget("Button 1", Color.GREEN, msdfFont),
+                                new ButtonWidget("Button #2", Color.RED, msdfFont)
+                        )
+        );
+
+
+        loop.setGfxPlatform(new GfxPlatform() {
+            @Override
+            public void drawRect(float x, float y, float w, float h, Color color) {
+                UISystem.this.drawQuad(
+                        x,
+                        y,
+                        w,
+                        h,
+                        -1, -1,
+                        -1, -1,
+                        -1, -1,
+                        -1, -1,
+                        -1,
+                        -1,
+                        -1,
+                        color
+                );
+            }
+
+            @Override
+            public void drawString(float x, float y, String text, Color color) {
+                UISystem.this.drawString(x, y, text, msdfFont, null, color);
+            }
+        });
 
 
     }
@@ -69,6 +107,7 @@ public class UISystem extends EcsSystem {
                 Color.WHITE
         );
 
+        loop.update(300, 300);
 
 
         surface.setCaptureMouse(false);
