@@ -27,6 +27,13 @@ public class Color {
         );
     }
 
+    public Color(float r, float g, float b, float a, double gamma) {
+        this.r = (float) Math.pow(r, gamma);
+        this.g = (float) Math.pow(g, gamma);
+        this.b = (float) Math.pow(b, gamma);
+        this.a = (float) Math.pow(a, gamma);
+    }
+
 
     public static Color fromRGB(float r, float g, float b, float a){
         float scale = 1 / 255f;
