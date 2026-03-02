@@ -9,4 +9,5 @@ public abstract class GfxPlatform {
     public abstract boolean isMousePressed(int mouseButton);
     public abstract void drawRect(float x, float y, float w, float h, Color color);
     public abstract void drawString(float x, float y, String text, MsdfFont font, Color color);
+    public abstract Theme getTheme();
 }

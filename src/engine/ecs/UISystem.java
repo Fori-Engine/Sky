@@ -26,6 +26,7 @@ public class UISystem extends EcsSystem {
     private Surface surface;
     private Loop loop;
     private TextValue fpsValue = text("Text 2");
+    private Theme theme;
 
     public UISystem(Renderer renderer, RenderPipeline renderPipeline, Surface surface, Scene scene) {
         this.renderer = renderer;
@@ -40,10 +41,11 @@ public class UISystem extends EcsSystem {
                 AssetRegistry.getAsset("core:assets/fonts/AirbusB612/b612-atlas.json")
         );
 
+        theme = ThemeLoader.loadTheme((String) AssetRegistry.getAsset("core:assets/themes/CozyRoom.json").getObject());
+
         loop = new Loop();
         loop.setWidget(
                 new ContainerWidget()
-                        .setIgnore(true)
                         .setLayoutEngine(new EdgeLayoutEngine())
                         .addWidgets(
                                 new Button(text("This is a really wide button"), msdfFont)
@@ -54,7 +56,7 @@ public class UISystem extends EcsSystem {
                                             }
                                         }).addHint(EdgeLayoutEngine.Top),
                                 new Text(fpsValue, msdfFont).addHint(EdgeLayoutEngine.Bottom),
-                                new Button(text("Text 1"), msdfFont).addHint(EdgeLayoutEngine.Right),
+                                new Button(text("1"), msdfFont).addHint(EdgeLayoutEngine.Right),
                                 new Button(text("Text 2"), msdfFont).addHint(EdgeLayoutEngine.Left)
                         )
         );
@@ -98,9 +100,12 @@ public class UISystem extends EcsSystem {
             public void drawString(float x, float y, String text, MsdfFont font, Color color) {
                 UISystem.this.drawString(x, y, text, font, null, color);
             }
+
+            @Override
+            public Theme getTheme() {
+                return theme;
+            }
         });
-
-
     }
 
     @Override
@@ -133,8 +138,9 @@ public class UISystem extends EcsSystem {
                 Color.WHITE
         );
 
-        fpsValue.string = String.valueOf(Time.framesPerSecond());
-        loop.update(0, 0, renderer.getWidth(), renderer.getHeight());
+
+        fpsValue.string = "GPU:" + renderer.getDeviceName() + "\nFPS:" + Time.framesPerSecond();
+        loop.update(0, 0);
 
 
         surface.setCaptureMouse(false);
@@ -194,9 +200,10 @@ public class UISystem extends EcsSystem {
                         color
                 );
             }
+            float left = character.planeBounds != null ? character.planeBounds.left : 0;
+            float right = character.planeBounds != null ? character.planeBounds.right : 0;
+
             xl += character.advance * msdfFont.getMSDFData().size;
-
-
         }
 
 
