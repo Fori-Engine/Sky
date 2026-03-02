@@ -23,7 +23,7 @@ public class ContainerWidget extends Widget {
     @Override
     public void update(GfxPlatform platform, int x, int y, int w, int h) {
         if(!ignore)
-            platform.drawRect(x, y, w, h, Color.GRAY);
+            platform.drawRect(x, y, w, h, platform.getTheme().containerBackgroundColor);
         updateChildren(platform, x, y);
     }
 

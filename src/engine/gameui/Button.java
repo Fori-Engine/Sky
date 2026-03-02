@@ -28,9 +28,17 @@ public class Button extends Widget {
     @Override
     public void update(GfxPlatform platform, int x, int y, int w, int h) {
         if(Rect2D.contains(platform.getMouseX(), platform.getMouseY(), x, y, w, h)){
-            platform.drawRect(x, y, w, h, Color.LIGHT_GRAY);
+            platform.drawRect(x, y, w, h, platform.getTheme().buttonHoverColor);
 
             boolean inputPressed = platform.isMousePressed(Input.MOUSE_BUTTON_1);
+            if(pressed) {
+                platform.drawRect(x, y, w, h, platform.getTheme().buttonClickColor);
+            }
+            else {
+                platform.drawRect(x, y, w, h, platform.getTheme().buttonHoverColor);
+            }
+
+
             if(pressed != inputPressed){
 
                 if(pressed)
@@ -40,7 +48,8 @@ public class Button extends Widget {
             }
 
         }
-        else platform.drawRect(x, y, w, h, Color.GRAY);
+        else
+            platform.drawRect(x, y, w, h, platform.getTheme().buttonBackgroundColor);
 
         platform.drawString(x, y, value.string, font, Color.WHITE);
         updateChildren(platform, x, y);

@@ -26,6 +26,7 @@ public class UISystem extends EcsSystem {
     private Surface surface;
     private Loop loop;
     private TextValue fpsValue = text("Text 2");
+    private Theme theme;
 
     public UISystem(Renderer renderer, RenderPipeline renderPipeline, Surface surface, Scene scene) {
         this.renderer = renderer;
@@ -40,10 +41,11 @@ public class UISystem extends EcsSystem {
                 AssetRegistry.getAsset("core:assets/fonts/AirbusB612/b612-atlas.json")
         );
 
+        theme = ThemeLoader.loadTheme((String) AssetRegistry.getAsset("core:assets/themes/CozyRoom.json").getObject());
+
         loop = new Loop();
         loop.setWidget(
                 new ContainerWidget()
-                        .setIgnore(true)
                         .setLayoutEngine(new EdgeLayoutEngine())
                         .addWidgets(
                                 new Button(text("This is a really wide button"), msdfFont)
@@ -98,6 +100,11 @@ public class UISystem extends EcsSystem {
             public void drawString(float x, float y, String text, MsdfFont font, Color color) {
                 UISystem.this.drawString(x, y, text, font, null, color);
             }
+
+            @Override
+            public Theme getTheme() {
+                return theme;
+            }
         });
     }
 
@@ -133,7 +140,7 @@ public class UISystem extends EcsSystem {
 
 
         fpsValue.string = "GPU:" + renderer.getDeviceName() + "\nFPS:" + Time.framesPerSecond();
-        loop.update(0, 0, renderer.getWidth(), renderer.getHeight());
+        loop.update(0, 0);
 
 
         surface.setCaptureMouse(false);
