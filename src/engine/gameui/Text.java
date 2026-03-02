@@ -1,35 +1,34 @@
 package engine.gameui;
 
-import engine.Input;
 import engine.graphics.Color;
-import engine.graphics.Rect2D;
 import engine.graphics.text.MsdfFont;
 
 ;
 
 public class Text extends Widget {
-    private String text;
+    private TextValue value;
     private MsdfFont font;
 
-    public Text(String text, MsdfFont font) {
-        this.text = text;
+    public Text(TextValue value, MsdfFont font) {
+        this.value = value;
         this.font = font;
+
     }
 
     @Override
     public int getRequiredWidth() {
-        return (int) font.getStringWidth(text);
+        return (int) font.getStringWidth(value.string);
     }
 
     @Override
     public int getRequiredHeight() {
-        return (int) font.getStringHeight(text);
+        return (int) font.getStringHeight(value.string);
     }
 
     @Override
     public void update(GfxPlatform platform, int x, int y, int w, int h) {
 
-        platform.drawString(x, y, text, font, Color.WHITE);
+        platform.drawString(x, y, value.string, font, Color.WHITE);
         updateChildren(platform, x, y);
     }
 }
