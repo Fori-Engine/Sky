@@ -54,7 +54,7 @@ public class UISystem extends EcsSystem {
                                             }
                                         }).addHint(EdgeLayoutEngine.Top),
                                 new Text(fpsValue, msdfFont).addHint(EdgeLayoutEngine.Bottom),
-                                new Button(text("Text 1"), msdfFont).addHint(EdgeLayoutEngine.Right),
+                                new Button(text("1"), msdfFont).addHint(EdgeLayoutEngine.Right),
                                 new Button(text("Text 2"), msdfFont).addHint(EdgeLayoutEngine.Left)
                         )
         );
@@ -99,8 +99,6 @@ public class UISystem extends EcsSystem {
                 UISystem.this.drawString(x, y, text, font, null, color);
             }
         });
-
-
     }
 
     @Override
@@ -133,7 +131,8 @@ public class UISystem extends EcsSystem {
                 Color.WHITE
         );
 
-        fpsValue.string = String.valueOf(Time.framesPerSecond());
+
+        fpsValue.string = "GPU:" + renderer.getDeviceName() + "\nFPS:" + Time.framesPerSecond();
         loop.update(0, 0, renderer.getWidth(), renderer.getHeight());
 
 
@@ -194,9 +193,10 @@ public class UISystem extends EcsSystem {
                         color
                 );
             }
+            float left = character.planeBounds != null ? character.planeBounds.left : 0;
+            float right = character.planeBounds != null ? character.planeBounds.right : 0;
+
             xl += character.advance * msdfFont.getMSDFData().size;
-
-
         }
 
 
