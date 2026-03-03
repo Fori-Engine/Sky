@@ -85,6 +85,7 @@ dependencies {
         implementation "org.lwjgl:lwjgl-jawt"
         implementation files("thirdparty/lwjgl3-awt-0.2.3.jar")
         implementation "com.google.code.gson:gson:$gsonVersion"
+        implementation "org.lwjgl:lwjgl-openal"
 
     }
 
@@ -101,6 +102,8 @@ dependencies {
         runtimeOnly "org.lwjgl:lwjgl-assimp::$lwjglNatives"
         runtimeOnly "org.lwjgl:lwjgl-spvc::$lwjglNatives"
         runtimeOnly "de.fabmax:physx-jni:$physxVersion:$lwjglNatives"
+        implementation "org.lwjgl:lwjgl-openal::$lwjglNatives"
+
     }
 
 }
