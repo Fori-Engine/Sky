@@ -111,9 +111,9 @@ public class UISystem extends EcsSystem {
     @Override
     public void run(List<Entity> entities) {
         ScreenSpaceFeatures screenSpaceFeatures = renderPipeline.getFeatures(ScreenSpaceFeatures.class);
-        vertexBufferData = screenSpaceFeatures.getVertexBuffer().get();
+        vertexBufferData = screenSpaceFeatures.getVertexBuffers()[renderer.getFrameIndex()].get();
         vertexBufferData.clear();
-        indexBufferData = screenSpaceFeatures.getIndexBuffer().get();
+        indexBufferData = screenSpaceFeatures.getIndexBuffers()[renderer.getFrameIndex()].get();
         indexBufferData.clear();
         screenSpaceFeatures.getShaderProgram().setTextures(renderer.getFrameIndex(), new DescriptorUpdate<>("input_textures", msdfFont.getTexture()).arrayIndex(1));
         screenSpaceFeatures.getShaderProgram().setSamplers(renderer.getFrameIndex(), new DescriptorUpdate<>("input_samplers", msdfFont.getSampler()).arrayIndex(1));
