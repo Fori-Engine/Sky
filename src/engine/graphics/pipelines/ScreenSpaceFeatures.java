@@ -4,17 +4,18 @@ import engine.graphics.Buffer;
 import engine.graphics.ShaderProgram;
 
 public class ScreenSpaceFeatures extends Features {
-    private Buffer vertexBuffer;
-    private Buffer indexBuffer;
+    private Buffer[] vertexBuffers;
+    private Buffer[] indexBuffers;
     private int indexCount;
     private ShaderProgram shaderProgram;
+    private int maxQuads = 1000;
 
     protected ScreenSpaceFeatures(boolean mandatory) {
         super(mandatory);
     }
 
-    public Buffer getVertexBuffer() {
-        return vertexBuffer;
+    public Buffer[] getVertexBuffers() {
+        return vertexBuffers;
     }
 
     public ShaderProgram getShaderProgram() {
@@ -25,16 +26,20 @@ public class ScreenSpaceFeatures extends Features {
         this.shaderProgram = shaderProgram;
     }
 
-    protected void setVertexBuffer(Buffer vertexBuffer) {
-        this.vertexBuffer = vertexBuffer;
+    protected void setVertexBuffers(Buffer[] vertexBuffers) {
+        this.vertexBuffers = vertexBuffers;
     }
 
-    public Buffer getIndexBuffer() {
-        return indexBuffer;
+    public Buffer[] getIndexBuffers() {
+        return indexBuffers;
     }
 
-    protected void setIndexBuffer(Buffer indexBuffer) {
-        this.indexBuffer = indexBuffer;
+    protected void setIndexBuffers(Buffer[] indexBuffers) {
+        this.indexBuffers = indexBuffers;
+    }
+
+    public int getMaxQuads() {
+        return maxQuads;
     }
 
     public int getIndexCount() {

@@ -42,7 +42,7 @@ public class BlinnPhongPipeline extends RenderPipeline {
 
     private ShaderProgram displayPassShaderProgram;
     private Camera displayPassCamera;
-    private Buffer displayPassVertexBuffer, displayPassIndexBuffer;
+    private Buffer[] displayPassVertexBuffers, displayPassIndexBuffers;
     private Buffer[] displayPassCameraBuffers;
 
     private int lightCount = 0;
@@ -182,6 +182,8 @@ public class BlinnPhongPipeline extends RenderPipeline {
             );
 
 
+            ScreenSpaceFeatures screenSpaceFeatures = getFeatures(ScreenSpaceFeatures.class);
+
             displayPassShaderProgram = ShaderProgram.newShaderProgram(renderer);
             displayPassShaderProgram.setDepthTestType(DepthTestType.Always);
             displayPassShaderProgram.setEnableBlending(true);
@@ -189,23 +191,26 @@ public class BlinnPhongPipeline extends RenderPipeline {
             displayPassShaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/blinn_phong/Display_fragment.spv"), ShaderType.FragmentShader);
             displayPassShaderProgram.assemble();
 
-            displayPassVertexBuffer = Buffer.newBuffer(
-                    renderer,
-                    displayPassShaderProgram.getVertexAttributesSize() * Float.BYTES * 4 * 3000,
-                    Buffer.Usage.VertexBuffer,
-                    Buffer.Type.CPUGPUShared,
-                    false
-            );
-            displayPassIndexBuffer = Buffer.newBuffer(
-                    renderer,
-                    Integer.BYTES * 6 * 4000,
-                    Buffer.Usage.IndexBuffer,
-                    Buffer.Type.CPUGPUShared,
-                    false
-            );
-
+            displayPassVertexBuffers = new Buffer[renderer.getMaxFramesInFlight()];
+            displayPassIndexBuffers = new Buffer[renderer.getMaxFramesInFlight()];
             displayPassCameraBuffers = new Buffer[renderer.getMaxFramesInFlight()];
+
             for (int i = 0; i < renderer.getMaxFramesInFlight(); i++) {
+                displayPassVertexBuffers[i] = Buffer.newBuffer(
+                        renderer,
+                        displayPassShaderProgram.getVertexAttributesSize() * Float.BYTES * 4 * screenSpaceFeatures.getMaxQuads(),
+                        Buffer.Usage.VertexBuffer,
+                        Buffer.Type.CPUGPUShared,
+                        false
+                );
+                displayPassIndexBuffers[i] = Buffer.newBuffer(
+                        renderer,
+                        Integer.BYTES * 6 * screenSpaceFeatures.getMaxQuads(),
+                        Buffer.Usage.IndexBuffer,
+                        Buffer.Type.CPUGPUShared,
+                        false
+                );
+
                 displayPassCameraBuffers[i] = Buffer.newBuffer(
                         renderer,
                         displayPassShaderProgram.getDescriptorByName("camera").getSizeBytes(),
@@ -213,24 +218,21 @@ public class BlinnPhongPipeline extends RenderPipeline {
                         Buffer.Type.CPUGPUShared,
                         false
                 );
-            }
 
-            for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-
-                ByteBuffer swapchainPassCameraBufferData = displayPassCameraBuffers[frameIndex].get();
+                ByteBuffer swapchainPassCameraBufferData = displayPassCameraBuffers[i].get();
 
                 displayPassCamera.getProj().get(0, swapchainPassCameraBufferData);
                 displayPassShaderProgram.setBuffers(
-                        frameIndex,
-                        new DescriptorUpdate<>("camera", displayPassCameraBuffers[frameIndex])
+                        i,
+                        new DescriptorUpdate<>("camera", displayPassCameraBuffers[i])
                 );
+
+
             }
 
-            displayPassVertexBuffer.get().clear();
-            displayPassIndexBuffer.get().clear();
-            ScreenSpaceFeatures screenSpaceFeatures = getFeatures(ScreenSpaceFeatures.class);
-            screenSpaceFeatures.setVertexBuffer(displayPassVertexBuffer);
-            screenSpaceFeatures.setIndexBuffer(displayPassIndexBuffer);
+
+            screenSpaceFeatures.setVertexBuffers(displayPassVertexBuffers);
+            screenSpaceFeatures.setIndexBuffers(displayPassIndexBuffers);
             screenSpaceFeatures.setShaderProgram(displayPassShaderProgram);
 
 
@@ -766,7 +768,7 @@ public class BlinnPhongPipeline extends RenderPipeline {
 
 
                     displayPass.setCullMode(CullMode.Back);
-                    displayPass.setDrawBuffers(displayPassVertexBuffer, displayPassIndexBuffer);
+                    displayPass.setDrawBuffers(displayPassVertexBuffers[renderer.getFrameIndex()], displayPassIndexBuffers[renderer.getFrameIndex()]);
                     displayPass.setShaderProgram(displayPassShaderProgram);
                     displayPass.drawIndexed(screenSpaceFeatures.getIndexCount());
                 }

@@ -312,7 +312,7 @@ public class ExampleStage extends Stage {
                             new Vector3f(0.0f, 1.0f, 0.0f)
                     ),
                     new Matrix4f().perspective(
-                            (float) Math.toRadians(25),
+                            (float) Math.toRadians(95),
                             (float) 1,
                             0.1f,
                             10.0f,
@@ -322,7 +322,7 @@ public class ExampleStage extends Stage {
                     true,
                     lightRT
             );
-            spotlightComponent.color = new Vector3f(1, 0, 0);
+            spotlightComponent.color = new Vector3f(1, 1, 1);
 
             Entity spotlightEntity = scene.createEntity(
                     spotlightComponent

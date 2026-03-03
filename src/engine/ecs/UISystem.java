@@ -46,18 +46,18 @@ public class UISystem extends EcsSystem {
         loop = new Loop();
         loop.setWidget(
                 new ContainerWidget()
-                        .setLayoutEngine(new EdgeLayoutEngine())
+                        .setIgnore(true)
+                        .setLayoutEngine(new LineLayoutEngine(LineLayoutEngine.Line.Vertical))
                         .addWidgets(
+                                new Text(fpsValue, msdfFont),
+                                new Text(text("This is text"), msdfFont),
                                 new Button(text("This is a really wide button"), msdfFont)
                                         .addEventHandler(new EventHandler() {
                                             @Override
                                             public void onClick() {
                                                 System.out.println("Foo");
                                             }
-                                        }).addHint(EdgeLayoutEngine.Top),
-                                new Text(fpsValue, msdfFont).addHint(EdgeLayoutEngine.Bottom),
-                                new Button(text("1"), msdfFont).addHint(EdgeLayoutEngine.Right),
-                                new Button(text("Text 2"), msdfFont).addHint(EdgeLayoutEngine.Left)
+                                        })
                         )
         );
 
@@ -111,9 +111,9 @@ public class UISystem extends EcsSystem {
     @Override
     public void run(List<Entity> entities) {
         ScreenSpaceFeatures screenSpaceFeatures = renderPipeline.getFeatures(ScreenSpaceFeatures.class);
-        vertexBufferData = screenSpaceFeatures.getVertexBuffer().get();
+        vertexBufferData = screenSpaceFeatures.getVertexBuffers()[renderer.getFrameIndex()].get();
         vertexBufferData.clear();
-        indexBufferData = screenSpaceFeatures.getIndexBuffer().get();
+        indexBufferData = screenSpaceFeatures.getIndexBuffers()[renderer.getFrameIndex()].get();
         indexBufferData.clear();
         screenSpaceFeatures.getShaderProgram().setTextures(renderer.getFrameIndex(), new DescriptorUpdate<>("input_textures", msdfFont.getTexture()).arrayIndex(1));
         screenSpaceFeatures.getShaderProgram().setSamplers(renderer.getFrameIndex(), new DescriptorUpdate<>("input_samplers", msdfFont.getSampler()).arrayIndex(1));
@@ -140,7 +140,7 @@ public class UISystem extends EcsSystem {
 
 
         fpsValue.string = "GPU:" + renderer.getDeviceName() + "\nFPS:" + Time.framesPerSecond();
-        loop.update(0, 0);
+        loop.update(0, 0, renderer.getWidth(), renderer.getHeight());
 
 
         surface.setCaptureMouse(false);
