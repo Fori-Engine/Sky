@@ -46,18 +46,18 @@ public class UISystem extends EcsSystem {
         loop = new Loop();
         loop.setWidget(
                 new ContainerWidget()
-                        .setLayoutEngine(new EdgeLayoutEngine())
+                        .setIgnore(true)
+                        .setLayoutEngine(new LineLayoutEngine(LineLayoutEngine.Line.Vertical))
                         .addWidgets(
+                                new Text(fpsValue, msdfFont),
+                                new Text(text("This is text"), msdfFont),
                                 new Button(text("This is a really wide button"), msdfFont)
                                         .addEventHandler(new EventHandler() {
                                             @Override
                                             public void onClick() {
                                                 System.out.println("Foo");
                                             }
-                                        }).addHint(EdgeLayoutEngine.Top),
-                                new Text(fpsValue, msdfFont).addHint(EdgeLayoutEngine.Bottom),
-                                new Button(text("1"), msdfFont).addHint(EdgeLayoutEngine.Right),
-                                new Button(text("Text 2"), msdfFont).addHint(EdgeLayoutEngine.Left)
+                                        })
                         )
         );
 
@@ -140,7 +140,7 @@ public class UISystem extends EcsSystem {
 
 
         fpsValue.string = "GPU:" + renderer.getDeviceName() + "\nFPS:" + Time.framesPerSecond();
-        loop.update(0, 0);
+        loop.update(0, 0, renderer.getWidth(), renderer.getHeight());
 
 
         surface.setCaptureMouse(false);
