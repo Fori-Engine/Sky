@@ -87,7 +87,7 @@ FSOutput fragmentMain(VSOutput vsOutput, uniform int render_mode, uniform int li
         float2 encoded_normal_ws = encode(normal_ws);
 
         output.color0 = float4(vsOutput.color.xyz * color_map_texture.Sample(color_map_sampler, vsOutput.uv_ts).xyz, encoded_normal_ws.x);
-        output.color1 = float4(vsOutput.pos_vs.xyz, encoded_normal_ws.y);
+        output.color1 = float4(0.0, 0.0, 0.0, encoded_normal_ws.y);
     }
 
 

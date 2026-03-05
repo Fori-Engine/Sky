@@ -23,6 +23,7 @@ shaders.each { shaderFileName, stages ->
                     '-matrix-layout-column-major',
                     '-o', outputName,
                     '-stage', stage,
+                    '-preserve-params',
                     '-entry', "${stage}Main"
 
             standardOutput = System.out
