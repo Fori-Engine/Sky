@@ -721,8 +721,10 @@ public class BlinnPhongPipeline extends RenderPipeline {
                 lightingPass.setShaderProgram(lightingPassShaderProgram);
 
                 try(MemoryStack stack = stackPush()) {
-                    ByteBuffer pPushConstants = stack.calloc(Integer.BYTES);
+                    ByteBuffer pPushConstants = stack.calloc(Integer.BYTES * 3);
                     pPushConstants.putInt(lightCount);
+                    pPushConstants.putInt(renderer.getWidth());
+                    pPushConstants.putInt(renderer.getHeight());
                     lightingPass.setPushConstants(pPushConstants);
                 }
 

@@ -52,7 +52,7 @@ float4 get_pos_ws(float ux, float uy, float4x4 inv_proj, float4x4 inv_view, floa
 }
 
 [numthreads(32, 32, 1)]
-void computeMain(uniform int light_count, int3 dispatch_ID : SV_DispatchThreadID) {
+void computeMain(uniform int light_count, uniform int width, uniform int height, int3 dispatch_ID : SV_DispatchThreadID) {
     int3 texture_xy_ss = int3(dispatch_ID.x, dispatch_ID.y, 0);
 
     float4 input_color = input_color_texture.Load(texture_xy_ss, 0);
@@ -66,7 +66,7 @@ void computeMain(uniform int light_count, int3 dispatch_ID : SV_DispatchThreadID
         float3 camera_pos_ws = float3(camera.invView[0][3], camera.invView[1][3], camera.invView[2][3]);
 
         float4 fragment_vs = input_pos_vs_texture.Load(texture_xy_ss, 0);
-        float4 fragment_ws = get_pos_ws((float) (texture_xy_ss.x + 0.5) / 1920.0, (float) (texture_xy_ss.y + 0.5) / 1080.0, camera.invProj, camera.invView, depth_psw); //mul(camera.invView, float4(fragment_vs.xyz, 1.0));
+        float4 fragment_ws = get_pos_ws((float) (texture_xy_ss.x + 0.5) / width, (float) (texture_xy_ss.y + 0.5) / height, camera.invProj, camera.invView, depth_psw); //mul(camera.invView, float4(fragment_vs.xyz, 1.0));
 
         
         float ambient = 0.02;
@@ -124,7 +124,6 @@ void computeMain(uniform int light_count, int3 dispatch_ID : SV_DispatchThreadID
         }
         
 
-        //output_color = fragment_ws.xyz;
     }
 
     output_color_texture[texture_xy_ss.xy] = float4(output_color, 1.0);
