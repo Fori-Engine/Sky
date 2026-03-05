@@ -3,9 +3,9 @@
 
 StructuredBuffer<Scene> scene_desc;
 
-Texture2D input_color_texture;
+Texture2D input_texture0;
 RWTexture2D output_color_texture;
-Texture2D input_pos_vs_texture;
+Texture2D input_texture1;
 Texture2D input_depth_stencil_psw_texture;
 
 Texture2D input_shadow_maps[MAX_LIGHTS];
@@ -55,7 +55,7 @@ float4 get_pos_ws(float ux, float uy, float4x4 inv_proj, float4x4 inv_view, floa
 void computeMain(uniform int light_count, uniform int width, uniform int height, int3 dispatch_ID : SV_DispatchThreadID) {
     int3 texture_xy_ss = int3(dispatch_ID.x, dispatch_ID.y, 0);
 
-    float4 input_color = input_color_texture.Load(texture_xy_ss, 0);
+    float4 input_color = input_texture0.Load(texture_xy_ss, 0);
 
     float depth_psw = input_depth_stencil_psw_texture.Load(texture_xy_ss, 0).r;
     float3 output_color = input_color.xyz;
@@ -65,7 +65,7 @@ void computeMain(uniform int light_count, uniform int width, uniform int height,
         Camera camera = scene_desc[0].camera;
         float3 camera_pos_ws = float3(camera.invView[0][3], camera.invView[1][3], camera.invView[2][3]);
 
-        float4 fragment_vs = input_pos_vs_texture.Load(texture_xy_ss, 0);
+        float4 fragment_vs = input_texture1.Load(texture_xy_ss, 0);
         float4 fragment_ws = get_pos_ws((float) (texture_xy_ss.x + 0.5) / width, (float) (texture_xy_ss.y + 0.5) / height, camera.invProj, camera.invView, depth_psw); //mul(camera.invView, float4(fragment_vs.xyz, 1.0));
 
         

@@ -25,8 +25,8 @@ public class BlinnPhongPipeline extends RenderPipeline {
 
     private GraphicsPass scenePass;
     private RenderTarget scenePassRT;
-    private Resource<Pair<Texture[], Sampler[]>> sceneColorTextures;
-    private Resource<Pair<Texture[], Sampler[]>> scenePosTextures;
+    private Resource<Pair<Texture[], Sampler[]>> sceneColor0Textures;
+    private Resource<Pair<Texture[], Sampler[]>> sceneColor1Textures;
     private Resource<Pair<Texture[], Sampler[]>> sceneDepthStencilTextures;
 
     private ComputePass lightingPass;
@@ -68,7 +68,7 @@ public class BlinnPhongPipeline extends RenderPipeline {
         //Scene Color Pass Resources
         {
             scenePassRT = new RenderTarget(renderer);
-            sceneColorTextures = new Resource<>(
+            sceneColor0Textures = new Resource<>(
                     new Pair<>(
                             new Texture[]{
                                     Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32),
@@ -78,7 +78,7 @@ public class BlinnPhongPipeline extends RenderPipeline {
                     )
             );
 
-            scenePosTextures = new Resource<>(
+            sceneColor1Textures = new Resource<>(
                     new Pair<>(
                             new Texture[]{
                                     Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32),
@@ -102,17 +102,17 @@ public class BlinnPhongPipeline extends RenderPipeline {
 
             scenePassRT.addAttachment(
                     new RenderTargetAttachment(
-                            RenderTargetAttachmentTypes.Color,
-                            sceneColorTextures.get().key,
-                            sceneColorTextures.get().value
+                            RenderTargetAttachmentTypes.Color0,
+                            sceneColor0Textures.get().key,
+                            sceneColor0Textures.get().value
                     )
             );
 
             scenePassRT.addAttachment(
                     new RenderTargetAttachment(
-                            RenderTargetAttachmentTypes.Pos,
-                            scenePosTextures.get().key,
-                            scenePosTextures.get().value
+                            RenderTargetAttachmentTypes.Color1,
+                            sceneColor1Textures.get().key,
+                            sceneColor1Textures.get().value
 
                     )
             );
@@ -145,7 +145,7 @@ public class BlinnPhongPipeline extends RenderPipeline {
 
             lightingPassRT.addAttachment(
                     new RenderTargetAttachment(
-                            RenderTargetAttachmentTypes.Color,
+                            RenderTargetAttachmentTypes.Color0,
                             lightingPassColorTextures.get().key,
                             lightingPassColorTextures.get().value
                     )
@@ -172,7 +172,7 @@ public class BlinnPhongPipeline extends RenderPipeline {
         {
             displayPassRT = renderer.getSwapchainRenderTarget();
             displayPassColorTextures = new Resource<>(
-                    displayPassRT.getAttachment(RenderTargetAttachmentTypes.Color).getTextures()
+                    displayPassRT.getAttachment(RenderTargetAttachmentTypes.Color0).getTextures()
             );
 
             displayPassCamera = new Camera(
@@ -257,12 +257,12 @@ public class BlinnPhongPipeline extends RenderPipeline {
             scenePass.addDependencies(
                     new Dependency(
                             "OutputColorTextures",
-                            sceneColorTextures,
+                            sceneColor0Textures,
                             DependencyTypes.RenderTargetWrite
                     ),
                     new Dependency(
                             "OutputPosTextures",
-                            scenePosTextures,
+                            sceneColor1Textures,
                             DependencyTypes.RenderTargetWrite
                     ),
                     new Dependency(
@@ -281,12 +281,12 @@ public class BlinnPhongPipeline extends RenderPipeline {
 
                     new Dependency(
                             "InputColorTextures",
-                            sceneColorTextures,
+                            sceneColor0Textures,
                             DependencyTypes.ComputeShaderRead
                     ),
                     new Dependency(
                             "InputPosTextures",
-                            scenePosTextures,
+                            sceneColor1Textures,
                             DependencyTypes.ComputeShaderRead
                     ),
                     new Dependency(
@@ -392,7 +392,7 @@ public class BlinnPhongPipeline extends RenderPipeline {
 
         if(displayPassRT != renderer.getSwapchainRenderTarget()) {
             displayPassRT = renderer.getSwapchainRenderTarget();
-            RenderTargetAttachment colorAttachment = displayPassRT.getAttachment(RenderTargetAttachmentTypes.Color);
+            RenderTargetAttachment colorAttachment = displayPassRT.getAttachment(RenderTargetAttachmentTypes.Color0);
             displayPassColorTextures = new Resource<>(colorAttachment.getTextures());
 
             displayPass.getDependency(
@@ -672,11 +672,11 @@ public class BlinnPhongPipeline extends RenderPipeline {
             lightingPassShaderProgram.setTextures(
                     renderer.getFrameIndex(),
                     new DescriptorUpdate<>(
-                            "input_color_texture",
+                            "input_texture0",
                             inputColorTexturesDependency.get().key[renderer.getFrameIndex()]
                     ),
                     new DescriptorUpdate<>(
-                            "input_pos_vs_texture",
+                            "input_texture1",
                             inputPosTexturesDependency.get().key[renderer.getFrameIndex()]
                     ),
                     new DescriptorUpdate<>(

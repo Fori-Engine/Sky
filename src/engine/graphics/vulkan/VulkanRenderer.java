@@ -164,7 +164,7 @@ public class VulkanRenderer extends Renderer {
             );
         }
 
-        RenderTargetAttachment colorAttachment = new RenderTargetAttachment(RenderTargetAttachmentTypes.Color, colorTextures, null);
+        RenderTargetAttachment colorAttachment = new RenderTargetAttachment(RenderTargetAttachmentTypes.Color0, colorTextures, null);
 
 
         RenderTargetAttachment depthAttachment = new RenderTargetAttachment(
