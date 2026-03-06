@@ -23,10 +23,14 @@ public class RenderSystem extends EcsSystem {
         for(Entity entity : entities) {
             if(entity.has(ShaderComponent.class)) {
                 ShaderComponent shaderComponent = entity.getComponent(ShaderComponent.class);
-                if (entity.has(MeshComponent.class))
+                if (entity.has(MeshComponent.class)) {
                     setMaterialData(renderer.getFrameIndex(), shaderComponent.shaderProgram(), entity.getComponent(MaterialComponent.class));
-                if (entity.has(MeshListComponent.class))
+                    setSceneDescAndTransformData(renderer.getFrameIndex(), entity.getComponent(MeshComponent.class));
+                }
+                if (entity.has(MeshListComponent.class)) {
                     setMaterialData(renderer.getFrameIndex(), shaderComponent.shaderProgram(), entity.getComponent(MaterialComponent.class));
+                    setSceneDescAndTransformData(renderer.getFrameIndex(), entity.getComponent(MeshListComponent.class));
+                }
             }
 
 
@@ -35,6 +39,22 @@ public class RenderSystem extends EcsSystem {
 
         renderPipeline.getFeatures(SceneFeatures.class).setScene(scene);
         renderPipeline.render(renderer);
+    }
+
+    private void setSceneDescAndTransformData(int frameIndex, MeshComponent meshComponent) {
+        meshComponent.shaderProgram.setBuffers(
+                frameIndex,
+                new DescriptorUpdate<>("scene_desc", meshComponent.sceneDescBuffers[frameIndex]),
+                new DescriptorUpdate<>("transforms", meshComponent.transformsBuffers[frameIndex])
+        );
+    }
+
+    private void setSceneDescAndTransformData(int frameIndex, MeshListComponent meshListComponent) {
+        meshListComponent.shaderProgram.setBuffers(
+                frameIndex,
+                new DescriptorUpdate<>("scene_desc", meshListComponent.sceneDescBuffers[frameIndex]),
+                new DescriptorUpdate<>("transforms", meshListComponent.transformsBuffers[frameIndex])
+        );
     }
 
     private void setMaterialData(int frameIndex, ShaderProgram shaderProgram, MaterialComponent materialComponent) {

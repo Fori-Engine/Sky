@@ -106,14 +106,6 @@ public class ExampleStage extends Stage {
             MeshListComponent meshListComponent = new MeshListComponent(renderer, renderer, 100, 100, 1, shaderProgram);
             meshListComponent.addMeshData(meshData, 0);
 
-            for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                meshListComponent.shaderProgram.setBuffers(
-                        frameIndex,
-                        new DescriptorUpdate<>("scene_desc", meshListComponent.sceneDescBuffers[frameIndex]),
-                        new DescriptorUpdate<>("transforms", meshListComponent.transformsBuffers[frameIndex])
-                );
-            }
-
             Entity floorEntity = scene.createEntity(
                     meshListComponent,
                     new MaterialComponent(new engine.graphics.Material(
@@ -148,15 +140,6 @@ public class ExampleStage extends Stage {
             meshComponent.setMeshData(meshData);
 
 
-
-            for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                meshComponent.shaderProgram.setBuffers(
-                        frameIndex,
-                        new DescriptorUpdate<>("scene_desc", meshComponent.sceneDescBuffers[frameIndex]),
-                        new DescriptorUpdate<>("transforms", meshComponent.transformsBuffers[frameIndex])
-                );
-            }
-
             Entity cubeEntity = scene.createEntity(
                     new MaterialComponent(new engine.graphics.Material(
                             Sampler.newSampler(renderer, Texture.Filter.Linear, Texture.Filter.Linear, true),
@@ -189,14 +172,6 @@ public class ExampleStage extends Stage {
 
             MeshComponent meshComponent = new MeshComponent(renderer, renderer, 100, 100, shaderProgram);
             meshComponent.setMeshData(meshData);
-
-            for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                meshComponent.shaderProgram.setBuffers(
-                        frameIndex,
-                        new DescriptorUpdate<>("scene_desc", meshComponent.sceneDescBuffers[frameIndex]),
-                        new DescriptorUpdate<>("transforms", meshComponent.transformsBuffers[frameIndex])
-                );
-            }
 
             Entity cubeEntity = scene.createEntity(
                     new MaterialComponent(new engine.graphics.Material(
