@@ -68,12 +68,8 @@ struct FSOutput {
     float4 color1 : SV_Target1;
 }
 
-
-Texture2D color_map_texture;
-SamplerState color_map_sampler;
-
-Texture2D normal_map_texture;
-SamplerState normal_map_sampler;
+Texture2D material[4];
+SamplerState material_sampler;
 
 [shader("fragment")]
 FSOutput fragmentMain(VSOutput vsOutput, uniform int render_mode, uniform int light_index) {
@@ -81,12 +77,12 @@ FSOutput fragmentMain(VSOutput vsOutput, uniform int render_mode, uniform int li
 
     if (render_mode == 0) {
 
-        float3 normal_ts = normal_map_texture.Sample(normal_map_sampler, vsOutput.uv_ts).xyz * 2.0 - 1.0;
+        float3 normal_ts = material[1].Sample(material_sampler, vsOutput.uv_ts).xyz * 2.0 - 1.0;
         float3 normal_ws = normalize(mul(vsOutput.tbn_ws_inv, normalize(normal_ts)));
 
         float2 encoded_normal_ws = encode(normal_ws);
 
-        output.color0 = float4(vsOutput.color.xyz * color_map_texture.Sample(color_map_sampler, vsOutput.uv_ts).xyz, encoded_normal_ws.x);
+        output.color0 = float4(vsOutput.color.xyz * material[0].Sample(material_sampler, vsOutput.uv_ts).xyz, encoded_normal_ws.x);
         output.color1 = float4(0.0, 0.0, 0.0, encoded_normal_ws.y);
     }
 

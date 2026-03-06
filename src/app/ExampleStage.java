@@ -106,22 +106,7 @@ public class ExampleStage extends Stage {
             MeshListComponent meshListComponent = new MeshListComponent(renderer, renderer, 100, 100, 1, shaderProgram);
             meshListComponent.addMeshData(meshData, 0);
 
-            Texture colorMapTexture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/brickwall.jpg"), TextureFormatType.ColorR8G8B8A8);
-            Sampler colorMapSampler = Sampler.newSampler(colorMapTexture, Texture.Filter.Linear, Texture.Filter.Linear, true);
-
-            Texture normalMapTexture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/normal_map.png"), TextureFormatType.ColorR8G8B8A8unorm);
-            Sampler normalMapSampler = Sampler.newSampler(colorMapTexture, Texture.Filter.Linear, Texture.Filter.Linear, true);
-
-
-
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                meshListComponent.shaderProgram.setTextures(frameIndex, new DescriptorUpdate<>("color_map_texture", colorMapTexture));
-                meshListComponent.shaderProgram.setSamplers(frameIndex, new DescriptorUpdate<>("color_map_sampler", colorMapSampler));
-
-                meshListComponent.shaderProgram.setTextures(frameIndex, new DescriptorUpdate<>("normal_map_texture", normalMapTexture));
-                meshListComponent.shaderProgram.setSamplers(frameIndex, new DescriptorUpdate<>("normal_map_sampler", normalMapSampler));
-
-
                 meshListComponent.shaderProgram.setBuffers(
                         frameIndex,
                         new DescriptorUpdate<>("scene_desc", meshListComponent.sceneDescBuffers[frameIndex]),
@@ -131,6 +116,13 @@ public class ExampleStage extends Stage {
 
             Entity floorEntity = scene.createEntity(
                     meshListComponent,
+                    new MaterialComponent(new engine.graphics.Material(
+                            Sampler.newSampler(renderer, Texture.Filter.Linear, Texture.Filter.Linear, true),
+                            Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/brickwall.jpg"), TextureFormatType.ColorR8G8B8A8),
+                            Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/normal_map.png"), TextureFormatType.ColorR8G8B8A8),
+                            Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/diffuse_map.png"), TextureFormatType.ColorR8G8B8A8),
+                            Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/specular_map.png"), TextureFormatType.ColorR8G8B8A8)
+                    )),
                     new ShaderComponent(shaderProgram),
                     new TransformComponent(new Matrix4f().identity().translate(0, 2, 0).rotate((float) Math.toRadians(0), 0, 0, 1)),
                     new NVPhysXComponent(new BoxCollider(10.0f, 1f, 10.0f), new Material(0.05f, 0.05f, 0.3f), ActorType.Static)
@@ -155,22 +147,9 @@ public class ExampleStage extends Stage {
             MeshComponent meshComponent = new MeshComponent(renderer, renderer, 100, 100, shaderProgram);
             meshComponent.setMeshData(meshData);
 
-            Texture colorMapTexture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/bugcat.jpg"), TextureFormatType.ColorR8G8B8A8);
-            Sampler colorMapSampler = Sampler.newSampler(colorMapTexture, Texture.Filter.Linear, Texture.Filter.Linear, true);
-
-            Texture normalMapTexture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/normal_map.png"), TextureFormatType.ColorR8G8B8A8unorm);
-            Sampler normalMapSampler = Sampler.newSampler(colorMapTexture, Texture.Filter.Linear, Texture.Filter.Linear, true);
-
 
 
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                meshComponent.shaderProgram.setTextures(frameIndex, new DescriptorUpdate<>("color_map_texture", colorMapTexture));
-                meshComponent.shaderProgram.setSamplers(frameIndex, new DescriptorUpdate<>("color_map_sampler", colorMapSampler));
-
-                meshComponent.shaderProgram.setTextures(frameIndex, new DescriptorUpdate<>("normal_map_texture", normalMapTexture));
-                meshComponent.shaderProgram.setSamplers(frameIndex, new DescriptorUpdate<>("normal_map_sampler", normalMapSampler));
-
-
                 meshComponent.shaderProgram.setBuffers(
                         frameIndex,
                         new DescriptorUpdate<>("scene_desc", meshComponent.sceneDescBuffers[frameIndex]),
@@ -179,6 +158,13 @@ public class ExampleStage extends Stage {
             }
 
             Entity cubeEntity = scene.createEntity(
+                    new MaterialComponent(new engine.graphics.Material(
+                            Sampler.newSampler(renderer, Texture.Filter.Linear, Texture.Filter.Linear, true),
+                            Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/bugcat.jpg"), TextureFormatType.ColorR8G8B8A8),
+                            Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/normal_map.png"), TextureFormatType.ColorR8G8B8A8),
+                            Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/diffuse_map.png"), TextureFormatType.ColorR8G8B8A8),
+                            Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/specular_map.png"), TextureFormatType.ColorR8G8B8A8)
+                    )),
                     meshComponent,
                     new ShaderComponent(shaderProgram),
                     new TransformComponent(new Matrix4f().identity().translate(0, 5, 0).rotate((float) Math.toRadians(0), 0, 0, 1)),
@@ -204,22 +190,7 @@ public class ExampleStage extends Stage {
             MeshComponent meshComponent = new MeshComponent(renderer, renderer, 100, 100, shaderProgram);
             meshComponent.setMeshData(meshData);
 
-            Texture colorMapTexture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/bugcat.jpg"), TextureFormatType.ColorR8G8B8A8);
-            Sampler colorMapSampler = Sampler.newSampler(colorMapTexture, Texture.Filter.Linear, Texture.Filter.Linear, true);
-
-            Texture normalMapTexture = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/normal_map.png"), TextureFormatType.ColorR8G8B8A8unorm);
-            Sampler normalMapSampler = Sampler.newSampler(colorMapTexture, Texture.Filter.Linear, Texture.Filter.Linear, true);
-
-
-
             for (int frameIndex = 0; frameIndex < renderer.getMaxFramesInFlight(); frameIndex++) {
-                meshComponent.shaderProgram.setTextures(frameIndex, new DescriptorUpdate<>("color_map_texture", colorMapTexture));
-                meshComponent.shaderProgram.setSamplers(frameIndex, new DescriptorUpdate<>("color_map_sampler", colorMapSampler));
-
-                meshComponent.shaderProgram.setTextures(frameIndex, new DescriptorUpdate<>("normal_map_texture", normalMapTexture));
-                meshComponent.shaderProgram.setSamplers(frameIndex, new DescriptorUpdate<>("normal_map_sampler", normalMapSampler));
-
-
                 meshComponent.shaderProgram.setBuffers(
                         frameIndex,
                         new DescriptorUpdate<>("scene_desc", meshComponent.sceneDescBuffers[frameIndex]),
@@ -228,6 +199,13 @@ public class ExampleStage extends Stage {
             }
 
             Entity cubeEntity = scene.createEntity(
+                    new MaterialComponent(new engine.graphics.Material(
+                            Sampler.newSampler(renderer, Texture.Filter.Linear, Texture.Filter.Linear, true),
+                            Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/bugcat.jpg"), TextureFormatType.ColorR8G8B8A8),
+                            Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/normal_map.png"), TextureFormatType.ColorR8G8B8A8),
+                            Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/diffuse_map.png"), TextureFormatType.ColorR8G8B8A8),
+                            Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/specular_map.png"), TextureFormatType.ColorR8G8B8A8)
+                    )),
                     meshComponent,
                     new ShaderComponent(shaderProgram),
                     new TransformComponent(new Matrix4f().identity().translate(3, 5, 0).rotate((float) Math.toRadians(0), 0, 0, 1)),
