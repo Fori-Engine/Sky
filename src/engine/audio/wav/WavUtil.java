@@ -1,7 +1,9 @@
 package engine.audio.wav;
 
-import audia.AudioBuffer;
-import audia.AudioDevice;
+
+
+import engine.audio.AudioBuffer;
+import engine.audio.AudioDevice;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
