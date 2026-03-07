@@ -4,7 +4,7 @@ import engine.Input;
 import engine.Surface;
 import engine.Time;
 import engine.ecs.CameraComponent;
-import engine.ecs.Entity;
+import engine.ecs.Actor;
 import engine.ecs.Script;
 import engine.graphics.Camera;
 import engine.graphics.Renderer;
@@ -37,13 +37,13 @@ public class FlyCameraScript extends Script {
     }
 
     @Override
-    public void init(Entity entity) {
-        entity.getComponent(CameraComponent.class).camera = camera;
+    public void init(Actor actor) {
+        actor.getComponent(CameraComponent.class).camera = camera;
     }
 
     @Override
-    public void update(Entity entity) {
-        if(entity.has(CameraComponent.class)) {
+    public void update(Actor actor) {
+        if(actor.has(CameraComponent.class)) {
 
             if (lastMouseX == -1 && lastMouseY == -1) {
                 lastMouseX = surface.getMousePos().x;

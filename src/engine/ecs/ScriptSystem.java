@@ -2,7 +2,7 @@ package engine.ecs;
 
 import java.util.List;
 
-public class ScriptSystem extends EcsSystem {
+public class ScriptSystem extends ActorSystem {
     private Scene scene;
 
     public ScriptSystem(Scene scene) {
@@ -10,18 +10,18 @@ public class ScriptSystem extends EcsSystem {
     }
 
     @Override
-    public void run(List<Entity> entities) {
-        for(Entity entity : entities) {
-            if(entity.has(ScriptComponent.class)) {
-                ScriptComponent scriptComponent = entity.getComponent(ScriptComponent.class);
+    public void run(Actor root) {
+        root.previsitAllActors(actor -> {
+            if(actor.has(ScriptComponent.class)) {
+                ScriptComponent scriptComponent = actor.getComponent(ScriptComponent.class);
                 if (!scriptComponent.script().initialized) {
-                    scriptComponent.script().init(entity);
+                    scriptComponent.script().init(actor);
                 }
 
-                scriptComponent.script().update(entity);
+                scriptComponent.script().update(actor);
 
             }
-        }
+        });
     }
 
     @Override

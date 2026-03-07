@@ -351,11 +351,9 @@ public class BlinnPhongPipeline extends RenderPipeline {
         camera.getInvProj().get(sceneDescData);
         sceneDescData.position(sceneDescData.position() + SizeUtil.MATRIX_SIZE_BYTES);
 
-
-
-        for(Entity entity : scene.getEntities()) {
-            if(entity.has(SpotlightComponent.class)) {
-                SpotlightComponent spotlightComponent = entity.getComponent(SpotlightComponent.class);
+        scene.getRootActor().previsitAllActors(actor -> {
+            if(actor.has(SpotlightComponent.class)) {
+                SpotlightComponent spotlightComponent = actor.getComponent(SpotlightComponent.class);
 
                 spotlightComponent.view.get(sceneDescData);
                 sceneDescData.position(sceneDescData.position() + SizeUtil.MATRIX_SIZE_BYTES);
@@ -377,7 +375,9 @@ public class BlinnPhongPipeline extends RenderPipeline {
                 sceneDescData.position(sceneDescData.position() + SizeUtil.VEC3_SIZE_BYTES);
                 sceneDescData.putFloat(-1);
             }
-        }
+        });
+
+
 
 
     }
@@ -405,12 +405,13 @@ public class BlinnPhongPipeline extends RenderPipeline {
 
         }
 
-        for(Entity entity : scene.getEntities()) {
-            if(entity.has(CameraComponent.class)) {
-                CameraComponent cameraComponent = entity.getComponent(CameraComponent.class);
+        scene.getRootActor().previsitAllActors(actor -> {
+            if(actor.has(CameraComponent.class)) {
+                CameraComponent cameraComponent = actor.getComponent(CameraComponent.class);
                 sceneCamera = cameraComponent.camera;
             }
-        }
+        });
+
 
 
 
@@ -418,22 +419,23 @@ public class BlinnPhongPipeline extends RenderPipeline {
         {
 
             lightCount = 0;
-            for(Entity entity : scene.getEntities()) {
-                if (entity.has(SpotlightComponent.class))
+
+            scene.getRootActor().previsitAllActors(actor -> {
+                if (actor.has(SpotlightComponent.class))
                     lightCount++;
-            }
+            });
 
 
             Texture[] shadowMapTextures = new Texture[lightCount * renderer.getMaxFramesInFlight()];
             Sampler[] shadowMapSamplers = new Sampler[shadowMapTextures.length];
 
-            int lightIndex = 0;
+            final int[] lightIndex = {0};
 
-            for(Entity entity : scene.getEntities()) {
-                if (entity.has(SpotlightComponent.class)) {
-                    SpotlightComponent spotlightComponent = entity.getComponent(SpotlightComponent.class);
-                    int i1 = renderer.getMaxFramesInFlight() * lightIndex;
-                    int i2 = renderer.getMaxFramesInFlight() * lightIndex + 1;
+            scene.getRootActor().previsitAllActors(actor -> {
+                if (actor.has(SpotlightComponent.class)) {
+                    SpotlightComponent spotlightComponent = actor.getComponent(SpotlightComponent.class);
+                    int i1 = renderer.getMaxFramesInFlight() * lightIndex[0];
+                    int i2 = renderer.getMaxFramesInFlight() * lightIndex[0] + 1;
 
                     shadowMapTextures[i1] = spotlightComponent.renderTarget
                             .getAttachment(RenderTargetAttachmentTypes.Depth)
@@ -451,10 +453,9 @@ public class BlinnPhongPipeline extends RenderPipeline {
                             .getAttachment(RenderTargetAttachmentTypes.Depth)
                             .getSamplers()[1];
 
-                    lightIndex++;
+                    lightIndex[0]++;
                 }
-            }
-
+            });
 
 
             Resource<Pair<Texture[], Sampler[]>> shadowMapTexturesResource = new Resource<>(new Pair<>(shadowMapTextures, shadowMapSamplers));
@@ -473,19 +474,19 @@ public class BlinnPhongPipeline extends RenderPipeline {
         {
             //Update entity shaders
             {
-                for(Entity entity : scene.getEntities()) {
-                    if(entity.has(TransformComponent.class)) {
-                        TransformComponent transformComponent = entity.getComponent(TransformComponent.class);
+                scene.getRootActor().previsitAllActors(actor -> {
+                    if(actor.has(TransformComponent.class)) {
+                        TransformComponent transformComponent = actor.getComponent(TransformComponent.class);
 
-                        if(entity.has(MeshListComponent.class)) {
-                            MeshListComponent meshListComponent = entity.getComponent(MeshListComponent.class);
+                        if(actor.has(MeshListComponent.class)) {
+                            MeshListComponent meshListComponent = actor.getComponent(MeshListComponent.class);
                             ByteBuffer transformsData = meshListComponent.transformsBuffers[renderer.getFrameIndex()].get();
                             transformComponent.transform().get(transformComponent.transformIndex() * SizeUtil.MATRIX_SIZE_BYTES, transformsData);
                             ByteBuffer sceneDescData = meshListComponent.sceneDescBuffers[renderer.getFrameIndex()].get();
                             updateSceneDesc(sceneDescData, sceneCamera, scene);
                         }
-                        if(entity.has(MeshComponent.class)) {
-                            MeshComponent meshComponent = entity.getComponent(MeshComponent.class);
+                        if(actor.has(MeshComponent.class)) {
+                            MeshComponent meshComponent = actor.getComponent(MeshComponent.class);
                             ByteBuffer transformsData = meshComponent.transformsBuffers[renderer.getFrameIndex()].get();
                             transformComponent.transform().get(0, transformsData);
                             ByteBuffer sceneDescData = meshComponent.sceneDescBuffers[renderer.getFrameIndex()].get();
@@ -494,7 +495,9 @@ public class BlinnPhongPipeline extends RenderPipeline {
 
 
                     }
-                }
+                });
+
+
 
             }
 
@@ -517,9 +520,9 @@ public class BlinnPhongPipeline extends RenderPipeline {
                 {
                     int mode = 1;
 
-                    for(Entity entity : scene.getEntities()) {
-                        if(entity.has(SpotlightComponent.class)) {
-                            SpotlightComponent spotlightComponent = entity.getComponent(SpotlightComponent.class);
+                    scene.getRootActor().previsitAllActors(actor -> {
+                        if(actor.has(SpotlightComponent.class)) {
+                            SpotlightComponent spotlightComponent = actor.getComponent(SpotlightComponent.class);
 
 
 
@@ -535,8 +538,8 @@ public class BlinnPhongPipeline extends RenderPipeline {
                             {
                                 shadowMapGenPass.setCullMode(CullMode.Front);
 
-                                for(Entity e : scene.getEntities()) {
 
+                                scene.getRootActor().previsitAllActors(e -> {
                                     if (e.has(MeshListComponent.class)) {
                                         MeshListComponent meshListComponent = e.getComponent(MeshListComponent.class);
                                         shadowMapGenPass.setDrawBuffers(
@@ -571,7 +574,7 @@ public class BlinnPhongPipeline extends RenderPipeline {
                                         }
                                         shadowMapGenPass.drawIndexed(meshComponent.indexCount);
                                     }
-                                }
+                                });
 
                             }
                             shadowMapGenPass.endRendering();
@@ -579,8 +582,7 @@ public class BlinnPhongPipeline extends RenderPipeline {
                         }
 
 
-                    }
-
+                    });
 
 
 
@@ -603,9 +605,9 @@ public class BlinnPhongPipeline extends RenderPipeline {
                     scenePass.startRendering(scenePassRT, 0, renderer.getWidth(), renderer.getHeight(), true, Color.BLACK);
                     {
                         scenePass.setCullMode(CullMode.Back);
-                        for(Entity entity : scene.getEntities()) {
-                            if (entity.has(MeshListComponent.class)) {
-                                MeshListComponent meshListComponent = entity.getComponent(MeshListComponent.class);
+                        scene.getRootActor().previsitAllActors(actor -> {
+                            if (actor.has(MeshListComponent.class)) {
+                                MeshListComponent meshListComponent = actor.getComponent(MeshListComponent.class);
 
                                 scenePass.setDrawBuffers(
                                         meshListComponent.vertexBuffer,
@@ -622,8 +624,8 @@ public class BlinnPhongPipeline extends RenderPipeline {
                                 }
                                 scenePass.drawIndexed(meshListComponent.indexCount);
                             }
-                            if(entity.has(MeshComponent.class)) {
-                                MeshComponent meshComponent = entity.getComponent(MeshComponent.class);
+                            if(actor.has(MeshComponent.class)) {
+                                MeshComponent meshComponent = actor.getComponent(MeshComponent.class);
                                 scenePass.setDrawBuffers(
                                         meshComponent.vertexBuffer,
                                         meshComponent.indexBuffer
@@ -640,7 +642,10 @@ public class BlinnPhongPipeline extends RenderPipeline {
                                 scenePass.drawIndexed(meshComponent.indexCount);
                             }
 
-                        }
+                        });
+
+
+
                     }
                     scenePass.endRendering();
                 }

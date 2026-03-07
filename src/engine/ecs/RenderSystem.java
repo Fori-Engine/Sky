@@ -5,7 +5,7 @@ import engine.graphics.pipelines.SceneFeatures;
 
 import java.util.List;
 
-public class RenderSystem extends EcsSystem {
+public class RenderSystem extends ActorSystem {
     private Renderer renderer;
     private RenderPipeline renderPipeline;
     private Scene scene;
@@ -18,23 +18,24 @@ public class RenderSystem extends EcsSystem {
     }
 
     @Override
-    public void run(List<Entity> entities) {
-
-        for(Entity entity : entities) {
-            if(entity.has(ShaderComponent.class)) {
-                ShaderComponent shaderComponent = entity.getComponent(ShaderComponent.class);
-                if (entity.has(MeshComponent.class)) {
-                    setMaterialData(renderer.getFrameIndex(), shaderComponent.shaderProgram(), entity.getComponent(MaterialComponent.class));
-                    setSceneDescAndTransformData(renderer.getFrameIndex(), entity.getComponent(MeshComponent.class));
+    public void run(Actor root) {
+        root.previsitAllActors(actor -> {
+            if(actor.has(ShaderComponent.class)) {
+                ShaderComponent shaderComponent = actor.getComponent(ShaderComponent.class);
+                if (actor.has(MeshComponent.class)) {
+                    setMaterialData(renderer.getFrameIndex(), shaderComponent.shaderProgram(), actor.getComponent(MaterialComponent.class));
+                    setSceneDescAndTransformData(renderer.getFrameIndex(), actor.getComponent(MeshComponent.class));
                 }
-                if (entity.has(MeshListComponent.class)) {
-                    setMaterialData(renderer.getFrameIndex(), shaderComponent.shaderProgram(), entity.getComponent(MaterialComponent.class));
-                    setSceneDescAndTransformData(renderer.getFrameIndex(), entity.getComponent(MeshListComponent.class));
+                if (actor.has(MeshListComponent.class)) {
+                    setMaterialData(renderer.getFrameIndex(), shaderComponent.shaderProgram(), actor.getComponent(MaterialComponent.class));
+                    setSceneDescAndTransformData(renderer.getFrameIndex(), actor.getComponent(MeshListComponent.class));
                 }
             }
+        });
 
 
-        }
+
+
 
 
         renderPipeline.getFeatures(SceneFeatures.class).setScene(scene);

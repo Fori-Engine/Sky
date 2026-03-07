@@ -15,7 +15,7 @@ import physx.physics.*;
 
 import java.util.List;
 
-public class NVPhysXSystem extends EcsSystem {
+public class NVPhysXSystem extends ActorSystem {
     private PxScene pxScene;
     private PxPhysics physics;
     private PxFoundation foundation;
@@ -74,12 +74,12 @@ public class NVPhysXSystem extends EcsSystem {
     }
 
     @Override
-    public void run(List<Entity> entities) {
+    public void run(Actor root) {
 
-        for (Entity entity : entities) {
-            if(entity.has(NVPhysXComponent.class) && entity.has(TransformComponent.class)) {
-                NVPhysXComponent nvPhysXComponent = entity.getComponent(NVPhysXComponent.class);
-                TransformComponent transformComponent = entity.getComponent(TransformComponent.class);
+        root.previsitAllActors(actor -> {
+            if(actor.has(NVPhysXComponent.class) && actor.has(TransformComponent.class)) {
+                NVPhysXComponent nvPhysXComponent = actor.getComponent(NVPhysXComponent.class);
+                TransformComponent transformComponent = actor.getComponent(TransformComponent.class);
 
                 if(!nvPhysXComponent.initialized) {
                     try(MemoryStack stack = MemoryStack.stackPush()) {
@@ -156,10 +156,7 @@ public class NVPhysXSystem extends EcsSystem {
                         .translate(pos.getX(), pos.getY(), pos.getZ())
                         .rotate(rotation);
             }
-        }
-
-
-
+        });
 
 
         if(surface.getKeyPressed(Input.KEY_SPACE)) {

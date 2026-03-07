@@ -13,7 +13,7 @@ import org.joml.Matrix2f;
 import org.joml.Vector2f;
 import java.nio.ByteBuffer;
 import java.util.List;
-public class UISystem extends EcsSystem {
+public class UISystem extends ActorSystem {
 
     private Renderer renderer;
     private RenderPipeline renderPipeline;
@@ -109,7 +109,7 @@ public class UISystem extends EcsSystem {
     }
 
     @Override
-    public void run(List<Entity> entities) {
+    public void run(Actor root) {
         ScreenSpaceFeatures screenSpaceFeatures = renderPipeline.getFeatures(ScreenSpaceFeatures.class);
         vertexBufferData = screenSpaceFeatures.getVertexBuffers()[renderer.getFrameIndex()].get();
         vertexBufferData.clear();
