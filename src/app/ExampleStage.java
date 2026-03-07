@@ -108,7 +108,7 @@ public class ExampleStage extends Stage {
 
 
 
-                MeshData meshData = MeshGenerator.newBox(10, 1, 10);
+                MeshData meshData = MeshGenerator.newBox(40, 1, 40);
 
                 MeshListComponent meshListComponent = new MeshListComponent(renderer, renderer, 100, 100, 1, shaderProgram);
                 meshListComponent.addMeshData(meshData, 0);
@@ -118,7 +118,7 @@ public class ExampleStage extends Stage {
                         meshListComponent,
                         new MaterialComponent(new engine.graphics.Material(
                                 Sampler.newSampler(renderer, Texture.Filter.Linear, Texture.Filter.Linear, true),
-                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/brickwall.jpg"), TextureFormatType.ColorR8G8B8A8),
+                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/woodfloor.png"), TextureFormatType.ColorR8G8B8A8),
                                 Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/normal_map.png"), TextureFormatType.ColorR8G8B8A8),
                                 Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/diffuse_map.png"), TextureFormatType.ColorR8G8B8A8),
                                 Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/specular_map.png"), TextureFormatType.ColorR8G8B8A8)
@@ -199,22 +199,6 @@ public class ExampleStage extends Stage {
 
             //Spotlight
             {
-                RenderTarget lightRT = new RenderTarget(renderer);
-
-                lightRT.addAttachment(
-                        new RenderTargetAttachment(
-                                RenderTargetAttachmentTypes.Depth,
-                                new Texture[]{
-                                        Texture.newDepthTexture(lightRT, 1024, 1024, TextureFormatType.Depth32),
-                                        Texture.newDepthTexture(lightRT, 1024, 1024, TextureFormatType.Depth32)
-                                },
-                                new Sampler[]{
-                                        Sampler.newSampler(lightRT, Texture.Filter.Nearest, Texture.Filter.Nearest, false),
-                                        Sampler.newSampler(lightRT, Texture.Filter.Nearest, Texture.Filter.Nearest, false)
-                                }
-                        )
-                );
-
 
                 float x = 0, y = 10, z = 1f;
 
@@ -222,6 +206,7 @@ public class ExampleStage extends Stage {
                 rootActor.addActor(scene.newActor(
                         "Spotlight1",
                         new SpotlightComponent(
+                                renderer,
                                 new Matrix4f().lookAt(
                                         new Vector3f(x, y, z),
                                         new Vector3f(0, 0, 0),
@@ -234,9 +219,7 @@ public class ExampleStage extends Stage {
                                         10.0f,
                                         true
                                 ),
-
-                                true,
-                                lightRT
+                                true
                         )
                 ));
 
@@ -245,27 +228,12 @@ public class ExampleStage extends Stage {
 
             //Spotlight
             {
-                RenderTarget lightRT = new RenderTarget(renderer);
-
-                lightRT.addAttachment(
-                        new RenderTargetAttachment(
-                                RenderTargetAttachmentTypes.Depth,
-                                new Texture[]{
-                                        Texture.newDepthTexture(lightRT, 1024, 1024, TextureFormatType.Depth32),
-                                        Texture.newDepthTexture(lightRT, 1024, 1024, TextureFormatType.Depth32)
-                                },
-                                new Sampler[]{
-                                        Sampler.newSampler(lightRT, Texture.Filter.Nearest, Texture.Filter.Nearest, false),
-                                        Sampler.newSampler(lightRT, Texture.Filter.Nearest, Texture.Filter.Nearest, false)
-                                }
-                        )
-                );
-
 
                 float x = 3, y = 10, z = 1f;
 
 
                 SpotlightComponent spotlightComponent = new SpotlightComponent(
+                        renderer,
                         new Matrix4f().lookAt(
                                 new Vector3f(x, y, z),
                                 new Vector3f(3, 0, 0),
@@ -279,8 +247,7 @@ public class ExampleStage extends Stage {
                                 true
                         ),
 
-                        true,
-                        lightRT
+                        true
                 );
                 spotlightComponent.color = new Vector3f(1, 1, 1);
 

@@ -1,6 +1,6 @@
 package engine.ecs;
 
-import engine.graphics.RenderTarget;
+import engine.graphics.*;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -11,17 +11,30 @@ public class SpotlightComponent {
     public boolean invertY;
     public RenderTarget renderTarget;
     public float attenuationConstant = 1.0f;
-    public float attenuationLinear = 0.14f;
-    public float attenuationQuadratic = 0.07f;
+    public float attenuationLinear = 0.0014f;
+    public float attenuationQuadratic = 0.000007f;
     public Vector3f color = new Vector3f(0, 1, 1);
 
-    public SpotlightComponent(Matrix4f view, Matrix4f proj, boolean invertY, RenderTarget renderTarget) {
+    public SpotlightComponent(Disposable parent, Matrix4f view, Matrix4f proj, boolean invertY) {
         setView(view);
-
-
         setProj(proj);
         this.invertY = invertY;
-        this.renderTarget = renderTarget;
+
+        renderTarget = new RenderTarget(parent);
+
+        renderTarget.addAttachment(
+                new RenderTargetAttachment(
+                        RenderTargetAttachmentTypes.Depth,
+                        new Texture[]{
+                                Texture.newDepthTexture(renderTarget, 1024, 1024, TextureFormatType.Depth32),
+                                Texture.newDepthTexture(renderTarget, 1024, 1024, TextureFormatType.Depth32)
+                        },
+                        new Sampler[]{
+                                Sampler.newSampler(renderTarget, Texture.Filter.Nearest, Texture.Filter.Nearest, false),
+                                Sampler.newSampler(renderTarget, Texture.Filter.Nearest, Texture.Filter.Nearest, false)
+                        }
+                )
+        );
 
         if(invertY){
             this.proj.m11(this.proj.m11() * -1);

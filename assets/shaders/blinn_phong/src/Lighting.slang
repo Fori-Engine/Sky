@@ -12,7 +12,7 @@ Texture2D input_shadow_maps[MAX_LIGHTS];
 SamplerState input_shadow_maps_samplers[MAX_LIGHTS];
 
 float4 get_normal_biased_fragment_ws(float4 fragment_ws, float3 light_dir_ws, float3 normal_ws) {
-    return fragment_ws + float4(normal_ws, 1.0) * 0.01 * 0.001 * saturate(1 - dot(light_dir_ws, normal_ws));
+    return fragment_ws + float4(normal_ws, 1.0) * 0.015 * abs(1 - dot(light_dir_ws, normal_ws));
 }
 
 float pcf(Texture2D input_shadow_map, SamplerState input_shadow_map_sampler, int pcf_kernel_w, float2 shadow_map_uv_ts, float4 fragment_shadow_map_ps) {
@@ -28,7 +28,7 @@ float pcf(Texture2D input_shadow_map, SamplerState input_shadow_map_sampler, int
         for (int y = -pcf_kernel_w; y <= -pcf_kernel_w; y++) {
             float shadow_map_depth = input_shadow_map.Sample(input_shadow_map_sampler, shadow_map_uv_ts.xy + float2(x, y) * float2(shadow_map_texel_w, shadow_map_texel_h)).r;
 
-            shadow_samples += (shadow_map_depth - 0.001 < fragment_shadow_map_ps.z) ? 0.5 : 0.0;
+            shadow_samples += (shadow_map_depth < fragment_shadow_map_ps.z) ? 0.5 : 0.0;
         }
     }
 
@@ -71,7 +71,7 @@ void computeMain(uniform int light_count, uniform int width, uniform int height,
         float4 fragment_ws = get_pos_ws((float) (texture_xy_ss.x + 0.5) / width, (float) (texture_xy_ss.y + 0.5) / height, camera.invProj, camera.invView, depth_psw); //mul(camera.invView, float4(fragment_vs.xyz, 1.0));
 
         
-        float ambient = 0.2;
+        float ambient = 0.01;
 
         for (int light_index = 0; light_index < light_count; light_index++) {
 
@@ -94,13 +94,13 @@ void computeMain(uniform int light_count, uniform int width, uniform int height,
 
                 float shadow = 0;
 
-          
+            
                 // Shadows
                 {
                     shadow = pcf(
                         input_shadow_maps[light_index], 
                         input_shadow_maps_samplers[light_index], 
-                        2, 
+                        1, 
                         shadow_map_uv_ts.xy, 
                         fragment_shadow_map_ps
                     );
@@ -118,8 +118,10 @@ void computeMain(uniform int light_count, uniform int width, uniform int height,
                     float3 halfway_dir_ws = normalize(light_dir_ws + camera_dir_ws);
                     
                     float specular = specular * pow(dot(halfway_dir_ws, normal_ws), 128);
-                    
-                    output_color += input_color.xyz * (attenuation * (ambient + diffuse + specular) * light.color - shadow);
+
+                    float3 mul = ((attenuation * (ambient + diffuse + specular) * light.color - shadow));
+
+                    output_color += input_color.xyz * mul;
                 }
             }
         }
