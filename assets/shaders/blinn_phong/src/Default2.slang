@@ -83,7 +83,11 @@ FSOutput fragmentMain(VSOutput vsOutput, uniform int render_mode, uniform int li
         float2 encoded_normal_ws = encode(normal_ws);
 
         output.color0 = float4(vsOutput.color.xyz * material[0].Sample(material_sampler, vsOutput.uv_ts).xyz, encoded_normal_ws.x);
-        output.color1 = float4(0.0, 0.0, 0.0, encoded_normal_ws.y);
+
+        float diffuse = material[2].Sample(material_sampler, vsOutput.uv_ts).r;
+        float specular = material[3].Sample(material_sampler, vsOutput.uv_ts).r;
+
+        output.color1 = float4(0.0, diffuse, specular, encoded_normal_ws.y);
     }
 
 

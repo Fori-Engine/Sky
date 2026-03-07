@@ -65,7 +65,9 @@ void computeMain(uniform int light_count, uniform int width, uniform int height,
         Camera camera = scene_desc[0].camera;
         float3 camera_pos_ws = float3(camera.invView[0][3], camera.invView[1][3], camera.invView[2][3]);
 
-        float4 fragment_vs = input_texture1.Load(texture_xy_ss, 0);
+        float4 color1 = input_texture1.Load(texture_xy_ss, 0);
+        float diffuse = color1.g;
+        float specular = color1.b;
         float4 fragment_ws = get_pos_ws((float) (texture_xy_ss.x + 0.5) / width, (float) (texture_xy_ss.y + 0.5) / height, camera.invProj, camera.invView, depth_psw); //mul(camera.invView, float4(fragment_vs.xyz, 1.0));
 
         
@@ -79,7 +81,7 @@ void computeMain(uniform int light_count, uniform int width, uniform int height,
             float3 light_dir_ws = normalize(light_pos_ws - fragment_ws.xyz);
             float3 camera_dir_ws = normalize(camera_pos_ws - fragment_ws.xyz);
 
-            float3 normal_ws = normalize(decode(float2(input_color.w, fragment_vs.w)));
+            float3 normal_ws = normalize(decode(float2(input_color.w, color1.w)));
 
             float4 normal_biased_fragment_ws = get_normal_biased_fragment_ws(fragment_ws, light_dir_ws, normal_ws);
 
@@ -110,12 +112,12 @@ void computeMain(uniform int light_count, uniform int width, uniform int height,
                     
                     float attenuation = 1.0 / (light.attenuationConstant + light.attenuationLinear * d + light.attenuationQuadratic * (d * d));
                     
-                    float diffuse = 0.5 * max(dot(light_dir_ws, normal_ws), 0.0);
+                    float diffuse = diffuse * max(dot(light_dir_ws, normal_ws), 0.0);
                     
                     float3 camera_dir_ws = normalize(camera_pos_ws - fragment_ws.xyz);
                     float3 halfway_dir_ws = normalize(light_dir_ws + camera_dir_ws);
                     
-                    float specular = 0.8 * pow(dot(halfway_dir_ws, normal_ws), 128);
+                    float specular = specular * pow(dot(halfway_dir_ws, normal_ws), 128);
                     
                     output_color += input_color.xyz * (attenuation * (ambient + diffuse + specular) * light.color - shadow);
                 }
