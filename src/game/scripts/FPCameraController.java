@@ -6,14 +6,11 @@ import engine.Time;
 import engine.ecs.*;
 import engine.graphics.Camera;
 import engine.graphics.Renderer;
-import engine.physx.Physx;
 import game.Settings;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.system.MemoryStack;
-import physx.common.PxVec3;
-import physx.physics.PxRaycastBuffer10;
-import physx.physics.PxRigidDynamic;
+
 
 public class FPCameraController extends Script {
     private Surface surface;
@@ -53,121 +50,113 @@ public class FPCameraController extends Script {
 
     @Override
     public void update(Actor actor, Actor root) {
-        if(actor.has(CameraComponent.class) && actor.has(NVPhysXComponent.class)) {
-            NVPhysXComponent nvPhysXComponent = actor.getComponent(NVPhysXComponent.class);
+        //Movement
+        {
+
+            if (lastMouseX == -1 && lastMouseY == -1) {
+                lastMouseX = surface.getMousePos().x;
+                lastMouseY = surface.getMousePos().y;
+            }
+
+            yaw += (surface.getMousePos().x - lastMouseX) * mouseSensitivity;
+            pitch += (surface.getMousePos().y - lastMouseY) * mouseSensitivity;
+
+            pitch = (float) Math.clamp(pitch, Math.toRadians(-maxPitchDeg), Math.toRadians(maxPitchDeg));
+
+
+            lastMouseX = surface.getMousePos().x;
+            lastMouseY = surface.getMousePos().y;
+
+
+            dir.x = (float) (Math.sin(yaw));
+            dir.y = (float) (Math.sin(pitch));
+            dir.z = (float) ((Math.cos(yaw) * Math.cos(pitch)));
+
 
             //Movement
             {
 
-                if (lastMouseX == -1 && lastMouseY == -1) {
-                    lastMouseX = surface.getMousePos().x;
-                    lastMouseY = surface.getMousePos().y;
-                }
-
-                yaw += (surface.getMousePos().x - lastMouseX) * mouseSensitivity;
-                pitch += (surface.getMousePos().y - lastMouseY) * mouseSensitivity;
-
-                pitch = (float) Math.clamp(pitch, Math.toRadians(-maxPitchDeg), Math.toRadians(maxPitchDeg));
+                if (!Settings.isSpectator) {
 
 
-                lastMouseX = surface.getMousePos().x;
-                lastMouseY = surface.getMousePos().y;
-
-
-                dir.x = (float) (Math.sin(yaw));
-                dir.y = (float) (Math.sin(pitch));
-                dir.z = (float) ((Math.cos(yaw) * Math.cos(pitch)));
-
-
-                //Movement
-                {
-
-                    if (!Settings.isSpectator) {
-
-
-                        PxRigidDynamic pxRigidDynamic = (PxRigidDynamic) nvPhysXComponent.actor;
-                        Vector3f force = new Vector3f(0, 0, 0);
-                        if (surface.getKeyPressed(Input.KEY_W)) {
-                            force = (new Vector3f(dir).normalize().mul(acceleration));
-                        }
-                        if (surface.getKeyPressed(Input.KEY_S)) {
-                            force = (new Vector3f(dir).normalize().mul(-acceleration));
-                        }
-                        if (surface.getKeyPressed(Input.KEY_D)) {
-                            force = (new Vector3f(dir).normalize().cross(up).mul(acceleration));
-                        }
-                        if (surface.getKeyPressed(Input.KEY_A)) {
-                            force = (new Vector3f(dir).normalize().cross(up).mul(-acceleration));
-                        }
-
-
-                        boolean jump = surface.getKeyPressed(Input.KEY_SPACE);
-                        if (jump != jumpJustPressed) {
-                            if (jump) force = (new Vector3f(up).mul(200));
-
-                            jumpJustPressed = jump;
-                        }
-
-
-                        TransformComponent transformComponent = actor.getComponent(TransformComponent.class);
-                        pos.x = transformComponent.transform().m30();
-                        pos.y = transformComponent.transform().m31();
-                        pos.z = transformComponent.transform().m32();
-
-                        try (MemoryStack stack = MemoryStack.stackPush()) {
-                            PxVec3 pos = PxVec3.createAt(stack, MemoryStack::nmalloc);
-                            Physx.copyTo(pos, force);
-
-                            pxRigidDynamic.addForce(pos);
-                        }
-                    } else {
-
-                        Vector3f velocity = new Vector3f(0, 0, 0);
-                        if (surface.getKeyPressed(Input.KEY_W)) {
-                            velocity = (new Vector3f(dir).normalize().mul(spectatorModeSpeed));
-                        }
-                        if (surface.getKeyPressed(Input.KEY_S)) {
-                            velocity = (new Vector3f(dir).normalize().mul(-spectatorModeSpeed));
-                        }
-                        if (surface.getKeyPressed(Input.KEY_D)) {
-                            velocity = (new Vector3f(dir).normalize().cross(up).mul(spectatorModeSpeed));
-                        }
-                        if (surface.getKeyPressed(Input.KEY_A)) {
-                            velocity = (new Vector3f(dir).normalize().cross(up).mul(-spectatorModeSpeed));
-                        }
-                        pos.add(velocity.mul(Time.deltaTime()));
+                    //PxRigidDynamic pxRigidDynamic = (PxRigidDynamic) nvPhysXComponent.actor;
+                    Vector3f force = new Vector3f(0, 0, 0);
+                    if (surface.getKeyPressed(Input.KEY_W)) {
+                        force = (new Vector3f(dir).normalize().mul(acceleration));
                     }
+                    if (surface.getKeyPressed(Input.KEY_S)) {
+                        force = (new Vector3f(dir).normalize().mul(-acceleration));
+                    }
+                    if (surface.getKeyPressed(Input.KEY_D)) {
+                        force = (new Vector3f(dir).normalize().cross(up).mul(acceleration));
+                    }
+                    if (surface.getKeyPressed(Input.KEY_A)) {
+                        force = (new Vector3f(dir).normalize().cross(up).mul(-acceleration));
+                    }
+
+
+                    boolean jump = surface.getKeyPressed(Input.KEY_SPACE);
+                    if (jump != jumpJustPressed) {
+                        if (jump) force = (new Vector3f(up).mul(200));
+
+                        jumpJustPressed = jump;
+                    }
+
+
+                    TransformComponent transformComponent = actor.getComponent(TransformComponent.class);
+                    pos.x = transformComponent.transform().m30();
+                    pos.y = transformComponent.transform().m31();
+                    pos.z = transformComponent.transform().m32();
+
+                    try (MemoryStack stack = MemoryStack.stackPush()) {
+                        //PxVec3 pos = PxVec3.createAt(stack, MemoryStack::nmalloc);
+                        //Physx.copyTo(pos, force);
+
+                        //pxRigidDynamic.addForce(pos);
+                    }
+                } else {
+
+                    Vector3f velocity = new Vector3f(0, 0, 0);
+                    if (surface.getKeyPressed(Input.KEY_W)) {
+                        velocity = (new Vector3f(dir).normalize().mul(spectatorModeSpeed));
+                    }
+                    if (surface.getKeyPressed(Input.KEY_S)) {
+                        velocity = (new Vector3f(dir).normalize().mul(-spectatorModeSpeed));
+                    }
+                    if (surface.getKeyPressed(Input.KEY_D)) {
+                        velocity = (new Vector3f(dir).normalize().cross(up).mul(spectatorModeSpeed));
+                    }
+                    if (surface.getKeyPressed(Input.KEY_A)) {
+                        velocity = (new Vector3f(dir).normalize().cross(up).mul(-spectatorModeSpeed));
+                    }
+                    pos.add(velocity.mul(Time.deltaTime()));
                 }
-
-
-                camera.setView(
-                        viewMatrix.identity().lookAt(
-                                pos,
-                                dir.add(pos), //TODO! This modifies dir!
-                                up
-                        )
-                );
             }
 
-            //Grab Tool
-            {
-                try(MemoryStack stack = MemoryStack.stackPush()) {
-                    PxVec3 pos = PxVec3.createAt(stack, MemoryStack::nmalloc);
-                    PxVec3 dir = PxVec3.createAt(stack, MemoryStack::nmalloc);
 
-                    Physx.copyTo(pos, new Vector3f(0.0f, 0.0f, 0.0f));
-                    Physx.copyTo(dir, new Vector3f(0.0f, 10.0f, 0.0f));
-
-
-
-
-                }
-            }
-
+            camera.setView(
+                    viewMatrix.identity().lookAt(
+                            pos,
+                            dir.add(pos), //TODO! This modifies dir!
+                            up
+                    )
+            );
         }
 
+        //Grab Tool
+        {
+            try(MemoryStack stack = MemoryStack.stackPush()) {
+                //PxVec3 pos = PxVec3.createAt(stack, MemoryStack::nmalloc);
+                //PxVec3 dir = PxVec3.createAt(stack, MemoryStack::nmalloc);
+
+                //Physx.copyTo(pos, new Vector3f(0.0f, 0.0f, 0.0f));
+                //Physx.copyTo(dir, new Vector3f(0.0f, 10.0f, 0.0f));
 
 
+
+
+            }
+        }
 
 
     }

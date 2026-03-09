@@ -8,10 +8,6 @@ import engine.graphics.*;
 
 import engine.ecs.*;
 import engine.graphics.pipelines.BlinnPhongPipeline;
-import engine.physx.ActorType;
-import engine.physx.BoxCollider;
-import engine.physx.Material;
-import engine.physx.SphereCollider;
 import game.scripts.FPCameraController;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -49,7 +45,6 @@ public class StageImpl extends Stage {
         {
 
             Actor.tryClassload(TransformComponent.class);
-            Actor.tryClassload(NVPhysXComponent.class);
             Actor.tryClassload(MeshComponent.class);
             Actor.tryClassload(MeshListComponent.class);
             Actor.tryClassload(CameraComponent.class);
@@ -62,7 +57,6 @@ public class StageImpl extends Stage {
         scene.addSystem(
                 new UISystem(renderer, renderPipeline, surface, scene),
                 new RenderSystem(renderer, renderPipeline, scene),
-                new NVPhysXSystem(surface, scene, 4, 1f/60f),
                 new ScriptSystem(scene)
         );
 
@@ -95,8 +89,7 @@ public class StageImpl extends Stage {
                                 new ScriptComponent(
                                         new FPCameraController(surface, renderer)
                                 ),
-                                new TransformComponent(new Matrix4f().identity().translate(0.0f, 15.0f, 0.5f)),
-                                new NVPhysXComponent(new SphereCollider(1.0f), new Material(0.5f, 0.5f, 0.3f), ActorType.Dynamic)
+                                new TransformComponent(new Matrix4f().identity().translate(0.0f, 15.0f, 0.5f))
 
                         ));
             }
@@ -128,8 +121,7 @@ public class StageImpl extends Stage {
                                 Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/specular_map.png"), TextureFormatType.ColorR8G8B8A8)
                         )),
                         new ShaderComponent(shaderProgram),
-                        new TransformComponent(new Matrix4f().identity().translate(0, 2, 0).rotate((float) Math.toRadians(0), 0, 0, 1)),
-                        new NVPhysXComponent(new BoxCollider(10.0f, 1f, 10.0f), new Material(0.5f, 0.5f, 0.3f), ActorType.Static)
+                        new TransformComponent(new Matrix4f().identity().translate(0, 2, 0).rotate((float) Math.toRadians(0), 0, 0, 1))
                 ));
             }
 
@@ -161,9 +153,7 @@ public class StageImpl extends Stage {
                         )),
                         meshComponent,
                         new ShaderComponent(shaderProgram),
-                        new TransformComponent(new Matrix4f().identity().translate(0, 5, 0).rotate((float) Math.toRadians(0), 0, 0, 1)),
-                        new NVPhysXComponent(new BoxCollider(1.0f, 1.0f, 1.0f), new Material(0.5f, 0.5f, 0.3f), ActorType.Dynamic)
-
+                        new TransformComponent(new Matrix4f().identity().translate(0, 5, 0).rotate((float) Math.toRadians(0), 0, 0, 1))
                 ));
             }
 
@@ -194,9 +184,7 @@ public class StageImpl extends Stage {
                         )),
                         meshComponent,
                         new ShaderComponent(shaderProgram),
-                        new TransformComponent(new Matrix4f().identity().translate(3, 5, 0).rotate((float) Math.toRadians(0), 0, 0, 1)),
-                        new NVPhysXComponent(new BoxCollider(1f, 1f, 1f), new Material(0.05f, 0.05f, 0.3f), ActorType.Dynamic)
-
+                        new TransformComponent(new Matrix4f().identity().translate(3, 5, 0).rotate((float) Math.toRadians(0), 0, 0, 1))
                 ));
             }
 
@@ -331,10 +319,6 @@ public class StageImpl extends Stage {
                 renderer.remove(meshListComponent.vertexBuffer);
                 renderer.remove(meshListComponent.indexBuffer);
                 renderer.remove(meshListComponent.shaderProgram);
-            }
-            if(actor.has(NVPhysXComponent.class)) {
-                NVPhysXComponent nvPhysXComponent = actor.getComponent(NVPhysXComponent.class);
-                nvPhysXComponent.release();
             }
         });
 
