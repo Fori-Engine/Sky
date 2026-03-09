@@ -29,7 +29,7 @@ float pcf(Texture2D input_shadow_map, SamplerState input_shadow_map_sampler, int
         for (int y = -pcf_kernel_w; y <= -pcf_kernel_w; y++) {
             float shadow_map_depth = input_shadow_map.Sample(input_shadow_map_sampler, shadow_map_uv_ts.xy + float2(x, y) * float2(shadow_map_texel_w, shadow_map_texel_h)).r;
 
-            shadow_samples += (shadow_map_depth < fragment_shadow_map_ps.z) ? 2.5 : 0.0;
+            shadow_samples += (shadow_map_depth < fragment_shadow_map_ps.z) ? 1.5 : 0.0;
         }
     }
 
@@ -72,8 +72,8 @@ void computeMain(uniform int light_count, uniform int width, uniform int height,
         float specular = color1.b;
         float4 fragment_ws = get_pos_ws((float) (texture_xy_ss.x + 0.5) / width, (float) (texture_xy_ss.y + 0.5) / height, camera.invProj, camera.invView, depth_psw); //mul(camera.invView, float4(fragment_vs.xyz, 1.0));
 
-        
         float ambient = 0.01;
+        float shadow = 0;
 
         for (int light_index = 0; light_index < light_count; light_index++) {
 
@@ -94,18 +94,19 @@ void computeMain(uniform int light_count, uniform int width, uniform int height,
 
             if (shadow_map_uv_ts.x >= 0 && shadow_map_uv_ts.x <= 1 && shadow_map_uv_ts.y >= 0 && shadow_map_uv_ts.y <= 1) {
 
-                float shadow = 0;
 
             
                 // Shadows
                 {
-                    shadow = pcf(
+                    float shadow_per_pixel = pcf(
                         input_shadow_maps[light_index], 
                         input_shadow_maps_samplers[light_index], 
                         1, 
                         shadow_map_uv_ts.xy, 
                         fragment_shadow_map_ps
                     );
+
+                    shadow += shadow_per_pixel;
                 }
 
                 // Lighting BRDF
@@ -121,12 +122,14 @@ void computeMain(uniform int light_count, uniform int width, uniform int height,
                     
                     float specular = specular * pow(dot(halfway_dir_ws, normal_ws), 128);
 
-                    float3 mul = ((attenuation * (ambient + diffuse + specular) * light.color * (1 - shadow)));
+                    float3 mul = (attenuation * (ambient + diffuse + specular) * light.color);
 
                     output_color += input_color.xyz * mul;
                 }
             }
         }
+
+        output_color.rgb *= (1 - max(0.0, shadow));
     }
     
 
