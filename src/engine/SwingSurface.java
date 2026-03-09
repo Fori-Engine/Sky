@@ -136,7 +136,7 @@ public class SwingSurface extends Surface {
     }
 
     @Override
-    public void setKeyCallback(SurfaceKeyCallback callback) {
+    public void addKeyCallback(SurfaceKeyCallback callback) {
 
     }
 

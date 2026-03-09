@@ -22,6 +22,7 @@ import org.lwjgl.vulkan.*;
 
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -31,6 +32,7 @@ public class GLFWSurface extends Surface {
     private long handle;
     private Cursor cursor;
     private GLFWErrorCallback errorCallback;
+    private List<SurfaceKeyCallback> surfaceKeyCallbacks = new ArrayList<>();
 
     @Override
     public void requestRenderAPI(RenderAPI api) {
@@ -59,6 +61,12 @@ public class GLFWSurface extends Surface {
         glfwWindowHint(GLFW_RESIZABLE, glfwBool(resizable));
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         handle = glfwCreateWindow(width, height, title, NULL, NULL);
+
+        glfwSetKeyCallback(handle, (window, key, scancode, action, mods) -> {
+            for(SurfaceKeyCallback callback : surfaceKeyCallbacks) {
+                if(action == GLFW_PRESS) callback.keyClick(key);
+            }
+        });
     }
 
     @Override
@@ -289,10 +297,8 @@ public class GLFWSurface extends Surface {
     }
 
     @Override
-    public void setKeyCallback(SurfaceKeyCallback callback) {
-        glfwSetKeyCallback(handle, (window, key, scancode, action, mods) -> {
-            if(action == GLFW_PRESS) callback.keyClick(key);
-        });
+    public void addKeyCallback(SurfaceKeyCallback callback) {
+        surfaceKeyCallbacks.add(callback);
     }
 
     @Override

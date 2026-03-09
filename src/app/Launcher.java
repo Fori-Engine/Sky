@@ -3,6 +3,7 @@ package app;
 import engine.Logger;
 import engine.Stage;
 import engine.Surface;
+import game.StageImpl;
 import org.lwjgl.system.Configuration;
 
 import java.io.File;
@@ -21,7 +22,7 @@ public class Launcher {
     public void launch(String[] args) {
         System.setProperty("org.lwjgl.system.stackSize", "128");
 
-        Stage stage = new ExampleStage();
+        Stage stage = new StageImpl();
         Surface surface = Surface.newSurface(stage, "SkySOFT Engine", 1920, 1080);
 
         stage.launch(args, surface);

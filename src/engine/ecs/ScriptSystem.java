@@ -1,5 +1,7 @@
 package engine.ecs;
 
+import engine.SystemState;
+
 import java.util.List;
 
 public class ScriptSystem extends ActorSystem {
@@ -11,17 +13,19 @@ public class ScriptSystem extends ActorSystem {
 
     @Override
     public void run(Actor root) {
-        root.previsitAllActors(actor -> {
-            if(actor.has(ScriptComponent.class)) {
-                ScriptComponent scriptComponent = actor.getComponent(ScriptComponent.class);
-                if (!scriptComponent.script().initialized) {
-                    scriptComponent.script().init(actor);
+        if(SystemState.running) {
+            root.previsitAllActors(actor -> {
+                if (actor.has(ScriptComponent.class)) {
+                    ScriptComponent scriptComponent = actor.getComponent(ScriptComponent.class);
+                    if (!scriptComponent.script().initialized) {
+                        scriptComponent.script().init(actor);
+                    }
+
+                    scriptComponent.script().update(actor, root);
+
                 }
-
-                scriptComponent.script().update(actor);
-
-            }
-        });
+            });
+        }
     }
 
     @Override

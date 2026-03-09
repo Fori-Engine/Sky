@@ -1,4 +1,4 @@
-package app;
+package game;
 
 import engine.*;
 import engine.asset.AssetPackage;
@@ -11,13 +11,14 @@ import engine.graphics.pipelines.BlinnPhongPipeline;
 import engine.physx.ActorType;
 import engine.physx.BoxCollider;
 import engine.physx.Material;
-import engine.scripts.FlyCameraScript;
+import engine.physx.SphereCollider;
+import game.scripts.FPCameraController;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import java.lang.Math;
 import java.nio.file.Path;
 
-public class ExampleStage extends Stage {
+public class StageImpl extends Stage {
 
     private float startTime;
     private Scene scene;
@@ -82,18 +83,21 @@ public class ExampleStage extends Stage {
                                                         new Vector3f(0.0f, 1.0f, 0.0f)
                                                 ),
                                                 new Matrix4f().perspective(
-                                                        (float) Math.toRadians(45.0f),
+                                                        (float) Math.toRadians(75.0f),
                                                         (float) renderer.getWidth() / renderer.getHeight(),
                                                         0.1f,
-                                                        10,
+                                                        10000,
                                                         true
                                                 ),
                                                 true
                                         )
                                 ),
                                 new ScriptComponent(
-                                        new FlyCameraScript(surface, renderer)
-                                )
+                                        new FPCameraController(surface, renderer)
+                                ),
+                                new TransformComponent(new Matrix4f().identity().translate(0.0f, 15.0f, 0.5f)),
+                                new NVPhysXComponent(new SphereCollider(1.0f), new Material(0.5f, 0.5f, 0.3f), ActorType.Dynamic)
+
                         ));
             }
 
@@ -108,7 +112,7 @@ public class ExampleStage extends Stage {
 
 
 
-                MeshData meshData = MeshGenerator.newBox(40, 1, 40);
+                MeshData meshData = MeshGenerator.newBox(10, 1, 10);
 
                 MeshListComponent meshListComponent = new MeshListComponent(renderer, renderer, 100, 100, 1, shaderProgram);
                 meshListComponent.addMeshData(meshData, 0);
@@ -118,15 +122,14 @@ public class ExampleStage extends Stage {
                         meshListComponent,
                         new MaterialComponent(new engine.graphics.Material(
                                 Sampler.newSampler(renderer, Texture.Filter.Linear, Texture.Filter.Linear, true),
-                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/woodfloor.png"), TextureFormatType.ColorR8G8B8A8),
+                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/brickwall.jpg"), TextureFormatType.ColorR8G8B8A8),
                                 Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/normal_map.png"), TextureFormatType.ColorR8G8B8A8),
                                 Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/diffuse_map.png"), TextureFormatType.ColorR8G8B8A8),
                                 Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/specular_map.png"), TextureFormatType.ColorR8G8B8A8)
                         )),
                         new ShaderComponent(shaderProgram),
                         new TransformComponent(new Matrix4f().identity().translate(0, 2, 0).rotate((float) Math.toRadians(0), 0, 0, 1)),
-                        new NVPhysXComponent(new BoxCollider(10.0f, 1f, 10.0f), new Material(0.05f, 0.05f, 0.3f), ActorType.Static)
-
+                        new NVPhysXComponent(new BoxCollider(10.0f, 1f, 10.0f), new Material(0.5f, 0.5f, 0.3f), ActorType.Static)
                 ));
             }
 
@@ -143,7 +146,7 @@ public class ExampleStage extends Stage {
 
                 MeshData meshData = MeshGenerator.newBox(1, 1, 1);
 
-                MeshComponent meshComponent = new MeshComponent(renderer, renderer, 100, 100, shaderProgram);
+                MeshComponent meshComponent = new MeshComponent(renderer, renderer, 1000, 1000, shaderProgram);
                 meshComponent.setMeshData(meshData);
 
 
@@ -151,15 +154,15 @@ public class ExampleStage extends Stage {
                         "Cube1",
                         new MaterialComponent(new engine.graphics.Material(
                                 Sampler.newSampler(renderer, Texture.Filter.Linear, Texture.Filter.Linear, true),
-                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/bugcat.jpg"), TextureFormatType.ColorR8G8B8A8),
-                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/normal_map.png"), TextureFormatType.ColorR8G8B8A8),
+                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/img.png"), TextureFormatType.ColorR8G8B8A8),
+                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/normal_map2.jpg"), TextureFormatType.ColorR8G8B8A8),
                                 Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/diffuse_map.png"), TextureFormatType.ColorR8G8B8A8),
                                 Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/specular_map.png"), TextureFormatType.ColorR8G8B8A8)
                         )),
                         meshComponent,
                         new ShaderComponent(shaderProgram),
                         new TransformComponent(new Matrix4f().identity().translate(0, 5, 0).rotate((float) Math.toRadians(0), 0, 0, 1)),
-                        new NVPhysXComponent(new BoxCollider(1f, 1f, 1f), new Material(0.05f, 0.05f, 0.3f), ActorType.Dynamic)
+                        new NVPhysXComponent(new BoxCollider(1.0f, 1.0f, 1.0f), new Material(0.5f, 0.5f, 0.3f), ActorType.Dynamic)
 
                 ));
             }
@@ -184,7 +187,7 @@ public class ExampleStage extends Stage {
                         "Cube2",
                         new MaterialComponent(new engine.graphics.Material(
                                 Sampler.newSampler(renderer, Texture.Filter.Linear, Texture.Filter.Linear, true),
-                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/bugcat.jpg"), TextureFormatType.ColorR8G8B8A8),
+                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/img.png"), TextureFormatType.ColorR8G8B8A8),
                                 Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/normal_map.png"), TextureFormatType.ColorR8G8B8A8),
                                 Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/diffuse_map.png"), TextureFormatType.ColorR8G8B8A8),
                                 Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/specular_map.png"), TextureFormatType.ColorR8G8B8A8)
@@ -240,7 +243,7 @@ public class ExampleStage extends Stage {
                                 new Vector3f(0.0f, 1.0f, 0.0f)
                         ),
                         new Matrix4f().perspective(
-                                (float) Math.toRadians(95),
+                                (float) Math.toRadians(90),
                                 (float) 1,
                                 0.1f,
                                 10.0f,

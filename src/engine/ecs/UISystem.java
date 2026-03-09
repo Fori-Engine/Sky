@@ -1,18 +1,22 @@
 package engine.ecs;
 
+import engine.Input;
 import engine.Surface;
 import static engine.gameui.TextValue.*;
 
+import engine.SystemState;
 import engine.Time;
 import engine.asset.AssetRegistry;
 import engine.gameui.*;
 import engine.graphics.*;
 import engine.graphics.pipelines.ScreenSpaceFeatures;
 import engine.graphics.text.*;
+import game.Colors;
+import game.Settings;
 import org.joml.Matrix2f;
 import org.joml.Vector2f;
 import java.nio.ByteBuffer;
-import java.util.List;
+
 public class UISystem extends ActorSystem {
 
     private Renderer renderer;
@@ -24,16 +28,26 @@ public class UISystem extends ActorSystem {
     private Vector2f origin = new Vector2f();
     private MsdfFont msdfFont;
     private Surface surface;
-    private Loop loop;
-    private TextValue fpsValue = text("Text 2");
+    private Loop hudLoop;
+    private Loop menuLoop;
+    private GfxPlatform gfxPlatform;
+
+
+    private TextValue gameInfo = text("Text 2");
     private Theme theme;
+
+
 
     public UISystem(Renderer renderer, RenderPipeline renderPipeline, Surface surface, Scene scene) {
         this.renderer = renderer;
         this.renderPipeline = renderPipeline;
         this.surface = surface;
         this.scene = scene;
+        surface.setCaptureMouse(SystemState.running);
 
+        surface.addKeyCallback(key -> {
+            if(key == Input.KEY_ESCAPE) SystemState.running = !SystemState.running;
+        });
 
         msdfFont = new MsdfFont(
                 renderer,
@@ -43,69 +57,110 @@ public class UISystem extends ActorSystem {
 
         theme = ThemeLoader.loadTheme((String) AssetRegistry.getAsset("core:assets/themes/CozyRoom.json").getObject());
 
-        loop = new Loop();
-        loop.setWidget(
-                new ContainerWidget()
-                        .setIgnore(true)
-                        .setLayoutEngine(new LineLayoutEngine(LineLayoutEngine.Line.Vertical))
-                        .addWidgets(
-                                new Text(fpsValue, msdfFont),
-                                new Text(text("This is text"), msdfFont),
-                                new Button(text("This is a really wide button"), msdfFont)
-                                        .addEventHandler(new EventHandler() {
-                                            @Override
-                                            public void onClick() {
-                                                System.out.println("Foo");
-                                            }
-                                        })
-                        )
-        );
+        //HUD UI
+        {
+            hudLoop = new Loop();
+            hudLoop.setWidget(
+                    new ContainerWidget()
+                            .setIgnore(true)
+                            .setLayoutEngine(new LineLayoutEngine(LineLayoutEngine.Line.Vertical))
+                            .addWidgets(
+                                    new Text(gameInfo, msdfFont),
+                                    new Text(text("This is text"), msdfFont),
+                                    new Button(text("This is text"), msdfFont)
+                                            .addEventHandler(new EventHandler() {
+                                                @Override
+                                                public void onClick() {
+                                                    System.out.println("Foo");
+                                                }
+                                            })
+                            )
+            );
+        }
 
 
-        loop.setGfxPlatform(new GfxPlatform() {
-            @Override
-            public int getMouseX() {
-                return (int) surface.getMousePos().x;
-            }
+        //Menu UI
+        {
+            menuLoop = new Loop();
+            menuLoop.setWidget(
+                    new ContainerWidget().setLayoutEngine(new EdgeLayoutEngine())
+                            .addWidget(new ContainerWidget()
+                                    .setLayoutEngine(new LineLayoutEngine(LineLayoutEngine.Line.Horizontal))
+                                    .addWidgets(
+                                            new Text(text("Welcome to the menu!"), msdfFont),
+                                            new Button(text("Quit"), msdfFont)
+                                                    .addEventHandler(new EventHandler() {
 
-            @Override
-            public int getMouseY() {
-                return (int) surface.getMousePos().y;
-            }
+                                                        @Override
+                                                        public void onClick() {
+                                                            System.exit(0);
+                                                        }
+                                                    }),
+                                            new Button(text("Resume"), msdfFont)
+                                                    .addEventHandler(new EventHandler() {
+                                                        @Override
+                                                        public void onClick() {
+                                                            SystemState.running = true;
+                                                        }
+                                                    })
+                                    ).addHint(EdgeLayoutEngine.Bottom))
+            );
+        }
 
-            @Override
-            public boolean isMousePressed(int mouseButton) {
-                return surface.getMousePressed(mouseButton);
-            }
 
-            @Override
-            public void drawRect(float x, float y, float w, float h, Color color) {
-                UISystem.this.drawQuad(
-                        x,
-                        y,
-                        w,
-                        h,
-                        -1, -1,
-                        -1, -1,
-                        -1, -1,
-                        -1, -1,
-                        -1,
-                        -1,
-                        -1,
-                        color
-                );
-            }
 
-            @Override
-            public void drawString(float x, float y, String text, MsdfFont font, Color color) {
-                UISystem.this.drawString(x, y, text, font, null, color);
-            }
+        //HUD Gfx Platform
+        {
+            gfxPlatform = new GfxPlatform() {
+                @Override
+                public int getMouseX() {
+                    return (int) surface.getMousePos().x;
+                }
 
-            @Override
-            public Theme getTheme() {
-                return theme;
-            }
-        });
+                @Override
+                public int getMouseY() {
+                    return (int) surface.getMousePos().y;
+                }
+
+                @Override
+                public boolean isMousePressed(int mouseButton) {
+                    return surface.getMousePressed(mouseButton);
+                }
+
+                @Override
+                public void drawRect(float x, float y, float w, float h, Color color) {
+
+
+
+                    UISystem.this.drawQuad(
+                            x,
+                            y,
+                            w,
+                            h,
+                            -1, -1,
+                            -1, -1,
+                            -1, -1,
+                            -1, -1,
+                            -1,
+                            -1,
+                            -1,
+                            color
+                    );
+                }
+
+                @Override
+                public void drawString(float x, float y, String text, MsdfFont font, Color color) {
+                    UISystem.this.drawString(x, y, text, font, null, color);
+                }
+
+                @Override
+                public Theme getTheme() {
+                    return theme;
+                }
+            };
+        }
+        hudLoop.setGfxPlatform(gfxPlatform);
+        menuLoop.setGfxPlatform(gfxPlatform);
     }
 
     @Override
@@ -118,7 +173,7 @@ public class UISystem extends ActorSystem {
         screenSpaceFeatures.getShaderProgram().setTextures(renderer.getFrameIndex(), new DescriptorUpdate<>("input_textures", msdfFont.getTexture()).arrayIndex(1));
         screenSpaceFeatures.getShaderProgram().setSamplers(renderer.getFrameIndex(), new DescriptorUpdate<>("input_samplers", msdfFont.getSampler()).arrayIndex(1));
 
-
+        surface.setCaptureMouse(SystemState.running);
 
         transform = new Matrix2f();
         setOrigin(0, 0);
@@ -126,8 +181,8 @@ public class UISystem extends ActorSystem {
         drawQuad(
                 0,
                 0,
-                1920,
-                1080,
+                renderer.getWidth(),
+                renderer.getHeight(),
                 0, 0,
                 0, 1,
                 1, 0,
@@ -138,12 +193,67 @@ public class UISystem extends ActorSystem {
                 Color.WHITE
         );
 
+        //Crosshair
+        {
 
-        fpsValue.string = "GPU:" + renderer.getDeviceName() + "\nFPS:" + Time.framesPerSecond();
-        loop.update(0, 0, renderer.getWidth(), renderer.getHeight());
 
 
-        surface.setCaptureMouse(false);
+            drawQuad(
+                    ((float) renderer.getWidth() / 2) - 15,
+                    ((float) renderer.getHeight() / 2) - 2,
+                    30,
+                    4,
+                    -1, -1,
+                    -1, -1,
+                    -1, -1,
+                    -1, -1,
+                    -1,
+                    -1,
+                    -1,
+                    Color.GRAY
+            );
+
+            drawQuad(
+                    ((float) renderer.getWidth() / 2) - 2,
+                    ((float) renderer.getHeight() / 2) - 15,
+                    4,
+                    30,
+                    -1, -1,
+                    -1, -1,
+                    -1, -1,
+                    -1, -1,
+                    -1,
+                    -1,
+                    -1,
+                    Color.GRAY
+            );
+        }
+
+
+        if(SystemState.running) {
+
+            gameInfo.string = "GPU: " + renderer.getDeviceName() + "\nFPS:" + Time.framesPerSecond() + "\nSpectator Mode: " + Settings.isSpectator;
+            hudLoop.update(0, 0, renderer.getWidth(), renderer.getHeight());
+
+        }
+        else {
+            drawQuad(
+                    0,
+                    0,
+                    renderer.getWidth(),
+                    renderer.getHeight(),
+                    -1, -1,
+                    -1, -1,
+                    -1, -1,
+                    -1, -1,
+                    -1,
+                    -1,
+                    -1,
+                    Colors.menuBackground
+            );
+            menuLoop.update((renderer.getWidth() / 2) - (renderer.getWidth() / 4), (renderer.getHeight() / 2) - (renderer.getHeight() / 4), renderer.getWidth() / 2, renderer.getHeight() / 2);
+        }
+
 
 
         screenSpaceFeatures.setIndexCount(6 * quadCount);

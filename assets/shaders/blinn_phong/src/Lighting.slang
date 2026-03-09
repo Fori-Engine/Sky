@@ -1,5 +1,6 @@
 #include "SceneDesc.slang"
 #include "KnarkowiczOctahedral.slang"
+#include "Atmosphere.slang"
 
 StructuredBuffer<Scene> scene_desc;
 
@@ -28,7 +29,7 @@ float pcf(Texture2D input_shadow_map, SamplerState input_shadow_map_sampler, int
         for (int y = -pcf_kernel_w; y <= -pcf_kernel_w; y++) {
             float shadow_map_depth = input_shadow_map.Sample(input_shadow_map_sampler, shadow_map_uv_ts.xy + float2(x, y) * float2(shadow_map_texel_w, shadow_map_texel_h)).r;
 
-            shadow_samples += (shadow_map_depth < fragment_shadow_map_ps.z) ? 0.5 : 0.0;
+            shadow_samples += (shadow_map_depth < fragment_shadow_map_ps.z) ? 2.5 : 0.0;
         }
     }
 
@@ -58,9 +59,10 @@ void computeMain(uniform int light_count, uniform int width, uniform int height,
     float4 input_color = input_texture0.Load(texture_xy_ss, 0);
 
     float depth_psw = input_depth_stencil_psw_texture.Load(texture_xy_ss, 0).r;
-    float3 output_color = float3(0.0, 0.0, 0.0);
+    float3 output_color = scatter();
 
     if (depth_psw != 1) {
+        output_color = float3(0.0, 0.0, 0.0);
 
         Camera camera = scene_desc[0].camera;
         float3 camera_pos_ws = float3(camera.invView[0][3], camera.invView[1][3], camera.invView[2][3]);
@@ -119,15 +121,14 @@ void computeMain(uniform int light_count, uniform int width, uniform int height,
                     
                     float specular = specular * pow(dot(halfway_dir_ws, normal_ws), 128);
 
-                    float3 mul = ((attenuation * (ambient + diffuse + specular) * light.color - shadow));
+                    float3 mul = ((attenuation * (ambient + diffuse + specular) * light.color * (1 - shadow)));
 
                     output_color += input_color.xyz * mul;
                 }
             }
         }
-        
-
     }
+    
 
     output_color_texture[texture_xy_ss.xy] = float4(output_color, 1.0);
 }

@@ -48,7 +48,7 @@ public abstract class Surface extends Disposable {
         return height;
     }
 
-    public abstract void setKeyCallback(SurfaceKeyCallback callback);
+    public abstract void addKeyCallback(SurfaceKeyCallback callback);
 
     public abstract boolean getKeyPressed(int key);
     public abstract boolean getKeyReleased(int key);

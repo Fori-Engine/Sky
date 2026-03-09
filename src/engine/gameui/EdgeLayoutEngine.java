@@ -19,6 +19,8 @@ public class EdgeLayoutEngine extends LayoutEngine {
         int width = Math.max(top, bottom);
         if(width != 0) return width;
 
+
+
         for(Widget child : widget.getWidgets()) {
             if(child.hasHint(Left)) width += child.getRequiredWidth();
             if(child.hasHint(Right)) width += child.getRequiredWidth();

@@ -1,19 +1,17 @@
 package engine.ecs;
 
-import engine.Input;
-import engine.Logger;
-import engine.Surface;
-import engine.Time;
+import engine.*;
 import engine.physx.ActorType;
 import engine.physx.Collider;
 import engine.physx.Material;
+import engine.physx.Physx;
 import org.joml.Quaternionf;
 import org.lwjgl.system.MemoryStack;
 import physx.PxTopLevelFunctions;
 import physx.common.*;
 import physx.physics.*;
 
-import java.util.List;
+import java.lang.Math;
 
 public class NVPhysXSystem extends ActorSystem {
     private PxScene pxScene;
@@ -51,8 +49,8 @@ public class NVPhysXSystem extends ActorSystem {
         foundation = PxTopLevelFunctions.CreateFoundation(version, allocator, errorCb);
 
         tolerances = new PxTolerancesScale();
-        tolerances.setLength(100);
-        tolerances.setSpeed(981);
+        tolerances.setLength(1);
+        tolerances.setSpeed(9.81f);
 
         physics = PxTopLevelFunctions.CreatePhysics(version, foundation, tolerances);
 
@@ -67,6 +65,7 @@ public class NVPhysXSystem extends ActorSystem {
         sceneDesc.setFilterShader(filterShader);
         pxScene = physics.createScene(sceneDesc);
 
+        Physx.setScene(pxScene);
 
 
 
@@ -159,9 +158,7 @@ public class NVPhysXSystem extends ActorSystem {
         });
 
 
-        if(surface.getKeyPressed(Input.KEY_SPACE)) {
-
-
+        if(SystemState.running) {
             float frameTime = Math.min(Time.deltaTime(), 0.25f);
             accumulator += frameTime;
             while (accumulator >= timestep) {
@@ -172,9 +169,6 @@ public class NVPhysXSystem extends ActorSystem {
                 accumulator -= timestep;
             }
         }
-
-
-
 
 
     }

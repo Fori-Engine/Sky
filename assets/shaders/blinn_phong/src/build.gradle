@@ -10,13 +10,9 @@ shaders.each { shaderFileName, stages ->
     stages.each { stage ->
 
         def outputName = outputDir + File.separator + shaderFileName + "_" + stage + ".spv"
-
-
-
-        def t = tasks.register("compile_${shaderFileName}_${stage}", Exec) {
+        tasks.register("compile_${shaderFileName}_${stage}", Exec) {
 
             inputs.file("${shaderFileName}.slang")
-            outputs.file(outputName)
 
             commandLine 'slangc', "${shaderFileName}.slang",
                     '-target', 'spirv',
@@ -25,6 +21,10 @@ shaders.each { shaderFileName, stages ->
                     '-stage', stage,
                     '-preserve-params',
                     '-entry', "${stage}Main"
+            outputs.file(outputName)
+
+
+
 
             standardOutput = System.out
             errorOutput = System.err
