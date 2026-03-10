@@ -14,6 +14,7 @@ import com.bulletphysics.linearmath.DefaultMotionState;
 import com.bulletphysics.linearmath.Transform;
 import engine.SystemState;
 import engine.Time;
+import engine.physics.Physics;
 import engine.physics.TypeUtil;
 import org.joml.Quaternionf;
 
@@ -41,6 +42,7 @@ public class BulletSystem extends ActorSystem {
 
         dynamicsWorld = new DiscreteDynamicsWorld(collisionDispatcher, broadphaseInterface, constraintSolver, collisionConfiguration);
         dynamicsWorld.setGravity(new Vector3f(0, -9.81f, 0));
+        Physics.world = dynamicsWorld;
     }
 
     @Override

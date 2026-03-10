@@ -1,16 +1,17 @@
 package game.scripts;
 
+import com.bulletphysics.collision.dispatch.CollisionWorld;
 import engine.Input;
 import engine.Surface;
 import engine.Time;
 import engine.ecs.*;
 import engine.graphics.Camera;
 import engine.graphics.Renderer;
+import engine.physics.Physics;
 import engine.physics.TypeUtil;
 import game.Settings;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import org.lwjgl.system.MemoryStack;
 
 
 public class FPCameraController extends Script {
@@ -135,10 +136,30 @@ public class FPCameraController extends Script {
             camera.setView(
                     viewMatrix.identity().lookAt(
                             pos,
-                            dir.add(pos), //TODO! This modifies dir!
+                            new Vector3f(dir).add(pos),
                             up
                     )
             );
+        }
+
+        //Grab Tool
+        {
+            javax.vecmath.Vector3f fromVM = TypeUtil.vec3(pos);
+            javax.vecmath.Vector3f toVM = TypeUtil.vec3(dir);
+            toVM.scale(10);
+            toVM.add(fromVM);
+
+            CollisionWorld.ClosestRayResultCallback closestRayResultCallback = new CollisionWorld.ClosestRayResultCallback(fromVM, toVM);
+
+            Physics.world.rayTest(fromVM, toVM, closestRayResultCallback);
+
+            if(closestRayResultCallback.hasHit()) {
+                Actor target = (Actor) closestRayResultCallback.collisionObject.getUserPointer();
+                System.out.println(target.getName());
+            }
+
+
+
         }
 
 
