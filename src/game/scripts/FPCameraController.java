@@ -6,6 +6,7 @@ import engine.Time;
 import engine.ecs.*;
 import engine.graphics.Camera;
 import engine.graphics.Renderer;
+import engine.physics.TypeUtil;
 import game.Settings;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -108,12 +109,9 @@ public class FPCameraController extends Script {
                     pos.y = transformComponent.transform().m31();
                     pos.z = transformComponent.transform().m32();
 
-                    try (MemoryStack stack = MemoryStack.stackPush()) {
-                        //PxVec3 pos = PxVec3.createAt(stack, MemoryStack::nmalloc);
-                        //Physx.copyTo(pos, force);
+                    RigidBodyComponent rigidBodyComponent = actor.getComponent(RigidBodyComponent.class);
+                    rigidBodyComponent.rigidBody.applyCentralForce(TypeUtil.vec3(force));
 
-                        //pxRigidDynamic.addForce(pos);
-                    }
                 } else {
 
                     Vector3f velocity = new Vector3f(0, 0, 0);
@@ -143,20 +141,7 @@ public class FPCameraController extends Script {
             );
         }
 
-        //Grab Tool
-        {
-            try(MemoryStack stack = MemoryStack.stackPush()) {
-                //PxVec3 pos = PxVec3.createAt(stack, MemoryStack::nmalloc);
-                //PxVec3 dir = PxVec3.createAt(stack, MemoryStack::nmalloc);
 
-                //Physx.copyTo(pos, new Vector3f(0.0f, 0.0f, 0.0f));
-                //Physx.copyTo(dir, new Vector3f(0.0f, 10.0f, 0.0f));
-
-
-
-
-            }
-        }
 
 
     }

@@ -8,6 +8,8 @@ import engine.graphics.*;
 
 import engine.ecs.*;
 import engine.graphics.pipelines.BlinnPhongPipeline;
+import engine.physics.Collider;
+import engine.physics.Interface;
 import game.scripts.FPCameraController;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -47,6 +49,7 @@ public class StageImpl extends Stage {
             Actor.tryClassload(TransformComponent.class);
             Actor.tryClassload(MeshComponent.class);
             Actor.tryClassload(MeshListComponent.class);
+            Actor.tryClassload(RigidBodyComponent.class);
             Actor.tryClassload(CameraComponent.class);
             Actor.tryClassload(SpotlightComponent.class);
             Actor.tryClassload(ShaderComponent.class);
@@ -57,6 +60,7 @@ public class StageImpl extends Stage {
         scene.addSystem(
                 new UISystem(renderer, renderPipeline, surface, scene),
                 new RenderSystem(renderer, renderPipeline, scene),
+                new BulletSystem(),
                 new ScriptSystem(scene)
         );
 
@@ -89,7 +93,8 @@ public class StageImpl extends Stage {
                                 new ScriptComponent(
                                         new FPCameraController(surface, renderer)
                                 ),
-                                new TransformComponent(new Matrix4f().identity().translate(0.0f, 15.0f, 0.5f))
+                                new TransformComponent(new Matrix4f().identity().translate(0.0f, 15.0f, 0.5f)),
+                                new RigidBodyComponent(Collider.newSphereCollider(1), 1.0f, new Interface(0.7f))
 
                         ));
             }
@@ -121,9 +126,12 @@ public class StageImpl extends Stage {
                                 Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/specular_map.png"), TextureFormatType.ColorR8G8B8A8)
                         )),
                         new ShaderComponent(shaderProgram),
-                        new TransformComponent(new Matrix4f().identity().translate(0, 2, 0).rotate((float) Math.toRadians(0), 0, 0, 1))
+                        new TransformComponent(new Matrix4f().identity().translate(0, 2, 0).rotate((float) Math.toRadians(0), 0, 0, 1)),
+                        new RigidBodyComponent(Collider.newBoxCollider(10, 1, 10), 0.0f, new Interface(0.5f))
+
                 ));
             }
+
 
             //Cube
             {
@@ -146,14 +154,16 @@ public class StageImpl extends Stage {
                         "Cube1",
                         new MaterialComponent(new engine.graphics.Material(
                                 Sampler.newSampler(renderer, Texture.Filter.Linear, Texture.Filter.Linear, true),
-                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/img.png"), TextureFormatType.ColorR8G8B8A8),
+                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/bugcat.jpg"), TextureFormatType.ColorR8G8B8A8),
                                 Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/normal_map2.jpg"), TextureFormatType.ColorR8G8B8A8),
                                 Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/diffuse_map.png"), TextureFormatType.ColorR8G8B8A8),
                                 Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/specular_map.png"), TextureFormatType.ColorR8G8B8A8)
                         )),
                         meshComponent,
                         new ShaderComponent(shaderProgram),
-                        new TransformComponent(new Matrix4f().identity().translate(0, 5, 0).rotate((float) Math.toRadians(0), 0, 0, 1))
+                        new TransformComponent(new Matrix4f().identity().translate(0, 5, 0).rotate((float) Math.toRadians(45), 0, 0, 1)),
+                        new RigidBodyComponent(Collider.newBoxCollider(1, 1, 1), 1.0f, new Interface(0.4f))
+
                 ));
             }
 
@@ -177,16 +187,19 @@ public class StageImpl extends Stage {
                         "Cube2",
                         new MaterialComponent(new engine.graphics.Material(
                                 Sampler.newSampler(renderer, Texture.Filter.Linear, Texture.Filter.Linear, true),
-                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/img.png"), TextureFormatType.ColorR8G8B8A8),
+                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/bugcat.jpg"), TextureFormatType.ColorR8G8B8A8),
                                 Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/normal_map.png"), TextureFormatType.ColorR8G8B8A8),
                                 Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/diffuse_map.png"), TextureFormatType.ColorR8G8B8A8),
                                 Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/specular_map.png"), TextureFormatType.ColorR8G8B8A8)
                         )),
                         meshComponent,
                         new ShaderComponent(shaderProgram),
-                        new TransformComponent(new Matrix4f().identity().translate(3, 5, 0).rotate((float) Math.toRadians(0), 0, 0, 1))
+                        new TransformComponent(new Matrix4f().identity().translate(3, 5, 0).rotate((float) Math.toRadians(0), 0, 0, 1)),
+                        new RigidBodyComponent(Collider.newBoxCollider(1, 1, 1), 1.0f, new Interface(0.4f))
                 ));
             }
+
+
 
             //Spotlight
             {

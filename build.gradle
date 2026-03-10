@@ -12,6 +12,7 @@ version '0.0.1'
 
 repositories {
     mavenCentral()
+
 }
 
 sourceSets {
@@ -42,6 +43,8 @@ project.ext.lwjglVersion = "3.3.6"
 project.ext.jomlVersion = "1.10.8"
 project.ext.kryoVersion = "5.6.2"
 project.ext.gsonVersion = "2.13.2"
+project.ext.jbulletVersion = "1.0.3"
+project.ext.vecmathVersion = "1.5.2"
 
 switch (OperatingSystem.current()) {
     case OperatingSystem.LINUX:
@@ -84,6 +87,9 @@ dependencies {
         implementation files("thirdparty/lwjgl3-awt-0.2.3.jar")
         implementation "com.google.code.gson:gson:$gsonVersion"
         implementation "org.lwjgl:lwjgl-openal"
+        implementation "com.github.stephengold:jbullet:$jbulletVersion"
+        implementation "javax.vecmath:vecmath:$vecmathVersion"
+
 
     }
 
