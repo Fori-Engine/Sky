@@ -111,6 +111,7 @@ public class FPCameraController extends Script {
                     pos.z = transformComponent.transform().m32();
 
                     RigidBodyComponent rigidBodyComponent = actor.getComponent(RigidBodyComponent.class);
+                    rigidBodyComponent.rigidBody.activate();
                     rigidBodyComponent.rigidBody.applyCentralForce(TypeUtil.vec3(force));
 
                 } else {
