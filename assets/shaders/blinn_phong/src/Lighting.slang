@@ -12,8 +12,8 @@ Texture2D input_depth_stencil_psw_texture;
 Texture2D input_shadow_maps[MAX_LIGHTS];
 SamplerState input_shadow_maps_samplers[MAX_LIGHTS];
 
-float4 get_normal_biased_fragment_ws(float4 fragment_ws, float3 light_dir_ws, float3 normal_ws) {
-    return fragment_ws + float4(normal_ws, 1.0) * 0.015 * abs(1 - dot(light_dir_ws, normal_ws));
+float4 get_normal_biased_fragment_ws(Light light, float4 fragment_ws, float3 light_dir_ws, float3 normal_ws) {
+    return fragment_ws + float4(normal_ws, 1.0) * light.shadowNormalOffsetBias * saturate(1 - dot(light_dir_ws, normal_ws));
 }
 
 float pcf(Texture2D input_shadow_map, SamplerState input_shadow_map_sampler, int pcf_kernel_w, float2 shadow_map_uv_ts, float4 fragment_shadow_map_ps) {
@@ -85,7 +85,7 @@ void computeMain(uniform int light_count, uniform int width, uniform int height,
 
             float3 normal_ws = normalize(decode(float2(input_color.w, color1.w)));
 
-            float4 normal_biased_fragment_ws = get_normal_biased_fragment_ws(fragment_ws, light_dir_ws, normal_ws);
+            float4 normal_biased_fragment_ws = get_normal_biased_fragment_ws(light, fragment_ws, light_dir_ws, normal_ws);
 
             float4 fragment_shadow_map_ps = mul(light.proj, mul(light.view, normal_biased_fragment_ws));
             fragment_shadow_map_ps /= fragment_shadow_map_ps.w;

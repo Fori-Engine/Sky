@@ -14,6 +14,7 @@ public class SpotlightComponent {
     public float attenuationLinear = 0.0014f;
     public float attenuationQuadratic = 0.000007f;
     public Vector3f color = new Vector3f(0, 1, 1);
+    public float shadowNormalOffsetBias = 0.05f;
 
     public SpotlightComponent(Disposable parent, Matrix4f view, Matrix4f proj, boolean invertY) {
         setView(view);

@@ -22,6 +22,8 @@ struct Light {
     float attenuationQuadratic;
 
     float3 color;
+
+    float shadowNormalOffsetBias;
 }
 
 struct Scene {

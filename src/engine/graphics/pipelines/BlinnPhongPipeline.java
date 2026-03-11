@@ -373,7 +373,7 @@ public class BlinnPhongPipeline extends RenderPipeline {
                 sceneDescData.putFloat(-1);
                 spotlightComponent.color.get(sceneDescData);
                 sceneDescData.position(sceneDescData.position() + SizeUtil.VEC3_SIZE_BYTES);
-                sceneDescData.putFloat(-1);
+                sceneDescData.putFloat(spotlightComponent.shadowNormalOffsetBias);
             }
         });
 
