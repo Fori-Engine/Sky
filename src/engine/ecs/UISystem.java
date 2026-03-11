@@ -28,12 +28,8 @@ public class UISystem extends ActorSystem {
     private Vector2f origin = new Vector2f();
     private MsdfFont msdfFont;
     private Surface surface;
-    private Loop hudLoop;
     private Loop menuLoop;
     private GfxPlatform gfxPlatform;
-
-
-    private TextValue gameInfo = text("Text 2");
     private Theme theme;
 
 
@@ -57,26 +53,6 @@ public class UISystem extends ActorSystem {
 
         theme = ThemeLoader.loadTheme((String) AssetRegistry.getAsset("core:assets/themes/CozyRoom.json").getObject());
 
-        //HUD UI
-        {
-            hudLoop = new Loop();
-            hudLoop.setWidget(
-                    new ContainerWidget()
-                            .setIgnore(true)
-                            .setLayoutEngine(new LineLayoutEngine(LineLayoutEngine.Line.Vertical))
-                            .addWidgets(
-                                    new Text(gameInfo, msdfFont),
-                                    new Text(text("This is text"), msdfFont),
-                                    new Button(text("This is text"), msdfFont)
-                                            .addEventHandler(new EventHandler() {
-                                                @Override
-                                                public void onClick() {
-                                                    System.out.println("Foo");
-                                                }
-                                            })
-                            )
-            );
-        }
 
 
         //Menu UI
@@ -109,7 +85,7 @@ public class UISystem extends ActorSystem {
 
 
 
-        //HUD Gfx Platform
+        //Gfx Platform
         {
             gfxPlatform = new GfxPlatform() {
                 @Override
@@ -159,7 +135,6 @@ public class UISystem extends ActorSystem {
                 }
             };
         }
-        hudLoop.setGfxPlatform(gfxPlatform);
         menuLoop.setGfxPlatform(gfxPlatform);
     }
 
@@ -232,8 +207,36 @@ public class UISystem extends ActorSystem {
 
         if(SystemState.running) {
 
-            gameInfo.string = "GPU: " + renderer.getDeviceName() + "\nFPS:" + Time.framesPerSecond() + "\nSpectator Mode: " + Settings.isSpectator;
-            hudLoop.update(0, 0, renderer.getWidth(), renderer.getHeight());
+            root.previsitAllActors(actor -> {
+                if(actor.has(UIComponent.class)) {
+                    UIComponent uiComponent = actor.getComponent(UIComponent.class);
+                    if (!uiComponent.active) {
+
+                        uiComponent.loop = new Loop();
+                        uiComponent.loop.setWidget(uiComponent.widget);
+                        uiComponent.loop.setGfxPlatform(gfxPlatform);
+
+                        uiComponent.active = true;
+                    }
+
+                    if (uiComponent.rect2D.isPresent()) {
+                        Rect2D rect2D = uiComponent.rect2D.get();
+                        uiComponent.loop.update(
+                                (int) rect2D.x,
+                                (int) rect2D.y,
+                                (int) rect2D.w,
+                                (int) rect2D.h
+                        );
+                    } else {
+                        uiComponent.loop.update(
+                                0, 0
+                        );
+                    }
+                }
+
+
+
+            });
 
         }
         else {

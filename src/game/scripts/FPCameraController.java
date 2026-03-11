@@ -6,6 +6,7 @@ import engine.Input;
 import engine.Surface;
 import engine.Time;
 import engine.ecs.*;
+import engine.gameui.Text;
 import engine.graphics.Camera;
 import engine.graphics.Renderer;
 import engine.physics.Physics;
@@ -19,7 +20,6 @@ public class FPCameraController extends Script {
     private Surface surface;
     private Camera camera;
     private float yaw = 0, pitch = 0;
-    private float yaw2 = 0, pitch2 = 0;
     private Vector3f pos = new Vector3f(), dir = new Vector3f(), up = new Vector3f(0.0f, 1.0f, 0.0f);
     private float lastMouseX = -1, lastMouseY = -1;
     private Matrix4f viewMatrix = new Matrix4f();
@@ -29,8 +29,9 @@ public class FPCameraController extends Script {
     public boolean jumpJustPressed = false;
     private Actor selectedActor;
     private Point2PointConstraint point2PointConstraint;
+    public Actor uiActor;
 
-    public FPCameraController(Surface surface, Renderer renderer) {
+    public FPCameraController(Surface surface, Renderer renderer, Actor uiActor) {
         this.surface = surface;
         camera = new Camera(
                 new Matrix4f().identity(),
@@ -46,6 +47,7 @@ public class FPCameraController extends Script {
         surface.addKeyCallback(key -> {
             if(key == Input.KEY_Q) Settings.isSpectator = !Settings.isSpectator;
         });
+        this.uiActor = uiActor;
     }
 
     @Override
@@ -151,6 +153,18 @@ public class FPCameraController extends Script {
 
         //Grab Tool
         {
+            UIComponent uiComponent = uiActor.getComponent(UIComponent.class);
+
+            Text wSelectedActorText = uiComponent.widget.getWidgetByPath("W_Container", "W_SelectedActorText");
+            wSelectedActorText.getText().string = selectedActor == null ? "Nothing selected" : selectedActor.getName();
+
+            Text wFPSText = uiComponent.widget.getWidgetByPath("W_Container", "W_FPSText");
+            wFPSText.getText().string = "FPS: " + Time.framesPerSecond();
+
+
+
+
+
             javax.vecmath.Vector3f fromVM = TypeUtil.vec3(pos);
             javax.vecmath.Vector3f toVM = TypeUtil.vec3(dir);
             toVM.scale(100);

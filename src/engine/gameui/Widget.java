@@ -7,6 +7,7 @@ public abstract class Widget {
     private List<Widget> widgets = new LinkedList<>();
     private List<EventHandler> eventHandlers = new LinkedList<>();
     private long hints;
+    private String name;
     protected LayoutEngine layoutEngine = new LayoutEngine() {
         @Override
         public int getComputedWidth() {
@@ -33,7 +34,31 @@ public abstract class Widget {
         return (hints & hint) != 0;
     }
 
+    public Widget setName(String name) {
+        this.name = name;
+        return this;
+    }
 
+    public String getName() {
+        return name;
+    }
+
+    public <T> T getWidgetByPath(String... names) {
+
+        Widget root = this;
+
+
+        for(String name : names) {
+            for(Widget widget : root.getWidgets()) {
+                if(widget.getName() != null && widget.getName().equals(name)) {
+                    root = widget;
+                }
+            }
+
+        }
+
+        return (T) root;
+    }
 
     public abstract int getRequiredWidth();
     public abstract int getRequiredHeight();

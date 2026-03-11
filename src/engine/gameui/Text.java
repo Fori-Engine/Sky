@@ -12,12 +12,15 @@ public class Text extends Widget {
     public Text(TextValue value, MsdfFont font) {
         this.value = value;
         this.font = font;
-
     }
 
     @Override
     public int getRequiredWidth() {
         return (int) font.getStringWidth(value.string);
+    }
+
+    public TextValue getText() {
+        return value;
     }
 
     @Override

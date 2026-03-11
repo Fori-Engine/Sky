@@ -4,10 +4,12 @@ import engine.*;
 import engine.asset.AssetPackage;
 import engine.asset.AssetRegistry;
 
+import engine.gameui.*;
 import engine.graphics.*;
 
 import engine.ecs.*;
 import engine.graphics.pipelines.BlinnPhongPipeline;
+import engine.graphics.text.MsdfFont;
 import engine.physics.Collider;
 import engine.physics.Interface;
 import game.scripts.FPCameraController;
@@ -15,6 +17,9 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import java.lang.Math;
 import java.nio.file.Path;
+import java.util.Optional;
+
+import static engine.gameui.TextValue.text;
 
 public class StageImpl extends Stage {
 
@@ -68,6 +73,46 @@ public class StageImpl extends Stage {
 
         Actor rootActor = scene.newRootActor("Root");
         {
+
+
+            Actor uiActor ;
+            //UI
+            {
+
+                MsdfFont msdfFont = new MsdfFont(
+                        renderer,
+                        AssetRegistry.getAsset("core:assets/fonts/AirbusB612/b612-atlas.png"),
+                        AssetRegistry.getAsset("core:assets/fonts/AirbusB612/b612-atlas.json")
+                );
+
+                uiActor = (scene.newActor(
+                        "UI",
+                        new UIComponent(
+                                new ContainerWidget()
+                                        .setIgnore(true)
+                                        .setName("W_Container")
+                                        .setLayoutEngine(new LineLayoutEngine(LineLayoutEngine.Line.Vertical))
+                                        .addWidgets(
+                                                new Text(text("Text time"), msdfFont)
+                                                        .setName("W_SelectedActorText"),
+                                                new Text(text(""), msdfFont)
+                                                        .setName("W_FPSText"),
+                                                new Button(text("Click me!"), msdfFont)
+                                                        .addEventHandler(new EventHandler() {
+                                                            @Override
+                                                            public void onClick() {
+                                                                System.out.println("Foo");
+                                                            }
+                                                        })
+                                        ),
+                                Optional.of(new Rect2D(0, 0, renderer.getWidth(), renderer.getHeight()))
+                        )
+                ));
+
+                rootActor.addActor(uiActor);
+            }
+
+
             //Camera
             {
                 rootActor.addActor(
@@ -91,7 +136,7 @@ public class StageImpl extends Stage {
                                         )
                                 ),
                                 new ScriptComponent(
-                                        new FPCameraController(surface, renderer)
+                                        new FPCameraController(surface, renderer, uiActor)
                                 ),
                                 new TransformComponent(new Matrix4f().identity().translate(0.0f, 15.0f, 0.5f)),
                                 new RigidBodyComponent(Collider.newSphereCollider(1), 1.0f, new Interface(0.7f))
@@ -222,7 +267,7 @@ public class StageImpl extends Stage {
                                 new Vector3f(0.0f, 1.0f, 0.0f)
                         ),
                         new Matrix4f().perspective(
-                                (float) Math.toRadians(90),
+                                (float) Math.toRadians(45),
                                 (float) 1,
                                 0.1f,
                                 10.0f,
@@ -231,7 +276,7 @@ public class StageImpl extends Stage {
 
                         true
                 );
-                spotlightComponent.color = new Vector3f(1, 1, 1);
+                spotlightComponent.color = new Vector3f(1, 0, 0);
 
                 rootActor.addActor(scene.newActor(
                         "Spotlight2",
@@ -240,6 +285,7 @@ public class StageImpl extends Stage {
 
 
             }
+
 
         }
         scene.setRootActor(rootActor);
