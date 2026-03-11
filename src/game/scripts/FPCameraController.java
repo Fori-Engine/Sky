@@ -1,6 +1,7 @@
 package game.scripts;
 
 import com.bulletphysics.collision.dispatch.CollisionWorld;
+import com.bulletphysics.dynamics.constraintsolver.Point2PointConstraint;
 import engine.Input;
 import engine.Surface;
 import engine.Time;
@@ -18,6 +19,7 @@ public class FPCameraController extends Script {
     private Surface surface;
     private Camera camera;
     private float yaw = 0, pitch = 0;
+    private float yaw2 = 0, pitch2 = 0;
     private Vector3f pos = new Vector3f(), dir = new Vector3f(), up = new Vector3f(0.0f, 1.0f, 0.0f);
     private float lastMouseX = -1, lastMouseY = -1;
     private Matrix4f viewMatrix = new Matrix4f();
@@ -25,6 +27,8 @@ public class FPCameraController extends Script {
     public float spectatorModeSpeed = 10;
 
     public boolean jumpJustPressed = false;
+    private Actor selectedActor;
+    private Point2PointConstraint point2PointConstraint;
 
     public FPCameraController(Surface surface, Renderer renderer) {
         this.surface = surface;
@@ -39,7 +43,6 @@ public class FPCameraController extends Script {
                 ),
                 true
         );
-
         surface.addKeyCallback(key -> {
             if(key == Input.KEY_Q) Settings.isSpectator = !Settings.isSpectator;
         });
@@ -52,6 +55,10 @@ public class FPCameraController extends Script {
 
     @Override
     public void update(Actor actor, Actor root) {
+        RigidBodyComponent rigidBodyComponent = actor.getComponent(RigidBodyComponent.class);
+        TransformComponent transformComponent = actor.getComponent(TransformComponent.class);
+
+
         //Movement
         {
 
@@ -105,12 +112,11 @@ public class FPCameraController extends Script {
                     }
 
 
-                    TransformComponent transformComponent = actor.getComponent(TransformComponent.class);
                     pos.x = transformComponent.transform().m30();
                     pos.y = transformComponent.transform().m31();
                     pos.z = transformComponent.transform().m32();
 
-                    RigidBodyComponent rigidBodyComponent = actor.getComponent(RigidBodyComponent.class);
+
                     rigidBodyComponent.rigidBody.activate();
                     rigidBodyComponent.rigidBody.applyCentralForce(TypeUtil.vec3(force));
 
@@ -147,16 +153,40 @@ public class FPCameraController extends Script {
         {
             javax.vecmath.Vector3f fromVM = TypeUtil.vec3(pos);
             javax.vecmath.Vector3f toVM = TypeUtil.vec3(dir);
-            toVM.scale(10);
+            toVM.scale(100);
             toVM.add(fromVM);
 
             CollisionWorld.ClosestRayResultCallback closestRayResultCallback = new CollisionWorld.ClosestRayResultCallback(fromVM, toVM);
 
             Physics.world.rayTest(fromVM, toVM, closestRayResultCallback);
 
-            if(closestRayResultCallback.hasHit()) {
-                Actor target = (Actor) closestRayResultCallback.collisionObject.getUserPointer();
-                System.out.println(target.getName());
+            if(closestRayResultCallback.hasHit() && surface.getMousePressed(Input.MOUSE_BUTTON_1)) {
+                selectedActor = (Actor) closestRayResultCallback.collisionObject.getUserPointer();
+            }
+            else selectedActor = null;
+
+
+
+            if(selectedActor != null) {
+                RigidBodyComponent selectedRigidBodyComponent = selectedActor.getComponent(RigidBodyComponent.class);
+
+
+                javax.vecmath.Vector3f rayToTransformDist = closestRayResultCallback.hitPointWorld;
+                rayToTransformDist.sub(closestRayResultCallback.hitPointWorld, selectedRigidBodyComponent.rigidBody.getCenterOfMassPosition(new javax.vecmath.Vector3f()));
+
+
+                if (point2PointConstraint != null) Physics.world.removeConstraint(point2PointConstraint);
+                point2PointConstraint = new Point2PointConstraint(selectedRigidBodyComponent.rigidBody, rayToTransformDist);
+                point2PointConstraint.setting.tau = 0.1f;
+                point2PointConstraint.setting.damping = 1.001f;
+                point2PointConstraint.setting.impulseClamp = 1f;
+                Physics.world.addConstraint(point2PointConstraint);
+
+
+                toVM = TypeUtil.vec3(dir);
+                toVM.add(fromVM);
+
+                point2PointConstraint.setPivotB(toVM);
             }
 
 

@@ -120,7 +120,7 @@ public class StageImpl extends Stage {
                         meshListComponent,
                         new MaterialComponent(new engine.graphics.Material(
                                 Sampler.newSampler(renderer, Texture.Filter.Linear, Texture.Filter.Linear, true),
-                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/brickwall.jpg"), TextureFormatType.ColorR8G8B8A8),
+                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/default.png"), TextureFormatType.ColorR8G8B8A8),
                                 Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/normal_map.png"), TextureFormatType.ColorR8G8B8A8),
                                 Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/diffuse_map.png"), TextureFormatType.ColorR8G8B8A8),
                                 Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/specular_map.png"), TextureFormatType.ColorR8G8B8A8)
@@ -133,71 +133,49 @@ public class StageImpl extends Stage {
             }
 
 
-            //Cube
-            {
+            for(int x = 0; x < 5; x++) {
+                for(int z = 0; z < 5; z++) {
+
+                    //Cube
+                    {
 
 
-                ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(renderer);
-                shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/blinn_phong/Default2_vertex.spv"), ShaderType.VertexShader);
-                shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/blinn_phong/Default2_fragment.spv"), ShaderType.FragmentShader);
-                shaderProgram.assemble();
+                        ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(renderer);
+                        shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/blinn_phong/Default2_vertex.spv"), ShaderType.VertexShader);
+                        shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/blinn_phong/Default2_fragment.spv"), ShaderType.FragmentShader);
+                        shaderProgram.assemble();
 
 
 
-                MeshData meshData = MeshGenerator.newBox(1, 1, 1);
+                        MeshData meshData = MeshGenerator.newBox(0.5f, 0.5f, 0.5f);
 
-                MeshComponent meshComponent = new MeshComponent(renderer, renderer, 1000, 1000, shaderProgram);
-                meshComponent.setMeshData(meshData);
+                        MeshComponent meshComponent = new MeshComponent(renderer, renderer, 1000, 1000, shaderProgram);
+                        meshComponent.setMeshData(meshData);
 
 
-                rootActor.addActor(scene.newActor(
-                        "Cube1",
-                        new MaterialComponent(new engine.graphics.Material(
-                                Sampler.newSampler(renderer, Texture.Filter.Linear, Texture.Filter.Linear, true),
-                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/bugcat.jpg"), TextureFormatType.ColorR8G8B8A8),
-                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/normal_map2.jpg"), TextureFormatType.ColorR8G8B8A8),
-                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/diffuse_map.png"), TextureFormatType.ColorR8G8B8A8),
-                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/specular_map.png"), TextureFormatType.ColorR8G8B8A8)
-                        )),
-                        meshComponent,
-                        new ShaderComponent(shaderProgram),
-                        new TransformComponent(new Matrix4f().identity().translate(0, 5, 0).rotate((float) Math.toRadians(45), 0, 0, 1)),
-                        new RigidBodyComponent(Collider.newBoxCollider(1, 1, 1), 1.0f, new Interface(0.4f))
+                        rootActor.addActor(scene.newActor(
+                                "Cube (x: " + x + " z: " + z + ")",
+                                new MaterialComponent(new engine.graphics.Material(
+                                        Sampler.newSampler(renderer, Texture.Filter.Linear, Texture.Filter.Linear, true),
+                                        Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/brickwall.jpg"), TextureFormatType.ColorR8G8B8A8),
+                                        Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/normal_map.png"), TextureFormatType.ColorR8G8B8A8),
+                                        Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/diffuse_map.png"), TextureFormatType.ColorR8G8B8A8),
+                                        Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/specular_map.png"), TextureFormatType.ColorR8G8B8A8)
+                                )),
+                                meshComponent,
+                                new ShaderComponent(shaderProgram),
+                                new TransformComponent(new Matrix4f().identity().translate(x + 1, 5, z + 1).rotate((float) Math.toRadians(45), 0, 0, 1)),
+                                new RigidBodyComponent(Collider.newBoxCollider(0.5f, 0.5f, 0.5f), 1.0f, new Interface(0.4f))
 
-                ));
+                        ));
+                    }
+
+
+
+                }
             }
 
-            //Cube
-            {
 
-
-                ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(renderer);
-                shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/blinn_phong/Default2_vertex.spv"), ShaderType.VertexShader);
-                shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/blinn_phong/Default2_fragment.spv"), ShaderType.FragmentShader);
-                shaderProgram.assemble();
-
-
-
-                MeshData meshData = MeshGenerator.newBox(1, 1, 1);
-
-                MeshComponent meshComponent = new MeshComponent(renderer, renderer, 100, 100, shaderProgram);
-                meshComponent.setMeshData(meshData);
-
-                rootActor.addActor(scene.newActor(
-                        "Cube2",
-                        new MaterialComponent(new engine.graphics.Material(
-                                Sampler.newSampler(renderer, Texture.Filter.Linear, Texture.Filter.Linear, true),
-                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/bugcat.jpg"), TextureFormatType.ColorR8G8B8A8),
-                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/normal_map.png"), TextureFormatType.ColorR8G8B8A8),
-                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/diffuse_map.png"), TextureFormatType.ColorR8G8B8A8),
-                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/specular_map.png"), TextureFormatType.ColorR8G8B8A8)
-                        )),
-                        meshComponent,
-                        new ShaderComponent(shaderProgram),
-                        new TransformComponent(new Matrix4f().identity().translate(3, 5, 0).rotate((float) Math.toRadians(0), 0, 0, 1)),
-                        new RigidBodyComponent(Collider.newBoxCollider(1, 1, 1), 1.0f, new Interface(0.4f))
-                ));
-            }
 
 
 

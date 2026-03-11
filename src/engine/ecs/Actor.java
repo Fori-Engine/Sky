@@ -5,7 +5,7 @@ import engine.Logger;
 public class Actor {
     private Object[] components = new Object[64];
     private long mask = 0L;
-    private Actor[] children = new Actor[64];
+    private Actor[] children = new Actor[128];
     private int nextChildIndex;
     private String name;
 
