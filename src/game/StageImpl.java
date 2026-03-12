@@ -256,15 +256,15 @@ public class StageImpl extends Stage {
             //Spotlight
             {
 
-                float x = 3, y = 10, z = 1f;
+                float x = 0, y = 10, z = 0f;
 
 
                 SpotlightComponent spotlightComponent = new SpotlightComponent(
                         renderer,
                         new Matrix4f().lookAt(
                                 new Vector3f(x, y, z),
-                                new Vector3f(3, 0, 0),
-                                new Vector3f(0.0f, 1.0f, 0.0f)
+                                new Vector3f(0.0f, -2, 0.0f),
+                                new Vector3f(0.0f, 0.0f, 1.0f) //This is relative to the camera!
                         ),
                         new Matrix4f().perspective(
                                 (float) Math.toRadians(45),
@@ -276,7 +276,7 @@ public class StageImpl extends Stage {
 
                         true
                 );
-                spotlightComponent.color = new Vector3f(1, 0, 0);
+                spotlightComponent.color = new Vector3f(1, 1, 1);
 
                 rootActor.addActor(scene.newActor(
                         "Spotlight2",
