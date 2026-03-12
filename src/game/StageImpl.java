@@ -172,7 +172,7 @@ public class StageImpl extends Stage {
                         )),
                         new ShaderComponent(shaderProgram),
                         new TransformComponent(new Matrix4f().identity().translate(0, 2, 0).rotate((float) Math.toRadians(0), 0, 0, 1)),
-                        new RigidBodyComponent(Collider.newBoxCollider(10, 1, 10), 0.0f, new Interface(0.5f))
+                        new RigidBodyComponent(Collider.newBoxCollider(10, 1, 10), 0.0f, new Interface(0.8f))
 
                 ));
             }
@@ -210,7 +210,7 @@ public class StageImpl extends Stage {
                                 meshComponent,
                                 new ShaderComponent(shaderProgram),
                                 new TransformComponent(new Matrix4f().identity().translate(x + 1, 5, z + 1).rotate((float) Math.toRadians(45), 0, 0, 1)),
-                                new RigidBodyComponent(Collider.newBoxCollider(0.5f, 0.5f, 0.5f), 1.0f, new Interface(0.4f))
+                                new RigidBodyComponent(Collider.newBoxCollider(0.5f, 0.5f, 0.5f), 1.0f, new Interface(0.8f))
 
                         ));
                     }

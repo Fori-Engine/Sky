@@ -1,7 +1,9 @@
 package game.scripts;
 
+import com.bulletphysics.collision.dispatch.CollisionObject;
 import com.bulletphysics.collision.dispatch.CollisionWorld;
 import com.bulletphysics.dynamics.constraintsolver.Point2PointConstraint;
+import com.bulletphysics.linearmath.Transform;
 import engine.Input;
 import engine.Surface;
 import engine.Time;
@@ -14,6 +16,8 @@ import engine.physics.TypeUtil;
 import game.Settings;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+
+import javax.vecmath.Quat4f;
 
 
 public class FPCameraController extends Script {
@@ -28,7 +32,6 @@ public class FPCameraController extends Script {
 
     public boolean jumpJustPressed = false;
     private Actor selectedActor;
-    private Point2PointConstraint point2PointConstraint;
     public Actor uiActor;
 
     public FPCameraController(Surface surface, Renderer renderer, Actor uiActor) {
@@ -175,33 +178,35 @@ public class FPCameraController extends Script {
             Physics.world.rayTest(fromVM, toVM, closestRayResultCallback);
 
             if(closestRayResultCallback.hasHit() && surface.getMousePressed(Input.MOUSE_BUTTON_1)) {
-                selectedActor = (Actor) closestRayResultCallback.collisionObject.getUserPointer();
+                Actor newSelectedActor = (Actor) closestRayResultCallback.collisionObject.getUserPointer();
+                if(!newSelectedActor.getName().equals("Floor")) {
+                    selectedActor = newSelectedActor;
+                }
+
             }
-            else selectedActor = null;
+            else if(surface.getMouseReleased(Input.MOUSE_BUTTON_1) && selectedActor != null) {
+                RigidBodyComponent selectedActorRigidBodyComponent = selectedActor.getComponent(RigidBodyComponent.class);
+                selectedActorRigidBodyComponent.rigidBody.setAngularFactor(1f);
+                toVM.sub(fromVM);
+                selectedActorRigidBodyComponent.rigidBody.activate();
+                toVM.scale(1f / 20f);
+                selectedActorRigidBodyComponent.rigidBody.applyCentralImpulse(toVM);
 
-
+                selectedActor = null;
+            }
 
             if(selectedActor != null) {
-                RigidBodyComponent selectedRigidBodyComponent = selectedActor.getComponent(RigidBodyComponent.class);
-
-
-                javax.vecmath.Vector3f rayToTransformDist = closestRayResultCallback.hitPointWorld;
-                rayToTransformDist.sub(closestRayResultCallback.hitPointWorld, selectedRigidBodyComponent.rigidBody.getCenterOfMassPosition(new javax.vecmath.Vector3f()));
-
-
-                if (point2PointConstraint != null) Physics.world.removeConstraint(point2PointConstraint);
-                point2PointConstraint = new Point2PointConstraint(selectedRigidBodyComponent.rigidBody, rayToTransformDist);
-                point2PointConstraint.setting.tau = 0.1f;
-                point2PointConstraint.setting.damping = 1.001f;
-                point2PointConstraint.setting.impulseClamp = 1f;
-                Physics.world.addConstraint(point2PointConstraint);
-
-
-                toVM = TypeUtil.vec3(dir);
-                toVM.add(fromVM);
-
-                point2PointConstraint.setPivotB(toVM);
+                RigidBodyComponent selectedActorRigidBodyComponent = selectedActor.getComponent(RigidBodyComponent.class);
+                selectedActorRigidBodyComponent.rigidBody.setAngularFactor(0.01f);
+                selectedActorRigidBodyComponent.rigidBody.setWorldTransform(
+                        new Transform(new javax.vecmath.Matrix4f(
+                                selectedActorRigidBodyComponent.rigidBody.getWorldTransform(new Transform()).getRotation(new Quat4f()),
+                                TypeUtil.vec3(new Vector3f(pos).add(new Vector3f(dir).mul(1.5f))),
+                                1.0f
+                        ))
+                );
             }
+
 
 
 

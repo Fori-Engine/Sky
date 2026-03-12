@@ -83,6 +83,7 @@ public class BulletSystem extends ActorSystem {
                     );
 
                     rigidBodyComponent.constructionInfo.friction = rigidBodyComponent.mat.friction;
+                    rigidBodyComponent.constructionInfo.restitution = 0.1f;
 
 
                     rigidBodyComponent.rigidBody = new RigidBody(rigidBodyComponent.constructionInfo);
