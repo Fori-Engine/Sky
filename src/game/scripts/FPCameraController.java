@@ -19,6 +19,8 @@ import org.joml.Vector3f;
 
 import javax.vecmath.Quat4f;
 
+import static com.bulletphysics.collision.dispatch.CollisionFlags.NO_CONTACT_RESPONSE;
+
 
 public class FPCameraController extends Script {
     private Surface surface;
@@ -33,6 +35,7 @@ public class FPCameraController extends Script {
     public boolean jumpJustPressed = false;
     private Actor selectedActor;
     public Actor uiActor;
+    private float distScale = 1.5f;
 
     public FPCameraController(Surface surface, Renderer renderer, Actor uiActor) {
         this.surface = surface;
@@ -59,9 +62,124 @@ public class FPCameraController extends Script {
     }
 
     @Override
+    public void fixedUpdate(Actor actor, float timestep) {
+        if (!Settings.isSpectator) {
+            RigidBodyComponent rigidBodyComponent = actor.getComponent(RigidBodyComponent.class);
+            TransformComponent transformComponent = actor.getComponent(TransformComponent.class);
+
+
+
+            //PxRigidDynamic pxRigidDynamic = (PxRigidDynamic) nvPhysXComponent.actor;
+            Vector3f force = new Vector3f(0, 0, 0);
+            if (surface.getKeyPressed(Input.KEY_W)) {
+                force = (new Vector3f(dir).normalize().mul(acceleration));
+            }
+            if (surface.getKeyPressed(Input.KEY_S)) {
+                force = (new Vector3f(dir).normalize().mul(-acceleration));
+            }
+            if (surface.getKeyPressed(Input.KEY_D)) {
+                force = (new Vector3f(dir).normalize().cross(up).mul(acceleration));
+            }
+            if (surface.getKeyPressed(Input.KEY_A)) {
+                force = (new Vector3f(dir).normalize().cross(up).mul(-acceleration));
+            }
+
+
+            boolean jump = surface.getKeyPressed(Input.KEY_SPACE);
+            if (jump != jumpJustPressed) {
+                if (jump) force = (new Vector3f(up).mul(200));
+
+                jumpJustPressed = jump;
+            }
+
+
+            pos.x = transformComponent.transform().m30();
+            pos.y = transformComponent.transform().m31();
+            pos.z = transformComponent.transform().m32();
+
+
+            rigidBodyComponent.rigidBody.activate();
+            rigidBodyComponent.rigidBody.applyCentralForce(TypeUtil.vec3(force));
+
+        }
+
+
+        //Grab Tool
+        {
+            UIComponent uiComponent = uiActor.getComponent(UIComponent.class);
+
+            Text wSelectedActorText = uiComponent.widget.getWidgetByPath("W_Container", "W_SelectedActorText");
+            wSelectedActorText.getText().string = selectedActor == null ? "Nothing selected" : selectedActor.getName();
+
+            Text wFPSText = uiComponent.widget.getWidgetByPath("W_Container", "W_FPSText");
+            wFPSText.getText().string = "FPS: " + Time.framesPerSecond();
+
+
+
+
+
+            javax.vecmath.Vector3f fromVM = TypeUtil.vec3(pos);
+            javax.vecmath.Vector3f toVM = TypeUtil.vec3(dir);
+            toVM.scale(100);
+            toVM.add(fromVM);
+
+            CollisionWorld.ClosestRayResultCallback closestRayResultCallback = new CollisionWorld.ClosestRayResultCallback(fromVM, toVM);
+
+            Physics.world.rayTest(fromVM, toVM, closestRayResultCallback);
+
+            if(closestRayResultCallback.hasHit() && surface.getMousePressed(Input.MOUSE_BUTTON_1) && selectedActor == null) {
+                Actor newSelectedActor = (Actor) closestRayResultCallback.collisionObject.getUserPointer();
+                if(!newSelectedActor.getName().equals("Floor")) {
+                    selectedActor = newSelectedActor;
+                    RigidBodyComponent selectedActorRigidBodyComponent = selectedActor.getComponent(RigidBodyComponent.class);
+                    selectedActorRigidBodyComponent.rigidBody.setCollisionFlags(NO_CONTACT_RESPONSE);
+                    selectedActorRigidBodyComponent.rigidBody.setLinearVelocity(new javax.vecmath.Vector3f(0, 0, 0));
+                    selectedActorRigidBodyComponent.rigidBody.setAngularVelocity(new javax.vecmath.Vector3f(0, 0, 0));
+                    selectedActorRigidBodyComponent.rigidBody.setGravity(new javax.vecmath.Vector3f(0, 0, 0));
+                    selectedActorRigidBodyComponent.rigidBody.activate(true);
+
+
+                }
+
+            }
+            else if(surface.getMouseReleased(Input.MOUSE_BUTTON_1) && selectedActor != null) {
+                RigidBodyComponent selectedActorRigidBodyComponent = selectedActor.getComponent(RigidBodyComponent.class);
+                selectedActorRigidBodyComponent.rigidBody.setCollisionFlags(
+                        selectedActorRigidBodyComponent.rigidBody.getCollisionFlags() & ~NO_CONTACT_RESPONSE
+                );
+                selectedActorRigidBodyComponent.rigidBody.setGravity(Physics.world.getGravity(new javax.vecmath.Vector3f()));
+
+                selectedActorRigidBodyComponent.rigidBody.activate(true);
+
+                selectedActor = null;
+            }
+
+            if(selectedActor != null) {
+
+
+                RigidBodyComponent selectedActorRigidBodyComponent = selectedActor.getComponent(RigidBodyComponent.class);
+                selectedActorRigidBodyComponent.rigidBody.activate();
+                selectedActorRigidBodyComponent.rigidBody.setAngularFactor(0.1f);
+                selectedActorRigidBodyComponent.rigidBody.setWorldTransform(
+                        new Transform(new javax.vecmath.Matrix4f(
+                                selectedActorRigidBodyComponent.rigidBody.getWorldTransform(new Transform()).getRotation(new Quat4f()),
+                                TypeUtil.vec3(new Vector3f(pos).add(new Vector3f(dir).mul(distScale))),
+                                1.0f
+                        ))
+                );
+
+
+            }
+
+
+
+
+        }
+
+    }
+
+    @Override
     public void update(Actor actor, Actor root) {
-        RigidBodyComponent rigidBodyComponent = actor.getComponent(RigidBodyComponent.class);
-        TransformComponent transformComponent = actor.getComponent(TransformComponent.class);
 
 
         //Movement
@@ -89,43 +207,7 @@ public class FPCameraController extends Script {
 
             //Movement
             {
-
-                if (!Settings.isSpectator) {
-
-
-                    //PxRigidDynamic pxRigidDynamic = (PxRigidDynamic) nvPhysXComponent.actor;
-                    Vector3f force = new Vector3f(0, 0, 0);
-                    if (surface.getKeyPressed(Input.KEY_W)) {
-                        force = (new Vector3f(dir).normalize().mul(acceleration));
-                    }
-                    if (surface.getKeyPressed(Input.KEY_S)) {
-                        force = (new Vector3f(dir).normalize().mul(-acceleration));
-                    }
-                    if (surface.getKeyPressed(Input.KEY_D)) {
-                        force = (new Vector3f(dir).normalize().cross(up).mul(acceleration));
-                    }
-                    if (surface.getKeyPressed(Input.KEY_A)) {
-                        force = (new Vector3f(dir).normalize().cross(up).mul(-acceleration));
-                    }
-
-
-                    boolean jump = surface.getKeyPressed(Input.KEY_SPACE);
-                    if (jump != jumpJustPressed) {
-                        if (jump) force = (new Vector3f(up).mul(200));
-
-                        jumpJustPressed = jump;
-                    }
-
-
-                    pos.x = transformComponent.transform().m30();
-                    pos.y = transformComponent.transform().m31();
-                    pos.z = transformComponent.transform().m32();
-
-
-                    rigidBodyComponent.rigidBody.activate();
-                    rigidBodyComponent.rigidBody.applyCentralForce(TypeUtil.vec3(force));
-
-                } else {
+                if(Settings.isSpectator) {
 
                     Vector3f velocity = new Vector3f(0, 0, 0);
                     if (surface.getKeyPressed(Input.KEY_W)) {
@@ -154,63 +236,6 @@ public class FPCameraController extends Script {
             );
         }
 
-        //Grab Tool
-        {
-            UIComponent uiComponent = uiActor.getComponent(UIComponent.class);
-
-            Text wSelectedActorText = uiComponent.widget.getWidgetByPath("W_Container", "W_SelectedActorText");
-            wSelectedActorText.getText().string = selectedActor == null ? "Nothing selected" : selectedActor.getName();
-
-            Text wFPSText = uiComponent.widget.getWidgetByPath("W_Container", "W_FPSText");
-            wFPSText.getText().string = "FPS: " + Time.framesPerSecond();
-
-
-
-
-
-            javax.vecmath.Vector3f fromVM = TypeUtil.vec3(pos);
-            javax.vecmath.Vector3f toVM = TypeUtil.vec3(dir);
-            toVM.scale(100);
-            toVM.add(fromVM);
-
-            CollisionWorld.ClosestRayResultCallback closestRayResultCallback = new CollisionWorld.ClosestRayResultCallback(fromVM, toVM);
-
-            Physics.world.rayTest(fromVM, toVM, closestRayResultCallback);
-
-            if(closestRayResultCallback.hasHit() && surface.getMousePressed(Input.MOUSE_BUTTON_1)) {
-                Actor newSelectedActor = (Actor) closestRayResultCallback.collisionObject.getUserPointer();
-                if(!newSelectedActor.getName().equals("Floor")) {
-                    selectedActor = newSelectedActor;
-                }
-
-            }
-            else if(surface.getMouseReleased(Input.MOUSE_BUTTON_1) && selectedActor != null) {
-                RigidBodyComponent selectedActorRigidBodyComponent = selectedActor.getComponent(RigidBodyComponent.class);
-                selectedActorRigidBodyComponent.rigidBody.setAngularFactor(1f);
-                toVM.sub(fromVM);
-                selectedActorRigidBodyComponent.rigidBody.activate();
-                toVM.scale(1f / 20f);
-                selectedActorRigidBodyComponent.rigidBody.applyCentralImpulse(toVM);
-
-                selectedActor = null;
-            }
-
-            if(selectedActor != null) {
-                RigidBodyComponent selectedActorRigidBodyComponent = selectedActor.getComponent(RigidBodyComponent.class);
-                selectedActorRigidBodyComponent.rigidBody.setAngularFactor(0.01f);
-                selectedActorRigidBodyComponent.rigidBody.setWorldTransform(
-                        new Transform(new javax.vecmath.Matrix4f(
-                                selectedActorRigidBodyComponent.rigidBody.getWorldTransform(new Transform()).getRotation(new Quat4f()),
-                                TypeUtil.vec3(new Vector3f(pos).add(new Vector3f(dir).mul(1.5f))),
-                                1.0f
-                        ))
-                );
-            }
-
-
-
-
-        }
 
 
 

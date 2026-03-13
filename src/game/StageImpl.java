@@ -194,7 +194,7 @@ public class StageImpl extends Stage {
 
                         MeshData meshData = MeshGenerator.newBox(0.5f, 0.5f, 0.5f);
 
-                        MeshComponent meshComponent = new MeshComponent(renderer, renderer, 1000, 1000, shaderProgram);
+                        MeshComponent meshComponent = new MeshComponent(renderer, renderer, 50, 50, shaderProgram);
                         meshComponent.setMeshData(meshData);
 
 

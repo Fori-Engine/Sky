@@ -5,4 +5,8 @@ public abstract class Script {
     public boolean initialized;
     public abstract void init(Actor actor);
     public abstract void update(Actor actor, Actor root);
+
+    public void fixedUpdate(Actor actor, float timestep) {
+
+    }
 }
