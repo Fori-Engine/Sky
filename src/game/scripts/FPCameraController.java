@@ -29,7 +29,7 @@ public class FPCameraController extends Script {
     private Vector3f pos = new Vector3f(), dir = new Vector3f(), up = new Vector3f(0.0f, 1.0f, 0.0f);
     private float lastMouseX = -1, lastMouseY = -1;
     private Matrix4f viewMatrix = new Matrix4f();
-    public float mouseSensitivity = 0.01f, maxPitchDeg = 75, acceleration = 10;
+    public float mouseSensitivity = 0.01f, maxPitchDeg = 75, acceleration = 5;
     public float spectatorModeSpeed = 10;
 
     public boolean jumpJustPressed = false;
