@@ -92,6 +92,7 @@ public class BulletSystem extends ActorSystem {
 
                             rigidBodyComponent.rigidBody = new RigidBody(rigidBodyComponent.constructionInfo);
                             rigidBodyComponent.rigidBody.setUserPointer(actor);
+                            rigidBodyComponent.rigidBody.setAngularFactor(rigidBodyComponent.rotate ? 1f : 0f);
 
                             dynamicsWorld.addRigidBody(rigidBodyComponent.rigidBody);
 

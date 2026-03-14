@@ -6,4 +6,5 @@ public class Interface {
     public Interface(float friction) {
         this.friction = friction;
     }
+
 }

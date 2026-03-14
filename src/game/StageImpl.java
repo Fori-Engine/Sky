@@ -140,7 +140,7 @@ public class StageImpl extends Stage {
                                         new FPPlayerController(surface, renderer, uiActor)
                                 ),
                                 new TransformComponent(new Matrix4f().identity().translate(0.0f, 15.0f, 0.5f)),
-                                new RigidBodyComponent(Collider.newSphereCollider(1), 1.0f, new Interface(0.9999999f))
+                                new RigidBodyComponent(Collider.newSphereCollider(1), 1.0f, new Interface(0.1f), false)
 
                         ));
             }

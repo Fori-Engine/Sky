@@ -15,10 +15,20 @@ public class RigidBodyComponent {
     public boolean active;
     public float mass = 1;
     public Interface mat;
+    public boolean rotate = true;
 
     public RigidBodyComponent(Collider collider, float mass, Interface mat) {
         this.collider = collider;
         this.mass = mass;
         this.mat = mat;
     }
+
+    public RigidBodyComponent(Collider collider, float mass, Interface mat, boolean rotate) {
+        this.collider = collider;
+        this.mass = mass;
+        this.mat = mat;
+        this.rotate = rotate;
+    }
+
+
 }
