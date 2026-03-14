@@ -12,7 +12,7 @@ import engine.graphics.pipelines.BlinnPhongPipeline;
 import engine.graphics.text.MsdfFont;
 import engine.physics.Collider;
 import engine.physics.Interface;
-import game.scripts.FPCameraController;
+import game.scripts.FPPlayerController;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import java.lang.Math;
@@ -137,7 +137,7 @@ public class StageImpl extends Stage {
                                         )
                                 ),
                                 new ScriptComponent(
-                                        new FPCameraController(surface, renderer, uiActor)
+                                        new FPPlayerController(surface, renderer, uiActor)
                                 ),
                                 new TransformComponent(new Matrix4f().identity().translate(0.0f, 15.0f, 0.5f)),
                                 new RigidBodyComponent(Collider.newSphereCollider(1), 1.0f, new Interface(0.9999999f))

@@ -1,8 +1,6 @@
 package game.scripts;
 
-import com.bulletphysics.collision.dispatch.CollisionObject;
 import com.bulletphysics.collision.dispatch.CollisionWorld;
-import com.bulletphysics.dynamics.constraintsolver.Point2PointConstraint;
 import com.bulletphysics.linearmath.Transform;
 import engine.Input;
 import engine.Surface;
@@ -12,7 +10,7 @@ import engine.gameui.Text;
 import engine.graphics.Camera;
 import engine.graphics.Renderer;
 import engine.physics.Physics;
-import engine.physics.TypeUtil;
+import engine.physics.MathUtil;
 import game.Settings;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -22,14 +20,14 @@ import javax.vecmath.Quat4f;
 import static com.bulletphysics.collision.dispatch.CollisionFlags.NO_CONTACT_RESPONSE;
 
 
-public class FPCameraController extends Script {
+public class FPPlayerController extends Script {
     private Surface surface;
     private Camera camera;
     private float yaw = 0, pitch = 0;
     private Vector3f pos = new Vector3f(), dir = new Vector3f(), up = new Vector3f(0.0f, 1.0f, 0.0f);
     private float lastMouseX = -1, lastMouseY = -1;
     private Matrix4f viewMatrix = new Matrix4f();
-    public float mouseSensitivity = 0.01f, maxPitchDeg = 75, acceleration = 5;
+    public float mouseSensitivity = 0.01f, maxPitchDeg = 75, moveForce = 5;
     public float spectatorModeSpeed = 10;
 
     public boolean jumpJustPressed = false;
@@ -37,7 +35,9 @@ public class FPCameraController extends Script {
     public Actor uiActor;
     private float distScale = 1.5f;
 
-    public FPCameraController(Surface surface, Renderer renderer, Actor uiActor) {
+    private Vector3f tmpVec3 = new Vector3f();
+
+    public FPPlayerController(Surface surface, Renderer renderer, Actor uiActor) {
         this.surface = surface;
         camera = new Camera(
                 new Matrix4f().identity(),
@@ -72,22 +72,22 @@ public class FPCameraController extends Script {
             //PxRigidDynamic pxRigidDynamic = (PxRigidDynamic) nvPhysXComponent.actor;
             Vector3f force = new Vector3f(0, 0, 0);
             if (surface.getKeyPressed(Input.KEY_W)) {
-                force = (new Vector3f(dir).normalize().mul(acceleration));
+                force.zero().set(dir).normalize().mul(moveForce);
             }
             if (surface.getKeyPressed(Input.KEY_S)) {
-                force = (new Vector3f(dir).normalize().mul(-acceleration));
+                force.zero().set(dir).normalize().mul(-moveForce);
             }
             if (surface.getKeyPressed(Input.KEY_D)) {
-                force = (new Vector3f(dir).normalize().cross(up).mul(acceleration));
+                force.zero().set(dir).normalize().cross(up).mul(moveForce);
             }
             if (surface.getKeyPressed(Input.KEY_A)) {
-                force = (new Vector3f(dir).normalize().cross(up).mul(-acceleration));
+                force.zero().set(dir).normalize().cross(up).mul(-moveForce);
             }
 
 
             boolean jump = surface.getKeyPressed(Input.KEY_SPACE);
             if (jump != jumpJustPressed) {
-                if (jump) force = (new Vector3f(up).mul(200));
+                if (jump) force = (tmpVec3.set(up).mul(200));
 
                 jumpJustPressed = jump;
             }
@@ -99,7 +99,7 @@ public class FPCameraController extends Script {
 
 
             rigidBodyComponent.rigidBody.activate();
-            rigidBodyComponent.rigidBody.applyCentralForce(TypeUtil.vec3(force));
+            rigidBodyComponent.rigidBody.applyCentralForce(MathUtil.vec3(force));
 
         }
 
@@ -113,8 +113,8 @@ public class FPCameraController extends Script {
 
 
 
-            javax.vecmath.Vector3f fromVM = TypeUtil.vec3(pos);
-            javax.vecmath.Vector3f toVM = TypeUtil.vec3(dir);
+            javax.vecmath.Vector3f fromVM = MathUtil.vec3(pos);
+            javax.vecmath.Vector3f toVM = MathUtil.vec3(dir);
             toVM.scale(100);
             toVM.add(fromVM);
 
@@ -158,7 +158,7 @@ public class FPCameraController extends Script {
                 selectedActorRigidBodyComponent.rigidBody.setWorldTransform(
                         new Transform(new javax.vecmath.Matrix4f(
                                 selectedActorRigidBodyComponent.rigidBody.getWorldTransform(new Transform()).getRotation(new Quat4f()),
-                                TypeUtil.vec3(new Vector3f(pos).add(new Vector3f(dir).mul(distScale))),
+                                MathUtil.vec3(new Vector3f(pos).add(new Vector3f(dir).mul(distScale))),
                                 1.0f
                         ))
                 );
@@ -206,26 +206,25 @@ public class FPCameraController extends Script {
 
                     Vector3f velocity = new Vector3f(0, 0, 0);
                     if (surface.getKeyPressed(Input.KEY_W)) {
-                        velocity = (new Vector3f(dir).normalize().mul(spectatorModeSpeed));
+                        velocity.zero().set(dir).normalize().mul(spectatorModeSpeed);
                     }
                     if (surface.getKeyPressed(Input.KEY_S)) {
-                        velocity = (new Vector3f(dir).normalize().mul(-spectatorModeSpeed));
+                        velocity.zero().set(dir).normalize().mul(-spectatorModeSpeed);
                     }
                     if (surface.getKeyPressed(Input.KEY_D)) {
-                        velocity = (new Vector3f(dir).normalize().cross(up).mul(spectatorModeSpeed));
+                        velocity.zero().set(dir).normalize().cross(up).mul(spectatorModeSpeed);
                     }
                     if (surface.getKeyPressed(Input.KEY_A)) {
-                        velocity = (new Vector3f(dir).normalize().cross(up).mul(-spectatorModeSpeed));
+                        velocity.zero().set(dir).normalize().cross(up).mul(-spectatorModeSpeed);
                     }
                     pos.add(velocity.mul(Time.deltaTime()));
                 }
             }
 
-
             camera.setView(
                     viewMatrix.identity().lookAt(
                             pos,
-                            new Vector3f(dir).add(pos),
+                            tmpVec3.set(dir).add(pos),
                             up
                     )
             );

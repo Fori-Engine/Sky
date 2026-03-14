@@ -5,8 +5,8 @@ import org.joml.Vector3f;
 
 import javax.vecmath.Quat4f;
 
-public class TypeUtil {
-    private TypeUtil() {}
+public class MathUtil {
+    private MathUtil() {}
 
     public static void copy(Vector3f src, javax.vecmath.Vector3f dst) {
         dst.x = src.x;
@@ -37,7 +37,6 @@ public class TypeUtil {
     public static javax.vecmath.Vector3f vec3(Vector3f src) {
         return new javax.vecmath.Vector3f(src.x, src.y, src.z);
     }
-
 
 
     public static Quat4f quat4(Quaternionf src) {

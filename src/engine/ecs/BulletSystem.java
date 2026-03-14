@@ -15,7 +15,7 @@ import com.bulletphysics.linearmath.Transform;
 import engine.SystemState;
 import engine.Time;
 import engine.physics.Physics;
-import engine.physics.TypeUtil;
+import engine.physics.MathUtil;
 import org.joml.Quaternionf;
 
 import javax.vecmath.Matrix4f;
@@ -73,8 +73,8 @@ public class BulletSystem extends ActorSystem {
 
 
                             rigidBodyComponent.motionState = new DefaultMotionState(new Transform(new Matrix4f(
-                                    TypeUtil.quat4(rotation),
-                                    TypeUtil.vec3(pos),
+                                    MathUtil.quat4(rotation),
+                                    MathUtil.vec3(pos),
                                     1.0f
                             )));
 
@@ -106,7 +106,7 @@ public class BulletSystem extends ActorSystem {
                             transformVM.getMatrix(posVM);
                             transformVM.getRotation(rotVM);
 
-                            TypeUtil.copy(rotVM, rotJML);
+                            MathUtil.copy(rotVM, rotJML);
 
                             float x = posVM.m03;
                             float y = posVM.m13;
