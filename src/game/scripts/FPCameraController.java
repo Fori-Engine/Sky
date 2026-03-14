@@ -111,11 +111,6 @@ public class FPCameraController extends Script {
             Text wSelectedActorText = uiComponent.widget.getWidgetByPath("W_Container", "W_SelectedActorText");
             wSelectedActorText.getText().string = selectedActor == null ? "Nothing selected" : selectedActor.getName();
 
-            Text wFPSText = uiComponent.widget.getWidgetByPath("W_Container", "W_FPSText");
-            wFPSText.getText().string = "FPS: " + Time.framesPerSecond();
-
-
-
 
 
             javax.vecmath.Vector3f fromVM = TypeUtil.vec3(pos);
@@ -234,7 +229,13 @@ public class FPCameraController extends Script {
                             up
                     )
             );
+
+            UIComponent uiComponent = uiActor.getComponent(UIComponent.class);
+
+            Text wFPSText = uiComponent.widget.getWidgetByPath("W_Container", "W_FPSText");
+            wFPSText.getText().string = "FPS: " + Time.framesPerSecond();
         }
+
 
 
 
