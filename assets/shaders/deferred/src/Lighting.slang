@@ -1,0 +1,187 @@
+#include "SceneDesc.slang"
+#include "KnarkowiczOctahedral.slang"
+#include "Atmosphere.slang"
+#include "CookTorrance.slang"
+
+StructuredBuffer<Scene> scene_desc;
+
+Texture2D input_texture0;
+RWTexture2D output_color_texture;
+Texture2D input_texture1;
+Texture2D input_depth_stencil_psw_texture;
+
+Texture2D input_shadow_maps[MAX_LIGHTS];
+SamplerState input_shadow_maps_samplers[MAX_LIGHTS];
+
+float4 get_normal_biased_fragment_ws(Light light, float4 fragment_ws, float3 light_dir_ws, float3 normal_ws) {
+    return fragment_ws + float4(normal_ws, 1.0) * light.shadowNormalOffsetBias * saturate(1 - dot(light_dir_ws, normal_ws));
+}
+
+float pcf(Texture2D input_shadow_map, SamplerState input_shadow_map_sampler, int pcf_kernel_w, float2 shadow_map_uv_ts, float4 fragment_shadow_map_ps) {
+
+    float shadow_map_texel_w, shadow_map_texel_h, shadow_map_num_levels;
+    input_shadow_map.GetDimensions(0, shadow_map_texel_w, shadow_map_texel_h, shadow_map_num_levels);
+    shadow_map_texel_w = 1 / shadow_map_texel_w;
+    shadow_map_texel_h = 1 / shadow_map_texel_h;
+
+    float shadow_samples = 0;
+
+    for (int x = -pcf_kernel_w; x <= pcf_kernel_w; x++) {
+        for (int y = -pcf_kernel_w; y <= -pcf_kernel_w; y++) {
+            float shadow_map_depth = input_shadow_map.Sample(input_shadow_map_sampler, shadow_map_uv_ts.xy + float2(x, y) * float2(shadow_map_texel_w, shadow_map_texel_h)).r;
+
+            shadow_samples += (shadow_map_depth < fragment_shadow_map_ps.z) ? 1.5 : 0.0;
+        }
+    }
+
+    shadow_samples /= pow(2 * pcf_kernel_w + 1, 2);
+
+    return shadow_samples;
+}
+
+float4 get_pos_ws(float ux, float uy, float4x4 inv_proj, float4x4 inv_view, float depth_psw) {
+
+    float ndc_x = ux * 2.0 - 1.0;
+    float ndc_y = -(uy * 2.0 - 1.0);
+    float4 projected_pos = float4(ndc_x, ndc_y, depth_psw, 1.0);
+
+    float4 view = mul(inv_proj, projected_pos);
+    float4 pos = mul(inv_view, view);
+
+    pos /= pos.w;
+
+    return pos;
+}
+
+[numthreads(32, 32, 1)]
+void computeMain(uniform int light_count, uniform int width, uniform int height, int3 dispatch_ID : SV_DispatchThreadID) {
+    int3 texture_xy_ss = int3(dispatch_ID.x, dispatch_ID.y, 0);
+
+    float4 input_color = input_texture0.Load(texture_xy_ss, 0);
+
+    float depth_psw = input_depth_stencil_psw_texture.Load(texture_xy_ss, 0).r;
+    float3 output_color = scatter();
+
+    if (depth_psw != 1) {
+        output_color = float3(0.0, 0.0, 0.0);
+
+        Camera camera = scene_desc[0].camera;
+        float3 camera_pos_ws = float3(camera.invView[0][3], camera.invView[1][3], camera.invView[2][3]);
+
+        float4 color1 = input_texture1.Load(texture_xy_ss, 0);
+        float metallic = color1.g;
+        float roughness = color1.b;
+        float3 albedo = input_color.rgb;
+
+        float4 fragment_ws = get_pos_ws((float) (texture_xy_ss.x + 0.5) / width, (float) (texture_xy_ss.y + 0.5) / height, camera.invProj, camera.invView, depth_psw); //mul(camera.invView, float4(fragment_vs.xyz, 1.0));
+
+        float ambient = 0.01;
+        float shadow = 0;
+
+        for (int light_index = 0; light_index < light_count; light_index++) {
+
+            Light light = scene_desc[0].lights[light_index];
+
+            float3 light_pos_ws = float3(light.invView[0][3], light.invView[1][3], light.invView[2][3]);
+            float3 light_dir_ws = normalize(light_pos_ws - fragment_ws.xyz);
+            float3 camera_dir_ws = normalize(camera_pos_ws - fragment_ws.xyz);
+
+            float3 normal_ws = normalize(decode(float2(input_color.w, color1.w)));
+
+            float4 normal_biased_fragment_ws = get_normal_biased_fragment_ws(light, fragment_ws, light_dir_ws, normal_ws);
+
+            float4 fragment_shadow_map_ps = mul(light.proj, mul(light.view, normal_biased_fragment_ws));
+            fragment_shadow_map_ps /= fragment_shadow_map_ps.w;
+            float4 shadow_map_uv_ts = fragment_shadow_map_ps * 0.5 + 0.5;
+
+
+            if (shadow_map_uv_ts.x >= 0 && shadow_map_uv_ts.x <= 1 && shadow_map_uv_ts.y >= 0 && shadow_map_uv_ts.y <= 1) {
+
+
+            
+                // Shadows
+                {
+                    float shadow_per_pixel = pcf(
+                        input_shadow_maps[light_index], 
+                        input_shadow_maps_samplers[light_index], 
+                        1, 
+                        shadow_map_uv_ts.xy, 
+                        fragment_shadow_map_ps
+                    );
+
+                    shadow += shadow_per_pixel;
+                }
+
+
+
+
+
+
+
+                // Lighting BRDF
+                {
+                    float distance = length(light_pos_ws - fragment_ws.xyz);
+                    float attenuation = 1.0 / (light.attenuationConstant + light.attenuationLinear * distance + light.attenuationQuadratic * (distance * distance));
+                    float3 radiance = light.color * attenuation;
+                    float cos = max(dot(light_dir_ws, normal_ws), 0.0);
+
+                    float3 camera_dir_ws = normalize(camera_pos_ws - fragment_ws.xyz);
+                    float3 halfway_dir_ws = normalize(light_dir_ws + camera_dir_ws);
+
+                    float3 F0 = float3(0.04);
+                    F0 = lerp(F0, albedo, metallic);
+                    float3 F = CT::fresnel(
+                        max(dot(camera_dir_ws, halfway_dir_ws), 0),
+                        F0
+                    );
+
+                    float NDF = CT::distribution(
+                        normal_ws, 
+                        halfway_dir_ws, 
+                        roughness
+                    );
+
+                    float G = CT::geometry(
+                        normal_ws, 
+                        camera_dir_ws, 
+                        light_dir_ws, 
+                        roughness
+                    );
+
+                    // BRDF specular numerator
+                    float3 numerator = NDF * G * F;
+                    // BRDF specular denominator
+                    float3 denominator = 4.0 * max(dot(normal_ws, camera_dir_ws), 0.0) * max(dot(normal_ws, light_dir_ws), 0.0) + 0.0001;
+                    
+                    float3 specular = numerator / denominator;
+
+                    float3 kS = F;
+                    float3 kD = float3(1.0) - kS;
+
+                    kD *= 1.0 - metallic;
+
+                    output_color.rgb += (kD * albedo / PI + specular) * radiance * cos + (0.03 * albedo);
+
+                }
+
+
+
+
+
+
+
+
+
+
+
+
+
+            }
+        }
+
+        output_color.rgb *= (1 - max(0.0, shadow));
+    }
+    
+
+    output_color_texture[texture_xy_ss.xy] = float4(output_color, 1.0);
+}

@@ -8,7 +8,7 @@ import engine.gameui.*;
 import engine.graphics.*;
 
 import engine.ecs.*;
-import engine.graphics.pipelines.BlinnPhongPipeline;
+import engine.graphics.pipelines.DeferredPipeline;
 import engine.graphics.text.MsdfFont;
 import engine.physics.Collider;
 import engine.physics.Interface;
@@ -48,7 +48,7 @@ public class StageImpl extends Stage {
                         .validation(true)
                         .vsync(false)
         );
-        renderPipeline = new BlinnPhongPipeline();
+        renderPipeline = new DeferredPipeline();
         {
 
             Actor.tryClassload(TransformComponent.class);
@@ -150,8 +150,8 @@ public class StageImpl extends Stage {
 
 
                 ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(renderer);
-                shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/blinn_phong/Default2_vertex.spv"), ShaderType.VertexShader);
-                shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/blinn_phong/Default2_fragment.spv"), ShaderType.FragmentShader);
+                shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred/Default2_vertex.spv"), ShaderType.VertexShader);
+                shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred/Default2_fragment.spv"), ShaderType.FragmentShader);
                 shaderProgram.assemble();
 
 
@@ -166,10 +166,10 @@ public class StageImpl extends Stage {
                         meshListComponent,
                         new MaterialComponent(new engine.graphics.Material(
                                 Sampler.newSampler(renderer, Texture.Filter.Linear, Texture.Filter.Linear, true),
-                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/default.png"), TextureFormatType.ColorR8G8B8A8),
-                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/normal_map.png"), TextureFormatType.ColorR8G8B8A8),
-                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/diffuse_map.png"), TextureFormatType.ColorR8G8B8A8),
-                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/specular_map.png"), TextureFormatType.ColorR8G8B8A8)
+                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/rustediron2_basecolor.png"), TextureFormatType.ColorR8G8B8A8),
+                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/rustediron2_normal.png"), TextureFormatType.ColorR8G8B8A8unorm),
+                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/rustediron2_metallic.png"), TextureFormatType.ColorR8G8B8A8unorm),
+                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/rustediron2_roughness.png"), TextureFormatType.ColorR8G8B8A8unorm)
                         )),
                         new ShaderComponent(shaderProgram),
                         new TransformComponent(new Matrix4f().identity().translate(0, 2, 0).rotate((float) Math.toRadians(0), 0, 0, 1)),
@@ -179,16 +179,16 @@ public class StageImpl extends Stage {
             }
 
 
-            for(int x = 0; x < 5; x++) {
-                for(int z = 0; z < 5; z++) {
+            for(int x = 0; x < 1; x++) {
+                for(int z = 0; z < 1; z++) {
 
                     //Cube
                     {
 
 
                         ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(renderer);
-                        shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/blinn_phong/Default2_vertex.spv"), ShaderType.VertexShader);
-                        shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/blinn_phong/Default2_fragment.spv"), ShaderType.FragmentShader);
+                        shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred/Default2_vertex.spv"), ShaderType.VertexShader);
+                        shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred/Default2_fragment.spv"), ShaderType.FragmentShader);
                         shaderProgram.assemble();
 
 
@@ -203,11 +203,11 @@ public class StageImpl extends Stage {
                                 "Cube (x: " + x + " z: " + z + ")",
                                 new MaterialComponent(new engine.graphics.Material(
                                         Sampler.newSampler(renderer, Texture.Filter.Linear, Texture.Filter.Linear, true),
-                                        Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/brickwall.jpg"), TextureFormatType.ColorR8G8B8A8),
-                                        Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/normal_map.png"), TextureFormatType.ColorR8G8B8A8),
-                                        Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/diffuse_map.png"), TextureFormatType.ColorR8G8B8A8),
-                                        Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/specular_map.png"), TextureFormatType.ColorR8G8B8A8)
-                                )),
+                                        Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/rustediron2_basecolor.png"), TextureFormatType.ColorR8G8B8A8),
+                                        Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/rustediron2_normal.png"), TextureFormatType.ColorR8G8B8A8unorm),
+                                        Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/rustediron2_metallic.png"), TextureFormatType.ColorR8G8B8A8unorm),
+                                        Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/rustediron2_roughness.png"), TextureFormatType.ColorR8G8B8A8unorm)
+                                    )),
                                 meshComponent,
                                 new ShaderComponent(shaderProgram),
                                 new TransformComponent(new Matrix4f().identity().translate(x + 1, 5, z + 1).rotate((float) Math.toRadians(45), 0, 0, 1)),
