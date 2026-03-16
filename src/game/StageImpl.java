@@ -140,7 +140,7 @@ public class StageImpl extends Stage {
                                         new FPPlayerController(surface, renderer, uiActor)
                                 ),
                                 new TransformComponent(new Matrix4f().identity().translate(0.0f, 15.0f, 0.5f)),
-                                new RigidBodyComponent(Collider.newSphereCollider(1), 1.0f, new Interface(0.1f), false)
+                                new RigidBodyComponent(Collider.newBoxCollider(1, 3, 1), 1.0f, new Interface(0.1f), false)
 
                         ));
             }
@@ -166,10 +166,10 @@ public class StageImpl extends Stage {
                         meshListComponent,
                         new MaterialComponent(new engine.graphics.Material(
                                 Sampler.newSampler(renderer, Texture.Filter.Linear, Texture.Filter.Linear, true),
-                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/rustediron2_basecolor.png"), TextureFormatType.ColorR8G8B8A8),
-                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/rustediron2_normal.png"), TextureFormatType.ColorR8G8B8A8unorm),
-                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/rustediron2_metallic.png"), TextureFormatType.ColorR8G8B8A8unorm),
-                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/rustediron2_roughness.png"), TextureFormatType.ColorR8G8B8A8unorm)
+                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/clayceramic/basecolor.jpg"), TextureFormatType.ColorR8G8B8A8),
+                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/clayceramic/normal.png"), TextureFormatType.ColorR8G8B8A8unorm),
+                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/clayceramic/metallic.jpg"), TextureFormatType.ColorR8G8B8A8unorm),
+                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/clayceramic/roughness.jpg"), TextureFormatType.ColorR8G8B8A8unorm)
                         )),
                         new ShaderComponent(shaderProgram),
                         new TransformComponent(new Matrix4f().identity().translate(0, 2, 0).rotate((float) Math.toRadians(0), 0, 0, 1)),
@@ -179,45 +179,72 @@ public class StageImpl extends Stage {
             }
 
 
-            for(int x = 0; x < 1; x++) {
-                for(int z = 0; z < 1; z++) {
-
-                    //Cube
-                    {
+            //Cube
+            {
 
 
-                        ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(renderer);
-                        shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred/Default2_vertex.spv"), ShaderType.VertexShader);
-                        shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred/Default2_fragment.spv"), ShaderType.FragmentShader);
-                        shaderProgram.assemble();
+                ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(renderer);
+                shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred/Default2_vertex.spv"), ShaderType.VertexShader);
+                shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred/Default2_fragment.spv"), ShaderType.FragmentShader);
+                shaderProgram.assemble();
 
 
 
-                        MeshData meshData = MeshGenerator.newBox(0.5f, 0.5f, 0.5f);
+                MeshData meshData = MeshGenerator.newBox(0.5f, 0.5f, 0.5f);
 
-                        MeshComponent meshComponent = new MeshComponent(renderer, renderer, 50, 50, shaderProgram);
-                        meshComponent.setMeshData(meshData);
-
-
-                        rootActor.addActor(scene.newActor(
-                                "Cube (x: " + x + " z: " + z + ")",
-                                new MaterialComponent(new engine.graphics.Material(
-                                        Sampler.newSampler(renderer, Texture.Filter.Linear, Texture.Filter.Linear, true),
-                                        Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/rustediron2_basecolor.png"), TextureFormatType.ColorR8G8B8A8),
-                                        Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/rustediron2_normal.png"), TextureFormatType.ColorR8G8B8A8unorm),
-                                        Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/rustediron2_metallic.png"), TextureFormatType.ColorR8G8B8A8unorm),
-                                        Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/rustediron2_roughness.png"), TextureFormatType.ColorR8G8B8A8unorm)
-                                    )),
-                                meshComponent,
-                                new ShaderComponent(shaderProgram),
-                                new TransformComponent(new Matrix4f().identity().translate(x + 1, 5, z + 1).rotate((float) Math.toRadians(45), 0, 0, 1)),
-                                new RigidBodyComponent(Collider.newBoxCollider(0.5f, 0.5f, 0.5f), 1.0f, new Interface(0.8f))
-
-                        ));
-                    }
+                MeshComponent meshComponent = new MeshComponent(renderer, renderer, 50, 50, shaderProgram);
+                meshComponent.setMeshData(meshData);
 
 
-                }
+                rootActor.addActor(scene.newActor(
+                        "Rusted Cube",
+                        new MaterialComponent(new engine.graphics.Material(
+                                Sampler.newSampler(renderer, Texture.Filter.Linear, Texture.Filter.Linear, true),
+                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/rustediron2_basecolor.png"), TextureFormatType.ColorR8G8B8A8),
+                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/rustediron2_normal.png"), TextureFormatType.ColorR8G8B8A8unorm),
+                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/rustediron2_metallic.png"), TextureFormatType.ColorR8G8B8A8unorm),
+                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/rustediron2_roughness.png"), TextureFormatType.ColorR8G8B8A8unorm)
+                        )),
+                        meshComponent,
+                        new ShaderComponent(shaderProgram),
+                        new TransformComponent(new Matrix4f().identity().translate(1, 5, 2).rotate((float) Math.toRadians(45), 0, 0, 1)),
+                        new RigidBodyComponent(Collider.newBoxCollider(0.5f, 0.5f, 0.5f), 1.0f, new Interface(0.8f))
+
+                ));
+            }
+
+            //Cube
+            {
+
+
+                ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(renderer);
+                shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred/Default2_vertex.spv"), ShaderType.VertexShader);
+                shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred/Default2_fragment.spv"), ShaderType.FragmentShader);
+                shaderProgram.assemble();
+
+
+
+                MeshData meshData = MeshGenerator.newBox(0.5f, 0.5f, 0.5f);
+
+                MeshComponent meshComponent = new MeshComponent(renderer, renderer, 50, 50, shaderProgram);
+                meshComponent.setMeshData(meshData);
+
+
+                rootActor.addActor(scene.newActor(
+                        "Rusted Cube",
+                        new MaterialComponent(new engine.graphics.Material(
+                                Sampler.newSampler(renderer, Texture.Filter.Linear, Texture.Filter.Linear, true),
+                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/concrete/basecolor.jpg"), TextureFormatType.ColorR8G8B8A8),
+                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/concrete/normal.png"), TextureFormatType.ColorR8G8B8A8unorm),
+                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/concrete/metallic.jpg"), TextureFormatType.ColorR8G8B8A8unorm),
+                                Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/concrete/roughness.jpg"), TextureFormatType.ColorR8G8B8A8unorm)
+                        )),
+                        meshComponent,
+                        new ShaderComponent(shaderProgram),
+                        new TransformComponent(new Matrix4f().identity().translate(2, 5, 2).rotate((float) Math.toRadians(45), 0, 0, 1)),
+                        new RigidBodyComponent(Collider.newBoxCollider(0.5f, 0.5f, 0.5f), 1.0f, new Interface(0.8f))
+
+                ));
             }
 
 
@@ -227,7 +254,7 @@ public class StageImpl extends Stage {
             //Spotlight
             {
 
-                float x = 0, y = 10, z = 1f;
+                float x = -2, y = 10, z = 1f;
 
 
                 rootActor.addActor(scene.newActor(
