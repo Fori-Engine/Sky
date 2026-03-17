@@ -1,7 +1,8 @@
+#pragma once
 #define MAX_LIGHTS 10
 #define MAX_TRANSFORMS 10
 
-struct Camera {
+public struct Camera {
     float4x4 view;
     float4x4 proj;
 
@@ -9,7 +10,7 @@ struct Camera {
     float4x4 invProj;
 }
 
-struct Light {
+public struct Light {
 
     float4x4 view;
     float4x4 proj;
@@ -26,7 +27,7 @@ struct Light {
     float shadowNormalOffsetBias;
 }
 
-struct Scene {
+public struct Scene {
     Camera camera;
     Light lights[MAX_LIGHTS];
 }
