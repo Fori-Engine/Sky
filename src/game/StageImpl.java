@@ -231,7 +231,7 @@ public class StageImpl extends Stage {
 
 
                 rootActor.addActor(scene.newActor(
-                        "Rusted Cube",
+                        "Concrete Cube",
                         new MaterialComponent(new engine.graphics.Material(
                                 Sampler.newSampler(renderer, Texture.Filter.Linear, Texture.Filter.Linear, true),
                                 Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/concrete/basecolor.jpg"), TextureFormatType.ColorR8G8B8A8),

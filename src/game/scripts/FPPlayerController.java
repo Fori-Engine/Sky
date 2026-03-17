@@ -27,7 +27,7 @@ public class FPPlayerController extends Script {
     private Vector3f pos = new Vector3f(), dir = new Vector3f(), up = new Vector3f(0.0f, 1.0f, 0.0f);
     private float lastMouseX = -1, lastMouseY = -1;
     private Matrix4f viewMatrix = new Matrix4f();
-    public float mouseSensitivity = 0.01f, maxPitchDeg = 75, moveForce = 5;
+    public float mouseSensitivity = 0.01f, maxPitchDeg = 75, moveForce = 10;
     public float spectatorModeSpeed = 10;
 
     public boolean jumpJustPressed = false;
@@ -143,8 +143,7 @@ public class FPPlayerController extends Script {
                         selectedActorRigidBodyComponent.rigidBody.getCollisionFlags() & ~NO_CONTACT_RESPONSE
                 );
                 selectedActorRigidBodyComponent.rigidBody.setGravity(Physics.world.getGravity(new javax.vecmath.Vector3f()));
-
-                selectedActorRigidBodyComponent.rigidBody.activate(true);
+                Physics.activateEverything();
 
                 selectedActor = null;
             }
@@ -162,6 +161,8 @@ public class FPPlayerController extends Script {
                                 1.0f
                         ))
                 );
+
+                Physics.activateEverything();
 
 
             }
