@@ -31,7 +31,7 @@ public class BulletSystem extends ActorSystem {
     private Quaternionf rotJML = new Quaternionf();
     private Matrix4f posVM = new Matrix4f();
     private float accumulator = 0;
-    private float timestep = 1 / 60f;
+    private float timestep = 1 / 120f;
 
     public BulletSystem() {
         BroadphaseInterface broadphaseInterface = new DbvtBroadphase();

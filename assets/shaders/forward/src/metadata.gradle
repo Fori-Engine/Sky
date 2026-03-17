@@ -1,0 +1,4 @@
+ext.shaders = [
+        'Default2': ['vertex', 'fragment'],
+        'Display': ['vertex', 'fragment']
+]

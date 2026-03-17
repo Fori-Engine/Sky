@@ -9,6 +9,7 @@ import engine.graphics.*;
 
 import engine.ecs.*;
 import engine.graphics.pipelines.DeferredPipeline;
+import engine.graphics.pipelines.ForwardPipeline;
 import engine.graphics.text.MsdfFont;
 import engine.physics.Collider;
 import engine.physics.Interface;
@@ -48,7 +49,7 @@ public class StageImpl extends Stage {
                         .validation(true)
                         .vsync(false)
         );
-        renderPipeline = new DeferredPipeline();
+        renderPipeline = new ForwardPipeline();
         {
 
             Actor.tryClassload(TransformComponent.class);
@@ -150,8 +151,8 @@ public class StageImpl extends Stage {
 
 
                 ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(renderer);
-                shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred/Default2_vertex.spv"), ShaderType.VertexShader);
-                shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred/Default2_fragment.spv"), ShaderType.FragmentShader);
+                shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/forward/Default2_vertex.spv"), ShaderType.VertexShader);
+                shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/forward/Default2_fragment.spv"), ShaderType.FragmentShader);
                 shaderProgram.assemble();
 
 
@@ -184,8 +185,8 @@ public class StageImpl extends Stage {
 
 
                 ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(renderer);
-                shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred/Default2_vertex.spv"), ShaderType.VertexShader);
-                shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred/Default2_fragment.spv"), ShaderType.FragmentShader);
+                shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/forward/Default2_vertex.spv"), ShaderType.VertexShader);
+                shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/forward/Default2_fragment.spv"), ShaderType.FragmentShader);
                 shaderProgram.assemble();
 
 
@@ -218,8 +219,8 @@ public class StageImpl extends Stage {
 
 
                 ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(renderer);
-                shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred/Default2_vertex.spv"), ShaderType.VertexShader);
-                shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/deferred/Default2_fragment.spv"), ShaderType.FragmentShader);
+                shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/forward/Default2_vertex.spv"), ShaderType.VertexShader);
+                shaderProgram.add(AssetRegistry.getAsset("core:assets/shaders/forward/Default2_fragment.spv"), ShaderType.FragmentShader);
                 shaderProgram.assemble();
 
 
