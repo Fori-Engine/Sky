@@ -61,10 +61,10 @@ public class UISystem extends ActorSystem {
             menuLoop.setWidget(
                     new ContainerWidget().setLayoutEngine(new EdgeLayoutEngine())
                             .addWidget(new ContainerWidget()
-                                    .setLayoutEngine(new LineLayoutEngine(LineLayoutEngine.Line.Horizontal))
+                                    .setLayoutEngine(new EdgeLayoutEngine())
                                     .addWidgets(
-                                            new Text(text("Welcome to the menu!"), msdfFont),
-                                            new Button(text("Quit"), msdfFont)
+                                            new Text(text("Welcome to the menu!"), msdfFont).addHint(EdgeLayoutEngine.Top),
+                                            new Button(text("Quit"), msdfFont).addHint(EdgeLayoutEngine.Left)
                                                     .addEventHandler(new EventHandler() {
 
                                                         @Override
@@ -72,7 +72,8 @@ public class UISystem extends ActorSystem {
                                                             System.exit(0);
                                                         }
                                                     }),
-                                            new Button(text("Resume"), msdfFont)
+                                            new Text(text("Text"), msdfFont).addHint(EdgeLayoutEngine.Right),
+                                            new Button(text("Resume"), msdfFont).addHint(EdgeLayoutEngine.Bottom)
                                                     .addEventHandler(new EventHandler() {
                                                         @Override
                                                         public void onClick() {
@@ -307,14 +308,12 @@ public class UISystem extends ActorSystem {
                         yl - sh - yo + effectOffsetY,
                         sw,
                         sh,
-                        1,
+                        1, //What if we want other fonts? :(
                         msdfFont.getMSDFData(),
                         character,
                         color
                 );
             }
-            float left = character.planeBounds != null ? character.planeBounds.left : 0;
-            float right = character.planeBounds != null ? character.planeBounds.right : 0;
 
             xl += character.advance * msdfFont.getMSDFData().size;
         }

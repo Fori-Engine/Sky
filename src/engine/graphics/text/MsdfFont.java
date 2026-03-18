@@ -49,10 +49,10 @@ public class MsdfFont extends Disposable {
             MsdfJsonLoader.Character character = msdfData.characters[c];
             if(character == null) character = msdfData.characters['?'];
 
-            stringLineWidth += character.advance * msdfData.size;
+            stringLineWidth += (character.advance) * msdfData.size;
         }
         width = Math.max(width, stringLineWidth);
-        return width;
+        return (float) Math.ceil(width);
     }
 
     public float getStringHeight(String string) {
