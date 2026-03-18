@@ -248,10 +248,6 @@ public class StageImpl extends Stage {
                 ));
             }
 
-
-
-
-
             //Spotlight
             {
 

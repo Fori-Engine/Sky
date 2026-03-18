@@ -593,9 +593,23 @@ public class VulkanRenderer extends Renderer {
                                             srcStageMask,
                                             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
                                     );
-                                } else if ((rd.getType() & DependencyTypes.FragmentShaderWrite) != 0) {
+                                }
+                                if ((rd.getType() & DependencyTypes.FragmentShaderDepthRead) != 0) {
+                                    VulkanUtil.transitionImages(
+                                            image,
+                                            commandBuffer,
+                                            VK_IMAGE_LAYOUT_GENERAL,
+                                            readSrcAccessMask,
+                                            VK_ACCESS_SHADER_READ_BIT,
+                                            VK_IMAGE_ASPECT_DEPTH_BIT,
+                                            srcStageMask,
+                                            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
+                                    );
+                                }
+                                else if ((rd.getType() & DependencyTypes.FragmentShaderWrite) != 0) {
                                     Logger.todo(VulkanRenderer.class, "FragmentShaderWrite transitions are not supported");
-                                } else if ((rd.getType() & DependencyTypes.ComputeShaderRead) != 0) {
+                                }
+                                else if ((rd.getType() & DependencyTypes.ComputeShaderRead) != 0) {
                                     VulkanUtil.transitionImages(
                                             image,
                                             commandBuffer,
