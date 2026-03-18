@@ -114,10 +114,6 @@ void computeMain(uniform int light_count, uniform int width, uniform int height,
                 }
 
                 
-
-
-
-
                 // Lighting BRDF
                 {
                     

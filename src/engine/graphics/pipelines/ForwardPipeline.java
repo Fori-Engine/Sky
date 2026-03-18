@@ -436,9 +436,10 @@ public class ForwardPipeline extends RenderPipeline {
                                                 meshListComponent.shaderProgram
                                         );
                                         try (MemoryStack stack = stackPush()) {
-                                            ByteBuffer pPushConstants = stack.calloc(2 * Integer.BYTES);
+                                            ByteBuffer pPushConstants = stack.calloc(3 * Integer.BYTES);
                                             pPushConstants.putInt(mode);
                                             pPushConstants.putInt(shadowMapGenPassLightIndex);
+                                            pPushConstants.putInt(-1);
                                             shadowMapGenPass.setPushConstants(pPushConstants);
                                         }
                                         shadowMapGenPass.drawIndexed(meshListComponent.indexCount);
@@ -453,9 +454,10 @@ public class ForwardPipeline extends RenderPipeline {
                                                 meshComponent.shaderProgram
                                         );
                                         try (MemoryStack stack = stackPush()) {
-                                            ByteBuffer pPushConstants = stack.calloc(2 * Integer.BYTES);
+                                            ByteBuffer pPushConstants = stack.calloc(3 * Integer.BYTES);
                                             pPushConstants.putInt(mode);
                                             pPushConstants.putInt(shadowMapGenPassLightIndex);
+                                            pPushConstants.putInt(-1);
                                             shadowMapGenPass.setPushConstants(pPushConstants);
                                         }
                                         shadowMapGenPass.drawIndexed(meshComponent.indexCount);
@@ -503,9 +505,10 @@ public class ForwardPipeline extends RenderPipeline {
                                         meshListComponent.shaderProgram
                                 );
                                 try (MemoryStack stack = stackPush()) {
-                                    ByteBuffer pPushConstants = stack.calloc(2 * Integer.BYTES);
+                                    ByteBuffer pPushConstants = stack.calloc(3 * Integer.BYTES);
                                     pPushConstants.putInt(mode);
                                     pPushConstants.putInt(-1);
+                                    pPushConstants.putInt(lightCount);
                                     scenePass.setPushConstants(pPushConstants);
                                 }
                                 scenePass.drawIndexed(meshListComponent.indexCount);
@@ -520,9 +523,10 @@ public class ForwardPipeline extends RenderPipeline {
                                         meshComponent.shaderProgram
                                 );
                                 try(MemoryStack stack = stackPush()) {
-                                    ByteBuffer pPushConstants = stack.calloc(2 * Integer.BYTES);
+                                    ByteBuffer pPushConstants = stack.calloc(3 * Integer.BYTES);
                                     pPushConstants.putInt(mode);
                                     pPushConstants.putInt(-1);
+                                    pPushConstants.putInt(lightCount);
                                     scenePass.setPushConstants(pPushConstants);
                                 }
                                 scenePass.drawIndexed(meshComponent.indexCount);

@@ -1,4 +1,7 @@
-#include "SceneDesc.slang"
+#include "../../common/Atmosphere.slang"
+#include "../../common/CookTorranceEval.slang"
+#include "../../common/SceneDesc.slang"
+#include "../../common/NormalDepthBias.slang"
 
 struct Transforms {
     float4x4 transforms[MAX_TRANSFORMS];
@@ -70,25 +73,58 @@ Texture2D material[4];
 SamplerState material_sampler;
 
 [shader("fragment")]
-FSOutput fragmentMain(VSOutput vsOutput, uniform int render_mode, uniform int light_index) {
+FSOutput fragmentMain(VSOutput vsOutput, uniform int render_mode, uniform int light_index, uniform int light_count) {
     FSOutput output;
 
     if (render_mode == 0) {
 
+        float3 albedo = material[0].Sample(material_sampler, vsOutput.uv_ts).rgb;
+
         float3 normal_ts = material[1].Sample(material_sampler, vsOutput.uv_ts).xyz * 2.0 - 1.0;
         float3 normal_ws = normalize(mul(vsOutput.tbn_ws_inv, normalize(normal_ts)));
-
-
-        float3 albedo = material[0].Sample(material_sampler, vsOutput.uv_ts).rgb;
 
         float metallic = material[2].Sample(material_sampler, vsOutput.uv_ts).r;
         float roughness = material[3].Sample(material_sampler, vsOutput.uv_ts).r;
 
-        output.color0 = material[0].Sample(material_sampler, vsOutput.uv_ts);
+        float ambient = 0.01;
+        float shadow = 0;
+        Camera camera = scene_desc[0].camera;
 
+        float3 camera_pos_ws = float3(camera.invView[0][3], camera.invView[1][3], camera.invView[2][3]);
 
+        float4 fragment_ws = mul(camera.invView, vsOutput.pos_vs);
 
+        float4 output_color = float4(0.0, 0.0, 0.0, 1.0);
 
+        for (int light_index = 0; light_index < light_count; light_index++) {
+
+            Light light = scene_desc[0].lights[light_index];
+
+            float3 light_pos_ws = float3(light.invView[0][3], light.invView[1][3], light.invView[2][3]);
+            float3 light_dir_ws = normalize(light_pos_ws - fragment_ws.xyz);
+            float3 camera_dir_ws = normalize(camera_pos_ws - fragment_ws.xyz);
+
+            NormalDepthBiasEval normalDepthBiasEval;
+            float4 normal_biased_fragment_ws = normalDepthBiasEval.get_normal_biased_fragment_ws(light, fragment_ws, light_dir_ws, normal_ws);
+
+            CookTorranceEval lighting_eval;
+            output_color.xyz += lighting_eval.get_color(
+                        light,
+                        light_pos_ws,
+                        light_dir_ws,
+                        camera_pos_ws,
+                        fragment_ws,
+                        normal_ws,
+                        metallic,
+                        roughness,
+                        albedo
+
+            );
+        
+        
+        }
+
+        output.color0 = output_color;
     }
 
 
