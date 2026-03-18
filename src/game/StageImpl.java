@@ -105,7 +105,13 @@ public class StageImpl extends Stage {
                                                             public void onClick() {
                                                                 System.out.println("Foo");
                                                             }
-                                                        })
+                                                        }),
+                                                new CanvasWidget(200, 200) {
+                                                    @Override
+                                                    public void drawCustom(GfxPlatform platform, int x, int y, int w, int h) {
+                                                        platform.drawRect(x + 10, y + 10, w - 20, h - 20, Color.RED);
+                                                    }
+                                                }
                                         ),
                                 Optional.of(new Rect2D(0, 0, renderer.getWidth(), renderer.getHeight()))
                         )

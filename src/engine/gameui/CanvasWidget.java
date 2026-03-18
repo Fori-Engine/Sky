@@ -1,0 +1,35 @@
+package engine.gameui;
+
+public abstract class CanvasWidget extends Widget {
+    private boolean ignore;
+    private int width, height;
+
+    public CanvasWidget(int width, int height) {
+        this.width = width;
+        this.height = height;
+    }
+
+    public Widget setIgnore(boolean ignore) {
+        this.ignore = ignore;
+        return this;
+    }
+
+    @Override
+    public int getRequiredWidth() {
+        return width;
+    }
+
+    @Override
+    public int getRequiredHeight() {
+        return height;
+    }
+
+    @Override
+    public void update(GfxPlatform platform, int x, int y, int w, int h) {
+        if(!ignore)
+            platform.drawRect(x, y, w, h, platform.getTheme().containerBackgroundColor);
+        drawCustom(platform, x, y, w, h);
+    }
+
+    public abstract void drawCustom(GfxPlatform platform, int x, int y, int w, int h);
+}
