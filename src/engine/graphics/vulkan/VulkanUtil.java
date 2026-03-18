@@ -65,6 +65,9 @@ public class VulkanUtil {
                                         int aspectMask,
                                         int srcStageMask,
                                         int dstStageMask) {
+        if(image.getCurrentLayout() == newLayout) return;
+
+
         try(MemoryStack stack = stackPush()) {
             VkImageMemoryBarrier.Buffer imageBarrier = VkImageMemoryBarrier.calloc(1, stack);
             {

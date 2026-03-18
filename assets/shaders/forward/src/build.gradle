@@ -20,6 +20,7 @@ shaders.each { shaderFileName, stages ->
                     '-o', outputName,
                     '-stage', stage,
                     '-preserve-params',
+                    '-O2',
                     '-entry', "${stage}Main"
             outputs.file(outputName)
 

@@ -1,5 +1,5 @@
 #include "KnarkowiczOctahedral.slang"
-#include "SceneDesc.slang"
+#include "../../common/SceneDesc.slang"
 
 struct Transforms {
     float4x4 transforms[MAX_TRANSFORMS];
