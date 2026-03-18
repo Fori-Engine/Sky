@@ -1,7 +1,8 @@
 #include "../../common/Atmosphere.slang"
 #include "../../common/CookTorranceEval.slang"
-#include "../../common/SceneDesc.slang"
 #include "../../common/NormalDepthBias.slang"
+#include "../../common/SceneDesc.slang"
+#include "../../common/ShadowEval.slang"
 
 struct Transforms {
     float4x4 transforms[MAX_TRANSFORMS];
@@ -30,7 +31,8 @@ struct Vertex
     float3 tangent_ms;
 }
 
-
+Texture2D input_shadow_maps[MAX_LIGHTS];
+SamplerState input_shadow_maps_samplers[MAX_LIGHTS];
 
 [shader("vertex")]
 VSOutput vertexMain(Vertex vertex, uniform int render_mode, uniform int light_index) {
@@ -107,24 +109,41 @@ FSOutput fragmentMain(VSOutput vsOutput, uniform int render_mode, uniform int li
             NormalDepthBiasEval normalDepthBiasEval;
             float4 normal_biased_fragment_ws = normalDepthBiasEval.get_normal_biased_fragment_ws(light, fragment_ws, light_dir_ws, normal_ws);
 
-            CookTorranceEval lighting_eval;
-            output_color.xyz += lighting_eval.get_color(
-                        light,
-                        light_pos_ws,
-                        light_dir_ws,
-                        camera_pos_ws,
-                        fragment_ws,
-                        normal_ws,
-                        metallic,
-                        roughness,
-                        albedo
+            float4 fragment_shadow_map_ps = mul(light.proj, mul(light.view, normal_biased_fragment_ws));
+            fragment_shadow_map_ps /= fragment_shadow_map_ps.w;
+            float4 shadow_map_uv_ts = fragment_shadow_map_ps * 0.5 + 0.5;
 
-            );
+            if (shadow_map_uv_ts.x >= 0 && shadow_map_uv_ts.x <= 1 && shadow_map_uv_ts.y >= 0 && shadow_map_uv_ts.y <= 1) {
+
+                float shadow_per_pixel = pcf(
+                    input_shadow_maps[light_index], 
+                    input_shadow_maps_samplers[light_index], 
+                    1,
+                                         shadow_map_uv_ts.xy, 
+                    fragment_shadow_map_ps
+                );
+
+                shadow += shadow_per_pixel;
+
+                CookTorranceEval lighting_eval;
+                output_color.xyz += lighting_eval.get_color(
+                    light,
+                    light_pos_ws,
+                    light_dir_ws,
+                    camera_pos_ws,
+                    fragment_ws,
+                    normal_ws,
+                    metallic,
+                    roughness,
+                    albedo
+
+                );
+            }
         
         
         }
 
-        output.color0 = output_color;
+        output.color0 = output_color * (1 - max(0.0, shadow));
     }
 
 

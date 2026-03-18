@@ -188,6 +188,11 @@ public class ForwardPipeline extends RenderPipeline {
         {
             scenePass.addDependencies(
                     new Dependency(
+                            "InputShadowMaps",
+                            null,
+                            DependencyTypes.FragmentShaderRead
+                    ),
+                    new Dependency(
                             "OutputColorTextures",
                             sceneColor0Textures,
                             DependencyTypes.RenderTargetWrite
@@ -360,6 +365,9 @@ public class ForwardPipeline extends RenderPipeline {
             shadowMapGenPass.getDependency(
                     "OutputShadowMaps"
             ).setDependency(shadowMapTexturesResource);
+            scenePass.getDependency(
+                    "InputShadowMaps"
+            ).setDependency(shadowMapTexturesResource);
 
         }
 
@@ -481,6 +489,44 @@ public class ForwardPipeline extends RenderPipeline {
 
         });
         scenePass.setPassExecuteCallback(() -> {
+
+
+
+            //Update shadow maps
+            {
+                Resource<Pair<Texture[], Sampler[]>> shadowMapTexturesResource = scenePass.getDependency("InputShadowMaps").getResource();
+
+                scene.getRootActor().previsitAllActors(actor -> {
+                   if(actor.has(MeshComponent.class) || actor.has(MeshListComponent.class)) {
+                       ShaderComponent shaderComponent = actor.getComponent(ShaderComponent.class);
+
+                       for (int i = 0; i < lightCount; i++) {
+                           shaderComponent.shaderProgram().setTextures(
+                                   renderer.getFrameIndex(),
+                                   new DescriptorUpdate<>(
+                                           "input_shadow_maps",
+                                           shadowMapTexturesResource.get().key[renderer.getMaxFramesInFlight() * i + renderer.getFrameIndex()]
+                                   ).arrayIndex(i)
+                           );
+                           shaderComponent.shaderProgram().setSamplers(
+                                   renderer.getFrameIndex(),
+                                   new DescriptorUpdate<>(
+                                           "input_shadow_maps_samplers",
+                                           shadowMapTexturesResource.get().value[renderer.getMaxFramesInFlight() * i + renderer.getFrameIndex()]
+                                   ).arrayIndex(i)
+                           );
+
+                       }
+                   }
+                });
+
+
+            }
+
+
+
+
+
             scenePass.startRecording(renderer.getFrameIndex());
             {
 
