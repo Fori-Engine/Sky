@@ -122,11 +122,55 @@ public class UISystem extends ActorSystem {
                     );
                 }
 
-                private void drawGlyph(float x, float y, float w, float h, int msdfTextureIndex, MsdfJsonLoader.MsdfData msdfData, MsdfJsonLoader.Character character, Color color) {
 
-                    int msdfScreenPxRange = (int) Math.ceil((w / msdfData.width) * msdfData.size);
+                private void drawTexture(float x,
+                                      float y,
+                                      float w,
+                                      float h,
+
+                                      float uvtlx,
+                                      float uvtly,
+
+                                      float uvblx,
+                                      float uvbly,
+
+                                      float uvtrx,
+                                      float uvtry,
+
+                                      float uvbrx,
+                                      float uvbry,
+
+                                      int shapeMode,
+                                      int op0,
+                                      float op1,
+                                      Color color) {
 
                     drawQuad(
+                            x,
+                            y,
+                            w,
+                            h,
+                            uvtlx,
+                            uvtly,
+                            uvblx,
+                            uvbly,
+                            uvtrx,
+                            uvtry,
+                            uvbrx,
+                            uvbry,
+                            shapeMode,
+                            op0,
+                            op1,
+                            color
+                    );
+                }
+
+                private void drawGlyph(float x, float y, float w, float h, int msdfTextureIndex, MsdfFont msdfFont, MsdfJsonLoader.Character character, Color color) {
+
+                    MsdfJsonLoader.MsdfData msdfData = msdfFont.getMSDFData();
+                    int msdfScreenPxRange = (int) Math.ceil((w / msdfData.width) * msdfData.size);
+
+                    drawTexture(
                             x,
                             y,
                             w,
@@ -192,7 +236,7 @@ public class UISystem extends ActorSystem {
                                     sw,
                                     sh,
                                     1, //What if we want other fonts? :(
-                                    msdfFont.getMSDFData(),
+                                    msdfFont,
                                     character,
                                     color
                             );
