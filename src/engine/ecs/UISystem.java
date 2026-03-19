@@ -5,14 +5,12 @@ import engine.Surface;
 import static engine.gameui.TextValue.*;
 
 import engine.SystemState;
-import engine.Time;
 import engine.asset.AssetRegistry;
 import engine.gameui.*;
 import engine.graphics.*;
 import engine.graphics.pipelines.ScreenSpaceFeatures;
 import engine.graphics.text.*;
 import game.Colors;
-import game.Settings;
 import org.joml.Matrix2f;
 import org.joml.Vector2f;
 import java.nio.ByteBuffer;
@@ -55,6 +53,7 @@ public class UISystem extends ActorSystem {
         theme = ThemeLoader.loadTheme((String) AssetRegistry.getAsset("core:assets/themes/CozyRoom.json").getObject());
 
 
+        textureBindings = new TextureBindings();
 
         //Menu UI
         {
@@ -124,7 +123,7 @@ public class UISystem extends ActorSystem {
                 }
 
 
-                private void drawTexture(float x,
+                public void drawTexture(float x,
                                       float y,
                                       float w,
                                       float h,
@@ -140,11 +139,17 @@ public class UISystem extends ActorSystem {
 
                                       float uvbrx,
                                       float uvbry,
-
-                                      int shapeMode,
-                                      int op0,
                                       float op1,
-                                      Color color) {
+                                      Color color,
+                                      Texture texture,
+                                      Sampler sampler, boolean msdf) {
+
+                    int index = textureBindings.getTextureBinding(texture);
+
+                    ScreenSpaceFeatures screenSpaceFeatures = renderPipeline.getFeatures(ScreenSpaceFeatures.class);
+                    screenSpaceFeatures.getShaderProgram().setTextures(renderer.getFrameIndex(), new DescriptorUpdate<>("input_textures", texture).arrayIndex(index));
+                    screenSpaceFeatures.getShaderProgram().setSamplers(renderer.getFrameIndex(), new DescriptorUpdate<>("input_samplers", sampler).arrayIndex(index));
+
 
                     drawQuad(
                             x,
@@ -159,14 +164,28 @@ public class UISystem extends ActorSystem {
                             uvtry,
                             uvbrx,
                             uvbry,
-                            shapeMode,
-                            op0,
+                            msdf ? -3 : 0,
+                            index, //op 0
                             op1,
                             color
                     );
                 }
 
-                private void drawGlyph(float x, float y, float w, float h, int msdfTextureIndex, MsdfFont msdfFont, MsdfJsonLoader.Character character, Color color) {
+                @Override
+                public void drawTexture(float x, float y, float w, float h, Color color, Texture texture, Sampler sampler) {
+                    drawTexture(x, y, w, h, 0, 0,
+                            0, 1,
+                            1, 0,
+                            1, 1,
+                            -1,
+                            color,
+                            texture,
+                            sampler,
+                            false
+                    );
+                }
+
+                private void drawGlyph(float x, float y, float w, float h, MsdfFont msdfFont, MsdfJsonLoader.Character character, Color color) {
 
                     MsdfJsonLoader.MsdfData msdfData = msdfFont.getMSDFData();
                     int msdfScreenPxRange = (int) Math.ceil((w / msdfData.width) * msdfData.size);
@@ -184,10 +203,11 @@ public class UISystem extends ActorSystem {
                             1 - character.atlasBounds.top / msdfData.height,
                             character.atlasBounds.right / msdfData.width,
                             1 - character.atlasBounds.bottom / msdfData.height,
-                            -3,
-                            msdfTextureIndex,
                             msdfScreenPxRange,
-                            color
+                            color,
+                            msdfFont.getTexture(),
+                            msdfFont.getSampler(),
+                            true
                     );
                 }
 
@@ -236,7 +256,6 @@ public class UISystem extends ActorSystem {
                                     yl - sh - yo + effectOffsetY,
                                     sw,
                                     sh,
-                                    1, //What if we want other fonts? :(
                                     msdfFont,
                                     character,
                                     color
@@ -265,8 +284,8 @@ public class UISystem extends ActorSystem {
         vertexBufferData.clear();
         indexBufferData = screenSpaceFeatures.getIndexBuffers()[renderer.getFrameIndex()].get();
         indexBufferData.clear();
-        screenSpaceFeatures.getShaderProgram().setTextures(renderer.getFrameIndex(), new DescriptorUpdate<>("input_textures", msdfFont.getTexture()).arrayIndex(1));
-        screenSpaceFeatures.getShaderProgram().setSamplers(renderer.getFrameIndex(), new DescriptorUpdate<>("input_samplers", msdfFont.getSampler()).arrayIndex(1));
+        //screenSpaceFeatures.getShaderProgram().setTextures(renderer.getFrameIndex(), new DescriptorUpdate<>("input_textures", msdfFont.getTexture()).arrayIndex(1));
+        //screenSpaceFeatures.getShaderProgram().setSamplers(renderer.getFrameIndex(), new DescriptorUpdate<>("input_samplers", msdfFont.getSampler()).arrayIndex(1));
 
         surface.setCaptureMouse(SystemState.running);
 

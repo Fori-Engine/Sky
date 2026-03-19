@@ -109,7 +109,7 @@ public class StageImpl extends Stage {
                                                 new CanvasWidget(200, 200) {
                                                     @Override
                                                     public void drawCustom(GfxPlatform platform, int x, int y, int w, int h) {
-                                                        platform.drawRect(x + 10, y + 10, w - 20, h - 20, Color.RED);
+                                                        platform.drawTexture(x + 10, y + 10, w - 20, h - 20, Color.WHITE, msdfFont.getTexture(), msdfFont.getSampler());
                                                     }
                                                 }
                                         ),
