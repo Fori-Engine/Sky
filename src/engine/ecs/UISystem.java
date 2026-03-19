@@ -122,9 +122,86 @@ public class UISystem extends ActorSystem {
                     );
                 }
 
+                private void drawGlyph(float x, float y, float w, float h, int msdfTextureIndex, MsdfJsonLoader.MsdfData msdfData, MsdfJsonLoader.Character character, Color color) {
+
+                    int msdfScreenPxRange = (int) Math.ceil((w / msdfData.width) * msdfData.size);
+
+                    drawQuad(
+                            x,
+                            y,
+                            w,
+                            h,
+                            character.atlasBounds.left / msdfData.width,
+                            1 - character.atlasBounds.top / msdfData.height,
+                            character.atlasBounds.left / msdfData.width,
+                            1 - character.atlasBounds.bottom / msdfData.height,
+                            character.atlasBounds.right / msdfData.width,
+                            1 - character.atlasBounds.top / msdfData.height,
+                            character.atlasBounds.right / msdfData.width,
+                            1 - character.atlasBounds.bottom / msdfData.height,
+                            -3,
+                            msdfTextureIndex,
+                            msdfScreenPxRange,
+                            color
+                    );
+                }
+
                 @Override
-                public void drawString(float x, float y, String text, MsdfFont font, Color color) {
-                    UISystem.this.drawString(x, y, text, font, null, color);
+                public void drawString(float x, float y, String text, MsdfFont font, TextEffect textEffect, Color color) {
+                    if(textEffect != null)
+                        textEffect.update();
+
+                    float xl = 0;
+                    float yl = y + (msdfFont.getMSDFData().lineHeight + msdfFont.getMSDFData().descender) * msdfFont.getMSDFData().size;
+                    float spaceXAdvance = msdfFont.getMSDFData().characters[' '].advance;
+
+                    for (int i = 0; i < text.length(); i++) {
+                        char c = text.charAt(i);
+
+                        if(c == '\n') {
+                            yl += msdfFont.getMSDFData().lineHeight * msdfFont.getMSDFData().size;
+                            xl = 0;
+                            continue;
+                        }
+                        if(c == '\t') {
+                            xl = msdfFont.getTabWidth() * spaceXAdvance;
+                            continue;
+                        }
+
+                        MsdfJsonLoader.Character character = msdfFont.getMSDFData().characters[c];
+                        if(character == null) character = msdfFont.getMSDFData().characters['?'];
+
+                        MsdfJsonLoader.Rect planeBounds = character.planeBounds;
+                        if(planeBounds != null) {
+
+                            float sw = (planeBounds.right - planeBounds.left) * msdfFont.getMSDFData().size;
+                            float sh = (planeBounds.top - planeBounds.bottom) * msdfFont.getMSDFData().size;
+                            float yo = planeBounds.bottom * msdfFont.getMSDFData().size;
+
+                            float effectOffsetX = 0, effectOffsetY = 0;
+
+                            if(textEffect != null) {
+                                Vector2f effectOffset = textEffect.offset(i, text.length());
+                                effectOffsetX = effectOffset.x;
+                                effectOffsetY = effectOffset.y;
+                            }
+
+                            drawGlyph(
+                                    x + xl + effectOffsetX,
+                                    yl - sh - yo + effectOffsetY,
+                                    sw,
+                                    sh,
+                                    1, //What if we want other fonts? :(
+                                    msdfFont.getMSDFData(),
+                                    character,
+                                    color
+                            );
+                        }
+
+                        xl += character.advance * msdfFont.getMSDFData().size;
+                    }
+
+
                 }
 
                 @Override
@@ -261,91 +338,11 @@ public class UISystem extends ActorSystem {
         quadCount = 0;
     }
 
-    private void drawString(float x, float y, String text, MsdfFont msdfFont, TextEffect textEffect, Color color) {
-        if(textEffect != null)
-            textEffect.update();
-
-        float xl = 0;
-        float yl = y + (msdfFont.getMSDFData().lineHeight + msdfFont.getMSDFData().descender) * msdfFont.getMSDFData().size;
-        float spaceXAdvance = msdfFont.getMSDFData().characters[' '].advance;
-
-        for (int i = 0; i < text.length(); i++) {
-            char c = text.charAt(i);
-
-            if(c == '\n') {
-                yl += msdfFont.getMSDFData().lineHeight * msdfFont.getMSDFData().size;
-                xl = 0;
-                continue;
-            }
-            if(c == '\t') {
-                xl = msdfFont.getTabWidth() * spaceXAdvance;
-                continue;
-            }
-
-            MsdfJsonLoader.Character character = msdfFont.getMSDFData().characters[c];
-            if(character == null) character = msdfFont.getMSDFData().characters['?'];
-
-            MsdfJsonLoader.Rect planeBounds = character.planeBounds;
-            if(planeBounds != null) {
-
-                float sw = (planeBounds.right - planeBounds.left) * msdfFont.getMSDFData().size;
-                float sh = (planeBounds.top - planeBounds.bottom) * msdfFont.getMSDFData().size;
-                float yo = planeBounds.bottom * msdfFont.getMSDFData().size;
-
-                float effectOffsetX = 0, effectOffsetY = 0;
-
-                if(textEffect != null) {
-                    Vector2f effectOffset = textEffect.offset(i, text.length());
-                    effectOffsetX = effectOffset.x;
-                    effectOffsetY = effectOffset.y;
-                }
-
-                drawGlyph(
-                        x + xl + effectOffsetX,
-                        yl - sh - yo + effectOffsetY,
-                        sw,
-                        sh,
-                        1, //What if we want other fonts? :(
-                        msdfFont.getMSDFData(),
-                        character,
-                        color
-                );
-            }
-
-            xl += character.advance * msdfFont.getMSDFData().size;
-        }
-
-
-    }
-
 
     private void setOrigin(float x, float y) {
         origin.set(x, y);
     }
 
-    private void drawGlyph(float x, float y, float w, float h, int msdfTextureIndex, MsdfJsonLoader.MsdfData msdfData, MsdfJsonLoader.Character character, Color color) {
-
-        int msdfScreenPxRange = (int) Math.ceil((w / msdfData.width) * msdfData.size);
-
-        drawQuad(
-                x,
-                y,
-                w,
-                h,
-                character.atlasBounds.left / msdfData.width,
-                1 - character.atlasBounds.top / msdfData.height,
-                character.atlasBounds.left / msdfData.width,
-                1 - character.atlasBounds.bottom / msdfData.height,
-                character.atlasBounds.right / msdfData.width,
-                1 - character.atlasBounds.top / msdfData.height,
-                character.atlasBounds.right / msdfData.width,
-                1 - character.atlasBounds.bottom / msdfData.height,
-                -3,
-                msdfTextureIndex,
-                msdfScreenPxRange,
-                color
-        );
-    }
 
     private void drawQuad(float x,
                           float y,
