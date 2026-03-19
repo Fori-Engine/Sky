@@ -2,9 +2,9 @@ struct VSOutput {
     float4 pos : SV_POSITION;
     float4 color; 
     float2 uv;
-    float fill_mode;
-    float texture_index;
-    float msdf_screenpx_range;
+    float shape_mode;
+    float op0;
+    float op1;
 }
 
 struct Vertex
@@ -12,9 +12,9 @@ struct Vertex
     float2 pos : POSITION;
     float4 color : COLOR;
     float2 uv : TEXCOORD0;
-    float fill_mode;
-    float texture_index;
-    float msdf_screenpx_range;
+    float shape_mode;
+    float op0;
+    float op1;
 }
 
 struct Camera
@@ -32,10 +32,10 @@ VSOutput vertexMain(Vertex vertex) {
     output.pos = mul(camera.proj, float4(vertex.pos, 0, 1.0));
     output.color = vertex.color;
     output.uv = vertex.uv;
-    output.fill_mode = vertex.fill_mode;
-    output.texture_index = vertex.texture_index;
-    output.msdf_screenpx_range = vertex.msdf_screenpx_range;
-    ;
+    output.shape_mode = vertex.shape_mode;
+    output.op0 = vertex.op0;
+    output.op1 = vertex.op1;
+    
 
     return output;
 }
@@ -60,21 +60,21 @@ FSOutput fragmentMain(VSOutput vsOutput) {
 
 
     FSOutput output;
-    if(vsOutput.fill_mode >= 0) {
-        output.color0SW = input_textures[int(vsOutput.texture_index)].Sample(input_samplers[int(vsOutput.texture_index)], vsOutput.uv) * vsOutput.color;
+    if(vsOutput.shape_mode >= 0) {
+        output.color0SW = input_textures[int(vsOutput.op0)].Sample(input_samplers[int(vsOutput.op0)], vsOutput.uv) * vsOutput.color;
     }
-    else if(vsOutput.fill_mode == -1) output.color0SW = vsOutput.color;
-    else if(vsOutput.fill_mode == -2) {
+    else if (vsOutput.shape_mode == -1) output.color0SW = vsOutput.color;
+    else if (vsOutput.shape_mode == -2) {
         float2 uv = vsOutput.uv * 2.0 - 1.0;
         float distance = length(uv);
 
         if(distance <= 1.0 && distance >= (1.0 - 0.5)) output.color0SW = vsOutput.color;
         else discard;
     }
-    else if (vsOutput.fill_mode == -3) {
-        float3 msd = input_textures[int(vsOutput.texture_index)] .Sample(input_samplers[int(vsOutput.texture_index)], vsOutput.uv) .xyz;
+    else if (vsOutput.shape_mode == -3) {
+        float3 msd = input_textures[int(vsOutput.op0)] .Sample(input_samplers[int(vsOutput.op0)], vsOutput.uv) .xyz;
         float sd = median(msd.r, msd.g, msd.b);
-        float screenPxDistance = vsOutput.msdf_screenpx_range * (sd - 0.5);
+        float screenPxDistance = vsOutput.op1 * (sd - 0.5);
         float opacity = clamp(screenPxDistance + 0.5, 0.0, 1.0);
 
         output.color0SW = lerp(0.0, vsOutput.color, opacity);

@@ -106,9 +106,6 @@ public class UISystem extends ActorSystem {
 
                 @Override
                 public void drawRect(float x, float y, float w, float h, Color color) {
-
-
-
                     UISystem.this.drawQuad(
                             x,
                             y,
@@ -367,9 +364,9 @@ public class UISystem extends ActorSystem {
                           float uvbrx,
                           float uvbry,
 
-                          int fillMode,
-                          int textureIndex,
-                          float msdfScreenPxRange,
+                          int shapeMode,
+                          int op0,
+                          float op1,
                           Color color) {
 
         Vector2f
@@ -386,9 +383,9 @@ public class UISystem extends ActorSystem {
         vertexBufferData.putFloat(color.a);
         vertexBufferData.putFloat(uvtlx);
         vertexBufferData.putFloat(uvtly);
-        vertexBufferData.putFloat(fillMode);
-        vertexBufferData.putFloat(textureIndex);
-        vertexBufferData.putFloat(msdfScreenPxRange);
+        vertexBufferData.putFloat(shapeMode);
+        vertexBufferData.putFloat(op0);
+        vertexBufferData.putFloat(op1);
 
         vertexBufferData.putFloat(bottomLeft.x);
         vertexBufferData.putFloat(bottomLeft.y);
@@ -398,9 +395,9 @@ public class UISystem extends ActorSystem {
         vertexBufferData.putFloat(color.a);
         vertexBufferData.putFloat(uvblx);
         vertexBufferData.putFloat(uvbly);
-        vertexBufferData.putFloat(fillMode);
-        vertexBufferData.putFloat(textureIndex);
-        vertexBufferData.putFloat(msdfScreenPxRange);
+        vertexBufferData.putFloat(shapeMode);
+        vertexBufferData.putFloat(op0);
+        vertexBufferData.putFloat(op1);
 
         vertexBufferData.putFloat(bottomRight.x);
         vertexBufferData.putFloat(bottomRight.y);
@@ -410,9 +407,9 @@ public class UISystem extends ActorSystem {
         vertexBufferData.putFloat(color.a);
         vertexBufferData.putFloat(uvbrx);
         vertexBufferData.putFloat(uvbry);
-        vertexBufferData.putFloat(fillMode);
-        vertexBufferData.putFloat(textureIndex);
-        vertexBufferData.putFloat(msdfScreenPxRange);
+        vertexBufferData.putFloat(shapeMode);
+        vertexBufferData.putFloat(op0);
+        vertexBufferData.putFloat(op1);
 
         vertexBufferData.putFloat(topRight.x);
         vertexBufferData.putFloat(topRight.y);
@@ -422,9 +419,9 @@ public class UISystem extends ActorSystem {
         vertexBufferData.putFloat(color.a);
         vertexBufferData.putFloat(uvtrx);
         vertexBufferData.putFloat(uvtry);
-        vertexBufferData.putFloat(fillMode);
-        vertexBufferData.putFloat(textureIndex);
-        vertexBufferData.putFloat(msdfScreenPxRange);
+        vertexBufferData.putFloat(shapeMode);
+        vertexBufferData.putFloat(op0);
+        vertexBufferData.putFloat(op1);
 
         indexBufferData.putInt(0 + (4 * quadCount));
         indexBufferData.putInt(1 + (4 * quadCount));
