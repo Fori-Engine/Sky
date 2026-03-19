@@ -284,8 +284,6 @@ public class UISystem extends ActorSystem {
         vertexBufferData.clear();
         indexBufferData = screenSpaceFeatures.getIndexBuffers()[renderer.getFrameIndex()].get();
         indexBufferData.clear();
-        //screenSpaceFeatures.getShaderProgram().setTextures(renderer.getFrameIndex(), new DescriptorUpdate<>("input_textures", msdfFont.getTexture()).arrayIndex(1));
-        //screenSpaceFeatures.getShaderProgram().setSamplers(renderer.getFrameIndex(), new DescriptorUpdate<>("input_samplers", msdfFont.getSampler()).arrayIndex(1));
 
         surface.setCaptureMouse(SystemState.running);
 
