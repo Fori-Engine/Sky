@@ -165,7 +165,7 @@ public class UISystem extends ActorSystem {
                             uvbrx,
                             uvbry,
                             msdf ? -3 : 0,
-                            index, //op 0
+                            index,
                             op1,
                             color
                     );
