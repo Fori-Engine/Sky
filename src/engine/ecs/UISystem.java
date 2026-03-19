@@ -31,6 +31,7 @@ public class UISystem extends ActorSystem {
     private Loop menuLoop;
     private GfxPlatform gfxPlatform;
     private Theme theme;
+    private TextureBindings textureBindings;
 
 
 
