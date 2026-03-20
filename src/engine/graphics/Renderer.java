@@ -61,7 +61,7 @@ public abstract class Renderer extends Disposable {
 
         if(settings.backend == RenderAPI.Vulkan){
             VulkanRenderContext vkContext = new VulkanRenderContext();
-            vkContext.readyDisplay(surface);
+            vkContext.readyDisplay(surface, settings);
 
             long vkSurface = vkContext.getVkSurface();
             VkInstance instance = vkContext.getInstance();

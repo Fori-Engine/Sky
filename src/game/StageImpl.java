@@ -45,7 +45,7 @@ public class StageImpl extends Stage {
                 surface.getWidth(),
                 surface.getHeight(),
                 new RendererSettings(RenderAPI.Vulkan)
-                        .validation(true)
+                        .validation(false)
                         .vsync(false)
         );
         renderPipeline = new DeferredPipeline();

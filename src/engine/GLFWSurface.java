@@ -12,11 +12,11 @@ import static org.lwjgl.vulkan.VK13.VK_API_VERSION_1_3;
 
 import engine.graphics.Disposable;
 import engine.graphics.RenderAPI;
+import engine.graphics.RendererSettings;
 import engine.graphics.vulkan.VulkanRenderer;
 import org.joml.Vector2f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFWErrorCallback;
-import org.lwjgl.glfw.GLFWKeyCallbackI;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
@@ -35,10 +35,10 @@ public class GLFWSurface extends Surface {
     private List<SurfaceKeyCallback> surfaceKeyCallbacks = new ArrayList<>();
 
     @Override
-    public void requestRenderAPI(RenderAPI api) {
+    public void requestRenderAPI(RenderAPI api, RendererSettings settings) {
         if(api == RenderAPI.Vulkan) {
             try (MemoryStack stack = stackPush()) {
-                vkInstance = createInstance(title, List.of("VK_LAYER_KHRONOS_validation"));
+                vkInstance = createInstance(title, settings.validation ? List.of("VK_LAYER_KHRONOS_validation") : null);
                 LongBuffer pSurface = stack.mallocLong(1);
                 glfwCreateWindowSurface(vkInstance, handle,
                         null, pSurface);

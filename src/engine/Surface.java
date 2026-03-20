@@ -2,6 +2,7 @@ package engine;
 
 import engine.graphics.Disposable;
 import engine.graphics.RenderAPI;
+import engine.graphics.RendererSettings;
 import org.joml.Vector2f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.vulkan.*;
@@ -21,7 +22,7 @@ public abstract class Surface extends Disposable {
     protected VkInstance vkInstance;
     protected VkDebugUtilsMessengerCallbackEXT vkDebugUtilsMessengerCallbackEXT;
 
-    public abstract void requestRenderAPI(RenderAPI api);
+    public abstract void requestRenderAPI(RenderAPI api, RendererSettings settings);
 
 
     public enum Cursor {

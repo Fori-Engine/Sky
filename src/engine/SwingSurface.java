@@ -2,19 +2,17 @@ package engine;
 
 import engine.graphics.Disposable;
 import engine.graphics.RenderAPI;
+import engine.graphics.RendererSettings;
 import engine.graphics.vulkan.VulkanRenderer;
 import org.joml.Vector2f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWVulkan;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
 import org.lwjgl.vulkan.awt.AWTVK;
 
 import javax.swing.*;
-import javax.swing.border.BevelBorder;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
@@ -141,9 +139,9 @@ public class SwingSurface extends Surface {
     }
 
     @Override
-    public void requestRenderAPI(RenderAPI api) {
+    public void requestRenderAPI(RenderAPI api, RendererSettings settings) {
         if(api == RenderAPI.Vulkan) {
-            vkInstance = createInstance(title, List.of("VK_LAYER_KHRONOS_validation"));
+            vkInstance = createInstance(title, settings.validation ? List.of("VK_LAYER_KHRONOS_validation") : null);
             try {
                 SwingUtilities.invokeAndWait((Runnable) () -> {
                     try {
