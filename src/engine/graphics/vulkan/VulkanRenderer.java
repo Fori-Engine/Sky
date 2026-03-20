@@ -63,6 +63,7 @@ public class VulkanRenderer extends Renderer {
 
         physicalDevice = selectPhysicalDevice(instance, vkSurface);
         physicalDeviceProperties = getPhysicalDeviceProperties(physicalDevice);
+        Session.setDiscrete(physicalDeviceProperties.deviceType() == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU);
 
 
         VulkanRuntime.setPhysicalDeviceProperties(physicalDeviceProperties);

@@ -12,7 +12,6 @@ public class VulkanRuntime {
     private static VkPhysicalDeviceProperties physicalDeviceProperties;
     private static int computeFamilyIndex;
 
-    private VulkanRuntime(){}
 
     public static VkDevice getCurrentDevice() {
         return currentDevice;

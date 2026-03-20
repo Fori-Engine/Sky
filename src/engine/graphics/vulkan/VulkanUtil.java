@@ -1,6 +1,5 @@
 package engine.graphics.vulkan;
 
-import engine.Logger;
 import engine.SkyRuntimeException;
 import engine.graphics.*;
 import org.lwjgl.system.MemoryStack;
@@ -20,6 +19,9 @@ public class VulkanUtil {
             }
             case ColorR32G32B32A32 -> {
                 return VK_FORMAT_R32G32B32A32_SFLOAT;
+            }
+            case ColorR16G16B16A16 -> {
+                return VK_FORMAT_R16G16B16A16_SFLOAT;
             }
             case Depth32 -> {
                 return VK_FORMAT_D32_SFLOAT;

@@ -71,8 +71,8 @@ public class DeferredPipeline extends RenderPipeline {
             sceneColor0Textures = new Resource<>(
                     new Pair<>(
                             new Texture[]{
-                                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32),
-                                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32)
+                                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), Session.isDiscrete() ? TextureFormatType.ColorR32G32B32A32 : TextureFormatType.ColorR16G16B16A16),
+                                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), Session.isDiscrete() ? TextureFormatType.ColorR32G32B32A32 : TextureFormatType.ColorR16G16B16A16)
                             },
                             null
                     )
@@ -81,8 +81,8 @@ public class DeferredPipeline extends RenderPipeline {
             sceneColor1Textures = new Resource<>(
                     new Pair<>(
                             new Texture[]{
-                                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32),
-                                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32)
+                                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), Session.isDiscrete() ? TextureFormatType.ColorR32G32B32A32 : TextureFormatType.ColorR16G16B16A16),
+                                    Texture.newColorTexture(scenePassRT, renderer.getWidth(), renderer.getHeight(), Session.isDiscrete() ? TextureFormatType.ColorR32G32B32A32 : TextureFormatType.ColorR16G16B16A16)
                             },
                             null
                     )
@@ -133,8 +133,8 @@ public class DeferredPipeline extends RenderPipeline {
             lightingPassColorTextures = new Resource<>(
                     new Pair<>(
                             new Texture[]{
-                                    Texture.newStorageTexture(lightingPassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32),
-                                    Texture.newStorageTexture(lightingPassRT, renderer.getWidth(), renderer.getHeight(), TextureFormatType.ColorR32G32B32A32)
+                                    Texture.newStorageTexture(lightingPassRT, renderer.getWidth(), renderer.getHeight(), Session.isDiscrete() ? TextureFormatType.ColorR32G32B32A32 : TextureFormatType.ColorR16G16B16A16),
+                                    Texture.newStorageTexture(lightingPassRT, renderer.getWidth(), renderer.getHeight(), Session.isDiscrete() ? TextureFormatType.ColorR32G32B32A32 : TextureFormatType.ColorR16G16B16A16)
                             },
                             new Sampler[]{
                                     Sampler.newSampler(lightingPassRT, Linear, Linear, true),

@@ -160,6 +160,9 @@ public class VulkanTexture extends Texture {
             case VK_FORMAT_R8G8B8A8_SRGB -> {
                 return TextureFormatType.ColorR8G8B8A8;
             }
+            case VK_FORMAT_R16G16B16A16_SFLOAT -> {
+                return TextureFormatType.ColorR16G16B16A16;
+            }
             case VK_FORMAT_R32G32B32A32_SFLOAT -> {
                 return TextureFormatType.ColorR32G32B32A32;
             }
