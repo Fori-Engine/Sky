@@ -3,6 +3,7 @@ package app;
 import engine.Logger;
 import engine.Stage;
 import engine.Surface;
+import engine.Time;
 import game.StageImpl;
 import org.lwjgl.system.Configuration;
 
@@ -27,11 +28,22 @@ public class Launcher {
 
         stage.launch(args, surface);
 
+        int frameCount = 0;
+
+        float deltaSum = 0;
+        float avgDelta = 0;
 
         while(true){
             boolean success = stage.update();
+            deltaSum += Time.deltaTime();
+            frameCount++;
+
+            avgDelta = deltaSum/frameCount;
+            System.out.println(avgDelta);
+
             if(!success) break;
         }
+
 
         stage.closing();
         stage.close();
