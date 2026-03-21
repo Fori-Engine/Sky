@@ -10,7 +10,6 @@ import engine.gameui.*;
 import engine.graphics.*;
 import engine.graphics.pipelines.ScreenSpaceFeatures;
 import engine.graphics.text.*;
-import game.Colors;
 import org.joml.Matrix2f;
 import org.joml.Vector2f;
 import java.nio.ByteBuffer;
@@ -389,7 +388,7 @@ public class UISystem extends ActorSystem {
                     -1,
                     -1,
                     -1,
-                    Colors.menuBackground
+                    Color.WHITE
             );
             menuLoop.update((renderer.getWidth() / 2) - (renderer.getWidth() / 4), (renderer.getHeight() / 2) - (renderer.getHeight() / 4), renderer.getWidth() / 2, renderer.getHeight() / 2);
         }

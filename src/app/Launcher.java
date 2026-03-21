@@ -1,14 +1,19 @@
 package app;
 
 import engine.Logger;
-import engine.Stage;
+import engine.Application;
 import engine.Surface;
 import engine.Time;
-import game.StageImpl;
 import org.lwjgl.system.Configuration;
 
 import java.io.File;
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Path;
 import java.util.List;
 
 
@@ -20,33 +25,37 @@ public class Launcher {
     }
 
 
-    public void launch(String[] args) {
+    public void launch(String[] args) throws ClassNotFoundException, InvocationTargetException, InstantiationException, IllegalAccessException, NoSuchMethodException, MalformedURLException {
         System.setProperty("org.lwjgl.system.stackSize", "128");
 
-        Stage stage = new StageImpl();
-        Surface surface = Surface.newSurface(stage, "SkySOFT Engine", 1920, 1080);
+        Application application;
+        {
+            Path path = Path.of(args[0]);
+            URL url = path.toUri().toURL();
 
-        stage.launch(args, surface);
+            System.out.println(url);
+            ClassLoader classLoader = new URLClassLoader(new URL[]{url});
 
-        int frameCount = 0;
+            Class clazz = classLoader.loadClass(args[1]);
+            Constructor constructor = clazz.getConstructor();
+            Object appImpl = constructor.newInstance();
+            application = (Application) appImpl;
+        }
+        Surface surface = Surface.newSurface(application, "SkySOFT Engine", 1920, 1080);
 
-        float deltaSum = 0;
-        float avgDelta = 0;
+
+        application.launch(args, surface);
+
+
 
         while(true){
-            boolean success = stage.update();
-            deltaSum += Time.deltaTime();
-            frameCount++;
-
-            avgDelta = deltaSum/frameCount;
-            System.out.println(avgDelta);
-
+            boolean success = application.update();
             if(!success) break;
         }
 
 
-        stage.closing();
-        stage.close();
+        application.closing();
+        application.close();
 
 
 
