@@ -1,6 +1,8 @@
 package engine.ecs;
 
 import engine.Logger;
+import engine.seri.RecursiveDescentParser;
+import engine.seri.Analyzer;
 
 public class Actor {
     private Object[] components = new Object[64];
@@ -13,12 +15,24 @@ public class Actor {
         this.name = name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public String getName() {
         return name;
     }
 
     public static void tryClassload(Class<?> clazz) {
         Logger.info(Actor.class, "Trying to load class: " + clazz.getSimpleName());
+    }
+
+    public static Actor from(String source) {
+        RecursiveDescentParser recursiveDescentParser = new RecursiveDescentParser();
+        recursiveDescentParser.parse(new Analyzer(source));
+        System.exit(1);
+
+        return null; //recursiveParser.getFirst();
     }
 
     public Actor addActor(Actor... actor) {
