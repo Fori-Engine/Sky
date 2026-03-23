@@ -8,16 +8,21 @@ public class Main {
                actor "Actor1"
                    actor "Actor2"
                    "Component" component(
-                       "MyFloat" float1(1.0),
-                       "MyFloat2" float1(0.0),
-                       "SomeProperty" euler3(1.0, 1.0, 1.0)
+                       "MyFloat" float2(1.0, 1.0),
+                     
                    )
                    
-                   end               
+                                  
                end
                """;
 
         Analyzer tokenizer = new Analyzer(dsl);
+//
+        //Analyzer.Token token;
+        //while ((token = tokenizer.next()) != null) {
+        //        if(!token.type.equals("whitespace")) System.out.println(token.type + "| " + token.content.toString());
+        //    }
+
         RecursiveDescentParser recursiveDescentParser = new RecursiveDescentParser();
         recursiveDescentParser.parse(tokenizer);
 
