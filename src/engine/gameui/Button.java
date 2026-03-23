@@ -17,12 +17,12 @@ public class Button extends Widget {
 
     @Override
     public int getRequiredWidth() {
-        return (int) font.getStringWidth(value.string);
+        return (int) font.getStringWidth(value.string) + (6 * padding);
     }
 
     @Override
     public int getRequiredHeight() {
-        return (int) font.getStringHeight(value.string);
+        return (int) font.getStringHeight(value.string) + (2 * padding);
     }
 
     @Override
@@ -51,7 +51,7 @@ public class Button extends Widget {
         else
             platform.drawRect(x, y, w, h, platform.getTheme().buttonBackgroundColor);
 
-        platform.drawString(x, y, value.string, font, null, Color.WHITE);
-        updateChildren(platform, x, y, w, h);
+        platform.drawString(x + (3 * padding), y + padding, value.string, font, null, Color.WHITE);
+        updateChildren(platform, x + (3 * padding), y + padding, w - padding, h - padding);
     }
 }
