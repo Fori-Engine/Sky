@@ -45,11 +45,11 @@ public class UISystem extends ActorSystem {
 
         msdfFont = new MsdfFont(
                 renderer,
-                AssetRegistry.getAsset("core:assets/fonts/AirbusB612/b612-atlas.png"),
-                AssetRegistry.getAsset("core:assets/fonts/AirbusB612/b612-atlas.json")
+                AssetRegistry.getAsset("core:assets/fonts/Roboto/roboto-atlas.png"),
+                AssetRegistry.getAsset("core:assets/fonts/Roboto/roboto-atlas.json")
         );
 
-        theme = ThemeLoader.loadTheme((String) AssetRegistry.getAsset("core:assets/themes/CozyRoom.json").getObject());
+        theme = ThemeLoader.loadTheme((String) AssetRegistry.getAsset("core:assets/themes/DarkMode.json").getObject());
 
 
         textureBindings = new TextureBindings();
@@ -62,16 +62,13 @@ public class UISystem extends ActorSystem {
                             .addWidget(new ContainerWidget()
                                     .setLayoutEngine(new EdgeLayoutEngine())
                                     .addWidgets(
-                                            new Text(text("Welcome to the menu!"), msdfFont).addHint(EdgeLayoutEngine.Top),
-                                            new Button(text("Quit"), msdfFont).addHint(EdgeLayoutEngine.Left)
-                                                    .addEventHandler(new EventHandler() {
+                                            new ContainerWidget().setLayoutEngine(new LineLayoutEngine(LineLayoutEngine.Line.Vertical)).addHint(EdgeLayoutEngine.Top)
+                                                    .addWidget(new Text(text("\"Lorem ipsum dolor sit amet, consectetur adipiscing elit,\nsed do eiusmod tempor incididunt ut labore et dolore magna aliqua. "), msdfFont))
+                                                    .addWidget(new Text(text("Text 2"), msdfFont))
+                                                    .addWidget(new Text(text("Text 3"), msdfFont))
+                                                    .addWidget(new Text(text("Text 4"), msdfFont)),
 
-                                                        @Override
-                                                        public void onClick() {
-                                                            System.exit(0);
-                                                        }
-                                                    }),
-                                            new Text(text("Text"), msdfFont).addHint(EdgeLayoutEngine.Right),
+
                                             new Button(text("Resume"), msdfFont).addHint(EdgeLayoutEngine.Bottom)
                                                     .addEventHandler(new EventHandler() {
                                                         @Override
@@ -187,7 +184,7 @@ public class UISystem extends ActorSystem {
                 private void drawGlyph(float x, float y, float w, float h, MsdfFont msdfFont, MsdfJsonLoader.Character character, Color color) {
 
                     MsdfJsonLoader.MsdfData msdfData = msdfFont.getMSDFData();
-                    int msdfScreenPxRange = (int) Math.ceil((w / msdfData.width) * msdfData.size);
+                    int msdfScreenPxRange = (int) ((32 / msdfData.width) * msdfData.size);
 
                     drawTexture(
                             x,
@@ -376,20 +373,6 @@ public class UISystem extends ActorSystem {
 
         }
         else {
-            drawQuad(
-                    0,
-                    0,
-                    renderer.getWidth(),
-                    renderer.getHeight(),
-                    -1, -1,
-                    -1, -1,
-                    -1, -1,
-                    -1, -1,
-                    -1,
-                    -1,
-                    -1,
-                    Color.WHITE
-            );
             menuLoop.update((renderer.getWidth() / 2) - (renderer.getWidth() / 4), (renderer.getHeight() / 2) - (renderer.getHeight() / 4), renderer.getWidth() / 2, renderer.getHeight() / 2);
         }
 
