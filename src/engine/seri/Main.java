@@ -7,8 +7,10 @@ public class Main {
                """
                actor "Actor1"
                    actor "Actor2"
-                   "Component" tuple(
-                   
+                   "Component" component(
+                       "MyFloat" float1(1.0),
+                       "MyFloat2" float1(0.0),
+                       "SomeProperty" euler3(1.0, 1.0, 1.0)
                    )
                    
                    end               

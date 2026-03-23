@@ -1,5 +1,7 @@
 package engine.seri;
 
+import java.util.Arrays;
+
 public class RecursiveDescentParser {
 
     public RecursiveDescentParser() {}
@@ -12,13 +14,17 @@ public class RecursiveDescentParser {
         return null;
     }
 
-    private Analyzer.Token expect(Analyzer analyzer, String type) {
+    private Analyzer.Token expect(Analyzer analyzer, boolean lenient, String... types) {
         Analyzer.Token token = nextProperToken(analyzer);
         if(token == null) return null;
 
-        if(!token.type.equals(type)) throw new RuntimeException("Expected " + type + " next");
-        return token;
+        for(String type : types) {
+            if(token.type.equals(type)) return token;
+        }
+        if(lenient) return null;
+        throw new RuntimeException("Expected any of " + Arrays.asList(types) + " next, got " + token.type + " (" + token.content.toString() + ") instead");
     }
+
 
 
     public void parse(Analyzer analyzer) {
@@ -28,17 +34,73 @@ public class RecursiveDescentParser {
         while((token = analyzer.next()) != null) {
             switch (token.type) {
                 case "actor_keyword": {
-                    expect(analyzer, "string_literal");
+                    expect(analyzer, false, "string_literal");
                     parse(analyzer);
 
-                    expect(analyzer, "end_keyword");
+                    expect(analyzer, false,"end_keyword");
+                    break;
                 }
                 case "string_literal": {
-                    expect(analyzer, "tuple_keyword");
-                    expect(analyzer, "left_paren");
-                    //parse(analyzer);
-                    expect(analyzer, "right_paren");
+                    //Strings can also be preceded by 'actor_keyword'
+                    Analyzer.Token next = expect(analyzer, false, "component_keyword", "float1_keyword", "float2_keyword", "float3_keyword", "float4_keyword", "euler3_keyword", "quat4_keyword");
+                    if(next != null) {
+                        switch (next.type) {
+                            case "component_keyword": {
+                                expect(analyzer, false, "left_paren");
+                                parse(analyzer);
+                                expect(analyzer, false,"right_paren");
+                                break;
+                            }
+                            case "float1_keyword": {
+                                expect(analyzer, false, "left_paren");
+                                expect(analyzer, false, "numeric");
+                                expect(analyzer, false,"right_paren");
+                                expect(analyzer, false, "arg_delimiter", "right_paren");
+                                break;
+                            }
+
+                            case "float2_keyword": {
+                                expect(analyzer, false, "left_paren");
+                                expect(analyzer, false, "numeric");
+                                expect(analyzer, false,"arg_delimiter");
+                                expect(analyzer, false, "numeric");
+                                expect(analyzer, false,"right_paren");
+                                expect(analyzer, false, "arg_delimiter", "right_paren");
+                                break;
+                            }
+
+                            case "float3_keyword", "euler3_keyword" : {
+                                expect(analyzer, false, "left_paren");
+                                expect(analyzer, false, "numeric");
+                                expect(analyzer, false,"arg_delimiter");
+                                expect(analyzer, false, "numeric");
+                                expect(analyzer, false,"arg_delimiter");
+                                expect(analyzer, false, "numeric");
+                                expect(analyzer, false,"right_paren");
+                                expect(analyzer, false, "arg_delimiter", "right_paren");
+                                break;
+                            }
+
+                            case "float4_keyword", "quat4_keyword" : {
+                                expect(analyzer, false, "left_paren");
+                                expect(analyzer, false, "numeric");
+                                expect(analyzer, false,"arg_delimiter");
+                                expect(analyzer, false, "numeric");
+                                expect(analyzer, false,"arg_delimiter");
+                                expect(analyzer, false, "numeric");
+                                expect(analyzer, false,"arg_delimiter");
+                                expect(analyzer, false, "numeric");
+                                expect(analyzer, false,"right_paren");
+                                expect(analyzer, false, "arg_delimiter", "right_paren");
+                                break;
+                            }
+
+                        }
+
+                    }
+                    break;
                 }
+
 
 
 

@@ -6,7 +6,7 @@ God help you if you're actually trying to understand this lexer
 public class Analyzer {
     private String source;
     private int index = 0;
-    public static String[] keywords = {"actor", "end", "tuple", "quat4", "float4", "float3", "float2", "float1", "late", "true", "false", "euler3"};
+    public static String[] keywords = {"actor", "end", "component", "quat4", "float4", "float3", "float2", "float1", "late", "true", "false", "euler3"};
 
     public Analyzer(String source) {
         this.source = source;
