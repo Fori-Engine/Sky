@@ -743,7 +743,8 @@ public class VulkanRenderer extends Renderer {
 
         vmaDestroyAllocator(allocator.getId());
         vkDestroySurfaceKHR(instance, vkSurface, null);
-        EXTDebugUtils.vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, null);
+        if(settings.validation)
+            EXTDebugUtils.vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, null);
 
         physicalDeviceProperties.free();
         vkDestroyDevice(device, null);
