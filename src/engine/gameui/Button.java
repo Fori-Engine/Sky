@@ -52,6 +52,6 @@ public class Button extends Widget {
             platform.drawRect(x, y, w, h, platform.getTheme().buttonBackgroundColor);
 
         platform.drawString(x, y, value.string, font, null, Color.WHITE);
-        updateChildren(platform, x, y);
+        updateChildren(platform, x, y, w, h);
     }
 }

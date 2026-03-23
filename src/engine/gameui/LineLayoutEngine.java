@@ -39,7 +39,7 @@ public class LineLayoutEngine extends LayoutEngine {
         }
         else if(line == Line.Vertical) {
             for(Widget child : widget.getWidgets()) {
-                height += child.getRequiredWidth();
+                height += child.getRequiredHeight();
             }
         }
 
@@ -48,7 +48,7 @@ public class LineLayoutEngine extends LayoutEngine {
     }
 
     @Override
-    public void updateChildren(GfxPlatform platform, int x, int y) {
+    public void updateChildren(GfxPlatform platform, int x, int y, int w, int h) {
         if(line == Line.Horizontal) {
             int dx = x, dy = y;
             for(Widget child : widget.getWidgets()) {

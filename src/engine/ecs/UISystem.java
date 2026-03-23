@@ -59,24 +59,20 @@ public class UISystem extends ActorSystem {
             menuLoop = new Loop();
             menuLoop.setWidget(
                     new ContainerWidget().setLayoutEngine(new EdgeLayoutEngine())
-                            .addWidget(new ContainerWidget()
-                                    .setLayoutEngine(new EdgeLayoutEngine())
+                            .addWidgets(new ContainerWidget().setLayoutEngine(new LineLayoutEngine(LineLayoutEngine.Line.Vertical)).addHint(EdgeLayoutEngine.Right)
                                     .addWidgets(
-                                            new ContainerWidget().setLayoutEngine(new LineLayoutEngine(LineLayoutEngine.Line.Vertical)).addHint(EdgeLayoutEngine.Top)
-                                                    .addWidget(new Text(text("\"Lorem ipsum dolor sit amet, consectetur adipiscing elit,\nsed do eiusmod tempor incididunt ut labore et dolore magna aliqua. "), msdfFont))
-                                                    .addWidget(new Text(text("Text 2"), msdfFont))
-                                                    .addWidget(new Text(text("Text 3"), msdfFont))
-                                                    .addWidget(new Text(text("Text 4"), msdfFont)),
-
-
-                                            new Button(text("Resume"), msdfFont).addHint(EdgeLayoutEngine.Bottom)
+                                            new Text(text("\"Lorem ipsum dolor sit amet, consectetur adipiscing elit,\nsed do eiusmod tempor incididunt ut labore et dolore magna aliqua. "), msdfFont),
+                                            new Text(text("Text 2"), msdfFont),
+                                            new Text(text("Text 3"), msdfFont),
+                                            new Text(text("Text 4"), msdfFont),
+                                            new Button(text("Resume"), msdfFont)
                                                     .addEventHandler(new EventHandler() {
                                                         @Override
                                                         public void onClick() {
                                                             SystemState.running = true;
                                                         }
                                                     })
-                                    ).addHint(EdgeLayoutEngine.Bottom))
+                                    ))
             );
         }
 

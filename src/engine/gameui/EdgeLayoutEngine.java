@@ -38,8 +38,8 @@ public class EdgeLayoutEngine extends LayoutEngine {
         for(Widget child : widget.getWidgets()) {
             if(child.hasHint(Top)) height += child.getRequiredHeight();
             if(child.hasHint(Bottom)) height += child.getRequiredHeight();
-            if(child.hasHint(Left)) leftHeight = child.getRequiredWidth();
-            if(child.hasHint(Right)) rightHeight = child.getRequiredWidth();
+            if(child.hasHint(Left)) leftHeight = child.getRequiredHeight();
+            if(child.hasHint(Right)) rightHeight = child.getRequiredHeight();
         }
 
         height += Math.max(leftHeight, rightHeight);
@@ -48,7 +48,7 @@ public class EdgeLayoutEngine extends LayoutEngine {
     }
 
     @Override
-    public void updateChildren(GfxPlatform platform, int x, int y) {
+    public void updateChildren(GfxPlatform platform, int x, int y, int w, int h) {
 
         int dx = x, dy = y;
         int widgetWidth = widget.getRequiredWidth(), widgetHeight = widget.getRequiredHeight();

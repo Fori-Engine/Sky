@@ -32,6 +32,6 @@ public class Text extends Widget {
     public void update(GfxPlatform platform, int x, int y, int w, int h) {
 
         platform.drawString(x, y, value.string, font, null, Color.WHITE);
-        updateChildren(platform, x, y);
+        updateChildren(platform, x, y, w, h);
     }
 }

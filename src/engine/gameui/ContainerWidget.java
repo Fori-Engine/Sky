@@ -24,7 +24,7 @@ public class ContainerWidget extends Widget {
     public void update(GfxPlatform platform, int x, int y, int w, int h) {
         if(!ignore)
             platform.drawRect(x, y, w, h, platform.getTheme().containerBackgroundColor);
-        updateChildren(platform, x, y);
+        updateChildren(platform, x, y, w, h);
     }
 
 
