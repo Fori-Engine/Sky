@@ -12,19 +12,19 @@ public class ContainerWidget extends Widget {
 
     @Override
     public int getRequiredWidth() {
-        return layoutEngine.getComputedWidth();
+        return layoutEngine.getComputedWidth() + (padding * 2);
     }
 
     @Override
     public int getRequiredHeight() {
-        return layoutEngine.getComputedHeight();
+        return layoutEngine.getComputedHeight() + (padding * 2);
     }
 
     @Override
     public void update(GfxPlatform platform, int x, int y, int w, int h) {
         if(!ignore)
             platform.drawRect(x, y, w, h, platform.getTheme().containerBackgroundColor);
-        updateChildren(platform, x, y, w, h);
+        updateChildren(platform, x + padding, y + padding, w - padding, h - padding);
     }
 
 

@@ -51,7 +51,8 @@ public class EdgeLayoutEngine extends LayoutEngine {
     public void updateChildren(GfxPlatform platform, int x, int y, int w, int h) {
 
         int dx = x, dy = y;
-        int widgetWidth = widget.getRequiredWidth(), widgetHeight = widget.getRequiredHeight();
+        Widget myWidget = getWidget();
+        int widgetWidth = w - myWidget.padding, widgetHeight = h - myWidget.padding;
 
         int topOffset = 0, bottomOffset = 0;
 

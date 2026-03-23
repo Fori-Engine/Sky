@@ -59,7 +59,7 @@ public class UISystem extends ActorSystem {
             menuLoop = new Loop();
             menuLoop.setWidget(
                     new ContainerWidget().setLayoutEngine(new EdgeLayoutEngine())
-                            .addWidgets(new ContainerWidget().setLayoutEngine(new LineLayoutEngine(LineLayoutEngine.Line.Vertical)).addHint(EdgeLayoutEngine.Right)
+                            .addWidgets(new ContainerWidget().setLayoutEngine(new LineLayoutEngine(LineLayoutEngine.Line.Vertical)).addHint(EdgeLayoutEngine.Top)
                                     .addWidgets(
                                             new Text(text("\"Lorem ipsum dolor sit amet, consectetur adipiscing elit,\nsed do eiusmod tempor incididunt ut labore et dolore magna aliqua. "), msdfFont),
                                             new Text(text("Text 2"), msdfFont),

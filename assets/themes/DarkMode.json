@@ -1,5 +1,5 @@
 {
-  "containerBackgroundColor": { "r": 0.01, "g": 0.01, "b": 0.01, "a": 0.8 },
+  "containerBackgroundColor": { "r": 0.01, "g": 0.01, "b": 0.01, "a": 0.85 },
   "buttonBackgroundColor": { "r": 0.0, "g": 0.0, "b": 0.0, "a": 1.0 },
   "buttonHoverColor": { "r": 0.3, "g": 0.3, "b": 0.3, "a": 1.0 },
   "buttonClickColor": { "r": 0.5, "g": 0.5, "b": 0.5, "a": 1.0 }
