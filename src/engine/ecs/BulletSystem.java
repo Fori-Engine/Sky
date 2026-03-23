@@ -130,7 +130,7 @@ public class BulletSystem extends ActorSystem {
 
 
 
-                dynamicsWorld.stepSimulation(Time.deltaTime(), 4, timestep);
+                dynamicsWorld.stepSimulation(timestep, 4, timestep);
                 accumulator -= timestep;
             }
         }
