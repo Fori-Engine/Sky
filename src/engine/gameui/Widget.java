@@ -8,7 +8,7 @@ public abstract class Widget {
     private List<EventHandler> eventHandlers = new LinkedList<>();
     private long hints;
     private String name;
-    protected int padding = 10;
+    protected int padding = 4;
     protected LayoutEngine layoutEngine = new LayoutEngine() {
         @Override
         public int getComputedWidth() {

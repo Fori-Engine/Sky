@@ -297,45 +297,10 @@ public class UISystem extends ActorSystem {
                 Color.WHITE
         );
 
-        //Crosshair
-        {
 
-
-
-            drawQuad(
-                    ((float) renderer.getWidth() / 2) - 15,
-                    ((float) renderer.getHeight() / 2) - 2,
-                    30,
-                    4,
-                    -1, -1,
-                    -1, -1,
-                    -1, -1,
-                    -1, -1,
-                    -1,
-                    -1,
-                    -1,
-                    Color.GRAY
-            );
-
-            drawQuad(
-                    ((float) renderer.getWidth() / 2) - 2,
-                    ((float) renderer.getHeight() / 2) - 15,
-                    4,
-                    30,
-                    -1, -1,
-                    -1, -1,
-                    -1, -1,
-                    -1, -1,
-                    -1,
-                    -1,
-                    -1,
-                    Color.GRAY
-            );
-        }
 
 
         if(SystemState.running) {
-
             root.previsitAllActors(actor -> {
                 if(actor.has(UIComponent.class)) {
                     UIComponent uiComponent = actor.getComponent(UIComponent.class);
