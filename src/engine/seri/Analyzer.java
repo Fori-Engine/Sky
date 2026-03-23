@@ -15,10 +15,11 @@ public class Analyzer {
         throw new RuntimeException("Unexpected character for token (" + character + ")");
     }
 
+    private int line = 1;
     public Token next() {
 
         boolean string = false, numeric = false;
-        Token token = new Token();
+        Token token = new Token(line);
 
         advance = index;
 
@@ -41,6 +42,7 @@ public class Analyzer {
             }
             if(!string) {
 
+                if(character == '\n') line++;
                 if(Character.isWhitespace(character)) {
                     index++;
                     token.type = "whitespace";
@@ -114,7 +116,9 @@ public class Analyzer {
         public String type;
         public StringBuilder content = new StringBuilder();
         public boolean foundDecimal = false;
-
-        public Token() { }
+        public int line;
+        public Token(int line) {
+            this.line = line;
+        }
     }
 }

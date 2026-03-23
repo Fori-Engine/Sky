@@ -27,7 +27,7 @@ public class RecursiveDescentParser {
         }
         if(lenient)
             return null;
-        throw new RuntimeException("Expected any of " + Arrays.asList(types) + " next instead of " + token.type + " (" + token.content.toString() + ")");
+        throw new RuntimeException("Expected any of " + Arrays.asList(types) + " next instead of " + token.type + " (" + token.content.toString() + ") on line " + token.line);
     }
 
 
