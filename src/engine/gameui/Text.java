@@ -16,7 +16,7 @@ public class Text extends Widget {
 
     @Override
     public int getRequiredWidth() {
-        return (int) font.getStringWidth(value.string) + (2 * padding);
+        return (int) font.getStringWidth(value.string.toString()) + (2 * padding);
     }
 
     public TextValue getText() {
@@ -25,13 +25,13 @@ public class Text extends Widget {
 
     @Override
     public int getRequiredHeight() {
-        return (int) font.getStringHeight(value.string) + (2 * padding);
+        return (int) font.getStringHeight(value.string.toString()) + (2 * padding);
     }
 
     @Override
     public void update(GfxPlatform platform, int x, int y, int w, int h) {
 
-        platform.drawString(x + padding, y + padding, value.string, font, null, Color.WHITE);
-        updateChildren(platform, x + padding, y + padding, w - padding, h - padding);
+        platform.drawString(x + padding, y + padding, value.string.toString(), font, null, Color.WHITE);
+        updateChildren(platform, x + padding, y + padding, w - padding * 2, h - padding * 2);
     }
 }

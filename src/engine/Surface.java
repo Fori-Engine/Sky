@@ -7,6 +7,7 @@ import org.joml.Vector2f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.vulkan.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class Surface extends Disposable {
@@ -23,6 +24,9 @@ public abstract class Surface extends Disposable {
     protected VkDebugUtilsMessengerCallbackEXT vkDebugUtilsMessengerCallbackEXT;
 
     public abstract void requestRenderAPI(RenderAPI api, RendererSettings settings);
+
+    protected List<SurfaceKeyCallback> surfaceKeyCallbacks = new ArrayList<>();
+    protected List<SurfaceCharCallback> surfaceCharCallbacks = new ArrayList<>();
 
 
     public enum Cursor {
@@ -49,7 +53,14 @@ public abstract class Surface extends Disposable {
         return height;
     }
 
-    public abstract void addKeyCallback(SurfaceKeyCallback callback);
+    public void addKeyCallback(SurfaceKeyCallback callback) {
+        surfaceKeyCallbacks.add(callback);
+    }
+
+    public void addCharCallback(SurfaceCharCallback callback) {
+        surfaceCharCallbacks.add(callback);
+    }
+
 
     public abstract boolean getKeyPressed(int key);
     public abstract boolean getKeyReleased(int key);
