@@ -64,7 +64,7 @@ public class GLFWSurface extends Surface {
 
         glfwSetKeyCallback(handle, (window, key, scancode, action, mods) -> {
             for(SurfaceKeyCallback callback : surfaceKeyCallbacks) {
-                if(action == GLFW_PRESS || action == GLFW_REPEAT) callback.keyClick(key);
+                if(action == GLFW_PRESS || action == GLFW_REPEAT) callback.keyClick(key, mods);
             }
         });
         glfwSetCharCallback(handle, (window, codepoint) -> {
@@ -72,6 +72,7 @@ public class GLFWSurface extends Surface {
                 callback.keyClick(Character.toChars(codepoint)[0]);
             }
         });
+
     }
 
     @Override
@@ -299,6 +300,11 @@ public class GLFWSurface extends Surface {
         int[] width = new int[1], height = new int[1];
         glfwGetWindowSize(handle, width, height);
         return height[0];
+    }
+
+    @Override
+    public String getClipboardString() {
+        return glfwGetClipboardString(handle);
     }
 
 

@@ -139,6 +139,11 @@ public class SwingSurface extends Surface {
     }
 
     @Override
+    public String getClipboardString() {
+        return "Empty";
+    }
+
+    @Override
     public void requestRenderAPI(RenderAPI api, RendererSettings settings) {
         if(api == RenderAPI.Vulkan) {
             vkInstance = createInstance(title, settings.validation ? List.of("VK_LAYER_KHRONOS_validation") : null);

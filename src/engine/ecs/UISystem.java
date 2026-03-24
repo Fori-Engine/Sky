@@ -39,7 +39,7 @@ public class UISystem extends ActorSystem {
         this.scene = scene;
         surface.setCaptureMouse(SystemState.running);
 
-        surface.addKeyCallback(key -> {
+        surface.addKeyCallback((key, modifiers) -> {
             if(key == Input.KEY_ESCAPE) SystemState.running = !SystemState.running;
         });
 
@@ -64,7 +64,7 @@ public class UISystem extends ActorSystem {
                                             new Text(text("\"Lorem ipsum dolor sit amet, consectetur adipiscing elit,\nsed do eiusmod tempor incididunt ut labore et dolore magna aliqua. "), msdfFont),
                                             new Text(text("Text 2"), msdfFont),
                                             new Text(text("Text 3"), msdfFont),
-                                            new TextField(text("TextField 1"), msdfFont),
+                                            new TextField(text("This is a bunch of text inside a text field"), msdfFont),
                                             new Button(text("Resume"), msdfFont)
                                                     .addEventHandler(new EventHandler() {
                                                         @Override

@@ -7,5 +7,6 @@ public class Theme {
     public Color buttonBackgroundColor;
     public Color buttonHoverColor;
     public Color buttonClickColor;
+    public Color textColor;
 
 }

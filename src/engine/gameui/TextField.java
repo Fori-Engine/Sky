@@ -3,6 +3,7 @@ package engine.gameui;
 import engine.Input;
 import engine.SurfaceCharCallback;
 import engine.SurfaceKeyCallback;
+import engine.Time;
 import engine.graphics.Color;
 import engine.graphics.Rect2D;
 import engine.graphics.Session;
@@ -16,25 +17,43 @@ public class TextField extends Widget {
     private SurfaceCharCallback surfaceCharCallback;
     private SurfaceKeyCallback surfaceKeyCallback;
     private int columns = 15;
-
+    private int cursor = 0;
+    private int determinedWidth = 0;
 
     public TextField(TextValue value, MsdfFont font) {
         this.value = value;
         this.font = font;
-        surfaceKeyCallback = key -> {
+        surfaceKeyCallback = (key, modifiers) -> {
             if(focused) {
                 if (key == Input.KEY_BACKSPACE) {
-                    if (value.string.isEmpty()) return;
-                    value.string.deleteCharAt(value.string.length() - 1);
+                    if (value.string.isEmpty() || cursor == 0) return;
+                    value.string.deleteCharAt(cursor - 1);
+                    cursor--;
+                }
+
+                if (key == Input.KEY_LEFT) if (cursor > 0) cursor--;
+                if (key == Input.KEY_RIGHT) if (cursor < value.string.length()) cursor++;
+
+
+                if(key == Input.KEY_V && (modifiers & Input.MOD_CONTROL) != 0) {
+                    value.string.append(Session.getSurface().getClipboardString());
                 }
             }
         };
         surfaceCharCallback = new SurfaceCharCallback() {
             @Override
             public void keyClick(char c) {
-                if(focused) value.string.append(c);
+                if(focused) {
+                    value.string.insert(cursor, c);
+                    cursor++;
+                }
             }
         };
+
+        determinedWidth = (int) (font.getStringWidth(value.string.toString()) + (padding * 2));
+        columns = value.string.length();
+        cursor = columns;
+
 
         Session.getSurface().addKeyCallback(surfaceKeyCallback);
         Session.getSurface().addCharCallback(surfaceCharCallback);
@@ -49,23 +68,14 @@ public class TextField extends Widget {
         return this;
     }
 
-    private int firstWidth = 0;
 
     private String getVisibleString() {
-        if(value.string.isEmpty()) return "";
-        if(value.string.length() <= columns) return value.string.toString();
-
-        String string = value.string.substring(value.string.length() - columns, value.string.length());
-        int newWidth = (int) font.getStringWidth(string) + (2 * padding);
-        if(firstWidth == 0 || newWidth > firstWidth)
-            firstWidth = (int) font.getStringWidth(string) + (2 * padding);
-
-        return string;
+        return value.string.toString().substring(cursor, Math.min(cursor + columns, value.string.length()));
     }
 
     @Override
     public int getRequiredWidth() {
-        return firstWidth == 0 ? (int) font.getStringWidth(getVisibleString()) + (2 * padding) : firstWidth + (2 * padding);
+        return determinedWidth;
     }
 
     public TextValue getText() {
@@ -79,21 +89,22 @@ public class TextField extends Widget {
 
     @Override
     public void update(GfxPlatform platform, int x, int y, int w, int h) {
-
         if(platform.isMousePressed(Input.MOUSE_BUTTON_1)) {
             focused = Rect2D.contains(platform.getMouseX(), platform.getMouseY(), x + padding, y + padding, w - padding * 2, h - padding * 2);
         }
 
-        Color color = focused ? platform.getTheme().buttonHoverColor : platform.getTheme().buttonBackgroundColor;
-
+        String visibleString = getVisibleString();
         platform.drawString(
                 x + padding,
                 y + padding,
-                getVisibleString(),
+                visibleString,
                 font,
                 null,
-                Color.WHITE
+                platform.getTheme().textColor
         );
+
+        Color color = focused ? platform.getTheme().buttonHoverColor : platform.getTheme().buttonBackgroundColor;
+
         platform.drawRectLines(x + padding, y + padding, w - padding * 2, h - padding * 2, 2, color);
         updateChildren(platform, x + padding, y + padding, w - padding * 2, h - padding * 2);
     }

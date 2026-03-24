@@ -61,6 +61,7 @@ public abstract class Surface extends Disposable {
         surfaceCharCallbacks.add(callback);
     }
 
+    public abstract String getClipboardString();
 
     public abstract boolean getKeyPressed(int key);
     public abstract boolean getKeyReleased(int key);

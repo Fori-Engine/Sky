@@ -31,7 +31,7 @@ public class Text extends Widget {
     @Override
     public void update(GfxPlatform platform, int x, int y, int w, int h) {
 
-        platform.drawString(x + padding, y + padding, value.string.toString(), font, null, Color.WHITE);
+        platform.drawString(x + padding, y + padding, value.string.toString(), font, null, platform.getTheme().textColor);
         updateChildren(platform, x + padding, y + padding, w - padding * 2, h - padding * 2);
     }
 }

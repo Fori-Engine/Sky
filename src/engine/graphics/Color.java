@@ -44,6 +44,11 @@ public class Color {
         return new Color(s * r, s * g, s * b, s * a);
     }
 
+    public Color copy(){
+        return new Color(r, g, b, a);
+    }
+
+
     @Override
     public String toString() {
         return "Color [" + r + " " + g + " " + b + " " + a + "]";
