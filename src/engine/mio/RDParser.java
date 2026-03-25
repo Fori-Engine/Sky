@@ -79,7 +79,8 @@ public class RDParser {
                         Analyzer.Token.TokenType.Float4Keyword,
                         Analyzer.Token.TokenType.Euler3Keyword,
                         Analyzer.Token.TokenType.Quat4Keyword,
-                        Analyzer.Token.TokenType.StringKeyword
+                        Analyzer.Token.TokenType.StringKeyword,
+                        Analyzer.Token.TokenType.BoolKeyword
                 );
 
 
@@ -90,6 +91,19 @@ public class RDParser {
                                 new Object[]{ token.content.toString() }
                         ));
                         parseContinuous(analyzer);
+                        break;
+                    }
+                    case BoolKeyword: {
+                        expect(analyzer, Analyzer.Token.TokenType.LeftParen);
+                        Analyzer.Token a1 = expect(analyzer, Analyzer.Token.TokenType.TrueKeyword, Analyzer.Token.TokenType.FalseKeyword);
+                        expect(analyzer, Analyzer.Token.TokenType.RightParen);
+                        expect(analyzer, Analyzer.Token.TokenType.ArgDelimiter, Analyzer.Token.TokenType.RightParen);
+
+                        ir.emit(new Instruction(
+                                Opcode.AddProperty,
+                                new Object[]{ token.content.toString(), Boolean.parseBoolean(a1.content.toString()) }
+                        ));
+
                         break;
                     }
                     case StringKeyword: {

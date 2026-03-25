@@ -105,6 +105,13 @@ public class AssetPackage {
                                             FileSystem.readString(assetPath)
                                     );
                                 }
+                                else if (assetFilePath.endsWith("mio")) {
+                                    asset = new Asset<String>(
+                                            assetPackage,
+                                            identifier,
+                                            FileSystem.readString(assetPath)
+                                    );
+                                }
 
                                 assetMap.put(identifier, asset);
                                 Logger.info(AssetPackage.class, "Loading asset " + identifier + " into namespace " + namespace);

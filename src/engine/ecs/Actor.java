@@ -8,6 +8,7 @@ public class Actor {
     private Actor[] children = new Actor[128];
     private int nextChildIndex;
     private String name;
+    private Actor parent;
 
     public Actor(String name) {
         this.name = name;
@@ -29,10 +30,19 @@ public class Actor {
 
     public Actor addActor(Actor... actor) {
         for(Actor a : actor) {
+            a.setParent(this);
             children[nextChildIndex++] = a;
         }
 
         return this;
+    }
+
+    private void setParent(Actor actor) {
+        this.parent = parent;
+    }
+
+    public Actor getParent() {
+        return parent;
     }
 
     public void previsitAllActors(ActorPreVisitor visitor) {

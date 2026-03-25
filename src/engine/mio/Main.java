@@ -5,19 +5,19 @@ public class Main {
 
         long start = System.currentTimeMillis();
         IRGen ir = MioCompiler.compile("""
-               actor "Actor1"
-                   actor "Actor2"
-                       actor "Actor3"
-                           actor "Actor4"
-                               "Component4" data("Pos" float2(1, 2), "Vel" float2(3, 4), "Name" string("Shayan"))
-                           end
-                       end
-                   end
-                   #This is a comment in MioDSL
-                   actor "Actor5"
-                       "Component5" data("Pos" float2(-5, 6), "Vel" float2(7, 8))
-                   end
-               end
+                actor "MySpotlight"
+                    "SpotlightComponent" data(
+                        "fovDeg" float1(15),
+                        "eye" float3(-4.0, 10.0, 1.0),
+                        "center" float3(0.0, 0.0, 0.0),
+                        "up" float3(0.0, 1.0, 0.0),
+                        "aspectRatio" float1(1.0),
+                        "zNear" float1(0.1),
+                        "zFar" float1(10.0),
+                        "zZeroToOne" bool(true),
+                        "invertY" bool(true)
+                    )
+                end
                """);
 
         System.out.println("[" + (System.currentTimeMillis() - start) + " ms]");

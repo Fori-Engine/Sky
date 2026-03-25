@@ -137,6 +137,8 @@ public class Analyzer {
             LateKeyword("late"),
             TrueKeyword("true"),
             FalseKeyword("false"),
+            BoolKeyword("bool"),
+
             Whitespace(null);
 
             public String value;
