@@ -1,4 +1,4 @@
-package engine.seri;
+package engine.mio;
 
 /*
 God help you if you're actually trying to understand this lexer
