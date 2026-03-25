@@ -17,7 +17,7 @@ public class Analyzer {
     private int line = 1;
     public Token next() {
 
-        boolean string = false, numeric = false;
+        boolean string = false, numeric = false, comment = false;
         Token token = new Token(line);
 
         advance = index;
@@ -39,9 +39,12 @@ public class Analyzer {
                     break;
                 }
             }
-            if(!string) {
-
-                if(character == '\n') line++;
+            if(character == '#') comment = true;
+            if(character == '\n') {
+                line++;
+                comment = false;
+            }
+            if(!string && !comment) {
                 if(Character.isWhitespace(character)) {
                     index++;
                     token.type = Token.TokenType.Whitespace;

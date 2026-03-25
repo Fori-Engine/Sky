@@ -50,7 +50,7 @@ public class RDParser {
                 Analyzer.Token next = expect(analyzer, Analyzer.Token.TokenType.StringLiteral);
                 tokens.push(next);
                 ir.emit(new Instruction(
-                        Opcode.AddActorToActor,
+                        Opcode.PushActor,
                         new Object[]{ next.content.toString() }
                 ));
                 parseSpecific(analyzer);
@@ -59,7 +59,7 @@ public class RDParser {
             case EndKeyword: {
                 tokens.pop();
                 ir.emit(new Instruction(
-                        Opcode.PopCurrentActor,
+                        Opcode.PopActor,
                         new Object[]{}
                 ));
                 break;
@@ -74,7 +74,7 @@ public class RDParser {
                 switch (next.type) {
                     case DataKeyword: {
                         ir.emit(new Instruction(
-                                Opcode.AddDataToActor,
+                                Opcode.AddData,
                                 new Object[]{ token.content.toString() }
                         ));
                         parseContinuous(analyzer);
@@ -87,7 +87,7 @@ public class RDParser {
                         expect(analyzer, Analyzer.Token.TokenType.ArgDelimiter, Analyzer.Token.TokenType.RightParen);
 
                         ir.emit(new Instruction(
-                                Opcode.AddVariableToData,
+                                Opcode.AddProperty,
                                 new Object[]{ token.content.toString(), Float.parseFloat(a1.content.toString()) }
                         ));
 
@@ -103,7 +103,7 @@ public class RDParser {
                         expect(analyzer, Analyzer.Token.TokenType.ArgDelimiter, Analyzer.Token.TokenType.RightParen);
 
                         ir.emit(new Instruction(
-                                Opcode.AddVariableToData,
+                                Opcode.AddProperty,
                                 new Object[]{ token.content.toString(), Float.parseFloat(a1.content.toString()), Float.parseFloat(a2.content.toString()) }
                         ));
                         break;
@@ -119,7 +119,7 @@ public class RDParser {
                         expect(analyzer, Analyzer.Token.TokenType.RightParen);
                         expect(analyzer, Analyzer.Token.TokenType.ArgDelimiter, Analyzer.Token.TokenType.RightParen);
                         ir.emit(new Instruction(
-                                Opcode.AddVariableToData,
+                                Opcode.AddProperty,
                                 new Object[]{ token.content.toString(), Float.parseFloat(a1.content.toString()), Float.parseFloat(a2.content.toString()), Float.parseFloat(a3.content.toString()) }
                         ));
 
@@ -139,7 +139,7 @@ public class RDParser {
                         expect(analyzer, Analyzer.Token.TokenType.RightParen);
                         expect(analyzer, Analyzer.Token.TokenType.ArgDelimiter, Analyzer.Token.TokenType.RightParen);
                         ir.emit(new Instruction(
-                                Opcode.AddVariableToData,
+                                Opcode.AddProperty,
                                 new Object[]{ token.content.toString(), Float.parseFloat(a1.content.toString()), Float.parseFloat(a2.content.toString()), Float.parseFloat(a3.content.toString()), Float.parseFloat(a4.content.toString()) }
                         ));
                         break;
