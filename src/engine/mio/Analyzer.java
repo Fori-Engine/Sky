@@ -127,6 +127,7 @@ public class Analyzer {
             DataKeyword("data"),
             PassKeyword("pass"),
             Float1Keyword("float1"),
+            StringKeyword("string"),
             Float2Keyword("float2"),
             Float3Keyword("float3"),
             Float4Keyword("float4"),

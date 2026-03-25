@@ -70,7 +70,19 @@ public class RDParser {
 
             case StringLiteral: {
                 //Strings can also be preceded by 'actor_keyword'
-                Analyzer.Token next = expect(analyzer, Analyzer.Token.TokenType.DataKeyword, Analyzer.Token.TokenType.Float1Keyword, Analyzer.Token.TokenType.Float2Keyword, Analyzer.Token.TokenType.Float3Keyword, Analyzer.Token.TokenType.Float4Keyword, Analyzer.Token.TokenType.Euler3Keyword, Analyzer.Token.TokenType.Quat4Keyword);
+                Analyzer.Token next = expect(
+                        analyzer,
+                        Analyzer.Token.TokenType.DataKeyword,
+                        Analyzer.Token.TokenType.Float1Keyword,
+                        Analyzer.Token.TokenType.Float2Keyword,
+                        Analyzer.Token.TokenType.Float3Keyword,
+                        Analyzer.Token.TokenType.Float4Keyword,
+                        Analyzer.Token.TokenType.Euler3Keyword,
+                        Analyzer.Token.TokenType.Quat4Keyword,
+                        Analyzer.Token.TokenType.StringKeyword
+                );
+
+
                 switch (next.type) {
                     case DataKeyword: {
                         ir.emit(new Instruction(
@@ -78,6 +90,19 @@ public class RDParser {
                                 new Object[]{ token.content.toString() }
                         ));
                         parseContinuous(analyzer);
+                        break;
+                    }
+                    case StringKeyword: {
+                        expect(analyzer, Analyzer.Token.TokenType.LeftParen);
+                        Analyzer.Token a1 = expect(analyzer, Analyzer.Token.TokenType.StringLiteral);
+                        expect(analyzer, Analyzer.Token.TokenType.RightParen);
+                        expect(analyzer, Analyzer.Token.TokenType.ArgDelimiter, Analyzer.Token.TokenType.RightParen);
+
+                        ir.emit(new Instruction(
+                                Opcode.AddProperty,
+                                new Object[]{ token.content.toString(), a1.content.toString() }
+                        ));
+
                         break;
                     }
                     case Float1Keyword: {

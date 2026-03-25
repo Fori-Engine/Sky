@@ -3,12 +3,13 @@ package engine.mio;
 public class Main {
     public static void main(String[] args) {
 
+        long start = System.currentTimeMillis();
         IRGen ir = MioCompiler.compile("""
                actor "Actor1"
                    actor "Actor2"
                        actor "Actor3"
                            actor "Actor4"
-                               "Component4" data("Pos" float2(1, 2), "Vel" float2(3, 4))
+                               "Component4" data("Pos" float2(1, 2), "Vel" float2(3, 4), "Name" string("Shayan"))
                            end
                        end
                    end
@@ -19,6 +20,7 @@ public class Main {
                end
                """);
 
+        System.out.println("[" + (System.currentTimeMillis() - start) + " ms]");
         for(Instruction frame : ir.getList()) {
             System.out.println(frame);
         }
