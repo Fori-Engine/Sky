@@ -16,6 +16,7 @@ import engine.graphics.RendererSettings;
 import engine.graphics.vulkan.VulkanRenderer;
 import org.joml.Vector2f;
 import org.lwjgl.PointerBuffer;
+import org.lwjgl.glfw.GLFWCharCallbackI;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
@@ -32,7 +33,6 @@ public class GLFWSurface extends Surface {
     private long handle;
     private Cursor cursor;
     private GLFWErrorCallback errorCallback;
-    private List<SurfaceKeyCallback> surfaceKeyCallbacks = new ArrayList<>();
 
     @Override
     public void requestRenderAPI(RenderAPI api, RendererSettings settings) {
@@ -64,9 +64,15 @@ public class GLFWSurface extends Surface {
 
         glfwSetKeyCallback(handle, (window, key, scancode, action, mods) -> {
             for(SurfaceKeyCallback callback : surfaceKeyCallbacks) {
-                if(action == GLFW_PRESS) callback.keyClick(key);
+                if(action == GLFW_PRESS || action == GLFW_REPEAT) callback.keyClick(key, mods);
             }
         });
+        glfwSetCharCallback(handle, (window, codepoint) -> {
+            for(SurfaceCharCallback callback : surfaceCharCallbacks) {
+                callback.keyClick(Character.toChars(codepoint)[0]);
+            }
+        });
+
     }
 
     @Override
@@ -297,9 +303,10 @@ public class GLFWSurface extends Surface {
     }
 
     @Override
-    public void addKeyCallback(SurfaceKeyCallback callback) {
-        surfaceKeyCallbacks.add(callback);
+    public String getClipboardString() {
+        return glfwGetClipboardString(handle);
     }
+
 
     @Override
     public boolean getKeyPressed(int key) {

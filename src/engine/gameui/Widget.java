@@ -9,6 +9,7 @@ public abstract class Widget {
     private long hints;
     private String name;
     protected int padding = 4;
+    protected boolean focused;
     protected LayoutEngine layoutEngine = new LayoutEngine() {
         @Override
         public int getComputedWidth() {

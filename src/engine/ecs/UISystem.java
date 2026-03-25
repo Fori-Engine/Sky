@@ -39,7 +39,7 @@ public class UISystem extends ActorSystem {
         this.scene = scene;
         surface.setCaptureMouse(SystemState.running);
 
-        surface.addKeyCallback(key -> {
+        surface.addKeyCallback((key, modifiers) -> {
             if(key == Input.KEY_ESCAPE) SystemState.running = !SystemState.running;
         });
 
@@ -59,12 +59,12 @@ public class UISystem extends ActorSystem {
             menuLoop = new Loop();
             menuLoop.setWidget(
                     new ContainerWidget().setLayoutEngine(new EdgeLayoutEngine())
-                            .addWidgets(new ContainerWidget().setLayoutEngine(new LineLayoutEngine(LineLayoutEngine.Line.Vertical)).addHint(EdgeLayoutEngine.Top)
+                            .addWidgets(new ContainerWidget().setLayoutEngine(new LineLayoutEngine(LineLayoutEngine.Line.Vertical)).addHint(EdgeLayoutEngine.Bottom)
                                     .addWidgets(
                                             new Text(text("\"Lorem ipsum dolor sit amet, consectetur adipiscing elit,\nsed do eiusmod tempor incididunt ut labore et dolore magna aliqua. "), msdfFont),
                                             new Text(text("Text 2"), msdfFont),
                                             new Text(text("Text 3"), msdfFont),
-                                            new Text(text("Text 4"), msdfFont),
+                                            new TextField(text("This is a bunch of text inside a text field"), msdfFont),
                                             new Button(text("Resume"), msdfFont)
                                                     .addEventHandler(new EventHandler() {
                                                         @Override
@@ -112,6 +112,17 @@ public class UISystem extends ActorSystem {
                             -1,
                             color
                     );
+                }
+
+                @Override
+                public void drawRectLines(float x, float y, float w, float h, int thickness, Color color) {
+                    drawRect(x - ((float) thickness / 2), y, thickness, h, color);
+                    //Top
+                    drawRect(x, y - ((float) thickness / 2), w, thickness, color);
+                    //Bottom
+                    drawRect(x, y - ((float) thickness / 2) + h, w, thickness, color);
+                    //Right
+                    drawRect(x - ((float) thickness / 2) + w, y, thickness, h, color);
                 }
 
 

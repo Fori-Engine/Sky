@@ -4,6 +4,7 @@ import engine.Logger;
 import engine.Application;
 import engine.Surface;
 import engine.Time;
+import engine.graphics.Session;
 import org.lwjgl.system.Configuration;
 
 import java.io.File;
@@ -42,6 +43,7 @@ public class Launcher {
             application = (Application) appImpl;
         }
         Surface surface = Surface.newSurface(application, "SkySOFT Engine", 1920, 1080);
+        Session.setSurface(surface);
 
 
         application.launch(args, surface);

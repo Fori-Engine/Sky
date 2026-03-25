@@ -1,15 +1,18 @@
 package engine.ecs;
 
 
+import engine.graphics.Disposable;
 import engine.mio.IRGen;
 import engine.mio.Instruction;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-public class Scene {
+public class Scene extends Disposable {
     private List<ActorSystem> systems = new ArrayList<>();
     private Actor root;
     private String name;
@@ -18,7 +21,8 @@ public class Scene {
     private Object component;
 
 
-    public Scene(String name) {
+    public Scene(Disposable parent, String name) {
+        super(parent);
         this.name = name;
     }
 
@@ -26,6 +30,7 @@ public class Scene {
         for(ActorSystem system : systems) {
             system.run(root);
         }
+
     }
 
     public Actor getRootActor() {
@@ -53,9 +58,10 @@ public class Scene {
                 case PushActor -> {
                     String actorName = (String) instruction.operands()[0];
                     Actor newActor = new Actor(actorName);
+                    if(actor != null) actor.addActor(newActor);
                     actor = newActor;
-                    actor.addActor(newActor);
                 }
+
                 case AddData -> {
                     if (instruction.operands()[0].equals("SpotlightComponent")) {
 
@@ -68,15 +74,50 @@ public class Scene {
                         Instruction zFar = iterator.next();
                         Instruction zZeroToOne = iterator.next();
                         Instruction invertY = iterator.next();
+                        Instruction color = iterator.next();
 
-                        System.out.println("Creating new spotlight!");
 
 
+                        SpotlightComponent spotlightComponent = new SpotlightComponent(
+                                this,
+                                new Matrix4f().lookAt(
+                                        new Vector3f(
+                                                (float) eye.operands()[1],
+                                                (float) eye.operands()[2],
+                                                (float) eye.operands()[3]
+                                        ),
+                                        new Vector3f(
+                                                (float) center.operands()[1],
+                                                (float) center.operands()[2],
+                                                (float) center.operands()[3]
+                                        ),
+                                        new Vector3f(
+                                                (float) up.operands()[1],
+                                                (float) up.operands()[2],
+                                                (float) up.operands()[3]
+                                        )
+                                ),
+                                new Matrix4f().perspective(
+                                        (float) Math.toRadians((float) fovDeg.operands()[1]),
+                                        ((float) aspectRatio.operands()[1]),
+                                        ((float) zNear.operands()[1]),
+                                        ((float) zFar.operands()[1]),
+                                        (boolean) zZeroToOne.operands()[1]
+                                ),
+                                (boolean) invertY.operands()[1]
+                        );
+                        spotlightComponent.color = new Vector3f(
+                                (float) color.operands()[1],
+                                (float) color.operands()[2],
+                                (float) color.operands()[3]
+                        );
+                        actor.add(spotlightComponent);
 
 
                     }
 
                 }
+
                 case PopActor -> actor = actor.getParent();
             }
         }
@@ -106,4 +147,8 @@ public class Scene {
     }
 
 
+    @Override
+    public void dispose() {
+
+    }
 }

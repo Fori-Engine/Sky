@@ -36,6 +36,8 @@ public class Analyzer {
                 else {
                     string = false;
                     index++;
+                    token.content.deleteCharAt(0);
+                    token.content.deleteCharAt(token.content.length() - 1);
                     break;
                 }
             }

@@ -7,6 +7,13 @@ public class Input {
     private Input(){}
 
     public static final int
+            MOD_SHIFT     = 0x1,
+            MOD_CONTROL   = 0x2,
+            MOD_ALT       = 0x4,
+            MOD_SUPER     = 0x8,
+            MOD_CAPS_LOCK = 0x10,
+            MOD_NUM_LOCK  = 0x20;
+    public static final int
             KEY_SPACE         = 32,
             KEY_APOSTROPHE    = 39,
             KEY_COMMA         = 44,

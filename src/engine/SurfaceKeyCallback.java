@@ -1,5 +1,5 @@
 package engine;
 
 public interface SurfaceKeyCallback {
-    void keyClick(int key);
+    void keyClick(int key, int modifiers);
 }

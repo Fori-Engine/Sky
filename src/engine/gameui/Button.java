@@ -17,25 +17,25 @@ public class Button extends Widget {
 
     @Override
     public int getRequiredWidth() {
-        return (int) font.getStringWidth(value.string) + (6 * padding);
+        return (int) font.getStringWidth(value.string.toString()) + (4 * padding);
     }
 
     @Override
     public int getRequiredHeight() {
-        return (int) font.getStringHeight(value.string) + (2 * padding);
+        return (int) font.getStringHeight(value.string.toString()) + (4 * padding);
     }
 
     @Override
     public void update(GfxPlatform platform, int x, int y, int w, int h) {
-        if(Rect2D.contains(platform.getMouseX(), platform.getMouseY(), x, y, w, h)){
-            platform.drawRect(x, y, w, h, platform.getTheme().buttonHoverColor);
+        if(Rect2D.contains(platform.getMouseX(), platform.getMouseY(), x + padding, y + padding, w - padding * 2, h - padding * 2)){
+            platform.drawRect(x + padding, y + padding, w - padding * 2, h - padding * 2, platform.getTheme().buttonHoverColor);
 
             boolean inputPressed = platform.isMousePressed(Input.MOUSE_BUTTON_1);
             if(pressed) {
-                platform.drawRect(x, y, w, h, platform.getTheme().buttonClickColor);
+                platform.drawRect(x + padding, y + padding, w - padding * 2, h - padding * 2, platform.getTheme().buttonClickColor);
             }
             else {
-                platform.drawRect(x, y, w, h, platform.getTheme().buttonHoverColor);
+                platform.drawRect(x + padding, y + padding, w - padding * 2, h - padding * 2, platform.getTheme().buttonHoverColor);
             }
 
 
@@ -49,9 +49,9 @@ public class Button extends Widget {
 
         }
         else
-            platform.drawRect(x, y, w, h, platform.getTheme().buttonBackgroundColor);
+            platform.drawRect(x + padding, y + padding, w - padding * 2, h - padding * 2, platform.getTheme().buttonBackgroundColor);
 
-        platform.drawString(x + (3 * padding), y + padding, value.string, font, null, Color.WHITE);
-        updateChildren(platform, x + (3 * padding), y + padding, w - padding, h - padding);
+        platform.drawString(x + (2 * padding), y + (2 * padding), value.string.toString(), font, null, platform.getTheme().textColor);
+        updateChildren(platform, x + padding, y + padding, w - padding * 2, h - padding * 2);
     }
 }

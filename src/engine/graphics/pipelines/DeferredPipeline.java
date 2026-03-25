@@ -426,6 +426,7 @@ public class DeferredPipeline extends RenderPipeline {
             });
 
 
+
             Texture[] shadowMapTextures = new Texture[lightCount * renderer.getMaxFramesInFlight()];
             Sampler[] shadowMapSamplers = new Sampler[shadowMapTextures.length];
 

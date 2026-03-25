@@ -38,7 +38,7 @@ public class Actor {
     }
 
     private void setParent(Actor actor) {
-        this.parent = parent;
+        this.parent = actor;
     }
 
     public Actor getParent() {
