@@ -1,7 +1,5 @@
 package engine.mio;
 
-import java.util.Arrays;
-
 public class Main {
     public static void main(String[] args) {
 
@@ -11,19 +9,13 @@ public class Main {
                    actor "Actor2"
                        actor "Actor3"
                            actor "Actor4"
-                               "Component4" component(
-                                   "Pos" float2(1, 2),
-                                   "Vel" float2(3, 4),
-                               )
+                               "Component4" data("Pos" float2(1, 2), "Vel" float2(3, 4),)
                            end
                        end
                    end
                    
                    actor "Actor5"
-                       "Component5" component(
-                            "Pos" float2(5, 6),
-                            "Vel" float2(7, 8),
-                       )
+                       "Component5" data("Pos" float2(5, 6), "Vel" float2(7, 8),)
                    end                              
                end
               
@@ -34,9 +26,9 @@ public class Main {
         RDParser parser = new RDParser();
         parser.parseContinuous(tokenizer);
 
-        IRSource ir = parser.getIR();
-        for(Object[] frame : ir.getFrames()) {
-            System.out.println(Arrays.toString(frame));
+        IRGen ir = parser.getIR();
+        for(Instruction frame : ir.getList()) {
+            System.out.println(frame);
         }
 
 
