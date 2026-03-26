@@ -46,8 +46,8 @@ public abstract class Disposable {
 
     public void disposeRecursive(Disposable disposable){
 
-        for(Disposable child : disposable.children){
-            disposeRecursive(child);
+        for(int i = disposable.children.size() - 1; i > 0; i--) {
+            disposeRecursive(disposable.children.get(i));
         }
 
         disposable.dispose();
