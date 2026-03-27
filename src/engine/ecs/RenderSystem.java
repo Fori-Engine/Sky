@@ -26,10 +26,6 @@ public class RenderSystem extends ActorSystem {
                     setMaterialData(renderer.getFrameIndex(), shaderComponent.shaderProgram(), actor.getComponent(MaterialComponent.class));
                     setSceneDescAndTransformData(renderer.getFrameIndex(), actor.getComponent(MeshComponent.class));
                 }
-                if (actor.has(MeshListComponent.class)) {
-                    setMaterialData(renderer.getFrameIndex(), shaderComponent.shaderProgram(), actor.getComponent(MaterialComponent.class));
-                    setSceneDescAndTransformData(renderer.getFrameIndex(), actor.getComponent(MeshListComponent.class));
-                }
             }
         });
 
@@ -50,13 +46,6 @@ public class RenderSystem extends ActorSystem {
         );
     }
 
-    private void setSceneDescAndTransformData(int frameIndex, MeshListComponent meshListComponent) {
-        meshListComponent.shaderProgram.setBuffers(
-                frameIndex,
-                new DescriptorUpdate<>("scene_desc", meshListComponent.sceneDescBuffers[frameIndex]),
-                new DescriptorUpdate<>("transforms", meshListComponent.transformsBuffers[frameIndex])
-        );
-    }
 
     private void setMaterialData(int frameIndex, ShaderProgram shaderProgram, MaterialComponent materialComponent) {
         Sampler sampler = materialComponent.material.getSampler();

@@ -479,13 +479,7 @@ public class DeferredPipeline extends RenderPipeline {
                     if(actor.has(TransformComponent.class)) {
                         TransformComponent transformComponent = actor.getComponent(TransformComponent.class);
 
-                        if(actor.has(MeshListComponent.class)) {
-                            MeshListComponent meshListComponent = actor.getComponent(MeshListComponent.class);
-                            ByteBuffer transformsData = meshListComponent.transformsBuffers[renderer.getFrameIndex()].get();
-                            transformComponent.transform().get(transformComponent.transformIndex() * SizeUtil.MATRIX_SIZE_BYTES, transformsData);
-                            ByteBuffer sceneDescData = meshListComponent.sceneDescBuffers[renderer.getFrameIndex()].get();
-                            updateSceneDesc(sceneDescData, sceneCamera, scene);
-                        }
+
                         if(actor.has(MeshComponent.class)) {
                             MeshComponent meshComponent = actor.getComponent(MeshComponent.class);
                             ByteBuffer transformsData = meshComponent.transformsBuffers[renderer.getFrameIndex()].get();
@@ -541,23 +535,7 @@ public class DeferredPipeline extends RenderPipeline {
 
 
                                 scene.getRootActor().previsitAllActors(e -> {
-                                    if (e.has(MeshListComponent.class)) {
-                                        MeshListComponent meshListComponent = e.getComponent(MeshListComponent.class);
-                                        shadowMapGenPass.setDrawBuffers(
-                                                meshListComponent.vertexBuffer,
-                                                meshListComponent.indexBuffer
-                                        );
-                                        shadowMapGenPass.setShaderProgram(
-                                                meshListComponent.shaderProgram
-                                        );
-                                        try (MemoryStack stack = stackPush()) {
-                                            ByteBuffer pPushConstants = stack.calloc(2 * Integer.BYTES);
-                                            pPushConstants.putInt(mode);
-                                            pPushConstants.putInt(shadowMapGenPassLightIndex);
-                                            shadowMapGenPass.setPushConstants(pPushConstants);
-                                        }
-                                        shadowMapGenPass.drawIndexed(meshListComponent.indexCount);
-                                    }
+
                                     if (e.has(MeshComponent.class)) {
                                         MeshComponent meshComponent = e.getComponent(MeshComponent.class);
                                         shadowMapGenPass.setDrawBuffers(
@@ -607,24 +585,6 @@ public class DeferredPipeline extends RenderPipeline {
                     {
                         scenePass.setCullMode(CullMode.Back);
                         scene.getRootActor().previsitAllActors(actor -> {
-                            if (actor.has(MeshListComponent.class)) {
-                                MeshListComponent meshListComponent = actor.getComponent(MeshListComponent.class);
-
-                                scenePass.setDrawBuffers(
-                                        meshListComponent.vertexBuffer,
-                                        meshListComponent.indexBuffer
-                                );
-                                scenePass.setShaderProgram(
-                                        meshListComponent.shaderProgram
-                                );
-                                try (MemoryStack stack = stackPush()) {
-                                    ByteBuffer pPushConstants = stack.calloc(2 * Integer.BYTES);
-                                    pPushConstants.putInt(mode);
-                                    pPushConstants.putInt(-1);
-                                    scenePass.setPushConstants(pPushConstants);
-                                }
-                                scenePass.drawIndexed(meshListComponent.indexCount);
-                            }
                             if(actor.has(MeshComponent.class)) {
                                 MeshComponent meshComponent = actor.getComponent(MeshComponent.class);
                                 scenePass.setDrawBuffers(

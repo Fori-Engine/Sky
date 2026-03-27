@@ -56,11 +56,28 @@ public class Main {
                         )
                         "MeshComponent" data(
                             "type" string("box"),
-                            "params" array["text1", "text2", "text3"]
+                            "params" array[0.5, 0.5, 0.5],
+                            "maxVertexCount" float1(50),
+                            "maxIndexCount" float1(50),
+                        )
+                        "TransformComponent" data(
+                            "translate" float3(1.0, 5.0, 2.0),
+                            "rotateAxis" euler3(0.0, 0.0, 1.0),
+                            "rotateDeg" float1(45.0)
+                        )
+                        "MaterialComponent" data(
+                            "baseColor" string("core:assets/textures/rustediron2_basecolor.png"),
+                            "normal" string("core:assets/textures/rustediron2_normal.png"),
+                            "metallic" string("core:assets/textures/rustediron2_metallic.png"),
+                            "roughness" string("core:assets/textures/rustediron2_roughness.png")
                         )
                 
-                
-                
+                        "RigidBodyComponent" data(
+                            "type" string("box"),
+                            "params" array[0.5, 0.5, 0.5],
+                            "mass" float1(1.0),
+                            "interfaceFriction" float1(0.8)
+                        )
                     end
                 end
                 

@@ -1,9 +1,12 @@
 package engine.ecs;
 
 
-import engine.graphics.Disposable;
+import engine.asset.AssetRegistry;
+import engine.graphics.*;
 import engine.mio.IRGen;
 import engine.mio.Instruction;
+import engine.physics.Collider;
+import engine.physics.Interface;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -50,7 +53,7 @@ public class Scene extends Disposable {
         return actor;
     }
 
-    public void exec(IRGen irGen) {
+    public void exec(Renderer renderer, IRGen irGen) {
 
         for (Iterator<Instruction> iterator = irGen.getList().iterator(); iterator.hasNext(); ) {
             Instruction instruction = iterator.next();
@@ -63,15 +66,117 @@ public class Scene extends Disposable {
                 }
 
                 case AddData -> {
+                    System.out.println((String) instruction.operands()[0]);
                     switch ((String) instruction.operands()[0]) {
+
+                        case "MaterialComponent" -> {
+                            Instruction baseColor = iterator.next();
+                            Instruction normal = iterator.next();
+                            Instruction metallic = iterator.next();
+                            Instruction roughness = iterator.next();
+
+
+                            actor.add(new MaterialComponent(new Material(
+                                    Sampler.newSampler(renderer, Texture.Filter.Linear, Texture.Filter.Linear, true),
+                                    Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset((String) baseColor.operands()[1]), TextureFormatType.ColorR8G8B8A8),
+                                    Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset((String) normal.operands()[1]), TextureFormatType.ColorR8G8B8A8unorm),
+                                    Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset((String) metallic.operands()[1]), TextureFormatType.ColorR8G8B8A8unorm),
+                                    Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset((String) roughness.operands()[1]), TextureFormatType.ColorR8G8B8A8unorm)
+                            )));
+
+                            System.out.println("is this even doing anything");
+                        }
+                        case "TransformComponent" -> {
+
+                            Instruction translate = iterator.next();
+                            Instruction rotateAxis = iterator.next();
+                            Instruction rotateDeg = iterator.next();
+
+                            Vector3f translation = new Vector3f(
+                                    (float) translate.operands()[1],
+                                    (float) translate.operands()[2],
+                                    (float) translate.operands()[3]
+                            );
+
+                            Vector3f rotationAxis = new Vector3f(
+                                    (float) rotateAxis.operands()[1],
+                                    (float) rotateAxis.operands()[2],
+                                    (float) rotateAxis.operands()[3]
+                            );
+
+                            float rotation = (float) Math.toRadians((float) rotateDeg.operands()[1]);
+
+
+                            actor.add(new TransformComponent(new Matrix4f().identity().translate(translation).rotate(rotation, rotationAxis)));
+                        }
+                        case "RigidBodyComponent" -> {
+
+                            Instruction type = iterator.next();
+                            Instruction params = iterator.next();
+                            Instruction mass = iterator.next();
+                            Instruction interfaceFriction = iterator.next();
+
+
+                            Collider collider = null;
+                            switch ((String) type.operands()[1]) {
+                                case "box": {
+                                    float width = (float) params.operands()[1];
+                                    float height = (float) params.operands()[2];
+                                    float depth = (float) params.operands()[3];
+                                    collider = Collider.newBoxCollider(width, height, depth);
+                                }
+                            }
+
+                            float colliderMass = (float) mass.operands()[1];
+                            float colliderInterfaceFriction = (float) interfaceFriction.operands()[1];
+
+                            actor.add(new RigidBodyComponent(collider, colliderMass, new Interface(colliderInterfaceFriction)));
+                        }
+                        case "ShaderComponent" -> {
+
+                            Instruction vertexShader = iterator.next();
+                            Instruction fragmentShader = iterator.next();
+
+                            ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(this);
+                            shaderProgram.add(
+                                    AssetRegistry.getAsset((String) vertexShader.operands()[1]),
+                                    ShaderType.VertexShader
+                            );
+                            shaderProgram.add(
+                                    AssetRegistry.getAsset((String) fragmentShader.operands()[1]),
+                                    ShaderType.FragmentShader
+                            );
+                            shaderProgram.assemble();
+
+                            ShaderComponent shaderComponent = new ShaderComponent(shaderProgram);
+                            actor.add(shaderComponent);
+                        }
                         case "MeshComponent" -> {
 
+                            Instruction type = iterator.next();
+                            Instruction params = iterator.next();
+                            Instruction maxVertexCount = iterator.next();
+                            Instruction maxIndexCount = iterator.next();
 
+                            MeshComponent meshComponent = new MeshComponent(
+                                    this,
+                                    renderer,
+                                    (int) ((float) maxVertexCount.operands()[1]),
+                                    (int) ((float) maxIndexCount.operands()[1]),
+                                    actor.getComponent(ShaderComponent.class).shaderProgram()
+                            );
 
+                            switch ((String) type.operands()[1]) {
+                                case "box": {
+                                    float width = (float) params.operands()[1];
+                                    float height = (float) params.operands()[2];
+                                    float depth = (float) params.operands()[3];
 
+                                    meshComponent.setMeshData(MeshGenerator.newBox(width, height, depth));
+                                }
+                            }
 
-
-                            break;
+                            actor.add(meshComponent);
                         }
                         case "SpotlightComponent" -> {
 
@@ -121,7 +226,6 @@ public class Scene extends Disposable {
                                     (float) color.operands()[3]
                             );
                             actor.add(spotlightComponent);
-                            break;
                         }
                     }
 

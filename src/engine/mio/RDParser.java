@@ -1,5 +1,6 @@
 package engine.mio;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Stack;
 
@@ -183,9 +184,11 @@ public class RDParser {
                     }
                     case ArrayKeyword: {
                         expect(analyzer, Analyzer.Token.TokenType.ArrayStart);
-
-
                         int arraySize = 0;
+
+                        ArrayList<Object> array = new ArrayList<>();
+                        array.add(next.content.toString());
+                        Analyzer.Token last = null;
                         while(true) {
                             Analyzer.Token t = expect(
                                     analyzer,
@@ -200,10 +203,28 @@ public class RDParser {
                             if(t.type == Analyzer.Token.TokenType.ArrayEnd){
                                 break;
                             }
-                            else if(t.type != Analyzer.Token.TokenType.ArgDelimiter) arraySize++;
+                            else if(t.type != Analyzer.Token.TokenType.ArgDelimiter) {
+                                if(last != null && last.type != t.type) {
+                                    throw new RuntimeException("Expected type " + last.type + " at index " + arraySize + " in the array instead of " + t.type);
+                                }
+
+                                last = t;
+                                arraySize++;
+
+                                switch (t.type) {
+                                    case Numeric -> array.add(Float.parseFloat(t.content.toString()));
+                                    case TrueKeyword -> array.add(true);
+                                    case FalseKeyword -> array.add(false);
+                                    case StringLiteral -> array.add(t.content.toString());
+                                }
+                            }
+
                         }
 
-                        System.out.println("New array of size " +  arraySize);
+                        ir.emit(new Instruction(
+                                Opcode.AddProperty,
+                                array.toArray()
+                        ));
 
 
 
