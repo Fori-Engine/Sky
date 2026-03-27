@@ -41,5 +41,19 @@ actor "WorldSpotlight"
             "color" float3(0.0, 1.0, 1.0)
         )
     end
+
+    actor "MyActor"
+        "ShaderComponent" data(
+            "vertexShader" string("core:assets/shaders/deferred/Default2_vertex.spv"),
+            "fragmentShader" string("core:assets/shaders/deferred/Default2_fragment.spv")
+        )
+        "MeshComponent" data(
+            "type" string("box"),
+            "params" array[0, 0, 0]
+        )
+
+
+
+    end
 end
 

@@ -18,22 +18,52 @@ public class Main {
                         "invertY" bool(true),
                         "color" float3(1.0, 0.0, 0.0)
                     )
+                
+                    actor "MySpotlight"
+                        "SpotlightComponent" data(
+                            "fovDeg" float1(65),
+                            "eye" float3(0.0, 10.0, 0.0),
+                            "center" float3(0.0, -2.0, 0.0),
+                            "up" float3(0.0, 0.0, 1.0),
+                            "aspectRatio" float1(1.0),
+                            "zNear" float1(0.1),
+                            "zFar" float1(10.0),
+                            "zZeroToOne" bool(true),
+                            "invertY" bool(true),
+                            "color" float3(1.0, 1.0, 1.0)
+                        )
+                    end
+                
+                    actor "MySpotlight2"
+                        "SpotlightComponent" data(
+                            "fovDeg" float1(15),
+                            "eye" float3(0.0, 7.0, 0.0),
+                            "center" float3(0.0, -8.0, 0.0),
+                            "up" float3(0.0, 0.0, 1.0),
+                            "aspectRatio" float1(1.0),
+                            "zNear" float1(0.1),
+                            "zFar" float1(10.0),
+                            "zZeroToOne" bool(true),
+                            "invertY" bool(true),
+                            "color" float3(0.0, 1.0, 1.0)
+                        )
+                    end
+                
+                    actor "MyActor"
+                        "ShaderComponent" data(
+                            "vertexShader" string("core:assets/shaders/deferred/Default2_vertex.spv"),
+                            "fragmentShader" string("core:assets/shaders/deferred/Default2_fragment.spv")
+                        )
+                        "MeshComponent" data(
+                            "type" string("box"),
+                            "params" array["text1", "text2", "text3"]
+                        )
+                
+                
+                
+                    end
                 end
                 
-                actor "MySpotlight"
-                    "SpotlightComponent" data(
-                        "fovDeg" float1(65),
-                        "eye" float3(0.0, 10.0, 0.0),
-                        "center" float3(0.0, -2.0, 0.0),
-                        "up" float3(0.0, 0.0, 1.0),
-                        "aspectRatio" float1(1.0),
-                        "zNear" float1(0.1),
-                        "zFar" float1(10.0),
-                        "zZeroToOne" bool(true),
-                        "invertY" bool(true),
-                        "color" float3(1.0, 1.0, 1.0)
-                    )
-                end
                 
                 """);
 

@@ -80,7 +80,8 @@ public class RDParser {
                         Analyzer.Token.TokenType.Euler3Keyword,
                         Analyzer.Token.TokenType.Quat4Keyword,
                         Analyzer.Token.TokenType.StringKeyword,
-                        Analyzer.Token.TokenType.BoolKeyword
+                        Analyzer.Token.TokenType.BoolKeyword,
+                        Analyzer.Token.TokenType.ArrayKeyword
                 );
 
 
@@ -132,7 +133,6 @@ public class RDParser {
 
                         break;
                     }
-
                     case Float2Keyword: {
                         expect(analyzer, Analyzer.Token.TokenType.LeftParen);
                         Analyzer.Token a1 = expect(analyzer, Analyzer.Token.TokenType.Numeric);
@@ -147,7 +147,6 @@ public class RDParser {
                         ));
                         break;
                     }
-
                     case Float3Keyword, Euler3Keyword: {
                         expect(analyzer, Analyzer.Token.TokenType.LeftParen);
                         Analyzer.Token a1 = expect(analyzer, Analyzer.Token.TokenType.Numeric);
@@ -164,7 +163,6 @@ public class RDParser {
 
                         break;
                     }
-
                     case Float4Keyword, Quat4Keyword: {
                         expect(analyzer, Analyzer.Token.TokenType.LeftParen);
                         expect(analyzer, Analyzer.Token.TokenType.LeftParen);
@@ -181,6 +179,34 @@ public class RDParser {
                                 Opcode.AddProperty,
                                 new Object[]{ token.content.toString(), Float.parseFloat(a1.content.toString()), Float.parseFloat(a2.content.toString()), Float.parseFloat(a3.content.toString()), Float.parseFloat(a4.content.toString()) }
                         ));
+                        break;
+                    }
+                    case ArrayKeyword: {
+                        expect(analyzer, Analyzer.Token.TokenType.ArrayStart);
+
+
+                        int arraySize = 0;
+                        while(true) {
+                            Analyzer.Token t = expect(
+                                    analyzer,
+                                    Analyzer.Token.TokenType.Numeric,
+                                    Analyzer.Token.TokenType.TrueKeyword,
+                                    Analyzer.Token.TokenType.FalseKeyword,
+                                    Analyzer.Token.TokenType.StringLiteral,
+                                    Analyzer.Token.TokenType.ArgDelimiter,
+                                    Analyzer.Token.TokenType.ArrayEnd
+                            );
+
+                            if(t.type == Analyzer.Token.TokenType.ArrayEnd){
+                                break;
+                            }
+                            else if(t.type != Analyzer.Token.TokenType.ArgDelimiter) arraySize++;
+                        }
+
+                        System.out.println("New array of size " +  arraySize);
+
+
+
                         break;
                     }
 

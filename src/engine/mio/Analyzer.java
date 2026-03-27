@@ -58,6 +58,11 @@ public class Analyzer {
                     index++;
                     break;
                 }
+                if(character == '[') {
+                    token.type = Token.TokenType.ArrayStart;
+                    index++;
+                    break;
+                }
                 if((Character.isDigit(character) || character == '-') && !Character.isDigit(source.charAt(index - 1)) && !Character.isLetter(source.charAt(index - 1))) {
                     if(!numeric) {
                         token.type = Token.TokenType.Numeric;
@@ -72,12 +77,17 @@ public class Analyzer {
 
 
                 }
-                if(character == ',' || character == ')') {
+                if(character == ',' || character == ')' || character == ']') {
                     if(numeric) {
                         token.content.deleteCharAt(token.content.length() - 1);
                         break;
                     }
-                    token.type = character == ',' ? Token.TokenType.ArgDelimiter : Token.TokenType.RightParen;
+                    switch (character) {
+                        case ',' -> token.type = Token.TokenType.ArgDelimiter;
+                        case ')' -> token.type = Token.TokenType.RightParen;
+                        case ']' -> token.type = Token.TokenType.ArrayEnd;
+                    }
+
                     index++;
                     break;
 
@@ -122,6 +132,8 @@ public class Analyzer {
         public enum TokenType {
             LeftParen("("),
             RightParen(")"),
+            ArrayStart("["),
+            ArrayEnd("]"),
             StringLiteral(null),
             Numeric(null),
             ActorKeyword("actor"),
@@ -134,6 +146,8 @@ public class Analyzer {
             Float3Keyword("float3"),
             Float4Keyword("float4"),
             Euler3Keyword("euler3"),
+            ArrayKeyword("array"),
+
             Quat4Keyword("quat4"),
             ArgDelimiter(","),
             LateKeyword("late"),

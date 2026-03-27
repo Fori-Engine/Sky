@@ -63,57 +63,66 @@ public class Scene extends Disposable {
                 }
 
                 case AddData -> {
-                    if (instruction.operands()[0].equals("SpotlightComponent")) {
-
-                        Instruction fovDeg = iterator.next();
-                        Instruction eye = iterator.next();
-                        Instruction center = iterator.next();
-                        Instruction up = iterator.next();
-                        Instruction aspectRatio = iterator.next();
-                        Instruction zNear = iterator.next();
-                        Instruction zFar = iterator.next();
-                        Instruction zZeroToOne = iterator.next();
-                        Instruction invertY = iterator.next();
-                        Instruction color = iterator.next();
+                    switch ((String) instruction.operands()[0]) {
+                        case "MeshComponent" -> {
 
 
 
-                        SpotlightComponent spotlightComponent = new SpotlightComponent(
-                                this,
-                                new Matrix4f().lookAt(
-                                        new Vector3f(
-                                                (float) eye.operands()[1],
-                                                (float) eye.operands()[2],
-                                                (float) eye.operands()[3]
-                                        ),
-                                        new Vector3f(
-                                                (float) center.operands()[1],
-                                                (float) center.operands()[2],
-                                                (float) center.operands()[3]
-                                        ),
-                                        new Vector3f(
-                                                (float) up.operands()[1],
-                                                (float) up.operands()[2],
-                                                (float) up.operands()[3]
-                                        )
-                                ),
-                                new Matrix4f().perspective(
-                                        (float) Math.toRadians((float) fovDeg.operands()[1]),
-                                        ((float) aspectRatio.operands()[1]),
-                                        ((float) zNear.operands()[1]),
-                                        ((float) zFar.operands()[1]),
-                                        (boolean) zZeroToOne.operands()[1]
-                                ),
-                                (boolean) invertY.operands()[1]
-                        );
-                        spotlightComponent.color = new Vector3f(
-                                (float) color.operands()[1],
-                                (float) color.operands()[2],
-                                (float) color.operands()[3]
-                        );
-                        actor.add(spotlightComponent);
 
 
+
+                            break;
+                        }
+                        case "SpotlightComponent" -> {
+
+                            Instruction fovDeg = iterator.next();
+                            Instruction eye = iterator.next();
+                            Instruction center = iterator.next();
+                            Instruction up = iterator.next();
+                            Instruction aspectRatio = iterator.next();
+                            Instruction zNear = iterator.next();
+                            Instruction zFar = iterator.next();
+                            Instruction zZeroToOne = iterator.next();
+                            Instruction invertY = iterator.next();
+                            Instruction color = iterator.next();
+
+
+                            SpotlightComponent spotlightComponent = new SpotlightComponent(
+                                    this,
+                                    new Matrix4f().lookAt(
+                                            new Vector3f(
+                                                    (float) eye.operands()[1],
+                                                    (float) eye.operands()[2],
+                                                    (float) eye.operands()[3]
+                                            ),
+                                            new Vector3f(
+                                                    (float) center.operands()[1],
+                                                    (float) center.operands()[2],
+                                                    (float) center.operands()[3]
+                                            ),
+                                            new Vector3f(
+                                                    (float) up.operands()[1],
+                                                    (float) up.operands()[2],
+                                                    (float) up.operands()[3]
+                                            )
+                                    ),
+                                    new Matrix4f().perspective(
+                                            (float) Math.toRadians((float) fovDeg.operands()[1]),
+                                            ((float) aspectRatio.operands()[1]),
+                                            ((float) zNear.operands()[1]),
+                                            ((float) zFar.operands()[1]),
+                                            (boolean) zZeroToOne.operands()[1]
+                                    ),
+                                    (boolean) invertY.operands()[1]
+                            );
+                            spotlightComponent.color = new Vector3f(
+                                    (float) color.operands()[1],
+                                    (float) color.operands()[2],
+                                    (float) color.operands()[3]
+                            );
+                            actor.add(spotlightComponent);
+                            break;
+                        }
                     }
 
                 }
