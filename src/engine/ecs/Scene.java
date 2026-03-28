@@ -113,6 +113,7 @@ public class Scene extends Disposable {
                             Instruction params = iterator.next();
                             Instruction mass = iterator.next();
                             Instruction interfaceFriction = iterator.next();
+                            Instruction canRotate = iterator.next();
 
 
                             Collider collider = null;
@@ -127,8 +128,10 @@ public class Scene extends Disposable {
 
                             float colliderMass = (float) mass.operands()[1];
                             float colliderInterfaceFriction = (float) interfaceFriction.operands()[1];
+                            boolean colliderCanRotate = (boolean) canRotate.operands()[1];
 
-                            actor.add(new RigidBodyComponent(collider, colliderMass, new Interface(colliderInterfaceFriction)));
+
+                            actor.add(new RigidBodyComponent(collider, colliderMass, new Interface(colliderInterfaceFriction), colliderCanRotate));
                         }
                         case "ShaderComponent" -> {
 
