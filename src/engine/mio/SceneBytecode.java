@@ -3,7 +3,7 @@ package engine.mio;
 import java.util.ArrayList;
 import java.util.List;
 
-public class IRGen {
+public class SceneBytecode {
 
     private List<Instruction> frames = new ArrayList<>();
 

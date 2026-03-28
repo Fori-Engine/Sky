@@ -4,7 +4,7 @@ public class Main {
     public static void main(String[] args) {
 
         long start = System.currentTimeMillis();
-        IRGen ir = MioCompiler.compile("""
+        SceneBytecode ir = SceneCompiler.compile("""
                 actor "WorldSpotlight"
                     "SpotlightComponent" data(
                         "fovDeg" float1(25),

@@ -7,7 +7,7 @@ import java.util.Stack;
 public class RDParser {
 
     public RDParser() {}
-    private IRGen ir = new IRGen();
+    private SceneBytecode ir = new SceneBytecode();
 
     private Analyzer.Token nextProperToken(Analyzer analyzer) {
         Analyzer.Token token;
@@ -31,7 +31,7 @@ public class RDParser {
         throw new RuntimeException("Expected any of " + Arrays.asList(types) + " next instead of " + token.type + " (" + token.content.toString() + ") on line " + token.line);
     }
 
-    public IRGen getIR() {
+    public SceneBytecode getEmittedBytecode() {
         return ir;
     }
 

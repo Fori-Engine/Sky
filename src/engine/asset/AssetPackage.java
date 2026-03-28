@@ -105,7 +105,7 @@ public class AssetPackage {
                                             FileSystem.readString(assetPath)
                                     );
                                 }
-                                else if (assetFilePath.endsWith("mio")) {
+                                else if (assetFilePath.endsWith("scene")) {
                                     asset = new Asset<String>(
                                             assetPackage,
                                             identifier,

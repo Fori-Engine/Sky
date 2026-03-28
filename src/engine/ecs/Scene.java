@@ -3,7 +3,7 @@ package engine.ecs;
 
 import engine.asset.AssetRegistry;
 import engine.graphics.*;
-import engine.mio.IRGen;
+import engine.mio.SceneBytecode;
 import engine.mio.Instruction;
 import engine.physics.Collider;
 import engine.physics.Interface;
@@ -53,9 +53,9 @@ public class Scene extends Disposable {
         return actor;
     }
 
-    public void exec(Renderer renderer, IRGen irGen) {
+    public void exec(Renderer renderer, SceneBytecode sceneBytecode) {
 
-        for (Iterator<Instruction> iterator = irGen.getList().iterator(); iterator.hasNext(); ) {
+        for (Iterator<Instruction> iterator = sceneBytecode.getList().iterator(); iterator.hasNext(); ) {
             Instruction instruction = iterator.next();
             switch (instruction.opcode()) {
                 case PushActor -> {
@@ -66,7 +66,6 @@ public class Scene extends Disposable {
                 }
 
                 case AddData -> {
-                    System.out.println((String) instruction.operands()[0]);
                     switch ((String) instruction.operands()[0]) {
 
                         case "MaterialComponent" -> {
@@ -84,7 +83,6 @@ public class Scene extends Disposable {
                                     Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset((String) roughness.operands()[1]), TextureFormatType.ColorR8G8B8A8unorm)
                             )));
 
-                            System.out.println("is this even doing anything");
                         }
                         case "TransformComponent" -> {
 

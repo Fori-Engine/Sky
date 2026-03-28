@@ -1,15 +1,15 @@
 package engine.mio;
 
-public class MioCompiler {
-    private MioCompiler() {}
+public class SceneCompiler {
+    private SceneCompiler() {}
 
-    public static IRGen compile(String source) {
+    public static SceneBytecode compile(String source) {
         Analyzer tokenizer = new Analyzer(source);
 
         RDParser parser = new RDParser();
         parser.parseContinuous(tokenizer);
 
-        return parser.getIR();
+        return parser.getEmittedBytecode();
     }
 
     public static void printTokens(String s) {
