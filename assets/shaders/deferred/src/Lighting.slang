@@ -88,7 +88,8 @@ void computeMain(uniform int light_count, uniform int width, uniform int height,
                         input_shadow_maps_samplers[light_index], 
                         1, 
                         shadow_map_uv_ts.xy, 
-                        fragment_shadow_map_ps
+                        fragment_shadow_map_ps,
+                        light
                     );
 
                     shadow += shadow_per_pixel;

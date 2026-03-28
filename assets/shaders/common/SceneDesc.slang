@@ -21,10 +21,12 @@ public struct Light {
     float attenuationConstant;
     float attenuationLinear;
     float attenuationQuadratic;
+    float shadowTestOffsetBias;
 
     float3 color;
 
     float shadowNormalOffsetBias;
+
 }
 
 public struct Scene {

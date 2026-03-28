@@ -1,7 +1,7 @@
 actor "WorldSpotlight"
 
     actor "MySpotlight"
-        "SpotlightComponent" data(
+        "LightComponent" data(
             "fovDeg" float1(65),
             "eye" float3(0.0, 10.0, 0.0),
             "center" float3(0.0, -2.0, 0.0),

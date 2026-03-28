@@ -5,7 +5,7 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 @ComponentArray(mask = 1 << 3)
-public class SpotlightComponent {
+public class LightComponent {
     public Matrix4f view, proj;
     public Matrix4f invView, invProj;
     public boolean invertY;
@@ -14,9 +14,10 @@ public class SpotlightComponent {
     public float attenuationLinear = 0.0014f;
     public float attenuationQuadratic = 0.000007f;
     public Vector3f color = new Vector3f(0, 1, 1);
-    public float shadowNormalOffsetBias = 0.05f;
+    public float shadowNormalOffsetBias = 0.0001f;
+    public float shadowTestOffsetBias = 0.00001f;
 
-    public SpotlightComponent(Disposable parent, Matrix4f view, Matrix4f proj, boolean invertY) {
+    public LightComponent(Disposable parent, Matrix4f view, Matrix4f proj, boolean invertY) {
         setView(view);
         setProj(proj);
         this.invertY = invertY;

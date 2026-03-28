@@ -179,7 +179,7 @@ public class Scene extends Disposable {
 
                             actor.add(meshComponent);
                         }
-                        case "SpotlightComponent" -> {
+                        case "LightComponent" -> {
 
                             Instruction fovDeg = iterator.next();
                             Instruction eye = iterator.next();
@@ -193,7 +193,7 @@ public class Scene extends Disposable {
                             Instruction color = iterator.next();
 
 
-                            SpotlightComponent spotlightComponent = new SpotlightComponent(
+                            LightComponent lightComponent = new LightComponent(
                                     this,
                                     new Matrix4f().lookAt(
                                             new Vector3f(
@@ -221,12 +221,12 @@ public class Scene extends Disposable {
                                     ),
                                     (boolean) invertY.operands()[1]
                             );
-                            spotlightComponent.color = new Vector3f(
+                            lightComponent.color = new Vector3f(
                                     (float) color.operands()[1],
                                     (float) color.operands()[2],
                                     (float) color.operands()[3]
                             );
-                            actor.add(spotlightComponent);
+                            actor.add(lightComponent);
                         }
                     }
 

@@ -352,28 +352,28 @@ public class DeferredPipeline extends RenderPipeline {
         sceneDescData.position(sceneDescData.position() + SizeUtil.MATRIX_SIZE_BYTES);
 
         scene.getRootActor().previsitAllActors(actor -> {
-            if(actor.has(SpotlightComponent.class)) {
-                SpotlightComponent spotlightComponent = actor.getComponent(SpotlightComponent.class);
+            if(actor.has(LightComponent.class)) {
+                LightComponent lightComponent = actor.getComponent(LightComponent.class);
 
-                spotlightComponent.view.get(sceneDescData);
+                lightComponent.view.get(sceneDescData);
                 sceneDescData.position(sceneDescData.position() + SizeUtil.MATRIX_SIZE_BYTES);
 
-                spotlightComponent.proj.get(sceneDescData);
+                lightComponent.proj.get(sceneDescData);
                 sceneDescData.position(sceneDescData.position() + SizeUtil.MATRIX_SIZE_BYTES);
 
-                spotlightComponent.invView.get(sceneDescData);
+                lightComponent.invView.get(sceneDescData);
                 sceneDescData.position(sceneDescData.position() + SizeUtil.MATRIX_SIZE_BYTES);
 
-                spotlightComponent.invProj.get(sceneDescData);
+                lightComponent.invProj.get(sceneDescData);
                 sceneDescData.position(sceneDescData.position() + SizeUtil.MATRIX_SIZE_BYTES);
 
-                sceneDescData.putFloat(spotlightComponent.attenuationConstant);
-                sceneDescData.putFloat(spotlightComponent.attenuationLinear);
-                sceneDescData.putFloat(spotlightComponent.attenuationQuadratic);
-                sceneDescData.putFloat(-1);
-                spotlightComponent.color.get(sceneDescData);
+                sceneDescData.putFloat(lightComponent.attenuationConstant);
+                sceneDescData.putFloat(lightComponent.attenuationLinear);
+                sceneDescData.putFloat(lightComponent.attenuationQuadratic);
+                sceneDescData.putFloat(lightComponent.shadowTestOffsetBias);
+                lightComponent.color.get(sceneDescData);
                 sceneDescData.position(sceneDescData.position() + SizeUtil.VEC3_SIZE_BYTES);
-                sceneDescData.putFloat(spotlightComponent.shadowNormalOffsetBias);
+                sceneDescData.putFloat(lightComponent.shadowNormalOffsetBias);
             }
         });
 
@@ -421,7 +421,7 @@ public class DeferredPipeline extends RenderPipeline {
             lightCount = 0;
 
             scene.getRootActor().previsitAllActors(actor -> {
-                if (actor.has(SpotlightComponent.class))
+                if (actor.has(LightComponent.class))
                     lightCount++;
             });
 
@@ -433,24 +433,24 @@ public class DeferredPipeline extends RenderPipeline {
             final int[] lightIndex = {0};
 
             scene.getRootActor().previsitAllActors(actor -> {
-                if (actor.has(SpotlightComponent.class)) {
-                    SpotlightComponent spotlightComponent = actor.getComponent(SpotlightComponent.class);
+                if (actor.has(LightComponent.class)) {
+                    LightComponent lightComponent = actor.getComponent(LightComponent.class);
                     int i1 = renderer.getMaxFramesInFlight() * lightIndex[0];
                     int i2 = renderer.getMaxFramesInFlight() * lightIndex[0] + 1;
 
-                    shadowMapTextures[i1] = spotlightComponent.renderTarget
+                    shadowMapTextures[i1] = lightComponent.renderTarget
                             .getAttachment(RenderTargetAttachmentTypes.Depth)
                             .getTextures()[0];
 
-                    shadowMapSamplers[i1] = spotlightComponent.renderTarget
+                    shadowMapSamplers[i1] = lightComponent.renderTarget
                             .getAttachment(RenderTargetAttachmentTypes.Depth)
                             .getSamplers()[0];
 
-                    shadowMapTextures[i2] = spotlightComponent.renderTarget
+                    shadowMapTextures[i2] = lightComponent.renderTarget
                             .getAttachment(RenderTargetAttachmentTypes.Depth)
                             .getTextures()[1];
 
-                    shadowMapSamplers[i2] = spotlightComponent.renderTarget
+                    shadowMapSamplers[i2] = lightComponent.renderTarget
                             .getAttachment(RenderTargetAttachmentTypes.Depth)
                             .getSamplers()[1];
 
@@ -516,20 +516,20 @@ public class DeferredPipeline extends RenderPipeline {
                     int mode = 1;
 
                     scene.getRootActor().previsitAllActors(actor -> {
-                        if(actor.has(SpotlightComponent.class)) {
-                            SpotlightComponent spotlightComponent = actor.getComponent(SpotlightComponent.class);
+                        if(actor.has(LightComponent.class)) {
+                            LightComponent lightComponent = actor.getComponent(LightComponent.class);
 
 
 
                             int width, height;
                             {
-                                Texture texture = spotlightComponent.renderTarget.getAttachmentByIndex(0).getTextures()[0];
+                                Texture texture = lightComponent.renderTarget.getAttachmentByIndex(0).getTextures()[0];
                                 width = texture.getWidth();
                                 height = texture.getHeight();
                             }
 
 
-                            shadowMapGenPass.startRendering(spotlightComponent.renderTarget, 3, width, height, true, Color.BLACK);
+                            shadowMapGenPass.startRendering(lightComponent.renderTarget, 3, width, height, true, Color.BLACK);
                             {
                                 shadowMapGenPass.setCullMode(CullMode.Front);
 
