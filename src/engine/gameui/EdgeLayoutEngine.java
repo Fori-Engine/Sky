@@ -5,24 +5,25 @@ public class EdgeLayoutEngine extends LayoutEngine {
     public static long Bottom = 1 << 1;
     public static long Left = 1 << 2;
     public static long Right = 1 << 3;
+    public static long Center = 1 << 4;
 
     @Override
     public int getComputedWidth() {
 
-        int top = 0, bottom = 0;
+        int top = 0, bottom = 0, center = 0;
 
         for(Widget child : widget.getWidgets()) {
             if (child.hasHint(Top)) top = child.getRequiredWidth();
+            if(child.hasHint(Center)) center += child.getRequiredWidth();
             else if (child.hasHint(Bottom)) bottom = child.getRequiredWidth();
         }
 
-        int width = Math.max(top, bottom);
+        int width = Math.max(center, Math.max(top, bottom));
         if(width != 0) return width;
-
-
 
         for(Widget child : widget.getWidgets()) {
             if(child.hasHint(Left)) width += child.getRequiredWidth();
+            if(child.hasHint(Center)) width += child.getRequiredWidth();
             if(child.hasHint(Right)) width += child.getRequiredWidth();
         }
 
@@ -33,16 +34,17 @@ public class EdgeLayoutEngine extends LayoutEngine {
     @Override
     public int getComputedHeight() {
         int height = 0;
-        int leftHeight = 0, rightHeight = 0;
+        int leftHeight = 0, rightHeight = 0, centerHeight = 0;
 
         for(Widget child : widget.getWidgets()) {
             if(child.hasHint(Top)) height += child.getRequiredHeight();
             if(child.hasHint(Bottom)) height += child.getRequiredHeight();
             if(child.hasHint(Left)) leftHeight = child.getRequiredHeight();
+            if(child.hasHint(Center)) centerHeight = child.getRequiredHeight();
             if(child.hasHint(Right)) rightHeight = child.getRequiredHeight();
         }
 
-        height += Math.max(leftHeight, rightHeight);
+        height += Math.max(centerHeight, Math.max(leftHeight, rightHeight));
 
         return height;
     }
@@ -76,6 +78,14 @@ public class EdgeLayoutEngine extends LayoutEngine {
             }
             else if(child.hasHint(Left)) {
                 child.update(platform, dx, dy + topOffset, child.getRequiredWidth(), widgetHeight - topOffset - bottomOffset);
+            }
+            else if(child.hasHint(Center)) {
+                int childHeight = child.getRequiredHeight();
+
+                float hw = childWidth / 2f;
+                float hh = childHeight / 2f;
+
+                child.update(platform, (int) (dx + (widgetWidth / 2f - hw)), (int) (dy + (widgetHeight / 2f - hh)), childWidth, childHeight);
             }
         }
 
