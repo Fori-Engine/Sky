@@ -44,8 +44,8 @@ struct FSOutput {
     float4 color0SW : SV_Target0;
 }
 
-Texture2D input_textures[3];
-SamplerState input_samplers[3];
+Texture2D input_textures[10];
+SamplerState input_samplers[10];
 
 float median(float r, float g, float b) {
     return max(min(r, g), min(max(r, g), b));
