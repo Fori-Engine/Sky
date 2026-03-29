@@ -25,7 +25,6 @@ public class UISystem extends ActorSystem {
     private Vector2f origin = new Vector2f();
     private MsdfFont msdfFont;
     private Surface surface;
-    private Loop menuLoop;
     private GfxPlatform gfxPlatform;
     private Theme theme;
     private TextureBindings textureBindings;
@@ -37,7 +36,7 @@ public class UISystem extends ActorSystem {
         this.renderPipeline = renderPipeline;
         this.surface = surface;
         this.scene = scene;
-        surface.setCaptureMouse(SystemState.running);
+
 
         surface.addKeyCallback((key, modifiers) -> {
             if(key == Input.KEY_ESCAPE) SystemState.running = !SystemState.running;
@@ -50,31 +49,9 @@ public class UISystem extends ActorSystem {
         );
 
         theme = ThemeLoader.loadTheme((String) AssetRegistry.getAsset("core:assets/themes/DarkMode.json").getObject());
-
-
         textureBindings = new TextureBindings();
 
-        //Menu UI
-        {
-            menuLoop = new Loop();
-            menuLoop.setWidget(
-                    new ContainerWidget().setLayoutEngine(new EdgeLayoutEngine())
-                            .addWidgets(new ContainerWidget().setLayoutEngine(new LineLayoutEngine(LineLayoutEngine.Line.Vertical)).addHint(EdgeLayoutEngine.Bottom)
-                                    .addWidgets(
-                                            new Text(text("\"Lorem ipsum dolor sit amet, consectetur adipiscing elit,\nsed do eiusmod tempor incididunt ut labore et dolore magna aliqua. "), msdfFont),
-                                            new Text(text("Text 2"), msdfFont),
-                                            new Text(text("Text 3"), msdfFont),
-                                            new TextField(text("This is a bunch of text inside a text field"), msdfFont),
-                                            new Button(text("Resume"), msdfFont)
-                                                    .addEventHandler(new EventHandler() {
-                                                        @Override
-                                                        public void onClick() {
-                                                            SystemState.running = true;
-                                                        }
-                                                    })
-                                    ))
-            );
-        }
+
 
 
 
@@ -277,7 +254,7 @@ public class UISystem extends ActorSystem {
                 }
             };
         }
-        menuLoop.setGfxPlatform(gfxPlatform);
+
     }
 
     @Override
@@ -287,8 +264,6 @@ public class UISystem extends ActorSystem {
         vertexBufferData.clear();
         indexBufferData = screenSpaceFeatures.getIndexBuffers()[renderer.getFrameIndex()].get();
         indexBufferData.clear();
-
-        surface.setCaptureMouse(SystemState.running);
 
         transform = new Matrix2f();
         setOrigin(0, 0);
@@ -309,45 +284,35 @@ public class UISystem extends ActorSystem {
         );
 
 
+        root.previsitAllActors(actor -> {
+            if (actor.has(UIComponent.class)) {
+                UIComponent uiComponent = actor.getComponent(UIComponent.class);
+                if (!uiComponent.active) {
 
+                    uiComponent.loop = new Loop();
+                    uiComponent.loop.setWidget(uiComponent.widget);
+                    uiComponent.loop.setGfxPlatform(gfxPlatform);
 
-        if(SystemState.running) {
-            root.previsitAllActors(actor -> {
-                if(actor.has(UIComponent.class)) {
-                    UIComponent uiComponent = actor.getComponent(UIComponent.class);
-                    if (!uiComponent.active) {
-
-                        uiComponent.loop = new Loop();
-                        uiComponent.loop.setWidget(uiComponent.widget);
-                        uiComponent.loop.setGfxPlatform(gfxPlatform);
-
-                        uiComponent.active = true;
-                    }
-
-                    if (uiComponent.rect2D.isPresent()) {
-                        Rect2D rect2D = uiComponent.rect2D.get();
-                        uiComponent.loop.update(
-                                (int) rect2D.x,
-                                (int) rect2D.y,
-                                (int) rect2D.w,
-                                (int) rect2D.h
-                        );
-                    } else {
-                        uiComponent.loop.update(
-                                0, 0
-                        );
-                    }
+                    uiComponent.active = true;
                 }
 
+                if (uiComponent.rect2D.isPresent()) {
+                    Rect2D rect2D = uiComponent.rect2D.get();
+                    uiComponent.loop.update(
+                            (int) rect2D.x,
+                            (int) rect2D.y,
+                            (int) rect2D.w,
+                            (int) rect2D.h
+                    );
+                } else {
+                    uiComponent.loop.update(
+                            0, 0
+                    );
+                }
+            }
 
 
-            });
-
-        }
-        else {
-            menuLoop.update((renderer.getWidth() / 2) - (renderer.getWidth() / 4), (renderer.getHeight() / 2) - (renderer.getHeight() / 4), renderer.getWidth() / 2, renderer.getHeight() / 2);
-        }
-
+        });
 
 
         screenSpaceFeatures.setIndexCount(6 * quadCount);
