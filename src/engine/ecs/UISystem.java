@@ -38,9 +38,6 @@ public class UISystem extends ActorSystem {
         this.scene = scene;
 
 
-        surface.addKeyCallback((key, modifiers) -> {
-            if(key == Input.KEY_ESCAPE) SystemState.running = !SystemState.running;
-        });
 
         msdfFont = new MsdfFont(
                 renderer,
