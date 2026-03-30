@@ -4,6 +4,7 @@
 #include "../../common/SceneDesc.slang"
 #include "../../common/NormalDepthBiasEval.slang"
 #include "../../common/ShadowEval.slang"
+#include "../../common/ReinhardTonemappingEval.slang"
 
 
 StructuredBuffer<Scene> scene_desc;
@@ -122,7 +123,8 @@ void computeMain(uniform int light_count, uniform int width, uniform int height,
 
         output_color.rgb *= (1 - max(0.0, shadow));
     }
-    
 
-    output_color_texture[texture_xy_ss.xy] = float4(output_color, 1.0);
+
+
+    output_color_texture[texture_xy_ss.xy] = float4(reinhard_hdr(output_color), 1.0);
 }
