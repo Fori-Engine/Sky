@@ -18,7 +18,11 @@ public class TextField extends Widget {
     private SurfaceKeyCallback surfaceKeyCallback;
     private int columns = 15;
     private int cursor = 0;
-    private int determinedWidth = 0;
+    private int visibilityCursor = 0;
+    private float cursorBlinkTime = 0.5f;
+    private boolean cursorVisible = true;
+    private float time = 0;
+
 
     public TextField(TextValue value, MsdfFont font) {
         this.value = value;
@@ -50,9 +54,9 @@ public class TextField extends Widget {
             }
         };
 
-        determinedWidth = (int) (font.getStringWidth(value.string.toString()) + (padding * 2));
         columns = value.string.length();
-        cursor = columns;
+        cursor += columns / 2;
+
 
 
         Session.getSurface().addKeyCallback(surfaceKeyCallback);
@@ -70,12 +74,14 @@ public class TextField extends Widget {
 
 
     private String getVisibleString() {
-        return value.string.toString().substring(cursor, Math.min(cursor + columns, value.string.length()));
+        if(cursor - value.string.length() > columns)
+            visibilityCursor = Math.clamp(cursor - columns / 2, 0, value.string.length() - 1);
+        return value.string.substring(visibilityCursor, Math.min(visibilityCursor + columns, value.string.length()));
     }
 
     @Override
     public int getRequiredWidth() {
-        return determinedWidth;
+        return (int) (font.getStringWidth(getVisibleString()) + (padding * 2));
     }
 
     public TextValue getText() {
@@ -103,7 +109,24 @@ public class TextField extends Widget {
                 platform.getTheme().textColor
         );
 
-        Color color = focused ? platform.getTheme().buttonHoverColor : platform.getTheme().buttonBackgroundColor;
+        Color color = focused ? platform.getTheme().buttonHoverColor : platform.getTheme().containerBackgroundColor;
+
+        time += Time.deltaTime();
+        if(time >= cursorBlinkTime) {
+            cursorVisible = !cursorVisible;
+            time -= cursorBlinkTime;
+        }
+
+        if(focused) {
+            if (cursorVisible) {
+                int end = 0;
+                if(!visibleString.isEmpty()) end = cursor % visibleString.length();
+
+                float cx = font.getStringWidth(visibleString.substring(0, end));
+                platform.drawRect(x + padding + cx, y + padding * 2, 1, h - padding * 4, platform.getTheme().textColor);
+            }
+        }
+
 
         platform.drawRectLines(x + padding, y + padding, w - padding * 2, h - padding * 2, 2, color);
         updateChildren(platform, x + padding, y + padding, w - padding * 2, h - padding * 2);
