@@ -31,8 +31,9 @@ public abstract class Widget {
         return padding;
     }
 
-    public void setPadding(int padding) {
+    public Widget setPadding(int padding) {
         this.padding = padding;
+        return this;
     }
 
     public Widget addHint(long hint) {
