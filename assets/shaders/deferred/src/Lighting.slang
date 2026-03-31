@@ -60,7 +60,6 @@ void computeMain(uniform int light_count, uniform int width, uniform int height,
 
         float4 fragment_ws = get_pos_ws((float) (texture_xy_ss.x + 0.5) / width, (float) (texture_xy_ss.y + 0.5) / height, camera.invProj, camera.invView, depth_psw); //mul(camera.invView, float4(fragment_vs.xyz, 1.0));
 
-        float ambient = 0.01;
         float shadow = 0;
 
         for (int light_index = 0; light_index < light_count; light_index++) {
