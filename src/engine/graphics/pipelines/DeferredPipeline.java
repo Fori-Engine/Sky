@@ -48,9 +48,6 @@ public class DeferredPipeline extends RenderPipeline {
     private int lightCount = 0;
     private final int COMPUTE_THREAD_GROUP_SIZE = 32;
 
-    private Texture skybox;
-    private Sampler skyboxSampler;
-
 
 
 
@@ -61,25 +58,12 @@ public class DeferredPipeline extends RenderPipeline {
         {
             supportedFeatures = List.of(
                     new SceneFeatures(true),
-                    new ScreenSpaceFeatures(false)
+                    new ScreenSpaceFeatures(false),
+                    new SkyboxFeatures(true)
             );
         }
 
-        //Skybox
-        {
-            skybox = Texture.newSkyboxTextureFromAsset(
-                    renderer,
-                    AssetRegistry.getAsset("core:assets/textures/skybox/right.jpg"),
-                    AssetRegistry.getAsset("core:assets/textures/skybox/left.jpg"),
-                    AssetRegistry.getAsset("core:assets/textures/skybox/top.jpg"),
-                    AssetRegistry.getAsset("core:assets/textures/skybox/bottom.jpg"),
-                    AssetRegistry.getAsset("core:assets/textures/skybox/front.jpg"),
-                    AssetRegistry.getAsset("core:assets/textures/skybox/back.jpg"),
 
-                    TextureFormatType.ColorR8G8B8A8);
-            skyboxSampler = Sampler.newSampler(skybox, Texture.Filter.Linear, Texture.Filter.Linear, true);
-
-        }
 
 
         //Scene Color Pass Resources
@@ -650,6 +634,7 @@ public class DeferredPipeline extends RenderPipeline {
             Resource<Pair<Texture[], Sampler[]>> inputPosTexturesDependency = lightingPass.getDependency("InputPosTextures").getResource();
             Resource<Pair<Texture[], Sampler[]>> inputDepthStencilTexturesDependency = lightingPass.getDependency("InputDepthStencilTextures").getResource();
 
+            SkyboxFeatures skyboxFeatures = getFeatures(SkyboxFeatures.class);
 
 
             lightingPassShaderProgram.setTextures(
@@ -672,10 +657,10 @@ public class DeferredPipeline extends RenderPipeline {
                     ),
                     new DescriptorUpdate<>(
                             "input_skybox_texture",
-                            skybox
+                            skyboxFeatures.getSkyboxTexture()
                     )
             );
-            lightingPassShaderProgram.setSamplers(renderer.getFrameIndex(), new DescriptorUpdate<>("input_skybox_texture_sampler", skyboxSampler));
+            lightingPassShaderProgram.setSamplers(renderer.getFrameIndex(), new DescriptorUpdate<>("input_skybox_texture_sampler", skyboxFeatures.getSkyboxSampler()));
 
 
 
