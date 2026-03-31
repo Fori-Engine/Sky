@@ -11,7 +11,7 @@ float pcf(Texture2D input_shadow_map, SamplerState input_shadow_map_sampler, int
         for (int y = -pcf_kernel_w; y <= -pcf_kernel_w; y++) {
             float shadow_map_depth = input_shadow_map.Sample(input_shadow_map_sampler, shadow_map_uv_ts.xy + float2(x, y) * float2(shadow_map_texel_w, shadow_map_texel_h)).r;
 
-            shadow_samples += (shadow_map_depth < fragment_shadow_map_ps.z - light.shadowTestOffsetBias) ? 1.5 : 0.0;
+            shadow_samples += (shadow_map_depth < fragment_shadow_map_ps.z - light.shadowTestOffsetBias) ? 1.0 : 0.0;
         }
     }
 
