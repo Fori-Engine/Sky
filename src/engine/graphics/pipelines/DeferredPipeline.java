@@ -48,6 +48,8 @@ public class DeferredPipeline extends RenderPipeline {
     private int lightCount = 0;
     private final int COMPUTE_THREAD_GROUP_SIZE = 32;
 
+    private Texture skybox;
+    private Sampler skyboxSampler;
 
 
 
@@ -63,6 +65,12 @@ public class DeferredPipeline extends RenderPipeline {
             );
         }
 
+        //Skybox
+        {
+            skybox = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/skyengine_dark.png"), TextureFormatType.ColorR8G8B8A8);
+            skyboxSampler = Sampler.newSampler(skybox, Texture.Filter.Linear, Texture.Filter.Linear, true);
+
+        }
 
 
         //Scene Color Pass Resources
@@ -652,8 +660,14 @@ public class DeferredPipeline extends RenderPipeline {
                     new DescriptorUpdate<>(
                             "output_color_texture",
                             outputColorTexturesDependency.get().key[renderer.getFrameIndex()]
+                    ),
+                    new DescriptorUpdate<>(
+                            "input_skybox_texture",
+                            skybox
                     )
             );
+            lightingPassShaderProgram.setSamplers(renderer.getFrameIndex(), new DescriptorUpdate<>("input_skybox_texture_sampler", skyboxSampler));
+
 
 
 

@@ -2,5 +2,5 @@
 
 float3 scatter() {
 
-    return float3(0.3, 0.3, 0.3);
+    return float3(0.0, 0.0, 0.0);
 }

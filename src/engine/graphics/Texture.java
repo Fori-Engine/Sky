@@ -57,6 +57,22 @@ public abstract class Texture extends Disposable {
         this.height = height;
     }
 
+    public static Texture newSkyboxTextureFromAsset(Disposable parent, Asset<TextureData> textureData, TextureFormatType textureFormatType){
+        if(Renderer.getRenderAPI() == RenderAPI.Vulkan) {
+            return new VulkanTexture(
+                    parent,
+                    textureData.getObject().width,
+                    textureData.getObject().height,
+                    6,
+                    textureData,
+                    VulkanUtil.getVulkanImageFormat(textureFormatType),
+                    VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                    VK_IMAGE_TILING_OPTIMAL,
+                    VK_IMAGE_ASPECT_COLOR_BIT
+            );
+        }
+        return null;
+    }
 
     public static Texture newColorTextureFromAsset(Disposable parent, Asset<TextureData> textureData, TextureFormatType textureFormatType){
         if(Renderer.getRenderAPI() == RenderAPI.Vulkan) {
@@ -64,6 +80,7 @@ public abstract class Texture extends Disposable {
                     parent,
                     textureData.getObject().width,
                     textureData.getObject().height,
+                    1,
                     textureData,
                     VulkanUtil.getVulkanImageFormat(textureFormatType),
                     VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
@@ -80,6 +97,7 @@ public abstract class Texture extends Disposable {
                     parent,
                     width,
                     height,
+                    1,
                     null,
                     VulkanUtil.getVulkanImageFormat(textureFormatType),
                     VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
@@ -96,6 +114,7 @@ public abstract class Texture extends Disposable {
                     parent,
                     width,
                     height,
+                    1,
                     null,
                     VulkanUtil.getVulkanImageFormat(textureFormatType),
                     VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT,
@@ -112,6 +131,7 @@ public abstract class Texture extends Disposable {
                     parent,
                     width,
                     height,
+                    1,
                     null,
                     VulkanUtil.getVulkanImageFormat(textureFormatType),
                     VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,

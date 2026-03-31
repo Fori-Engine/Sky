@@ -14,7 +14,7 @@ public struct CookTorranceEval {
         float3 camera_dir_ws = normalize(camera_pos_ws - fragment_ws.xyz);
         float3 halfway_dir_ws = normalize(light_dir_ws + camera_dir_ws);
 
-        float3 F0 = float3(0.04);
+        float3 F0 = float3(0.06);
         F0 = lerp(F0, albedo, metallic);
         float3 F = CT::fresnel(
                         max(dot(camera_dir_ws, halfway_dir_ws), 0),

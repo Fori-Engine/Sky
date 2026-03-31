@@ -17,6 +17,9 @@ Texture2D input_depth_stencil_psw_texture;
 Texture2D input_shadow_maps[MAX_LIGHTS];
 SamplerState input_shadow_maps_samplers[MAX_LIGHTS];
 
+TextureCube input_skybox_texture;
+SamplerState input_skybox_texture_sampler;
+
 
 
 
@@ -122,6 +125,16 @@ void computeMain(uniform int light_count, uniform int width, uniform int height,
         }
 
         output_color.rgb *= (1 - max(0.0, shadow));
+    }
+    else {
+        Camera camera = scene_desc[0].camera;
+        float3 camera_pos_ws = float3(camera.invView[0][3], camera.invView[1][3], camera.invView[2][3]);
+
+        float4 fragment_ws = get_pos_ws((float) (texture_xy_ss.x + 0.5) / width, (float) (texture_xy_ss.y + 0.5) / height, camera.invProj, camera.invView, 0.9);
+
+        float3 dir = fragment_ws.xyz - camera_pos_ws;
+
+        output_color.rgb = input_skybox_texture.Sample(input_skybox_texture_sampler, dir, 0).rgb;
     }
 
 

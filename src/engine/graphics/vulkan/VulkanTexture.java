@@ -40,7 +40,7 @@ public class VulkanTexture extends Texture {
         isStorageTexture = (usage & VK_IMAGE_USAGE_STORAGE_BIT) != 0;
     }
 
-    public VulkanTexture(Disposable parent, int width, int height, Asset<TextureData> textureData, int imageFormat, int usage, int tiling, int aspectMask) {
+    public VulkanTexture(Disposable parent, int width, int height, int arrayLayers, Asset<TextureData> textureData, int imageFormat, int usage, int tiling, int aspectMask) {
         super(parent, width, height, textureData, toTextureFormatType(imageFormat));
 
         image = new VulkanImage(
