@@ -13,6 +13,7 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
@@ -36,16 +37,17 @@ public class VulkanTexture extends Texture {
                 usage,
                 imageFormat
         );
-        imageView = new VulkanImageView(image, VulkanRuntime.getCurrentDevice(), image, aspectMask);
+        imageView = new VulkanImageView(image, VulkanRuntime.getCurrentDevice(), image, aspectMask, 1);
         isStorageTexture = (usage & VK_IMAGE_USAGE_STORAGE_BIT) != 0;
     }
 
-    public VulkanTexture(Disposable parent, int width, int height, int arrayLayers, Asset<TextureData> textureData, int imageFormat, int usage, int tiling, int aspectMask) {
+    public VulkanTexture(Disposable parent, int width, int height, int arrayLayers, List<Asset<TextureData>> textureData, int imageFormat, int usage, int tiling, int aspectMask) {
         super(parent, width, height, textureData, toTextureFormatType(imageFormat));
 
         image = new VulkanImage(
                 this,
                 VulkanAllocator.getAllocator(),
+                arrayLayers,
                 getWidth(),
                 getHeight(),
                 imageFormat,
@@ -55,14 +57,16 @@ public class VulkanTexture extends Texture {
 
         isStorageTexture = (usage & VK_IMAGE_USAGE_STORAGE_BIT) != 0;
 
-        imageView = new VulkanImageView(image, VulkanRuntime.getCurrentDevice(), image, aspectMask);
+        imageView = new VulkanImageView(image, VulkanRuntime.getCurrentDevice(), image, aspectMask, arrayLayers);
 
         if(textureData != null) {
 
 
-            imageData = Buffer.newBuffer(this, getWidth() * getHeight() * 4, Buffer.Usage.ImageBackingBuffer, Buffer.Type.CPUGPUShared, false);
+            imageData = Buffer.newBuffer(this, getWidth() * getHeight() * 4 * arrayLayers, Buffer.Usage.ImageBackingBuffer, Buffer.Type.CPUGPUShared, false);
             ByteBuffer bytes = imageData.map();
-            bytes.put(getTextureData());
+            for(Asset<TextureData> faceAsset : textureData) {
+                bytes.put(faceAsset.getObject().data);
+            }
             imageData.unmap();
 
 
@@ -110,14 +114,15 @@ public class VulkanTexture extends Texture {
                         VK_ACCESS_TRANSFER_WRITE_BIT,
                         VK_IMAGE_ASPECT_COLOR_BIT,
                         VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-                        VK_PIPELINE_STAGE_TRANSFER_BIT
+                        VK_PIPELINE_STAGE_TRANSFER_BIT,
+                        arrayLayers
                 );
 
 
 
                 VkBufferImageCopy.Buffer imageCopies = VkBufferImageCopy.calloc(1, stack);
                 imageCopies.imageSubresource().aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
-                imageCopies.imageSubresource().layerCount(1);
+                imageCopies.imageSubresource().layerCount(arrayLayers);
                 imageCopies.imageExtent().set(width, height, 1);
 
 
@@ -132,11 +137,12 @@ public class VulkanTexture extends Texture {
                         VK_ACCESS_SHADER_READ_BIT,
                         VK_IMAGE_ASPECT_COLOR_BIT,
                         VK_PIPELINE_STAGE_TRANSFER_BIT,
-                        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
+                        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                        arrayLayers
                 );
 
                 if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-                    throw new SkyRuntimeException(Logger.error(VulkanTexture.class, "Failed to finish recording per-RenderCommand command buffer"));
+                    throw new SkyRuntimeException(Logger.error(VulkanTexture.class, "Failed to finish recording command buffer"));
                 }
 
                 VkSubmitInfo submitInfo = VkSubmitInfo.calloc(stack);
@@ -144,7 +150,7 @@ public class VulkanTexture extends Texture {
                 submitInfo.pCommandBuffers(stack.pointers(commandBuffer));
 
                 if (vkQueueSubmit(VulkanRuntime.getGraphicsQueue(), submitInfo, fence.getHandle()) != VK_SUCCESS) {
-                    throw new SkyRuntimeException("Failed to submit per-RenderCommand command buffer");
+                    throw new SkyRuntimeException("Failed to submit command buffer");
                 }
 
                 vkWaitForFences(VulkanRuntime.getCurrentDevice(), fence.getHandle(), true, VulkanUtil.UINT64_MAX);

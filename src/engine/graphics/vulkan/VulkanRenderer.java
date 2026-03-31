@@ -592,7 +592,8 @@ public class VulkanRenderer extends Renderer {
                                             VK_ACCESS_SHADER_READ_BIT,
                                             VK_IMAGE_ASPECT_COLOR_BIT,
                                             srcStageMask,
-                                            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
+                                            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                            1
                                     );
                                 }
                                 if ((rd.getType() & DependencyTypes.FragmentShaderDepthRead) != 0) {
@@ -604,7 +605,8 @@ public class VulkanRenderer extends Renderer {
                                             VK_ACCESS_SHADER_READ_BIT,
                                             VK_IMAGE_ASPECT_DEPTH_BIT,
                                             srcStageMask,
-                                            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
+                                            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                            1
                                     );
                                 }
                                 else if ((rd.getType() & DependencyTypes.FragmentShaderWrite) != 0) {
@@ -619,7 +621,8 @@ public class VulkanRenderer extends Renderer {
                                             VK_ACCESS_SHADER_READ_BIT,
                                             VK_IMAGE_ASPECT_COLOR_BIT,
                                             srcStageMask,
-                                            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
+                                            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                                            1
                                     );
                                 }
                                 else if ((rd.getType() & DependencyTypes.ComputeShaderReadDepth) != 0) {
@@ -631,7 +634,8 @@ public class VulkanRenderer extends Renderer {
                                             VK_ACCESS_SHADER_READ_BIT,
                                             VK_IMAGE_ASPECT_DEPTH_BIT,
                                             srcStageMask,
-                                            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
+                                            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                                            1
                                     );
                                 }else if ((rd.getType() & DependencyTypes.ComputeShaderWrite) != 0) {
                                     VulkanUtil.transitionImages(
@@ -642,7 +646,8 @@ public class VulkanRenderer extends Renderer {
                                             VK_ACCESS_SHADER_WRITE_BIT,
                                             VK_IMAGE_ASPECT_COLOR_BIT,
                                             srcStageMask,
-                                            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
+                                            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                                            1
                                     );
                                 } else if ((rd.getType() & DependencyTypes.Present) != 0) {
                                     VulkanUtil.transitionImages(
@@ -653,7 +658,8 @@ public class VulkanRenderer extends Renderer {
                                             VK_ACCESS_NONE,
                                             VK_IMAGE_ASPECT_COLOR_BIT,
                                             srcStageMask,
-                                            VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
+                                            VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                                            1
                                     );
                                 } else if ((rd.getType() & DependencyTypes.RenderTargetRead) != 0) {
                                     Logger.todo(VulkanRenderer.class, "RenderTargetRead transitions are not supported");
@@ -666,7 +672,8 @@ public class VulkanRenderer extends Renderer {
                                             VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
                                             VK_IMAGE_ASPECT_COLOR_BIT,
                                             srcStageMask,
-                                            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+                                            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                                            1
                                     );
                                 } else if ((rd.getType() & DependencyTypes.RenderTargetDepthWrite) != 0) {
                                     VulkanUtil.transitionImages(
@@ -677,7 +684,8 @@ public class VulkanRenderer extends Renderer {
                                             VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
                                             VK_IMAGE_ASPECT_DEPTH_BIT,
                                             srcStageMask,
-                                            VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT
+                                            VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+                                            1
                                     );
                                 }
 

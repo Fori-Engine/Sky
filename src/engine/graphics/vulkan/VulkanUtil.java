@@ -66,7 +66,8 @@ public class VulkanUtil {
                                         int dstAccessMask,
                                         int aspectMask,
                                         int srcStageMask,
-                                        int dstStageMask) {
+                                        int dstStageMask,
+                                        int layerCount) {
         if(image.getCurrentLayout() == newLayout) return;
 
 
@@ -85,7 +86,7 @@ public class VulkanUtil {
                 imageBarrier.subresourceRange().baseMipLevel(0);
                 imageBarrier.subresourceRange().levelCount(1);
                 imageBarrier.subresourceRange().baseArrayLayer(0);
-                imageBarrier.subresourceRange().layerCount(1);
+                imageBarrier.subresourceRange().layerCount(layerCount);
             }
 
             if(image.getFormat() == VK_FORMAT_D32_SFLOAT && aspectMask == VK_IMAGE_ASPECT_COLOR_BIT) {

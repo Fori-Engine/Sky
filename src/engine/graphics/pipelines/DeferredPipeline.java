@@ -67,7 +67,16 @@ public class DeferredPipeline extends RenderPipeline {
 
         //Skybox
         {
-            skybox = Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset("core:assets/textures/skyengine_dark.png"), TextureFormatType.ColorR8G8B8A8);
+            skybox = Texture.newSkyboxTextureFromAsset(
+                    renderer,
+                    AssetRegistry.getAsset("core:assets/textures/skybox/right.jpg"),
+                    AssetRegistry.getAsset("core:assets/textures/skybox/left.jpg"),
+                    AssetRegistry.getAsset("core:assets/textures/skybox/top.jpg"),
+                    AssetRegistry.getAsset("core:assets/textures/skybox/bottom.jpg"),
+                    AssetRegistry.getAsset("core:assets/textures/skybox/front.jpg"),
+                    AssetRegistry.getAsset("core:assets/textures/skybox/back.jpg"),
+
+                    TextureFormatType.ColorR8G8B8A8);
             skyboxSampler = Sampler.newSampler(skybox, Texture.Filter.Linear, Texture.Filter.Linear, true);
 
         }
