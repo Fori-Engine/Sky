@@ -6,6 +6,7 @@ import engine.graphics.Texture;
 public class SkyboxFeatures extends Features {
     private Texture skyboxTexture;
     private Sampler skyboxSampler;
+    private float sampleIntensity = 5;
     protected SkyboxFeatures(boolean mandatory) {
         super(mandatory);
     }
@@ -24,5 +25,13 @@ public class SkyboxFeatures extends Features {
 
     public void setSkyboxSampler(Sampler skyboxSampler) {
         this.skyboxSampler = skyboxSampler;
+    }
+
+    public float getSampleIntensity() {
+        return sampleIntensity;
+    }
+
+    public void setSampleIntensity(float sampleIntensity) {
+        this.sampleIntensity = sampleIntensity;
     }
 }

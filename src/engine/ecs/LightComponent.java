@@ -11,8 +11,8 @@ public class LightComponent {
     public boolean invertY;
     public RenderTarget renderTarget;
     public float attenuationConstant = 1f;
-    public float attenuationLinear = 0.0014f;
-    public float attenuationQuadratic = 0.000007f;
+    public float attenuationLinear = 0.007f;
+    public float attenuationQuadratic = 0.0002f;
     public Vector3f color = new Vector3f(0, 1, 1);
     public float shadowNormalOffsetBias = 0.0001f;
     public float shadowTestOffsetBias = 0.00001f;

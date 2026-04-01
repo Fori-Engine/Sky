@@ -39,7 +39,7 @@ float4 get_pos_ws(float ux, float uy, float4x4 inv_proj, float4x4 inv_view, floa
 }
 
 [numthreads(32, 32, 1)]
-void computeMain(uniform int light_count, uniform int width, uniform int height, int3 dispatch_ID : SV_DispatchThreadID) {
+void computeMain(uniform int light_count, uniform int width, uniform int height, uniform float cubemap_sample_intensity, int3 dispatch_ID : SV_DispatchThreadID) {
     int3 texture_xy_ss = int3(dispatch_ID.x, dispatch_ID.y, 0);
 
     float4 input_color = input_texture0.Load(texture_xy_ss, 0);
@@ -114,7 +114,7 @@ void computeMain(uniform int light_count, uniform int width, uniform int height,
                         metallic,
                         roughness,
                         albedo,
-                        input_skybox_texture.Sample(input_skybox_texture_sampler, -reflect(camera_dir_ws, normal_ws), 0).rgb * 50
+                        input_skybox_texture.Sample(input_skybox_texture_sampler, -reflect(camera_dir_ws, normal_ws), 0).rgb * cubemap_sample_intensity
 
                     );
 

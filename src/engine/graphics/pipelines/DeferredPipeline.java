@@ -695,10 +695,11 @@ public class DeferredPipeline extends RenderPipeline {
                 lightingPass.setShaderProgram(lightingPassShaderProgram);
 
                 try(MemoryStack stack = stackPush()) {
-                    ByteBuffer pPushConstants = stack.calloc(Integer.BYTES * 3);
+                    ByteBuffer pPushConstants = stack.calloc(Integer.BYTES * 3 + Float.BYTES);
                     pPushConstants.putInt(lightCount);
                     pPushConstants.putInt(renderer.getWidth());
                     pPushConstants.putInt(renderer.getHeight());
+                    pPushConstants.putFloat((int) getFeatures(SkyboxFeatures.class).getSampleIntensity());
                     lightingPass.setPushConstants(pPushConstants);
                 }
 
