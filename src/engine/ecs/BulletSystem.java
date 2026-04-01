@@ -15,7 +15,7 @@ import com.bulletphysics.linearmath.Transform;
 import engine.SystemState;
 import engine.Time;
 import engine.physics.Physics;
-import engine.physics.MathUtil;
+import engine.util.MathUtil;
 import org.joml.Quaternionf;
 
 import javax.vecmath.Matrix4f;

@@ -1,4 +1,4 @@
-package engine.physics;
+package engine.util;
 
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;

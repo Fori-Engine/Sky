@@ -1,5 +1,7 @@
 package engine;
 
+import engine.util.ExceptionUtil;
+
 public class SkyRuntimeException extends RuntimeException {
     public SkyRuntimeException(String msg, Exception e) {
         super(msg);

@@ -1,6 +1,6 @@
 package engine.graphics.pipelines;
 
-import engine.Pair;
+import engine.util.Pair;
 import engine.asset.AssetRegistry;
 import engine.ecs.*;
 import engine.graphics.*;
