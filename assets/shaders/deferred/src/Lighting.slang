@@ -114,7 +114,7 @@ void computeMain(uniform int light_count, uniform int width, uniform int height,
                         metallic,
                         roughness,
                         albedo,
-                        input_skybox_texture.Sample(input_skybox_texture_sampler, -reflect(camera_dir_ws, normal_ws), 0).rgb
+                        input_skybox_texture.Sample(input_skybox_texture_sampler, -reflect(camera_dir_ws, normal_ws), 0).rgb * 50
 
                     );
 
