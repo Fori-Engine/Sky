@@ -75,7 +75,6 @@ dependencies {
     {
         implementation "com.esotericsoftware:kryo:$kryoVersion"
         implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
-        implementation "org.lwjgl:lwjgl-assimp"
         implementation "org.lwjgl:lwjgl"
         implementation "org.lwjgl:lwjgl-glfw"
         implementation "org.lwjgl:lwjgl-stb"
@@ -103,7 +102,6 @@ dependencies {
         if (lwjglNatives == "natives-macos" || lwjglNatives == "natives-macos-arm64")
             runtimeOnly "org.lwjgl:lwjgl-vulkan::$lwjglNatives"
 
-        runtimeOnly "org.lwjgl:lwjgl-assimp::$lwjglNatives"
         runtimeOnly "org.lwjgl:lwjgl-spvc::$lwjglNatives"
         implementation "org.lwjgl:lwjgl-openal::$lwjglNatives"
 
