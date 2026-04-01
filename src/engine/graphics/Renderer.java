@@ -1,6 +1,6 @@
 package engine.graphics;
 
-import engine.Logger;
+import engine.logging.Logger;
 import engine.Surface;
 import engine.graphics.vulkan.VulkanRenderContext;
 import engine.graphics.vulkan.VulkanRenderer;

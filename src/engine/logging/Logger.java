@@ -1,4 +1,4 @@
-package engine;
+package engine.logging;
 
 import java.io.*;
 import java.text.SimpleDateFormat;

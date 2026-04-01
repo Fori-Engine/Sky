@@ -1,6 +1,6 @@
 package engine.ecs;
 
-import engine.Logger;
+import engine.logging.Logger;
 
 public class Actor {
     private Object[] components = new Object[64];

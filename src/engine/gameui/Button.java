@@ -1,7 +1,6 @@
 package engine.gameui;
 
-import engine.Input;
-import engine.graphics.Color;
+import engine.input.Input;
 import engine.graphics.Rect2D;
 import engine.graphics.text.MsdfFont;
 

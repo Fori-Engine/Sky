@@ -3,6 +3,8 @@ package engine;
 import engine.graphics.Disposable;
 import engine.graphics.RenderAPI;
 import engine.graphics.RendererSettings;
+import engine.input.SurfaceCharCallback;
+import engine.input.SurfaceKeyCallback;
 import org.joml.Vector2f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.vulkan.*;

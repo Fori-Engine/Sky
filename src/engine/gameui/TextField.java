@@ -1,8 +1,8 @@
 package engine.gameui;
 
-import engine.Input;
-import engine.SurfaceCharCallback;
-import engine.SurfaceKeyCallback;
+import engine.input.Input;
+import engine.input.SurfaceCharCallback;
+import engine.input.SurfaceKeyCallback;
 import engine.Time;
 import engine.graphics.Color;
 import engine.graphics.Rect2D;

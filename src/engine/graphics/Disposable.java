@@ -1,8 +1,7 @@
 package engine.graphics;
 
-import engine.Internal;
-import engine.Logger;
-import engine.SkyRuntimeException;
+import engine.util.Internal;
+import engine.logging.SkyRuntimeException;
 
 import java.util.ArrayList;
 import java.util.Iterator;

@@ -1,10 +1,7 @@
 package engine.ecs;
 
-import engine.Input;
 import engine.Surface;
-import static engine.gameui.TextValue.*;
 
-import engine.SystemState;
 import engine.asset.AssetRegistry;
 import engine.gameui.*;
 import engine.graphics.*;

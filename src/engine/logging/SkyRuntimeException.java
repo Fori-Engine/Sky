@@ -1,4 +1,4 @@
-package engine;
+package engine.logging;
 
 import engine.util.ExceptionUtil;
 

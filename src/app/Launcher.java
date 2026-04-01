@@ -1,6 +1,6 @@
 package app;
 
-import engine.Logger;
+import engine.logging.Logger;
 import engine.Application;
 import engine.Surface;
 import engine.bridge.ProjectLoader;

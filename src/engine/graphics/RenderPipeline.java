@@ -1,8 +1,6 @@
 package engine.graphics;
 
-import engine.Logger;
-import engine.SkyRuntimeException;
-import engine.ecs.Scene;
+import engine.logging.SkyRuntimeException;
 import engine.graphics.pipelines.Features;
 
 import java.util.List;

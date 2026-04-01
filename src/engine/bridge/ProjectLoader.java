@@ -1,8 +1,8 @@
 package engine.bridge;
 
 import engine.Application;
-import engine.Logger;
-import engine.SkyRuntimeException;
+import engine.logging.Logger;
+import engine.logging.SkyRuntimeException;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;

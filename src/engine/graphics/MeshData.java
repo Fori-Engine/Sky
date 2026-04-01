@@ -1,19 +1,12 @@
 package engine.graphics;
 
-import engine.Logger;
 import engine.asset.Asset;
-import engine.asset.AssetRegistry;
-import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.*;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
 
-import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.*;
 
 import static org.lwjgl.assimp.Assimp.*;
-import static org.lwjgl.system.MemoryStack.stackPush;
 
 public class MeshData {
     private Map<String, List<Float>> data;
