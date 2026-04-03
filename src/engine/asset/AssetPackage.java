@@ -75,6 +75,7 @@ public class AssetPackage {
                                             channelsInFile,
                                             4
                                     );
+                                    Logger.info(AssetPackage.class, STBImage.stbi_failure_reason());
                                     int size = texture.remaining();
                                     byte[] bytes = new byte[texture.remaining()];
 
