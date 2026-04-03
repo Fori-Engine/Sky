@@ -4,6 +4,7 @@
 #include "../../common/SceneDesc.slang"
 #include "../../common/NormalDepthBiasEval.slang"
 #include "../../common/ShadowEval.slang"
+#include "../../common/BloomEval.slang"
 #include "../../common/ReinhardTonemappingEval.slang"
 
 
@@ -126,21 +127,20 @@ void computeMain(uniform int light_count, uniform int width, uniform int height,
         }
 
         output_color.rgb *= (1 - max(0.0, shadow));
+        BloomEval bloom_eval;
 
-        //Bloom
-            {
-                float2 xy = float2(texture_xy_ss.xy) / float2(width, height);
+        bloom_eval.write_bloom(
+            output_bloom_texture,
+            texture_xy_ss,
+            width,
+            height,
+            output_color
+        );
 
-                int w, h, num_levels;
-                output_bloom_texture.GetDimensions(0, w, h, num_levels);
 
-                int2 ixy = xy * float2(w, h);
 
-                float luminance = dot(output_color, float3(0.2126, 0.7152, 0.0722));
-                if(luminance > 0.5) output_bloom_texture[ixy] = float4(output_color, 1.0);
-                else output_bloom_texture[ixy] = float4(0.0, 0.0, 0.0, 0.0);
 
-            }
+
     }
     else {
         Camera camera = scene_desc[0].camera;
