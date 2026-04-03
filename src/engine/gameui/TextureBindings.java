@@ -3,7 +3,7 @@ package engine.gameui;
 import engine.graphics.Texture;
 
 public class TextureBindings {
-    public Texture[] textures = new Texture[128];
+    public Texture[] textures = new Texture[32];
     public int cursor = 1;
 
     public int getTextureBinding(Texture texture) {
