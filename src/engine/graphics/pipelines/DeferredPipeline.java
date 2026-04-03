@@ -34,7 +34,7 @@ public class DeferredPipeline extends RenderPipeline {
     private Resource<Pair<Texture[], Sampler[]>> lightingPassColorTextures;
     private ShaderProgram lightingPassShaderProgram;
     private Buffer[] lightingPassSceneDescBuffers;
-
+    private Resource<Pair<Texture[], Sampler[]>> lightingPassBloomTextures;
 
     private GraphicsPass displayPass;
     private RenderTarget displayPassRT;
@@ -136,6 +136,19 @@ public class DeferredPipeline extends RenderPipeline {
                             new Texture[]{
                                     Texture.newStorageTexture(lightingPassRT, renderer.getWidth(), renderer.getHeight(), Session.isDiscrete() ? TextureFormatType.ColorR32G32B32A32 : TextureFormatType.ColorR16G16B16A16),
                                     Texture.newStorageTexture(lightingPassRT, renderer.getWidth(), renderer.getHeight(), Session.isDiscrete() ? TextureFormatType.ColorR32G32B32A32 : TextureFormatType.ColorR16G16B16A16)
+                            },
+                            new Sampler[]{
+                                    Sampler.newSampler(lightingPassRT, Linear, Linear, true),
+                                    Sampler.newSampler(lightingPassRT, Linear, Linear, true)
+                            }
+                    )
+            );
+
+            lightingPassBloomTextures = new Resource<>(
+                    new Pair<>(
+                            new Texture[]{
+                                    Texture.newStorageTexture(lightingPassRT, renderer.getWidth() / 4, renderer.getHeight() / 4, Session.isDiscrete() ? TextureFormatType.ColorR32G32B32A32 : TextureFormatType.ColorR16G16B16A16),
+                                    Texture.newStorageTexture(lightingPassRT, renderer.getWidth() / 4, renderer.getHeight() / 4, Session.isDiscrete() ? TextureFormatType.ColorR32G32B32A32 : TextureFormatType.ColorR16G16B16A16)
                             },
                             new Sampler[]{
                                     Sampler.newSampler(lightingPassRT, Linear, Linear, true),
@@ -301,6 +314,11 @@ public class DeferredPipeline extends RenderPipeline {
                             DependencyTypes.ComputeShaderReadDepth
                     ),
                     new Dependency(
+                            "OutputBloomTextures",
+                            lightingPassBloomTextures,
+                            DependencyTypes.ComputeShaderWrite
+                    ),
+                    new Dependency(
                             "OutputColorTextures",
                             lightingPassColorTextures,
                             DependencyTypes.ComputeShaderWrite
@@ -320,6 +338,11 @@ public class DeferredPipeline extends RenderPipeline {
                             "SwapchainColorTextures",
                             displayPassColorTextures,
                             DependencyTypes.RenderTargetWrite
+                    ),
+                    new Dependency(
+                            "InputBloomTextures",
+                            lightingPassBloomTextures,
+                            DependencyTypes.FragmentShaderRead
                     ),
                     new Dependency(
                             "SwapchainColorTexturesPresent",
@@ -631,6 +654,7 @@ public class DeferredPipeline extends RenderPipeline {
 
             Resource<Pair<Texture[], Sampler[]>> inputColorTexturesDependency = lightingPass.getDependency("InputColorTextures").getResource();
             Resource<Pair<Texture[], Sampler[]>> outputColorTexturesDependency = lightingPass.getDependency("OutputColorTextures").getResource();
+            Resource<Pair<Texture[], Sampler[]>> outputBloomTexturesDependency = lightingPass.getDependency("OutputBloomTextures").getResource();
             Resource<Pair<Texture[], Sampler[]>> inputPosTexturesDependency = lightingPass.getDependency("InputPosTextures").getResource();
             Resource<Pair<Texture[], Sampler[]>> inputDepthStencilTexturesDependency = lightingPass.getDependency("InputDepthStencilTextures").getResource();
 
@@ -658,6 +682,10 @@ public class DeferredPipeline extends RenderPipeline {
                     new DescriptorUpdate<>(
                             "input_skybox_texture",
                             skyboxFeatures.getSkyboxTexture()
+                    ),
+                    new DescriptorUpdate<>(
+                            "output_bloom_texture",
+                            outputBloomTexturesDependency.get().key[renderer.getFrameIndex()]
                     )
             );
             lightingPassShaderProgram.setSamplers(renderer.getFrameIndex(), new DescriptorUpdate<>("input_skybox_texture_sampler", skyboxFeatures.getSkyboxSampler()));
@@ -715,23 +743,47 @@ public class DeferredPipeline extends RenderPipeline {
 
         displayPass.setPassExecuteCallback(() -> {
 
-            Resource<Pair<Texture[], Sampler[]>> inputTexturesResource = displayPass.getDependency("InputColorTextures").getResource();
+            //Lighting main output
+            {
+                Resource<Pair<Texture[], Sampler[]>> inputTexturesResource = displayPass.getDependency("InputColorTextures").getResource();
 
-            displayPassShaderProgram.setTextures(
-                    renderer.getFrameIndex(),
-                    new DescriptorUpdate<>(
-                            "input_textures",
-                            inputTexturesResource.get().key[renderer.getFrameIndex()]
-                    ).arrayIndex(0)
-            );
+                displayPassShaderProgram.setTextures(
+                        renderer.getFrameIndex(),
+                        new DescriptorUpdate<>(
+                                "input_textures",
+                                inputTexturesResource.get().key[renderer.getFrameIndex()]
+                        ).arrayIndex(0)
+                );
 
-            displayPassShaderProgram.setSamplers(
-                    renderer.getFrameIndex(),
-                    new DescriptorUpdate<>(
-                            "input_samplers",
-                            inputTexturesResource.get().value[renderer.getFrameIndex()]
-                    ).arrayIndex(0)
-            );
+                displayPassShaderProgram.setSamplers(
+                        renderer.getFrameIndex(),
+                        new DescriptorUpdate<>(
+                                "input_samplers",
+                                inputTexturesResource.get().value[renderer.getFrameIndex()]
+                        ).arrayIndex(0)
+                );
+            }
+
+            //Lighting bloom
+            {
+                Resource<Pair<Texture[], Sampler[]>> inputBloomTexturesResource = displayPass.getDependency("InputBloomTextures").getResource();
+
+                displayPassShaderProgram.setTextures(
+                        renderer.getFrameIndex(),
+                        new DescriptorUpdate<>(
+                                "input_textures",
+                                inputBloomTexturesResource.get().key[renderer.getFrameIndex()]
+                        ).arrayIndex(1)
+                );
+
+                displayPassShaderProgram.setSamplers(
+                        renderer.getFrameIndex(),
+                        new DescriptorUpdate<>(
+                                "input_samplers",
+                                inputBloomTexturesResource.get().value[renderer.getFrameIndex()]
+                        ).arrayIndex(1)
+                );
+            }
 
             displayPass.startRecording(renderer.getFrameIndex());
             {

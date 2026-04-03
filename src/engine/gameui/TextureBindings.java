@@ -4,7 +4,7 @@ import engine.graphics.Texture;
 
 public class TextureBindings {
     public Texture[] textures = new Texture[32];
-    public int cursor = 1;
+    public int cursor = 2;
 
     public int getTextureBinding(Texture texture) {
         for (int i = 0; i < textures.length; i++) {

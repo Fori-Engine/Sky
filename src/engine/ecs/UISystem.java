@@ -2,6 +2,7 @@ package engine.ecs;
 
 import engine.Surface;
 
+import engine.SystemState;
 import engine.asset.AssetRegistry;
 import engine.gameui.*;
 import engine.graphics.*;
@@ -277,6 +278,22 @@ public class UISystem extends ActorSystem {
                 Color.WHITE
         );
 
+        if(SystemState.running) {
+            drawQuad(
+                    0,
+                    0,
+                    renderer.getWidth(),
+                    renderer.getHeight(),
+                    0, 0,
+                    0, 1,
+                    1, 0,
+                    1, 1,
+                    0,
+                    1,
+                    1,
+                    Color.WHITE
+            );
+        }
 
         root.previsitAllActors(actor -> {
             if (actor.has(UIComponent.class)) {
