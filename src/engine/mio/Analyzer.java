@@ -28,89 +28,92 @@ public class Analyzer {
 
             //Order indicates match priority!
             //Make sure to update index before emitting and quitting the loop!
-            if (character == '\"') {
-                if (!string) {
-                    string = true;
-                    token.type = Token.TokenType.StringLiteral;
-                }
-                else {
-                    string = false;
-                    index++;
-                    token.content.deleteCharAt(0);
-                    token.content.deleteCharAt(token.content.length() - 1);
-                    break;
-                }
-            }
+
             if(character == '#') comment = true;
             if(character == '\n') {
                 line++;
                 comment = false;
             }
-            if(!string && !comment) {
-                if(Character.isWhitespace(character)) {
-                    index++;
-                    token.type = Token.TokenType.Whitespace;
-                    break;
-                }
-                if(character == '(') {
-                    if (numeric) numeric = false;
-                    token.type = Token.TokenType.LeftParen;
-                    index++;
-                    break;
-                }
-                if(character == '[') {
-                    token.type = Token.TokenType.ArrayStart;
-                    index++;
-                    break;
-                }
-                if((Character.isDigit(character) || character == '-') && !Character.isDigit(source.charAt(index - 1)) && !Character.isLetter(source.charAt(index - 1))) {
-                    if(!numeric) {
-                        token.type = Token.TokenType.Numeric;
-                        numeric = true;
+            if(!comment) {
+                if (character == '\"') {
+                    if (!string) {
+                        string = true;
+                        token.type = Token.TokenType.StringLiteral;
                     }
-                }
-                if(character == '.') {
-                    if(numeric) {
-                        if (!token.foundDecimal) token.foundDecimal = true;
-                        else unexpectedSymbol(character);
-                    }
-
-
-                }
-                if(character == ',' || character == ')' || character == ']') {
-                    if(numeric) {
+                    else {
+                        string = false;
+                        index++;
+                        token.content.deleteCharAt(0);
                         token.content.deleteCharAt(token.content.length() - 1);
                         break;
                     }
-                    switch (character) {
-                        case ',' -> token.type = Token.TokenType.ArgDelimiter;
-                        case ')' -> token.type = Token.TokenType.RightParen;
-                        case ']' -> token.type = Token.TokenType.ArrayEnd;
-                    }
-
-                    index++;
-                    break;
-
                 }
-
-                //Match keywords
-                {
-                    boolean b = false;
-
-                    for (Token.TokenType tokenType : Token.TokenType.values()) {
-                        if (token.content.toString().strip().equals(tokenType.value)) {
-                            token.type = tokenType;
-                            b = true;
-                            break;
-                        }
+                if (!string) {
+                    if (Character.isWhitespace(character)) {
+                        index++;
+                        token.type = Token.TokenType.Whitespace;
+                        break;
                     }
-                    if (b) {
+                    if (character == '(') {
+                        if (numeric) numeric = false;
+                        token.type = Token.TokenType.LeftParen;
                         index++;
                         break;
                     }
-                }
-            }
+                    if (character == '[') {
+                        token.type = Token.TokenType.ArrayStart;
+                        index++;
+                        break;
+                    }
+                    if ((Character.isDigit(character) || character == '-') && !Character.isDigit(source.charAt(index - 1)) && !Character.isLetter(source.charAt(index - 1))) {
+                        if (!numeric) {
+                            token.type = Token.TokenType.Numeric;
+                            numeric = true;
+                        }
+                    }
+                    if (character == '.') {
+                        if (numeric) {
+                            if (!token.foundDecimal) token.foundDecimal = true;
+                            else unexpectedSymbol(character);
+                        }
 
+
+                    }
+                    if (character == ',' || character == ')' || character == ']') {
+                        if (numeric) {
+                            token.content.deleteCharAt(token.content.length() - 1);
+                            break;
+                        }
+                        switch (character) {
+                            case ',' -> token.type = Token.TokenType.ArgDelimiter;
+                            case ')' -> token.type = Token.TokenType.RightParen;
+                            case ']' -> token.type = Token.TokenType.ArrayEnd;
+                        }
+
+                        index++;
+                        break;
+
+                    }
+
+                    //Match keywords
+                    {
+                        boolean b = false;
+
+                        for (Token.TokenType tokenType : Token.TokenType.values()) {
+                            if (token.content.toString().strip().equals(tokenType.value)) {
+                                token.type = tokenType;
+                                b = true;
+                                break;
+                            }
+                        }
+                        if (b) {
+                            index++;
+                            break;
+                        }
+                    }
+                }
+
+            }
 
 
 
