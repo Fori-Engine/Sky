@@ -19,11 +19,11 @@ public class ProjectLoader {
     }
 
     public static Application instantiateApplication(String[] args) {
-        Logger.info(ProjectLoader.class, "Loading project");
         Path path = Path.of(args[0]);
         try {
             URL url = path.toUri().toURL();
-            Logger.info(ProjectLoader.class, "Found project class files at: " + url);
+            Logger.info(ProjectLoader.class, "Loading project " + url);
+
             classLoader = new URLClassLoader(new URL[]{url});
 
             Class clazz = classLoader.loadClass(args[1]);
