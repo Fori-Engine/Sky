@@ -1,4 +1,3 @@
-#include "../../common/Atmosphere.slang"
 #include "../../common/CookTorranceEval.slang"
 #include "KnarkowiczOctahedral.slang"
 #include "../../common/SceneDesc.slang"
@@ -47,7 +46,7 @@ void computeMain(uniform int light_count, uniform int width, uniform int height,
     float4 input_color = input_texture0.Load(texture_xy_ss, 0);
 
     float depth_psw = input_depth_stencil_psw_texture.Load(texture_xy_ss, 0).r;
-    float3 output_color = scatter();
+    float3 output_color = float3(0.0, 0.0, 0.0);
 
     if (depth_psw != 1) {
         output_color = float3(0.0, 0.0, 0.0);
