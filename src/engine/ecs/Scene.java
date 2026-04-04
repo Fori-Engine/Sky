@@ -2,6 +2,7 @@ package engine.ecs;
 
 
 import engine.asset.AssetRegistry;
+import engine.bridge.ProjectLoader;
 import engine.graphics.*;
 import engine.mio.SceneBytecode;
 import engine.mio.Instruction;
@@ -10,6 +11,8 @@ import engine.physics.Interface;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -227,6 +230,22 @@ public class Scene extends Disposable {
                                     (float) color.operands()[3]
                             );
                             actor.add(lightComponent);
+                        }
+                        case "ScriptComponent" -> {
+                            Instruction script = iterator.next();
+                            System.out.println(script.operands()[1]);
+
+                            Class clazz = null;
+                            try {
+                                clazz = ProjectLoader.getClassLoader().loadClass((String) script.operands()[1]);
+                                Constructor constructor = clazz.getConstructor();
+                                Script s = (Script) constructor.newInstance();
+                                actor.add(new ScriptComponent(s));
+                            } catch (ClassNotFoundException | InvocationTargetException | NoSuchMethodException |
+                                     InstantiationException | IllegalAccessException e) {
+                                throw new RuntimeException(e);
+                            }
+
                         }
                     }
 

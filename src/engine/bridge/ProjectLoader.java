@@ -12,13 +12,19 @@ import java.net.URLClassLoader;
 import java.nio.file.Path;
 
 public class ProjectLoader {
+    private static ClassLoader classLoader;
+
+    public static ClassLoader getClassLoader() {
+        return classLoader;
+    }
+
     public static Application instantiateApplication(String[] args) {
         Logger.info(ProjectLoader.class, "Loading project");
         Path path = Path.of(args[0]);
         try {
             URL url = path.toUri().toURL();
             Logger.info(ProjectLoader.class, "Found project class files at: " + url);
-            ClassLoader classLoader = new URLClassLoader(new URL[]{url});
+            classLoader = new URLClassLoader(new URL[]{url});
 
             Class clazz = classLoader.loadClass(args[1]);
             Constructor constructor = clazz.getConstructor();
