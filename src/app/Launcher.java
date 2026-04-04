@@ -18,7 +18,8 @@ public class Launcher {
 
 
     public void initLogging() {
-        Logger.setFileTarget(new File("engine.log"));
+        //Logger.setFileTarget(new File("engine.log"));
+        Logger.setConsoleTarget(System.out);
     }
 
 
