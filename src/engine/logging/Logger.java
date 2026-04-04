@@ -50,7 +50,7 @@ public class Logger {
         return new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(Calendar.getInstance().getTime());
     }
 
-    private static String logGeneric(String ansiColor, String source, String type, String message){
+    private static synchronized String logGeneric(String ansiColor, String source, String type, String message){
 
         if(target == LogTarget.Console)
             writer.println(ansiColor + " (" + timeStr() + " " + source + " " + type + ") " + message + ANSI_RESET);

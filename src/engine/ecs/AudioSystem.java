@@ -1,19 +1,12 @@
 package engine.ecs;
 
-import engine.asset.AssetRegistry;
 import engine.audio.*;
 import engine.audio.wav.WavUtil;
 import engine.logging.Logger;
 import engine.logging.SkyRuntimeException;
-import org.joml.Vector3f;
 
 import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class AudioSystem extends ActorSystem {
     private AudioDevice device;
@@ -22,8 +15,10 @@ public class AudioSystem extends ActorSystem {
 
     //Volatile thread shared variables
     //private volatile org.joml.Vector3f receiverPos = new Vector3f();
-    private volatile float rx, ry, rz;
+    private volatile float rx, ry, rz, ox, oy, oz;
+
     private volatile boolean running = true;
+    private final List<AudioSourceComponent> sources = Collections.synchronizedList(new ArrayList<>());
 
 
     public AudioSystem() {
@@ -33,27 +28,50 @@ public class AudioSystem extends ActorSystem {
         thread = new Thread(() -> {
             Logger.info(AudioSystem.class, "Acquired device " + device.getName());
 
-
-            AudioBuffer audioBuffer = null;
-            audioBuffer = WavUtil.loadAudioWAV(device, new ByteArrayInputStream((byte[]) AssetRegistry.getAsset("nsp:nspassets/audio/cheering.wav").getObject()));
-
-
-            AudioSource source = new AudioSource(device);
-            {
-                source.setPosition(0f, 0f, 0f);
-            }
-
-            context.addAudioSource(source);
-
-            source.play(audioBuffer, new AudioPlayback(true));
-
             while(running) {
-                AudioReceiver.getInstance()
-                        .setPosition(
-                                rx,
-                                ry,
-                                rz
-                        );
+                synchronized (sources) {
+                    for (AudioSourceComponent sourceComponent : sources) {
+
+                        if(sourceComponent.source != null) {
+                            sourceComponent.source.setPosition(
+                                    sourceComponent.position.x,
+                                    sourceComponent.position.y,
+                                    sourceComponent.position.z
+                            );
+                        }
+
+
+                        if(sourceComponent.sampleChanged) {
+                            sourceComponent.sample = WavUtil.loadAudioWAV(device, new ByteArrayInputStream(sourceComponent.sampleAsset.getObject()));
+                            sourceComponent.sampleChanged = false;
+                        }
+
+                        if (!sourceComponent.registered) {
+                            sourceComponent.source = new AudioSource(device);
+                            sourceComponent.registered = true;
+                            context.addAudioSource(sourceComponent.source);
+                        }
+                        if (sourceComponent.playing) {
+                            sourceComponent.source.play(sourceComponent.sample, new AudioPlayback(false));
+                            sourceComponent.playing = false;
+                        }
+
+
+                    }
+
+                    sources.removeIf(audioSourceComponent -> {
+                        if(!audioSourceComponent.playing)
+                            context.removeAudioSource(audioSourceComponent.source);
+                        return !audioSourceComponent.playing;
+                    });
+                }
+
+
+
+                AudioReceiver audioReceiver = AudioReceiver.getInstance();
+                audioReceiver.setPosition(rx, ry, rz);
+                audioReceiver.setOrientation(ox, oy, oz);
+
 
                 Optional<AudioDeviceEvent> event = context.pollEvent();
 
@@ -61,23 +79,11 @@ public class AudioSystem extends ActorSystem {
 
 
                     if(event.get().hasFlag(AudioDeviceEvent.DeviceChanged)) {
-                        System.out.println("Lost " + device.getName());
                         device.free();
                         context.free();
 
                         device = AudioDevice.getSystemAudioDevice();
                         context = new AudioContext(device);
-
-                        System.out.println("Acquired device " + device.getName());
-                        System.out.println(device.isStereo());
-
-                    }
-                    else if(event.get().hasFlag(AudioDeviceEvent.SourcePlayStart)) {
-                        System.out.println("Started playing");
-                    }
-                    else if(event.get().hasFlag(AudioDeviceEvent.SourcePlayEnd)) {
-                        System.out.println("Ended playing");
-                        break;
                     }
                 }
 
@@ -97,6 +103,19 @@ public class AudioSystem extends ActorSystem {
                 rx = pos.x;
                 ry = pos.y;
                 rz = pos.z;
+
+                org.joml.Vector3f dir = (audioReceiverComponent.direction());
+                ox = dir.x;
+                oy = dir.y;
+                oz = dir.z;
+            }
+            if(actor.has(AudioSourceComponent.class)) {
+                AudioSourceComponent audioSourceComponent = actor.getComponent(AudioSourceComponent.class);
+                if(audioSourceComponent.playing && audioSourceComponent.sampleChanged) {
+                    synchronized (sources) {
+                        sources.add(audioSourceComponent);
+                    }
+                }
             }
 
 
