@@ -127,15 +127,7 @@ void computeMain(uniform int light_count, uniform int width, uniform int height,
         }
 
         output_color.rgb *= (1 - max(0.0, shadow));
-        BloomEval bloom_eval;
 
-        bloom_eval.write_bloom(
-            output_bloom_texture,
-            texture_xy_ss,
-            width,
-            height,
-            output_color
-        );
 
 
 
@@ -152,6 +144,16 @@ void computeMain(uniform int light_count, uniform int width, uniform int height,
 
         output_color.rgb = input_skybox_texture.Sample(input_skybox_texture_sampler, dir, 0).rgb;
     }
+
+    BloomEval bloom_eval;
+
+    bloom_eval.write_bloom(
+        output_bloom_texture,
+        texture_xy_ss,
+        width,
+        height,
+        output_color
+    );
 
 
 
