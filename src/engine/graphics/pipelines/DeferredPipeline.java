@@ -147,8 +147,8 @@ public class DeferredPipeline extends RenderPipeline {
             lightingPassBloomTextures = new Resource<>(
                     new Pair<>(
                             new Texture[]{
-                                    Texture.newStorageTexture(lightingPassRT, renderer.getWidth() / 4, renderer.getHeight() / 4, Session.isDiscrete() ? TextureFormatType.ColorR32G32B32A32 : TextureFormatType.ColorR16G16B16A16),
-                                    Texture.newStorageTexture(lightingPassRT, renderer.getWidth() / 4, renderer.getHeight() / 4, Session.isDiscrete() ? TextureFormatType.ColorR32G32B32A32 : TextureFormatType.ColorR16G16B16A16)
+                                    Texture.newStorageTexture(lightingPassRT, renderer.getWidth() / 2, renderer.getHeight() / 2, Session.isDiscrete() ? TextureFormatType.ColorR32G32B32A32 : TextureFormatType.ColorR16G16B16A16),
+                                    Texture.newStorageTexture(lightingPassRT, renderer.getWidth() / 2, renderer.getHeight() / 2, Session.isDiscrete() ? TextureFormatType.ColorR32G32B32A32 : TextureFormatType.ColorR16G16B16A16)
                             },
                             new Sampler[]{
                                     Sampler.newSampler(lightingPassRT, Linear, Linear, true),
