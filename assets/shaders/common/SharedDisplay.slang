@@ -1,3 +1,4 @@
+#include "Constants.slang"
 struct VSOutput {
     float4 pos : SV_POSITION;
     float4 color; 
@@ -105,10 +106,14 @@ FSOutput fragmentMain(VSOutput vsOutput) {
     }
     else if (vsOutput.shape_mode == -1) output.color0SW = vsOutput.color;
     else if (vsOutput.shape_mode == -2) {
-        float2 uv = vsOutput.uv * 2.0 - 1.0;
+        float2 uv = vsOutput.uv;
         float distance = length(uv);
 
-        if(distance <= 1.0 && distance >= (1.0 - 0.5)) output.color0SW = vsOutput.color;
+        float angle = atan2(uv.y, uv.x);
+        if (angle <= 0) angle = -angle + PI;
+
+        if (angle > 0 && angle < vsOutput.op1 && distance <= 1.0 && distance >= (1.0 - vsOutput.op0))
+            output.color0SW = vsOutput.color;
         else discard;
     }
     else if (vsOutput.shape_mode == -3) {

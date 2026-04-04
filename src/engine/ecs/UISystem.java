@@ -87,6 +87,24 @@ public class UISystem extends ActorSystem {
                 }
 
                 @Override
+                public void drawArc(float x, float y, float w, float h, float range, float thickness, Color color) {
+                    UISystem.this.drawQuad(
+                            x,
+                            y,
+                            w,
+                            h,
+                            -1, 1,
+                            -1, -1,
+                            1, 1,
+                            1, -1,
+                            -2,
+                            range,
+                            thickness,
+                            color
+                    );
+                }
+
+                @Override
                 public void drawRectLines(float x, float y, float w, float h, int thickness, Color color) {
                     drawRect(x - ((float) thickness / 2), y, thickness, h, color);
                     //Top
@@ -354,7 +372,7 @@ public class UISystem extends ActorSystem {
                           float uvbry,
 
                           int shapeMode,
-                          int op0,
+                          float op0,
                           float op1,
                           Color color) {
 

@@ -11,6 +11,8 @@ public abstract class GfxPlatform {
     public abstract int getMouseY();
     public abstract boolean isMousePressed(int mouseButton);
     public abstract void drawRect(float x, float y, float w, float h, Color color);
+
+    public abstract void drawArc(float x, float y, float w, float h, float start, float end, Color color);
     public abstract void drawRectLines(float x, float y, float w, float h, int thickness, Color color);
     public abstract void drawTexture(float x,
                              float y,
