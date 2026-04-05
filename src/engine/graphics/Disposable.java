@@ -1,5 +1,6 @@
 package engine.graphics;
 
+import engine.GLFWSurface;
 import engine.util.Internal;
 import engine.logging.SkyRuntimeException;
 
@@ -13,7 +14,9 @@ public abstract class Disposable {
 
     public Disposable(Disposable parent){
         this.parent = parent;
-        if(parent != null) parent.add(this);
+        if(parent != null) {
+            parent.add(this);
+        }
     }
 
     public void remove(Disposable child) {
@@ -45,8 +48,10 @@ public abstract class Disposable {
 
     public void disposeRecursive(Disposable disposable){
 
-        for(int i = disposable.children.size() - 1; i > 0; i--) {
-            disposeRecursive(disposable.children.get(i));
+        String string = (getDepthString(disposable)+ " " + disposable.getClass().getSimpleName());
+        System.out.println(string);
+        for(Disposable child : disposable.children) {
+            disposeRecursive(child);
         }
 
         disposable.dispose();

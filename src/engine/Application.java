@@ -13,11 +13,8 @@ public abstract class Application extends Disposable {
         init(args, surface);
     }
 
-
-    public abstract void closing();
-
     public void close(){
-        disposeAll();
+        //disposeAll();
     }
 
     public void init(String[] args, Surface surface) {

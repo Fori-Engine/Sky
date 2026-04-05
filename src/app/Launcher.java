@@ -41,12 +41,8 @@ public class Launcher {
         }
 
 
-        application.closing();
         application.close();
-
-
-
-
+        surface.disposeAll();
     }
 
     private boolean isRunningInDebug() {

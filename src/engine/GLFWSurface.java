@@ -1,5 +1,6 @@
 package engine;
 import static java.util.stream.Collectors.toSet;
+import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.glfw.GLFWVulkan.*;
 import static org.lwjgl.glfw.GLFWVulkan.glfwVulkanSupported;
@@ -20,7 +21,7 @@ import engine.logging.Logger;
 import engine.logging.SkyRuntimeException;
 import org.joml.Vector2f;
 import org.lwjgl.PointerBuffer;
-import org.lwjgl.glfw.GLFWErrorCallback;
+import org.lwjgl.glfw.*;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 
@@ -35,6 +36,10 @@ public class GLFWSurface extends Surface {
     private long handle;
     private Cursor cursor;
     private GLFWErrorCallback errorCallback;
+    private GLFWKeyCallbackI keyCallbackI;
+    private GLFWCharCallbackI charCallbackI;
+
+
 
     @Override
     public void requestRenderAPI(RenderAPI api, RendererSettings settings) {
@@ -51,6 +56,7 @@ public class GLFWSurface extends Surface {
 
     public GLFWSurface(Disposable parent, String title, int width, int height, boolean resizable) {
         super(parent, title, width, height, resizable);
+        System.out.println("GLFW parent " + parent.getClass().getSimpleName());
 
 
         if (!glfwInit()) {
@@ -64,16 +70,21 @@ public class GLFWSurface extends Surface {
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         handle = glfwCreateWindow(width, height, title, NULL, NULL);
 
-        glfwSetKeyCallback(handle, (window, key, scancode, action, mods) -> {
+        keyCallbackI = (window, key, scancode, action, mods) -> {
             for(SurfaceKeyCallback callback : surfaceKeyCallbacks) {
                 if(action == GLFW_PRESS || action == GLFW_REPEAT) callback.keyClick(key, mods);
             }
-        });
-        glfwSetCharCallback(handle, (window, codepoint) -> {
+        };
+
+        charCallbackI = (window, codepoint) -> {
             for(SurfaceCharCallback callback : surfaceCharCallbacks) {
                 callback.keyClick(Character.toChars(codepoint)[0]);
             }
-        });
+        };
+
+
+        glfwSetKeyCallback(handle, keyCallbackI);
+        glfwSetCharCallback(handle, charCallbackI);
 
     }
 
@@ -353,9 +364,11 @@ public class GLFWSurface extends Surface {
 
     @Override
     public void dispose() {
+
         if(vkDebugUtilsMessengerCallbackEXT != null) vkDebugUtilsMessengerCallbackEXT.free();
-        errorCallback.free();
+        glfwFreeCallbacks(handle);
         glfwDestroyWindow(handle);
+        errorCallback.free();
         glfwTerminate();
     }
 
