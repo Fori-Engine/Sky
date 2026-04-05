@@ -110,9 +110,9 @@ FSOutput fragmentMain(VSOutput vsOutput) {
         float distance = length(uv);
 
         float angle = atan2(uv.y, uv.x);
-        if (angle <= 0) angle = -angle + PI;
+        if(angle < 0) angle += 2 * PI;
 
-        if (angle > 0 && angle < vsOutput.op1 && distance <= 1.0 && distance >= (1.0 - vsOutput.op0))
+        if (angle < vsOutput.op1 && distance <= 1.0 && distance >= (1.0 - vsOutput.op0))
             output.color0SW = vsOutput.color;
         else discard;
     }

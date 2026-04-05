@@ -98,8 +98,8 @@ public class UISystem extends ActorSystem {
                             1, 1,
                             1, -1,
                             -2,
-                            range,
                             thickness,
+                            range,
                             color
                     );
                 }
