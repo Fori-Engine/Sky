@@ -29,12 +29,12 @@ public class UISystem extends ActorSystem {
 
 
 
-    public UISystem(Renderer renderer, RenderPipeline renderPipeline, Surface surface, Scene scene) {
+    public UISystem(Renderer renderer, RenderPipeline renderPipeline, Surface surface, Scene scene, Theme theme) {
         this.renderer = renderer;
         this.renderPipeline = renderPipeline;
         this.surface = surface;
         this.scene = scene;
-
+        this.theme = theme;
 
 
         msdfFont = new MsdfFont(
@@ -43,7 +43,6 @@ public class UISystem extends ActorSystem {
                 AssetRegistry.getAsset("core:assets/fonts/Roboto/roboto-atlas.json")
         );
 
-        theme = ThemeLoader.loadTheme((String) AssetRegistry.getAsset("core:assets/themes/DarkMode.json").getObject());
         textureBindings = new TextureBindings();
 
 
