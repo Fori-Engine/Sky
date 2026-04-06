@@ -81,9 +81,6 @@ public class MeshDataWriter {
 
         }
 
-        System.out.println();
-
-
         for(int index : meshData.getIndices()) {
             indexBufferData.putInt(vertexOffset + index);
         }
