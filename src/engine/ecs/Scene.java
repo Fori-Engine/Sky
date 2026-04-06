@@ -4,6 +4,7 @@ package engine.ecs;
 import engine.asset.AssetRegistry;
 import engine.bridge.ProjectLoader;
 import engine.graphics.*;
+import engine.logging.Logger;
 import engine.mio.SceneBytecode;
 import engine.mio.Instruction;
 import engine.physics.Collider;
@@ -233,11 +234,10 @@ public class Scene extends Disposable {
                         }
                         case "ScriptComponent" -> {
                             Instruction script = iterator.next();
-                            System.out.println(script.operands()[1]);
+                            Logger.info(Scene.class, "Loading script " + script.operands()[1]);
 
-                            Class clazz = null;
                             try {
-                                clazz = ProjectLoader.getClassLoader().loadClass((String) script.operands()[1]);
+                                Class clazz = ProjectLoader.getClassLoader().loadClass((String) script.operands()[1]);
                                 Constructor constructor = clazz.getConstructor();
                                 Script s = (Script) constructor.newInstance();
                                 actor.add(new ScriptComponent(s));
