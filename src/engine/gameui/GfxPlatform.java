@@ -5,6 +5,9 @@ import engine.graphics.Sampler;
 import engine.graphics.Texture;
 import engine.graphics.text.MsdfFont;
 import engine.graphics.text.TextEffect;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
+import org.joml.Vector4f;
 
 public abstract class GfxPlatform {
     public abstract int getMouseX();
@@ -34,6 +37,9 @@ public abstract class GfxPlatform {
                              Color color,
                              Texture texture,
                              Sampler sampler, boolean msdf);
+    public abstract void setOrigin(float x, float y);
+    public abstract Vector4f getOrigin();
+    public abstract void setTransform(Matrix4f transform);
     public abstract void drawTexture(float x, float y, float  w, float h, Color color, Texture texture, Sampler sampler);
     public abstract void drawString(float x, float y, String text, MsdfFont font, TextEffect textEffect, Color color);
     public abstract Theme getTheme();

@@ -8,8 +8,8 @@ import engine.gameui.*;
 import engine.graphics.*;
 import engine.graphics.pipelines.ScreenSpaceFeatures;
 import engine.graphics.text.*;
-import org.joml.Matrix2f;
-import org.joml.Vector2f;
+import org.joml.*;
+
 import java.nio.ByteBuffer;
 
 public class UISystem extends ActorSystem {
@@ -19,8 +19,8 @@ public class UISystem extends ActorSystem {
     private Scene scene;
     private int quadCount = 0;
     private ByteBuffer vertexBufferData, indexBufferData;
-    private Matrix2f transform = new Matrix2f();
-    private Vector2f origin = new Vector2f();
+    private Matrix4f transform = new Matrix4f();
+    private Vector4f origin = new Vector4f();
     private MsdfFont msdfFont;
     private Surface surface;
     private GfxPlatform gfxPlatform;
@@ -164,6 +164,21 @@ public class UISystem extends ActorSystem {
                 }
 
                 @Override
+                public void setOrigin(float x, float y) {
+                    UISystem.this.setOrigin(x, y);
+                }
+
+                @Override
+                public Vector4f getOrigin() {
+                    return origin;
+                }
+
+                @Override
+                public void setTransform(Matrix4f transform) {
+                    UISystem.this.transform.set(transform);
+                }
+
+                @Override
                 public void drawTexture(float x, float y, float w, float h, Color color, Texture texture, Sampler sampler) {
                     drawTexture(x, y, w, h, 0, 0,
                             0, 1,
@@ -277,7 +292,7 @@ public class UISystem extends ActorSystem {
         indexBufferData = screenSpaceFeatures.getIndexBuffers()[renderer.getFrameIndex()].get();
         indexBufferData.clear();
 
-        transform = new Matrix2f();
+        transform = new Matrix4f();
         setOrigin(0, 0);
 
         drawQuad(
@@ -349,7 +364,7 @@ public class UISystem extends ActorSystem {
 
 
     private void setOrigin(float x, float y) {
-        origin.set(x, y);
+        origin.set(x, y, 0, 1);
     }
 
 
@@ -375,11 +390,11 @@ public class UISystem extends ActorSystem {
                           float op1,
                           Color color) {
 
-        Vector2f
-                topLeft = new Vector2f(x, y).sub(origin).mul(transform).add(origin),
-                bottomLeft = new Vector2f(x, y + h).sub(origin).mul(transform).add(origin),
-                bottomRight = new Vector2f(x + w, y + h).sub(origin).mul(transform).add(origin),
-                topRight = new Vector2f(x + w, y).sub(origin).mul(transform).add(origin);
+        Vector4f
+                topLeft = new Vector4f(x, y, 0, 1).sub(origin).mul(transform).add(origin),
+                bottomLeft = new Vector4f(x, y + h, 0, 1).sub(origin).mul(transform).add(origin),
+                bottomRight = new Vector4f(x + w, y + h, 0, 1).sub(origin).mul(transform).add(origin),
+                topRight = new Vector4f(x + w, y, 0, 1).sub(origin).mul(transform).add(origin);
 
         vertexBufferData.putFloat(topLeft.x);
         vertexBufferData.putFloat(topLeft.y);
