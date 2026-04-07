@@ -19,14 +19,15 @@ public class TextField extends Widget {
     private int columns = 15;
     private int cursor = 0;
     private int visibilityCursor = 0;
-    private float cursorBlinkTime = 0.5f;
+    private float cursorBlinkTime = 0.3f;
     private boolean cursorVisible = true;
     private float time = 0;
-
+    private float w = 0;
 
     public TextField(TextValue value, MsdfFont font) {
         this.value = value;
         this.font = font;
+        w = font.getStringWidth(value.string.toString());
         surfaceKeyCallback = (key, modifiers) -> {
             if(focused) {
                 if (key == Input.KEY_BACKSPACE) {
@@ -81,7 +82,7 @@ public class TextField extends Widget {
 
     @Override
     public int getRequiredWidth() {
-        return (int) (font.getStringWidth(getVisibleString()) + (padding * 2));
+        return (int) (w + (padding * 2));
     }
 
     public TextValue getText() {
@@ -95,11 +96,27 @@ public class TextField extends Widget {
 
     @Override
     public void update(GfxPlatform platform, int x, int y, int w, int h) {
+        String visibleString = getVisibleString();
         if(platform.isMousePressed(Input.MOUSE_BUTTON_1)) {
             focused = Rect2D.contains(platform.getMouseX(), platform.getMouseY(), x + padding, y + padding, w - padding * 2, h - padding * 2);
+
+            if(focused) {
+                float sx = platform.getMouseX() - x - padding;
+
+                for(int i = 0; i < getText().string.length(); i++) {
+                    float width = font.getStringWidth(getText().string.substring(0, i));
+                    float width2 = font.getStringWidth(getText().string.substring(0, Math.min(i + 1, getText().string.length() - 1)));
+                    if(width <= sx && sx <= width2) {
+                        cursor = i;
+                        break;
+                    }
+                }
+
+
+            }
+
         }
 
-        String visibleString = getVisibleString();
         platform.drawString(
                 x + padding,
                 y + padding,
