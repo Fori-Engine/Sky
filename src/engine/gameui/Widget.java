@@ -10,6 +10,7 @@ public abstract class Widget {
     private String name;
     protected int padding = 4;
     protected boolean focused;
+    protected Widget parent;
     protected LayoutEngine layoutEngine = new LayoutEngine() {
         @Override
         public int getComputedWidth() {
@@ -98,8 +99,12 @@ public abstract class Widget {
 
     public Widget addWidget(Widget widget) {
         widgets.add(widget);
+        widget.parent = this;
+        widget.onAdded();
         return this;
     }
+
+    public void onAdded() {}
 
     public List<Widget> getWidgets() {
         return widgets;
