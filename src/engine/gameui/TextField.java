@@ -108,6 +108,7 @@ public class TextField extends Widget {
                     float width2 = font.getStringWidth(getText().string.substring(0, Math.min(i + 1, getText().string.length() - 1)));
                     if(width <= sx && sx <= width2) {
                         cursor = i;
+                        cursorVisible = true;
                         break;
                     }
                 }
