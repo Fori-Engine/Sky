@@ -358,6 +358,12 @@ public class GLFWSurface extends Surface {
     }
 
     @Override
+    public boolean isMouseCaptured() {
+        int mode = glfwGetInputMode(handle, GLFW_CURSOR);
+        return mode == GLFW_CURSOR_DISABLED;
+    }
+
+    @Override
     public boolean shouldClose() {
         return glfwWindowShouldClose(handle);
     }

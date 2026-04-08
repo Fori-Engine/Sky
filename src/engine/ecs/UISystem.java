@@ -54,11 +54,13 @@ public class UISystem extends ActorSystem {
             gfxPlatform = new GfxPlatform() {
                 @Override
                 public int getMouseX() {
+                    if(Session.getSurface().isMouseCaptured()) return 0;
                     return (int) surface.getMousePos().x;
                 }
 
                 @Override
                 public int getMouseY() {
+                    if(Session.getSurface().isMouseCaptured()) return 0;
                     return (int) surface.getMousePos().y;
                 }
 

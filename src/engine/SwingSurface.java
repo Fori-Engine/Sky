@@ -197,6 +197,11 @@ public class SwingSurface extends Surface {
     }
 
     @Override
+    public boolean isMouseCaptured() {
+        return false;
+    }
+
+    @Override
     public PointerBuffer getVulkanInstanceExtensions() {
         GLFW.glfwInit();
         return GLFWVulkan.glfwGetRequiredInstanceExtensions();

@@ -71,6 +71,7 @@ public abstract class Surface extends Disposable {
     public abstract boolean getMouseReleased(int button);
     public abstract Vector2f getMousePos();
     public abstract void setCursor(Cursor cursor);
+    public abstract boolean isMouseCaptured();
 
 
     public static Surface newSurface(Disposable parent, String title, int width, int height) {

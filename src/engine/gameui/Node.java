@@ -8,10 +8,12 @@ public class Node extends ContainerWidget {
     private boolean expanded = true;
     private Button button;
     private TextValue value;
+    private int indent = 20;
     public Node(TextValue value, MsdfFont msdfFont) {
         this.value = value;
         setLayoutEngine(new LineLayoutEngine(LineLayoutEngine.Line.Vertical));
         addWidget(button = new Button(value, msdfFont));
+        setIgnore(true);
 
         button.addEventHandler(new EventHandler() {
             @Override
@@ -30,14 +32,22 @@ public class Node extends ContainerWidget {
         }
     }
 
+    public int getIndent() {
+        return indent;
+    }
+
+    public void setIndent(int indent) {
+        this.indent = indent;
+    }
+
     public TextValue getValue() {
         return value;
     }
 
     @Override
     public int getRequiredWidth() {
-        if(expanded) return super.getRequiredWidth();
-        else return button.getRequiredWidth();
+        if(expanded) return super.getRequiredWidth() + (indent * 2);
+        else return button.getRequiredWidth() + (indent * 2);
     }
 
     @Override
@@ -49,8 +59,8 @@ public class Node extends ContainerWidget {
     @Override
     public void update(GfxPlatform platform, int x, int y, int w, int h) {
         if(expanded)
-            super.update(platform, x, y, w, h);
+            super.update(platform, x + indent, y, w, h);
         else
-            button.update(platform, x, y, w, h);
+            button.update(platform, x + indent, y, w, h);
     }
 }
