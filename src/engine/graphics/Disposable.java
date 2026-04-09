@@ -1,6 +1,5 @@
 package engine.graphics;
 
-import engine.GLFWSurface;
 import engine.util.Internal;
 import engine.logging.SkyRuntimeException;
 
@@ -9,18 +8,19 @@ import java.util.Iterator;
 import java.util.List;
 
 public abstract class Disposable {
-    public Disposable parent;
-    public List<Disposable> children = new ArrayList<>();
+    public Disposable disposer;
+    public List<Disposable> childrenToDispose = new ArrayList<>();
 
     public Disposable(Disposable parent){
-        this.parent = parent;
+        this.disposer = parent;
         if(parent != null) {
-            parent.add(this);
+            parent.addDisposable(this);
         }
     }
 
-    public void remove(Disposable child) {
-        for (Iterator<Disposable> iterator = children.iterator(); iterator.hasNext(); ) {
+
+    public void removeDisposable(Disposable child) {
+        for (Iterator<Disposable> iterator = childrenToDispose.iterator(); iterator.hasNext(); ) {
             Disposable ref = iterator.next();
             if (ref == child) {
                 iterator.remove();
@@ -28,18 +28,18 @@ public abstract class Disposable {
         }
     }
 
-    public void add(Disposable child){
+    public void addDisposable(Disposable child){
 
         if(child == this) {
             throw new SkyRuntimeException("A Disposable cannot be a child of itself");
         }
-        child.parent = this;
-        children.add(child);
-
+        child.disposer = this;
+        childrenToDispose.add(child);
     }
 
-    public List<Disposable> getChildren() {
-        return children;
+
+    public List<Disposable> getChildrenToDispose() {
+        return childrenToDispose;
     }
 
     public void disposeAll(){
@@ -50,7 +50,7 @@ public abstract class Disposable {
 
         String string = (getDepthString(disposable)+ " " + disposable.getClass().getSimpleName());
         System.out.println(string);
-        for(Disposable child : disposable.children) {
+        for(Disposable child : disposable.childrenToDispose) {
             disposeRecursive(child);
         }
 
@@ -67,8 +67,8 @@ public abstract class Disposable {
 
         int i = 0;
 
-        while(ref.parent != null){
-            ref = ref.parent;
+        while(ref.disposer != null){
+            ref = ref.disposer;
             i++;
         }
 
@@ -80,6 +80,7 @@ public abstract class Disposable {
 
         return stringBuilder.toString();
     }
+
 
 
 }

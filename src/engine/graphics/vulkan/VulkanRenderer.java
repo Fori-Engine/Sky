@@ -487,9 +487,9 @@ public class VulkanRenderer extends Renderer {
     public void updateRenderer(boolean surfaceInvalidated) {
         if (surfaceInvalidated) {
             swapchain.disposeAll();
-            this.remove(swapchain);
+            this.removeDisposable(swapchain);
             swapchainRenderTarget.disposeAll();
-            this.remove(swapchainRenderTarget);
+            this.removeDisposable(swapchainRenderTarget);
 
             this.width = surface.getWidth();
             this.height = surface.getHeight();

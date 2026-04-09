@@ -47,6 +47,7 @@ public class Scene extends Disposable {
     public void setRootActor(Actor root) {
         this.root = root;
         this.actor = root;
+        addDisposable(this.actor);
     }
 
     public Actor newActor(String name, Object... components) {
@@ -64,12 +65,13 @@ public class Scene extends Disposable {
             switch (instruction.opcode()) {
                 case PushActor -> {
                     String actorName = (String) instruction.operands()[0];
-                    Actor newActor = new Actor(actorName);
-                    if(actor != null) actor.addActor(newActor);
-                    actor = newActor;
+                    Actor child = new Actor(actorName);
+                    if (actor != null) actor.addActor(child);
+                    actor = child;
                 }
 
                 case AddData -> {
+
                     switch ((String) instruction.operands()[0]) {
 
                         case "MaterialComponent" -> {
@@ -80,11 +82,11 @@ public class Scene extends Disposable {
 
 
                             actor.add(new MaterialComponent(new Material(
-                                    Sampler.newSampler(renderer, Texture.Filter.Linear, Texture.Filter.Linear, true),
-                                    Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset((String) baseColor.operands()[1]), TextureFormatType.ColorR8G8B8A8),
-                                    Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset((String) normal.operands()[1]), TextureFormatType.ColorR8G8B8A8unorm),
-                                    Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset((String) metallic.operands()[1]), TextureFormatType.ColorR8G8B8A8unorm),
-                                    Texture.newColorTextureFromAsset(renderer, AssetRegistry.getAsset((String) roughness.operands()[1]), TextureFormatType.ColorR8G8B8A8unorm)
+                                    Sampler.newSampler(actor, Texture.Filter.Linear, Texture.Filter.Linear, true),
+                                    Texture.newColorTextureFromAsset(actor, AssetRegistry.getAsset((String) baseColor.operands()[1]), TextureFormatType.ColorR8G8B8A8),
+                                    Texture.newColorTextureFromAsset(actor, AssetRegistry.getAsset((String) normal.operands()[1]), TextureFormatType.ColorR8G8B8A8unorm),
+                                    Texture.newColorTextureFromAsset(actor, AssetRegistry.getAsset((String) metallic.operands()[1]), TextureFormatType.ColorR8G8B8A8unorm),
+                                    Texture.newColorTextureFromAsset(actor, AssetRegistry.getAsset((String) roughness.operands()[1]), TextureFormatType.ColorR8G8B8A8unorm)
                             )));
 
                         }
@@ -142,7 +144,7 @@ public class Scene extends Disposable {
                             Instruction vertexShader = iterator.next();
                             Instruction fragmentShader = iterator.next();
 
-                            ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(this);
+                            ShaderProgram shaderProgram = ShaderProgram.newShaderProgram(actor);
                             shaderProgram.add(
                                     AssetRegistry.getAsset((String) vertexShader.operands()[1]),
                                     ShaderType.VertexShader
@@ -164,7 +166,7 @@ public class Scene extends Disposable {
                             Instruction maxIndexCount = iterator.next();
 
                             MeshComponent meshComponent = new MeshComponent(
-                                    this,
+                                    actor,
                                     renderer,
                                     (int) ((float) maxVertexCount.operands()[1]),
                                     (int) ((float) maxIndexCount.operands()[1]),
@@ -248,12 +250,14 @@ public class Scene extends Disposable {
 
                         }
                     }
-
                 }
 
-                case PopActor -> actor = actor.getParent();
+                case PopActor -> {
+                    actor = actor.getParent();
+                }
             }
         }
+
 
     }
 
