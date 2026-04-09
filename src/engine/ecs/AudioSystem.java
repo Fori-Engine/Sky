@@ -90,6 +90,7 @@ public class AudioSystem extends ActorSystem {
 
             }
         });
+        thread.setName("Audio Thread");
         thread.start();
 
     }
